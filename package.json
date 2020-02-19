@@ -1,6 +1,6 @@
 {
   "name": "raphtalia",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "A discord bot to assist with managing the Gulag. Still in development right now, but the planned features are as follows:\r 1. Kick members\r 2. Count infractions\r 3. Detect pro-capitalist or pro-democracy language\r 4. Play the soviet national anthem on a voice channel\r 5. Post the communist manifesto",
   "main": "bot.js",
   "scripts": {
@@ -15,5 +15,12 @@
   "bugs": {
     "url": "https://github.com/Hashiphoto/Raphtalia/issues"
   },
-  "homepage": "https://github.com/Hashiphoto/Raphtalia#readme"
+  "homepage": "https://github.com/Hashiphoto/Raphtalia#readme",
+  "dependencies": {
+    "discord.js": "^11.5.1",
+    "mysql": "^2.18.1",
+    "mysql2": "^2.1.0",
+    "sequelize": "^5.21.4"
+  },
+  "devDependencies": {}
 }
