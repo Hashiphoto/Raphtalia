@@ -40,22 +40,15 @@ function processCommand(message) {
     const args = message.content.slice(prefix.length).split(' ');
     const command = args.shift().toLowerCase();
 
-    var authorMember = message.guild.members.get(message.author.id);
-
-
     if(command === 'help') {
         message.channel.send('Help yourself, ' + message.member.toString());
     }
     else if(command === 'kick') {
-        var minimumRole = message.guild.roles.find(role => role.name.toLowerCase() === permissions.kick.toLowerCase());
-        if(!minimumRole) {
-            console.log('There is no role \"' + permissions.kick + '\"');
-            return;
-        }
-        if(authorMember.highestRole.comparePositionTo(minimumRole) < 0) {
+        if(!hasPermission(message, permission.kick)) {
             infract(message, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
             return;
         }
+
         // Iterate through every argument and check if it's a mention
         for(var i = 0; i < args.length; i++) {
             const user = getUserFromMention(args[i]);
@@ -95,9 +88,16 @@ function censor(message) {
     }
 }
 
-function hasRole(userId, guild, roleName) {
-    var member = guild.members.get(userId);
-    return member.roles.some(role => role.name.toLowerCase() === roleName.toLowerCase());
+// This function verifies that the message author has a role equal to or greater than the role given by minRoleName
+function hasPermission(message, minRoleName) {
+    var authorMember = message.guild.members.get(message.author.id);
+    var minRole = message.guild.roles.find(role => role.name.toLowerCase() === minRoleName.toLowerCase());
+    if(!minRole) {
+        console.log('There is no role \"' + minRoleName + '\". Go check the permissions file');
+        return false;
+    }
+    
+    return authorMember.highestRole.comparePositionTo(minRole) >= 0;
 }
 
 function infract(message, reason) {
