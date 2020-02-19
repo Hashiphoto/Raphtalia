@@ -6,7 +6,7 @@ A discord bot to assist with managing the Gulag. Still in development right now,
 4. Play the soviet national anthem on a voice channel
 5. Post the communist manifesto
 
-# Contributing
+## Contributing
 1. Fork the repositry
 2. Clone it onto your machine
 3. Run the command 'npm install' or 'npm ci'
