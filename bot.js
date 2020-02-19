@@ -14,7 +14,7 @@ console.log('Connected!');
 client.once('ready', () => {
     // Login to Discord with your app's token
     console.log('Ready!');
-    sequelize.sync({ force: true }).then(() => {
+    sequelize.sync({ force: false }).then(() => {
         console.log('Database synced!');
     })
 });
@@ -24,26 +24,23 @@ client.login(config.token).then(() => {
 });
 
 client.on('message', message => {
+    if(message.author.bot) {
+        return;
+    }
+
+    // capitalism
     if(message.content.match(/capitalism/gi) != null) {
-        sequelize.transaction(function(t) {
-            return infractions.findOrCreate({
-                where: {
-                    id: message.author.id
-                },
-                transaction: t
-            }).spread(function(user, created) {
-                user.update({
-                    infractionsCount: sequelize.literal('infractionsCount + 1')
-                }).then(() => {
-                    message.channel.send('That\'s a funny way to spell \"Communism\". This infraction has been recorded');
-                    reportInfractions(user.id, message);
-                });
-            })
-        })
+        infract(message, 'That\'s a funny way to spell \"Communism\". This infraction has been recorded');
+    }
+
+    // :flag_us:
+    if(message.content.includes('🇺🇸') != null) {
+        message.delete();
+        infract(message, '☭☭☭');
     }
 
     // Commands
-    if(!message.content.startsWith(prefix) || message.author.bot) {
+    if(!message.content.startsWith(prefix)) {
         return;
     }
     const args = message.content.slice(prefix.length).split(' ');
@@ -66,9 +63,32 @@ client.on('message', message => {
             })
         }
     }
+    else if(command === 'infractions') {
+        if(message.mentions.users.size === 0) {
+            reportInfractions(message.author.id, message);
+        }
+    }
 })
 
-function reportInfractions(userId, message) {
+function infract(message, reason) {
+    sequelize.transaction(function(t) {
+        return infractions.findOrCreate({
+            where: {
+                id: message.author.id
+            },
+            transaction: t
+        }).spread(function(user, created) {
+            user.update({
+                infractionsCount: sequelize.literal('infractionsCount + 1')
+            }).then(() => {
+                message.channel.send(reason);
+                printInfractions(user.id, message);
+            });
+        })
+    })
+}
+
+function printInfractions(userId, message) {
     infractions.findByPk(userId).then(user => {
         const discordName = message.guild.members.get(userId).toString();
         message.channel.send(discordName + ' has incurred ' + user.infractionsCount + ' infractions');
