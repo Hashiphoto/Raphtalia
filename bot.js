@@ -1,8 +1,8 @@
 const Discord = require('discord.js');
 const Sequelize = require('sequelize');
-const config = require('./config.json');
+const discordConfig = require('./config/discord-config.json');
 const permissions = require('./permissions.json');
-const connection = require('./connection.json');
+const connection = require('./config/db-config.json');
 const client = new Discord.Client();
 var sequelize = new Sequelize('mysql://'+connection.user+':'+connection.password+'@localhost:3306/raphtalia');
 var infractions = sequelize.import('./sequelize_models/infractions.js');
@@ -19,7 +19,7 @@ client.once('ready', () => {
     })
 });
 
-client.login(config.token).then(() => {
+client.login(discordConfig.token).then(() => {
     console.log('Logged in!');
 });
 
@@ -28,21 +28,15 @@ client.on('message', message => {
         return;
     }
 
-    // capitalism
-    if(message.content.match(/capitalism/gi) != null) {
-        infract(message, 'That\'s a funny way to spell \"Communism\". This infraction has been recorded');
+    if(message.content.startsWith(prefix)) {
+        processCommand(message);
     }
+    else {
+        censor(message)
+    }
+})
 
-    // :flag_us:
-    if(message.content.includes('🇺🇸') != null) {
-        message.delete();
-        infract(message, '☭☭☭');
-    }
-
-    // Commands
-    if(!message.content.startsWith(prefix)) {
-        return;
-    }
+function processCommand(message) {
     const args = message.content.slice(prefix.length).split(' ');
     const command = args.shift().toLowerCase();
     if(command === 'help') {
@@ -68,7 +62,30 @@ client.on('message', message => {
             reportInfractions(message.author.id, message);
         }
     }
-})
+}
+
+function censor(message) {
+    // capitalism
+    if(message.content.match(/capitalism/gi) != null) {
+        infract(message, 'That\'s a funny way to spell \"Communism\". This infraction has been recorded');
+    }
+    // supreme leader disrespect
+    else if(message.content.match(/(long live|all hail|glory to)/gi) != null &&
+            !message.mentions.roles.find(role => role.name === 'Supreme Dictator') &&
+            message.content.match(/(gulag|supreme leader|leader|erkin|dictator|supreme dictator|bootylicious supreme dictator)/gi) == null) {
+        infract(message, 'Glory to the Supreme Dictator _alone!_ This infraction has been recorded');
+    }
+    // :flag_us:
+    else if(message.content.includes('🇺🇸')) {
+        message.delete();
+        infract(message, 'Uh, oh. ☭☭☭');
+    }
+}
+
+function hasRole(userId, guild, roleName) {
+    var member = guild.members.get(userId);
+    return member.roles.some(role => role.name.toLowerCase() === roleName.toLowerCase());
+}
 
 function infract(message, reason) {
     sequelize.transaction(function(t) {
