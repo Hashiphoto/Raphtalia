@@ -39,10 +39,23 @@ client.on('message', message => {
 function processCommand(message) {
     const args = message.content.slice(prefix.length).split(' ');
     const command = args.shift().toLowerCase();
+
+    var authorMember = message.guild.members.get(message.author.id);
+
+
     if(command === 'help') {
         message.channel.send('Help yourself, ' + message.member.toString());
     }
     else if(command === 'kick') {
+        var minimumRole = message.guild.roles.find(role => role.name.toLowerCase() === permissions.kick.toLowerCase());
+        if(!minimumRole) {
+            console.log('There is no role \"' + permissions.kick + '\"');
+            return;
+        }
+        if(authorMember.highestRole.comparePositionTo(minimumRole) < 0) {
+            infract(message, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
+            return;
+        }
         // Iterate through every argument and check if it's a mention
         for(var i = 0; i < args.length; i++) {
             const user = getUserFromMention(args[i]);
