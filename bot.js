@@ -108,6 +108,33 @@ function processCommand(message) {
             infract(target.id, message.channel, 'Yes sir~!');
         }
     }
+    else if(command === 'exile') {
+        if(!hasPermission(sender, permissions.exile)) {
+            infract(message.author.id, message.channel, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
+            return;
+        }
+
+        // Iterate through every argument and check if it's a mention
+        for(var i = 0; i < args.length; i++) {
+            const user = getUserFromMention(args[i]);
+            if(!user) {
+                continue;
+            }
+            var target = message.guild.members.get(user.id);
+
+            if(!target) {
+                console.log('Could not find that member');
+                return;
+            }
+
+            if(sender.highestRole.comparePositionTo(target.highestRole) < 0) {
+                infract(sender, message.channel, 'Trying to exile a superior are we?');
+                return;
+            }
+            
+            exile(target.id, message.channel);
+        }
+    }
 }
 
 function censor(message) {
