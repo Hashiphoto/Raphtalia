@@ -1,13 +1,32 @@
 const Discord = require('discord.js');
 const Sequelize = require('sequelize');
-const discordConfig = require('./config/discord-config.json');
+var discordConfig;
 const permissions = require('./permissions.json');
 const connection = require('./config/db-config.json');
 const client = new Discord.Client();
 var sequelize = new Sequelize('mysql://'+connection.user+':'+connection.password+'@localhost:3306/raphtalia');
 var infractions = sequelize.import('./sequelize_models/infractions.js');
+
 const prefix = '!';
 const infractionLimit = 5;
+
+if(process.argv.length < 3) {
+    console.log('Please specify -d dev or -m master');
+    throw new Error("No branch specified");
+}
+
+process.argv.forEach(function(value, index, array) {
+    // skip 'node' and the name of the app
+    if(index < 2) {
+        return;
+    }
+    if(value === '-d') {
+        discordConfig = require('./config/discord-config-development.json');
+    }
+    else if(value === '-m') {
+        discordConfig = require('./config/discord-config-master.json');
+    }
+})
 
 console.log('Connected!');
 // When the client is ready, run this code

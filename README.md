@@ -14,3 +14,5 @@ A discord bot to assist with managing the Gulag. Still in development right now,
 5. Create a pull request
 
 At this time, I don't have a way for contributors to test their code because I don't want to give out the Discord bot's token, and the MySQL database is only running on my machine.
+
+Test
