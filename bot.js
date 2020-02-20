@@ -84,9 +84,15 @@ function processCommand(message) {
 }
 
 function censor(message) {
-    // capitalism
-    if(message.content.match(/capitalism/gi) != null) {
-        infract(message, 'That\'s a funny way to spell \"Communism\". This infraction has been recorded');
+    const sender = message.guild.members.get(message.author.id);
+    const regex = /(capitalism|freedom|america)/gi;
+    // simple banned words
+    if(message.content.match(regex) != null) {
+        const fixedMessage = 'I fixed ' + sender.toString() + '\'s message\n>>> ' + message.content.replace(regex, '██████');
+        message.delete();
+        message.channel.send(fixedMessage);
+
+        infract(message, 'This infraction has been recorded');
     }
     // supreme leader disrespect
     else if(message.content.match(/(long live|all hail|glory to)/gi) != null &&
@@ -123,8 +129,7 @@ function infract(message, reason) {
             user.increment('infractionsCount')
             .then((updatedRow) => {
                 var infractionCount = updatedRow.infractionsCount;
-                message.channel.send(reason);
-                reportInfractions(message.author.id, message.channel);
+                reportInfractions(message.author.id, message.channel, reason + '\n');
                 if(infractionCount > infractionLimit) {
                     exile(message.author.id, message.channel);
                 }
@@ -133,11 +138,11 @@ function infract(message, reason) {
     });
 }
 
-function reportInfractions(id, channel) {
+function reportInfractions(id, channel, pretext = '') {
     const discordName = channel.guild.members.get(id).toString();
     infractions.findByPk(id)
     .then(user => {
-    	channel.send(discordName + ' has incurred ' + user.infractionsCount + ' infractions');
+    	channel.send(pretext + discordName + ' has incurred ' + user.infractionsCount + ' infractions');
     })
     .catch(() => {
 		channel.send(discordName + ' is a model citizen <3');
