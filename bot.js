@@ -51,9 +51,8 @@ function processCommand(message) {
             reportInfractions(sender, message.channel);
         }
     case 'kick' :
-        if(!hasPermission(sender, permissions.kick)) {
-            infract(sender, message.channel, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
-            return;
+        if(!verifyPermission(sender, message.channel, permissions.kick)) {
+            return; 
         }
 
         doForEachMention(sender, message.channel, args, (sender, target) => {
@@ -64,27 +63,24 @@ function processCommand(message) {
             })
         })
     case 'report' :
-        if(!hasPermission(sender, permissions.report)) {
-            infract(message.author.id, message.channel, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
-            return;
+        if(!verifyPermission(sender, message.channel, permissions.report)) {
+            return; 
         }
 
         doForEachMention(sender, message.channel, args, (sender, target) => {
             infract(target.id, message.channel, 'Yes sir~!');
         })
     case 'exile' :
-        if(!hasPermission(sender, permissions.exile)) {
-            infract(message.author.id, message.channel, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
-            return;
+        if(!verifyPermission(sender, message.channel, permissions.exile)) {
+            return; 
         }
 
         doForEachMention(sender, message.channel, args, (sender, target) => {
             exile(target.id, message.channel);
         })
     case 'softkick' :
-        if(!hasPermission(sender, permissions.kick)) {
-            infract(sender, message.channel, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
-            return;
+        if(!verifyPermission(sender, message.channel, permissions.kick)) {
+            return; 
         }
 
         doForEachMention(sender, message.channel, args, (sender, target) => {
@@ -101,8 +97,15 @@ function processCommand(message) {
             })
 
         })
-    
-    }   
+    case 'pardon' :
+        if(!verifyPermission(sender, message.channel, permissions.pardon)) {
+            return;
+        }
+
+        doForEachMention(sender, message.channel, args, (sender, target) => {
+            pardon(target.id, message.channel);
+        })
+    }
 }
 
 function doForEachMention(sender, channel, args, action) {
@@ -119,7 +122,7 @@ function doForEachMention(sender, channel, args, action) {
         }
 
         if(sender.highestRole.comparePositionTo(target.highestRole) < 0) {
-            infract(sender, channel, 'Trying to usurp a superior are we?');
+            infract(sender, channel, 'Targeting a superior are we?');
             return;
         }
         
@@ -149,6 +152,16 @@ function censor(message) {
         message.delete();
         infract(message.author.id, message.channel, 'Uh, oh. ☭☭☭');
     }
+}
+
+// check if has permission and infracts the member if they don't
+function verifyPermission(member, channel, minRoleName) {
+    if(!hasPermission(member, minRoleName)) {
+        infract(member.id, channel, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
+        return false;
+    }
+
+    return true;
 }
 
 // This function verifies that the member has a role equal to or greater than the role given by minRoleName
@@ -193,21 +206,51 @@ function reportInfractions(id, channel, pretext = '') {
     })
 }
 
-function exile(id, channel) {
-    var exileRole = channel.guild.roles.find(role => role.name.toLowerCase() === 'exile');
+function pardon(id, channel) {
+    setRoles(id, channel, []); // clear all roles
     var member = channel.guild.members.get(id);
+    channel.send(member.toString() + ' has been un-exiled');
+}
+
+function exile(id, channel) {
+    setRoles(id, channel, ['exile']);
+    var member = channel.guild.members.get(id);
+    channel.send('Uh oh, gulag for you ' + member.toString());
+}
+
+// Set the roles of a user. The parameter roles is an array of string (names of roles)
+function setRoles(id, channel, roles) {
+    var discordRoles = [];
+    var member = channel.guild.members.get(id);
+
+    // Get the backing roles for the names
+    roles.forEach(role => {
+        discordRoles.push(channel.guild.roles.find(r => r.name.toLowerCase() === role));
+    })
     
-    // Check if already exiled (have @everyone and @exile roles)
-    if(member.roles.size === 2 && member.roles.has(exileRole.id)) {
-        return;
-    }
-    member.removeRoles(member.roles, 'exiled')
+    // Check if user already has roles, including @everyone
+    // var hasRoles = true;
+    // if(member.roles.size === discordRoles.size + 1) {
+    //     discordRoles.forEach(role => {
+    //         if(!member.roles.has(role.id)) {
+    //             hasRoles = false;
+    //         }
+    //     })
+    // }
+
+    // if(hasRoles) {
+    //     return;
+    // }
+
+    member.removeRoles(member.roles)
     .then(() => {
-        member.addRole(exileRole);
-        channel.send('Uh oh, gulag for you ' + member.toString());
+        member.addRoles(discordRoles)
+        .catch(() => {
+            console.error('Could not add roles to ' + member.toString());
+        })
     })
     .catch(() => {
-
+        console.error('Could not remove roles for ' + member.toString());
     })
 }
 
