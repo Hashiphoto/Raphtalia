@@ -78,7 +78,7 @@ function processCommand(message) {
     }
     else if(command === 'infractions') {
         if(message.mentions.users.size === 0) {
-            reportInfractions(message.author.id, message);
+            reportInfractions(message.author.id, message.channel);
         }
     }
 }
@@ -122,16 +122,26 @@ function infract(message, reason) {
         }).spread(function(user, created) {
             user.increment('infractionsCount')
             .then((updatedRow) => {
-                console.log('COUNT: ' + updatedRow.infractionsCount);
                 var infractionCount = updatedRow.infractionsCount;
-                const discordName = message.guild.members.get(message.author.id).toString();
-                message.channel.send(reason + '\n' + discordName + ' has incurred ' + infractionCount + ' infractions');
+                message.channel.send(reason);
+                reportInfractions(message.author.id, message.channel);
                 if(infractionCount > infractionLimit) {
                     exile(message.author.id, message.channel);
                 }
             })
         })
     });
+}
+
+function reportInfractions(id, channel) {
+    const discordName = channel.guild.members.get(id).toString();
+    infractions.findByPk(id)
+    .then(user => {
+    	channel.send(discordName + ' has incurred ' + user.infractionsCount + ' infractions');
+    })
+    .catch(() => {
+		channel.send(discordName + ' is a model citizen <3');
+    })
 }
 
 function exile(id, channel) {
