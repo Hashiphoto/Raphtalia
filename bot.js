@@ -7,7 +7,7 @@ const client = new Discord.Client();
 var sequelize = new Sequelize('mysql://'+connection.user+':'+connection.password+'@localhost:3306/raphtalia');
 var infractions = sequelize.import('./sequelize_models/infractions.js');
 const prefix = '!';
-const infractionLimit = 10;
+const infractionLimit = 5;
 
 console.log('Connected!');
 // When the client is ready, run this code
@@ -120,21 +120,26 @@ function infract(message, reason) {
             },
             transaction: t
         }).spread(function(user, created) {
-            user.update({
-                infractionsCount: sequelize.literal('infractionsCount + 1')
-            }).then(() => {
-                message.channel.send(reason);
-                printInfractions(user.id, message);
-            });
+            user.increment('infractionsCount')
+            .then((updatedRow) => {
+                console.log('COUNT: ' + updatedRow.infractionsCount);
+                var infractionCount = updatedRow.infractionsCount;
+                const discordName = message.guild.members.get(message.author.id).toString();
+                message.channel.send(reason + '\n' + discordName + ' has incurred ' + infractionCount + ' infractions');
+                if(infractionCount > infractionLimit) {
+                    exile(message.author.id, message.channel);
+                }
+            })
         })
-    })
+    });
 }
 
-function printInfractions(userId, message) {
-    infractions.findByPk(userId).then(user => {
-        const discordName = message.guild.members.get(userId).toString();
-        message.channel.send(discordName + ' has incurred ' + user.infractionsCount + ' infractions');
-    });
+function exile(id, channel) {
+    var member = channel.guild.members.get(id);
+    member.removeRoles(member.roles, 'exiled');
+    var exileRole = channel.guild.roles.find(role => role.name.toLowerCase() === 'exile');
+    member.addRole(exileRole);
+    channel.send('Uh oh, gulag for you ' + member.toString());
 }
 
 function getUserFromMention(mention) {
