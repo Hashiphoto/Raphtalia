@@ -40,14 +40,19 @@ client.on('message', message => {
 function processCommand(message) {
     const args = message.content.slice(prefix.length).split(' ');
     const command = args.shift().toLowerCase();
-    var authorMember = message.guild.members.get(message.author.id);
+    var sender = message.guild.members.get(message.author.id);
 
     if(command === 'help') {
         message.channel.send('Help yourself, ' + message.member.toString());
     }
+    else if(command === 'infractions') {
+        if(message.mentions.users.size === 0) {
+            reportInfractions(sender, message.channel);
+        }
+    }
     else if(command === 'kick') {
-        if(!hasPermission(authorMember, permissions.kick)) {
-            infract(message, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
+        if(!hasPermission(sender, permissions.kick)) {
+            infract(sender, message.channel, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
             return;
         }
 
@@ -57,28 +62,50 @@ function processCommand(message) {
             if(!user) {
                 continue;
             }
-            var member = message.guild.members.get(user.id);
+            var target = message.guild.members.get(user.id);
 
-            if(!member) {
+            if(!target) {
                 console.log('Could not find that member');
                 return;
             }
 
-            if(authorMember.highestRole.comparePositionTo(member.highestRole) < 0) {
-                infract(message, 'Trying to kick a superior are we?');
+            if(sender.highestRole.comparePositionTo(target.highestRole) < 0) {
+                infract(sender, message.channel, 'Trying to kick a superior are we?');
                 return;
             }
 
-            member.kick().then((member) => {
+            target.kick().then((member) => {
                 message.channel.send(':wave: ' + member.displayName + ' has been kicked');
             }).catch(() => {
                 message.channel.send('Something went wrong...');
             })
         }
     }
-    else if(command === 'infractions') {
-        if(message.mentions.users.size === 0) {
-            reportInfractions(message.author.id, message.channel);
+    else if(command === 'report') {
+        if(!hasPermission(sender, permissions.report)) {
+            infract(message.author.id, message.channel, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
+            return;
+        }
+
+        // Iterate through every argument and check if it's a mention
+        for(var i = 0; i < args.length; i++) {
+            const user = getUserFromMention(args[i]);
+            if(!user) {
+                continue;
+            }
+            var target = message.guild.members.get(user.id);
+
+            if(!target) {
+                console.log('Could not find that member');
+                return;
+            }
+
+            if(sender.highestRole.comparePositionTo(target.highestRole) < 0) {
+                infract(sender, message.channel, 'Trying to report a superior are we?');
+                return;
+            }
+            
+            infract(target.id, message.channel, 'Yes sir~!');
         }
     }
 }
@@ -92,18 +119,18 @@ function censor(message) {
         message.delete();
         message.channel.send(fixedMessage);
 
-        infract(message, 'This infraction has been recorded');
+        infract(message.author.id, message.channel, 'This infraction has been recorded');
     }
     // supreme leader disrespect
     else if(message.content.match(/(long live|all hail|glory to)/gi) != null &&
             !message.mentions.roles.find(role => role.name === 'Supreme Dictator') &&
             message.content.match(/(gulag|supreme leader|leader|erkin|dictator|supreme dictator|bootylicious supreme dictator)/gi) == null) {
-        infract(message, 'Glory to the Supreme Dictator _alone!_ This infraction has been recorded');
+        infract(message.author.id, message.channel, 'Glory to the Supreme Dictator _alone!_ This infraction has been recorded');
     }
     // :flag_us:
     else if(message.content.includes('🇺🇸')) {
         message.delete();
-        infract(message, 'Uh, oh. ☭☭☭');
+        infract(message.author.id, message.channel, 'Uh, oh. ☭☭☭');
     }
 }
 
@@ -118,20 +145,20 @@ function hasPermission(member, minRoleName) {
     return member.highestRole.comparePositionTo(minRole) >= 0;
 }
 
-function infract(message, reason) {
+function infract(discordId, channel, reason) {
     sequelize.transaction(function(t) {
         return infractions.findOrCreate({
             where: {
-                id: message.author.id
+                id: discordId
             },
             transaction: t
         }).spread(function(user, created) {
             user.increment('infractionsCount')
             .then((updatedRow) => {
                 var infractionCount = updatedRow.infractionsCount;
-                reportInfractions(message.author.id, message.channel, reason + '\n');
+                reportInfractions(discordId, channel, reason + '\n');
                 if(infractionCount > infractionLimit) {
-                    exile(message.author.id, message.channel);
+                    exile(discordId, channel);
                 }
             })
         })
