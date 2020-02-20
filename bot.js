@@ -84,6 +84,27 @@ function processCommand(message) {
             exile(target.id, message.channel);
         })
     }
+    else if(command === 'softkick') {
+        if(!hasPermission(sender, permissions.kick)) {
+            infract(sender, message.channel, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
+            return;
+        }
+
+        doForEachMention(sender, message.channel, args, (sender, target) => {
+            message.channel.createInvite({temporary: true, maxAge: 300, maxUses: 1, unique: true})
+            .then(invite => {
+                target.send(invite.toString())
+                .then(() => {
+                    target.kick().then((member) => {
+                        message.channel.send(':wave: ' + member.displayName + ' has been kicked and invited back');
+                    }).catch(() => {
+                        message.channel.send('Something went wrong...');
+                    })
+                })
+            })
+
+        })
+    }
 }
 
 function doForEachMention(sender, channel, args, action) {
