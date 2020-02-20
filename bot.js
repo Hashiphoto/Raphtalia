@@ -56,30 +56,13 @@ function processCommand(message) {
             return;
         }
 
-        // Iterate through every argument and check if it's a mention
-        for(var i = 0; i < args.length; i++) {
-            const user = getUserFromMention(args[i]);
-            if(!user) {
-                continue;
-            }
-            var target = message.guild.members.get(user.id);
-
-            if(!target) {
-                console.log('Could not find that member');
-                return;
-            }
-
-            if(sender.highestRole.comparePositionTo(target.highestRole) < 0) {
-                infract(sender, message.channel, 'Trying to kick a superior are we?');
-                return;
-            }
-
+        doForEachMention(sender, message.channel, args, (sender, target) => {
             target.kick().then((member) => {
                 message.channel.send(':wave: ' + member.displayName + ' has been kicked');
             }).catch(() => {
                 message.channel.send('Something went wrong...');
             })
-        }
+        })
     }
     else if(command === 'report') {
         if(!hasPermission(sender, permissions.report)) {
@@ -87,26 +70,9 @@ function processCommand(message) {
             return;
         }
 
-        // Iterate through every argument and check if it's a mention
-        for(var i = 0; i < args.length; i++) {
-            const user = getUserFromMention(args[i]);
-            if(!user) {
-                continue;
-            }
-            var target = message.guild.members.get(user.id);
-
-            if(!target) {
-                console.log('Could not find that member');
-                return;
-            }
-
-            if(sender.highestRole.comparePositionTo(target.highestRole) < 0) {
-                infract(sender, message.channel, 'Trying to report a superior are we?');
-                return;
-            }
-            
+        doForEachMention(sender, message.channel, args, (sender, target) => {
             infract(target.id, message.channel, 'Yes sir~!');
-        }
+        })
     }
     else if(command === 'exile') {
         if(!hasPermission(sender, permissions.exile)) {
@@ -114,26 +80,31 @@ function processCommand(message) {
             return;
         }
 
-        // Iterate through every argument and check if it's a mention
-        for(var i = 0; i < args.length; i++) {
-            const user = getUserFromMention(args[i]);
-            if(!user) {
-                continue;
-            }
-            var target = message.guild.members.get(user.id);
-
-            if(!target) {
-                console.log('Could not find that member');
-                return;
-            }
-
-            if(sender.highestRole.comparePositionTo(target.highestRole) < 0) {
-                infract(sender, message.channel, 'Trying to exile a superior are we?');
-                return;
-            }
-            
+        doForEachMention(sender, message.channel, args, (sender, target) => {
             exile(target.id, message.channel);
+        })
+    }
+}
+
+function doForEachMention(sender, channel, args, action) {
+    for(var i = 0; i < args.length; i++) {
+        const user = getUserFromMention(args[i]);
+        if(!user) {
+            continue;
         }
+        var target = channel.guild.members.get(user.id);
+
+        if(!target) {
+            console.log('Could not find that member');
+            return;
+        }
+
+        if(sender.highestRole.comparePositionTo(target.highestRole) < 0) {
+            infract(sender, channel, 'Trying to usurp a superior are we?');
+            return;
+        }
+        
+        action(sender, target);
     }
 }
 
