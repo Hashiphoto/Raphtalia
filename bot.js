@@ -7,6 +7,7 @@ const client = new Discord.Client();
 var sequelize = new Sequelize('mysql://'+connection.user+':'+connection.password+'@localhost:3306/raphtalia');
 var infractions = sequelize.import('./sequelize_models/infractions.js');
 const prefix = '!';
+const infractionLimit = 10;
 
 console.log('Connected!');
 // When the client is ready, run this code
@@ -39,12 +40,13 @@ client.on('message', message => {
 function processCommand(message) {
     const args = message.content.slice(prefix.length).split(' ');
     const command = args.shift().toLowerCase();
+    var authorMember = message.guild.members.get(message.author.id);
 
     if(command === 'help') {
         message.channel.send('Help yourself, ' + message.member.toString());
     }
     else if(command === 'kick') {
-        if(!hasPermission(message, permission.kick)) {
+        if(!hasPermission(authorMember, permissions.kick)) {
             infract(message, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
             return;
         }
@@ -56,10 +58,21 @@ function processCommand(message) {
                 continue;
             }
             var member = message.guild.members.get(user.id);
+
+            if(!member) {
+                console.log('Could not find that member');
+                return;
+            }
+
+            if(authorMember.highestRole.comparePositionTo(member.highestRole) < 0) {
+                infract(message, 'Trying to kick a superior are we?');
+                return;
+            }
+
             member.kick().then((member) => {
                 message.channel.send(':wave: ' + member.displayName + ' has been kicked');
             }).catch(() => {
-                message.channel.send('I don\'t have to listen to you');
+                message.channel.send('Something went wrong...');
             })
         }
     }
@@ -88,16 +101,15 @@ function censor(message) {
     }
 }
 
-// This function verifies that the message author has a role equal to or greater than the role given by minRoleName
-function hasPermission(message, minRoleName) {
-    var authorMember = message.guild.members.get(message.author.id);
-    var minRole = message.guild.roles.find(role => role.name.toLowerCase() === minRoleName.toLowerCase());
+// This function verifies that the member has a role equal to or greater than the role given by minRoleName
+function hasPermission(member, minRoleName) {
+    var minRole = member.guild.roles.find(role => role.name.toLowerCase() === minRoleName.toLowerCase());
     if(!minRole) {
         console.log('There is no role \"' + minRoleName + '\". Go check the permissions file');
         return false;
     }
-    
-    return authorMember.highestRole.comparePositionTo(minRole) >= 0;
+
+    return member.highestRole.comparePositionTo(minRole) >= 0;
 }
 
 function infract(message, reason) {
