@@ -1,32 +1,13 @@
 const Discord = require('discord.js');
 const Sequelize = require('sequelize');
-var discordConfig;
+const discordConfig = require('./config/discord-config.json');
 const permissions = require('./permissions.json');
 const connection = require('./config/db-config.json');
 const client = new Discord.Client();
 var sequelize = new Sequelize('mysql://'+connection.user+':'+connection.password+'@localhost:3306/raphtalia');
 var infractions = sequelize.import('./sequelize_models/infractions.js');
-
 const prefix = '!';
 const infractionLimit = 5;
-
-if(process.argv.length < 3) {
-    console.log('Please specify -d dev or -m master');
-    throw new Error("No branch specified");
-}
-
-process.argv.forEach(function(value, index, array) {
-    // skip 'node' and the name of the app
-    if(index < 2) {
-        return;
-    }
-    if(value === '-d') {
-        discordConfig = require('./config/discord-config-development.json');
-    }
-    else if(value === '-m') {
-        discordConfig = require('./config/discord-config-master.json');
-    }
-})
 
 console.log('Connected!');
 // When the client is ready, run this code
@@ -61,15 +42,15 @@ function processCommand(message) {
     const command = args.shift().toLowerCase();
     var sender = message.guild.members.get(message.author.id);
 
-    if(command === 'help') {
+    switch(command){
+    case 'help' :
         message.channel.send('Help yourself, ' + message.member.toString());
-    }
-    else if(command === 'infractions') {
+        break;
+    case 'infractions' :
         if(message.mentions.users.size === 0) {
             reportInfractions(sender, message.channel);
         }
-    }
-    else if(command === 'kick') {
+    case 'kick' :
         if(!hasPermission(sender, permissions.kick)) {
             infract(sender, message.channel, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
             return;
@@ -82,8 +63,7 @@ function processCommand(message) {
                 message.channel.send('Something went wrong...');
             })
         })
-    }
-    else if(command === 'report') {
+    case 'report' :
         if(!hasPermission(sender, permissions.report)) {
             infract(message.author.id, message.channel, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
             return;
@@ -92,8 +72,7 @@ function processCommand(message) {
         doForEachMention(sender, message.channel, args, (sender, target) => {
             infract(target.id, message.channel, 'Yes sir~!');
         })
-    }
-    else if(command === 'exile') {
+    case 'exile' :
         if(!hasPermission(sender, permissions.exile)) {
             infract(message.author.id, message.channel, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
             return;
@@ -102,8 +81,7 @@ function processCommand(message) {
         doForEachMention(sender, message.channel, args, (sender, target) => {
             exile(target.id, message.channel);
         })
-    }
-    else if(command === 'softkick') {
+    case 'softkick' :
         if(!hasPermission(sender, permissions.kick)) {
             infract(sender, message.channel, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
             return;
@@ -123,7 +101,8 @@ function processCommand(message) {
             })
 
         })
-    }
+    
+    }   
 }
 
 function doForEachMention(sender, channel, args, action) {
