@@ -204,11 +204,21 @@ function reportInfractions(id, channel, pretext = '') {
 }
 
 function exile(id, channel) {
-    var member = channel.guild.members.get(id);
-    member.removeRoles(member.roles, 'exiled');
     var exileRole = channel.guild.roles.find(role => role.name.toLowerCase() === 'exile');
-    member.addRole(exileRole);
-    channel.send('Uh oh, gulag for you ' + member.toString());
+    var member = channel.guild.members.get(id);
+    
+    // Check if already exiled (have @everyone and @exile roles)
+    if(member.roles.size === 2 && member.roles.has(exileRole.id)) {
+        return;
+    }
+    member.removeRoles(member.roles, 'exiled')
+    .then(() => {
+        member.addRole(exileRole);
+        channel.send('Uh oh, gulag for you ' + member.toString());
+    })
+    .catch(() => {
+
+    })
 }
 
 function getUserFromMention(mention) {
