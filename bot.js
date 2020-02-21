@@ -57,7 +57,7 @@ client.on('message', message => {
         return;
     }
 
-    if(message.content.startsWith(commandswitch.prefix)) {
+    if(message.content.startsWith(prefix)) {
         processCommand(message);
     }
     else {
