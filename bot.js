@@ -3,6 +3,7 @@ const Sequelize = require('sequelize');
 var discordConfig;
 const permissions = require('./permissions.json');
 const connection = require('./config/db-config.json');
+const kickgif = require('./kickgif.json');
 const client = new Discord.Client();
 var sequelize = new Sequelize('mysql://'+connection.user+':'+connection.password+'@localhost:3306/raphtalia');
 var infractions = sequelize.import('./sequelize_models/infractions.js');
@@ -77,8 +78,11 @@ function processCommand(message) {
         }
 
         doForEachMention(sender, message.channel, args, (sender, target) => {
+            let randInt = math.floor(math.random() * 5);
+            var showkick = kickgif.gifs[randInt];
             target.kick().then((member) => {
                 message.channel.send(':wave: ' + member.displayName + ' has been kicked');
+                message.channel.send(showkick);
             }).catch(() => {
                 message.channel.send('Something went wrong...');
             })
@@ -113,6 +117,7 @@ function processCommand(message) {
                 target.send(invite.toString())
                 .then(() => {
                     target.kick().then((member) => {
+                        message.channel.send(kickgif.gifs.softkick);
                         message.channel.send(':wave: ' + member.displayName + ' has been kicked and invited back');
                     }).catch(() => {
                         message.channel.send('Something went wrong...');
