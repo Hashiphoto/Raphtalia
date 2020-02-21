@@ -1,5 +1,5 @@
 let commands = require('./commands.js');
-//let getNextRole = commands.getNextRole();
+/*let getNextRole = commands.getNextRole();
 let getPreviousRole = commands.getPreviousRole();
 let doForEachMention = commands.doForEachMention();
 let censor = commands.censor();
@@ -11,7 +11,7 @@ let reportInfractions = commands.reportInfractions();
 let pardon = commands.pardon();
 let exile = commands.exile();
 let setRoles = commands.setRoles();
-let getUserFromMention = commands.getUserFromMention();
+let getUserFromMention = commands.getUserFromMention();*/
 
 exports.processCommand = function(message) {
     const args = message.content.slice(prefix.length).split(' ');

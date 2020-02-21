@@ -1,4 +1,4 @@
-/*exports.getNextRole = function(member, guild) {
+exports.getNextRole = function(member, guild) {
     var curRole = member.highestRole;
 
     // Get the next highest role
@@ -16,7 +16,7 @@
     })
     
     return higherRoles[0];
-}*/
+}
 
 exports.getPreviousRole = function(member, guild) {
     var curRole = member.highestRole;
