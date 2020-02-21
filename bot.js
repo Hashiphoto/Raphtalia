@@ -47,6 +47,7 @@ client.login(discordConfig.token).then(() => {
 });
 
 client.on('message', message => {
+    
     if(message.author.bot) {
         return;
     }
