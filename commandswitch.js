@@ -170,5 +170,8 @@ exports.processCommand = function(message) {
             message.channel.send(target.toString() + ' has been demoted to ' + roleName + '!');
         })
         break;
+    
+    default:
+        message.channel.send("Nani the fuck is that command? òwó"
     }
 }
