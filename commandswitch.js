@@ -1,3 +1,6 @@
+const permissions = require('./permissions.json');
+const links = require('./links.json');
+
 let commands = require('./commands.js');
 let getNextRole = commands.getNextRole;
 let getPreviousRole = commands.getPreviousRole;

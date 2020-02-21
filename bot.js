@@ -1,12 +1,9 @@
 const Discord = require('discord.js');
 const Sequelize = require('sequelize');
 var discordConfig;
-const permissions = require('./permissions.json');
 const connection = require('./config/db-config.json');
-const links = require('./links.json');
 const client = new Discord.Client();
 var sequelize = new Sequelize('mysql://'+connection.user+':'+connection.password+'@localhost:3306/raphtalia');
-var infractions = sequelize.import('./sequelize_models/infractions.js');
 
 var commandSwitch = require('./commandswitch.js') //include the module
 let processCommand = commandSwitch.processCommand; //import the function
