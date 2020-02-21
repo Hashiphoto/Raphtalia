@@ -9,6 +9,7 @@ var commandSwitch = require('./commandswitch.js') //include the module
 let processCommand = commandSwitch.processCommand; //import the function
 const prefix = commandSwitch.prefix;
 
+
 var censorfile = require('./censor.js')
 var censor = censorfile.censor;
 
