@@ -1,5 +1,5 @@
 let commands = require('./commands.js');
-let getNextRole = commands.getNextRole();
+//let getNextRole = commands.getNextRole();
 let getPreviousRole = commands.getPreviousRole();
 let doForEachMention = commands.doForEachMention();
 let censor = commands.censor();
