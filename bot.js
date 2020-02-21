@@ -130,6 +130,45 @@ function processCommand(message) {
             pardon(target.id, message.channel);
         })
         break;
+    case 'promote' :
+        if(!verifyPermission(sender, message.channel, permissions.promote)) {
+            return;
+        }
+
+        doForEachMention(sender, message.channel, args, (sender, target) => {
+            if(sender === target) {
+                infract(sender.id, message.channel, 'https://media.giphy.com/media/d5fOmhU24QKMZ2Wv3m/giphy.gif');
+                return;
+            }
+
+            var curRole = target.highestRole;
+
+            // Get the next highest role
+            var higherRoles = [];
+            message.guild.roles.forEach(role => {
+                if(role.comparePositionTo(curRole) > 0 && role.managed === false) {
+                    higherRoles.push(role);
+                }
+            })
+            if(higherRoles.length === 0) {
+                message.channel.send(target.toString() + ' already has the highest position');
+            }
+            higherRoles.sort(function(role1, role2) {
+                return role1.position > role2.position;
+            })
+            var nextHighest = higherRoles[0];
+
+            // Ensure the target's next highest role is not higher than the sender's
+            if(sender.highestRole.comparePositionTo(nextHighest) < 0) {
+                infract(sender.id, message.channel, 'You can\'t promote above your own role');
+                return;
+            }
+
+            console.log('promote ' + target.user.username + ' ' + curRole.name + ' -> ' + nextHighest.name);
+            // promote the target
+            setRoles(target.id, message.channel, [nextHighest.name]);
+        })
+        break;
     }
 }
 
@@ -200,7 +239,7 @@ function hasPermission(member, minRoleName) {
     return member.highestRole.comparePositionTo(minRole) >= 0;
 }
 
-function infract(discordId, channel, reason) {
+function infract(discordId, channel, reason = '') {
     sequelize.transaction(function(t) {
         return infractions.findOrCreate({
             where: {
@@ -249,9 +288,14 @@ function setRoles(id, channel, roles) {
     var member = channel.guild.members.get(id);
 
     // Get the backing roles for the names
-    roles.forEach(role => {
-        discordRoles.push(channel.guild.roles.find(r => r.name.toLowerCase() === role));
-    })
+    for(var i = 0; i < roles.length; i++) {
+        var roleObject = channel.guild.roles.find(r => r.name.toLowerCase() === roles[i].toLowerCase());
+        if(!roleObject) {
+            console.log('Could not find role: ' + roles[i])
+            continue;
+        }
+        discordRoles.push(roleObject);
+    }
     
     // Check if user already has roles, including @everyone
     // var hasRoles = true;
