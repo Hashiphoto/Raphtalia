@@ -164,9 +164,9 @@ function processCommand(message) {
                 return;
             }
 
-            console.log('promote ' + target.user.username + ' ' + curRole.name + ' -> ' + nextHighest.name);
             // promote the target
             setRoles(target.id, message.channel, [nextHighest.name]);
+            message.channel.send(target.toString() + ' has been promoted to ' + nextHighest.name + '!');
         })
         break;
     }
