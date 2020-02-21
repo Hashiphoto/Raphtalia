@@ -1,13 +1,32 @@
 const Discord = require('discord.js');
 const Sequelize = require('sequelize');
-const discordConfig = require('./config/discord-config.json');
+var discordConfig;
 const permissions = require('./permissions.json');
 const connection = require('./config/db-config.json');
 const client = new Discord.Client();
 var sequelize = new Sequelize('mysql://'+connection.user+':'+connection.password+'@localhost:3306/raphtalia');
 var infractions = sequelize.import('./sequelize_models/infractions.js');
+
 const prefix = '!';
 const infractionLimit = 5;
+
+if(process.argv.length < 3) {
+    console.log('Please specify -d dev or -m master');
+    throw new Error("No branch specified");
+}
+
+process.argv.forEach(function(value, index, array) {
+    // skip 'node' and the name of the app
+    if(index < 2) {
+        return;
+    }
+    if(value === '-d') {
+        discordConfig = require('./config/discord-config-development.json');
+    }
+    else if(value === '-m') {
+        discordConfig = require('./config/discord-config-master.json');
+    }
+})
 
 console.log('Connected!');
 // When the client is ready, run this code
@@ -50,6 +69,7 @@ function processCommand(message) {
         if(message.mentions.users.size === 0) {
             reportInfractions(sender, message.channel);
         }
+        break;
     case 'kick' :
         if(!verifyPermission(sender, message.channel, permissions.kick)) {
             return; 
@@ -62,6 +82,7 @@ function processCommand(message) {
                 message.channel.send('Something went wrong...');
             })
         })
+        break;
     case 'report' :
         if(!verifyPermission(sender, message.channel, permissions.report)) {
             return; 
@@ -70,6 +91,7 @@ function processCommand(message) {
         doForEachMention(sender, message.channel, args, (sender, target) => {
             infract(target.id, message.channel, 'Yes sir~!');
         })
+        break;
     case 'exile' :
         if(!verifyPermission(sender, message.channel, permissions.exile)) {
             return; 
@@ -78,6 +100,7 @@ function processCommand(message) {
         doForEachMention(sender, message.channel, args, (sender, target) => {
             exile(target.id, message.channel);
         })
+        break;
     case 'softkick' :
         if(!verifyPermission(sender, message.channel, permissions.kick)) {
             return; 
@@ -97,6 +120,7 @@ function processCommand(message) {
             })
 
         })
+        break;
     case 'pardon' :
         if(!verifyPermission(sender, message.channel, permissions.pardon)) {
             return;
@@ -105,6 +129,7 @@ function processCommand(message) {
         doForEachMention(sender, message.channel, args, (sender, target) => {
             pardon(target.id, message.channel);
         })
+        break;
     }
 }
 
