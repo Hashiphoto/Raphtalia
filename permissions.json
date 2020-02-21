@@ -2,5 +2,6 @@
     "kick":"officer",
     "report":"officer",
     "exile":"supreme dictator",
-    "pardon":"supreme dictator"
+    "pardon":"supreme dictator",
+    "promote":"officer"
 }
