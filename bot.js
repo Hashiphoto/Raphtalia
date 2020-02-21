@@ -8,6 +8,7 @@ var sequelize = new Sequelize('mysql://'+connection.user+':'+connection.password
 var infractions = sequelize.import('./sequelize_models/infractions.js');
 
 const prefix = '!';
+const everyoneRole = '@everyone';
 const infractionLimit = 5;
 
 if(process.argv.length < 3) {
@@ -136,27 +137,18 @@ function processCommand(message) {
         }
 
         doForEachMention(sender, message.channel, args, (sender, target) => {
+            // Disallow self-promotion
             if(sender.id === target.id) {
                 infract(sender.id, message.channel, 'https://media.giphy.com/media/d5fOmhU24QKMZ2Wv3m/giphy.gif');
                 return;
             }
 
-            var curRole = target.highestRole;
+            var nextHighest = getNextRole(target, message.guild);
 
-            // Get the next highest role
-            var higherRoles = [];
-            message.guild.roles.forEach(role => {
-                if(role.comparePositionTo(curRole) > 0 && role.managed === false) {
-                    higherRoles.push(role);
-                }
-            })
-            if(higherRoles.length === 0) {
-                message.channel.send(target.toString() + ' already has the highest position');
+            if(nextHighest == null) {
+                message.channel.send(target.toString() + ' holds the highest office already');
+                return;
             }
-            higherRoles.sort(function(role1, role2) {
-                return role1.position > role2.position;
-            })
-            var nextHighest = higherRoles[0];
 
             // Ensure the target's next highest role is not higher than the sender's
             if(sender.highestRole.comparePositionTo(nextHighest) < 0) {
@@ -169,7 +161,75 @@ function processCommand(message) {
             message.channel.send(target.toString() + ' has been promoted to ' + nextHighest.name + '!');
         })
         break;
+    case 'demote' :
+        if(!verifyPermission(sender, message.channel, permissions.promote)) {
+            return;
+        }
+
+        doForEachMention(sender, message.channel, args, (sender, target) => {
+            // Ensure the sender has a higher rank than the target
+            if(sender.highestRole.comparePositionTo(target.highestRole) < 0) {
+                infract(sender.id, message.channel, target.toString() + ' holds a higher rank than you!!!');
+                return;
+            }
+
+            var nextLowest = getPreviousRole(target, message.guild);
+
+            if(nextLowest == null) {
+                message.channel.send(target.toString() + ' can\'t get any lower');
+                return;
+            }
+
+            // promote the target
+            setRoles(target.id, message.channel, [nextLowest.name]);
+            var roleName = nextLowest.name;
+            if(roleName === everyoneRole) {
+                roleName = 'commoner';
+            }
+            message.channel.send(target.toString() + ' has been demoted to ' + roleName + '!');
+        })
+        break;
     }
+}
+
+function getNextRole(member, guild) {
+    var curRole = member.highestRole;
+
+    // Get the next highest role
+    var higherRoles = [];
+    guild.roles.forEach(role => {
+        if(role.comparePositionTo(curRole) > 0 && role.managed === false) {
+            higherRoles.push(role);
+        }
+    })
+    if(higherRoles.length === 0) {
+        return null;
+    }
+    higherRoles.sort(function(role1, role2) {
+        return role1.position > role2.position;
+    })
+    
+    return higherRoles[0];
+}
+
+function getPreviousRole(member, guild) {
+    var curRole = member.highestRole;
+
+    // Get the next highest role
+    var lowerRoles = [];
+    guild.roles.forEach(role => {
+        if(role.comparePositionTo(curRole) < 0 && role.managed === false) {
+            lowerRoles.push(role);
+        }
+    })
+    if(lowerRoles.length === 0) {
+        return null;
+    }
+    lowerRoles.sort(function(role1, role2) {
+        return role1.position < role2.position;
+    })
+    
+    return lowerRoles[0];
 }
 
 function doForEachMention(sender, channel, args, action) {
