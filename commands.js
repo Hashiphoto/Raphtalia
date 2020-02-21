@@ -1,5 +1,6 @@
 const infractionLimit = 5;
 const Sequelize = require('sequelize');
+const connection = require('./config/db-config.json');
 var sequelize = new Sequelize('mysql://'+connection.user+':'+connection.password+'@localhost:3306/raphtalia');
 var infractions = sequelize.import('./sequelize_models/infractions.js');
 
