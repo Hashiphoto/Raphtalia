@@ -10,13 +10,10 @@ var infractions = sequelize.import('./sequelize_models/infractions.js');
 
 var commandSwitch = require('./commandswitch.js') //include the module
 let processCommand = commandSwitch.processCommand; //import the function
+const prefix = commandSwitch.prefix;
 
 var censorfile = require('./censor.js')
 var censor = censorfile.censor;
-
-const prefix = '!';
-const everyoneRole = '@everyone';
-const infractionLimit = 5;
 
 if(process.argv.length < 3) {
     console.log('Please specify -d dev or -m master');
@@ -60,7 +57,7 @@ client.on('message', message => {
         return;
     }
 
-    if(message.content.startsWith(prefix)) {
+    if(message.content.startsWith(commandswitch.prefix)) {
         processCommand(message);
     }
     else {

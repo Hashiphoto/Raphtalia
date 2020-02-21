@@ -1,4 +1,6 @@
-exports.getNextRole = function(member, guild) {
+const infractionLimit = 5;
+
+exports.getNextRole = function getNextRole(member, guild) {
     var curRole = member.highestRole;
 
     // Get the next highest role
@@ -18,7 +20,7 @@ exports.getNextRole = function(member, guild) {
     return higherRoles[0];
 }
 
-exports.getPreviousRole = function(member, guild) {
+exports.getPreviousRole = function getPreviousRole (member, guild) {
     var curRole = member.highestRole;
 
     // Get the next highest role
@@ -38,7 +40,7 @@ exports.getPreviousRole = function(member, guild) {
     return lowerRoles[0];
 }
 
-exports.doForEachMention = function(sender, channel, args, action) {
+exports.doForEachMention = function doForEachMention(sender, channel, args, action) {
     for(var i = 0; i < args.length; i++) {
         const user = getUserFromMention(args[i]);
         if(!user) {
@@ -61,9 +63,9 @@ exports.doForEachMention = function(sender, channel, args, action) {
 }
 
 // check if has permission and infracts the member if they don't
-exports.verifyPermission = function(member, channel, minRoleName) {
+exports.verifyPermission = function verifyPermission(member, channel, minRoleName) {
     if(!hasPermission(member, minRoleName)) {
-        infract(member.id, channel, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
+        exports.infract(member.id, channel, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
         return false;
     }
 
@@ -71,7 +73,7 @@ exports.verifyPermission = function(member, channel, minRoleName) {
 }
 
 // This function verifies that the member has a role equal to or greater than the role given by minRoleName
-exports.hasPermission = function(member, minRoleName) {
+exports.hasPermission = function hasPermission(member, minRoleName) {
     var minRole = member.guild.roles.find(role => role.name.toLowerCase() === minRoleName.toLowerCase());
     if(!minRole) {
         console.log('There is no role \"' + minRoleName + '\". Go check the permissions file');
@@ -81,7 +83,7 @@ exports.hasPermission = function(member, minRoleName) {
     return member.highestRole.comparePositionTo(minRole) >= 0;
 }
 
-exports.infract = function(discordId, channel, reason = '') {
+exports.infract = function infract(discordId, channel, reason = '') {
     sequelize.transaction(function(t) {
         return infractions.findOrCreate({
             where: {
@@ -101,7 +103,7 @@ exports.infract = function(discordId, channel, reason = '') {
     });
 }
 
-exports.setInfractions = function(discordId, amount, channel, reason){
+exports.setInfractions = function setInfractions(discordId, amount, channel, reason){
     sequelize.transaction(function(t) {
         return infractions.findOrCreate({
             where: {
@@ -118,7 +120,7 @@ exports.setInfractions = function(discordId, amount, channel, reason){
     });
 }
 
-exports.reportInfractions = function(id, channel, pretext = '') {
+exports.reportInfractions = function reportInfractions(id, channel, pretext = '') {
 
     const discordName = channel.guild.members.get(id).toString();
     infractions.findByPk(id)
@@ -130,20 +132,20 @@ exports.reportInfractions = function(id, channel, pretext = '') {
     })
 }
 
-exports.pardon = function(id, channel) {
+exports.pardon = function pardon(id, channel) {
     setRoles(id, channel, []); // clear all roles
     var member = channel.guild.members.get(id);
     channel.send(member.toString() + ' has been un-exiled');
 }
 
-exports.exile = function(id, channel) {
+exports.exile = function exile(id, channel) {
     setRoles(id, channel, ['exile']);
     var member = channel.guild.members.get(id);
     channel.send('Uh oh, gulag for you ' + member.toString());
 }
 
 // Set the roles of a user. The parameter roles is an array of string (names of roles)
-exports.setRoles = function(id, channel, roles) {
+exports.setRoles = function setRoles(id, channel, roles) {
     var discordRoles = [];
     var member = channel.guild.members.get(id);
 
@@ -183,7 +185,7 @@ exports.setRoles = function(id, channel, roles) {
     })
 }
 
-exports.getUserFromMention = function(mention) {
+exports.getUserFromMention = function getUserFromMention(mention) {
 	// The id is the first and only match found by the RegEx.
 	const matches = mention.match(/^<@!?(\d+)>$/);
 

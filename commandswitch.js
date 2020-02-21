@@ -2,7 +2,6 @@ let commands = require('./commands.js');
 let getNextRole = commands.getNextRole;
 let getPreviousRole = commands.getPreviousRole;
 let doForEachMention = commands.doForEachMention;
-let censor = commands.censor;
 let verifyPermission = commands.verifyPermission;
 let hasPermission = commands.hasPermission;
 let infract = commands.infract;
@@ -12,6 +11,11 @@ let pardon = commands.pardon;
 let exile = commands.exile;
 let setRoles = commands.setRoles;
 let getUserFromMention = commands.getUserFromMention;
+
+const prefix = '!';
+const everyoneRole = '@everyone';
+exports.prefix = prefix;
+
 
 exports.processCommand = function(message) {
     const args = message.content.slice(prefix.length).split(' ');
