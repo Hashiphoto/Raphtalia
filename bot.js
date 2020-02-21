@@ -17,6 +17,7 @@ if(process.argv.length < 3) {
     throw new Error("No branch specified");
 }
 
+// Check for master or dev branch configuration
 process.argv.forEach(function(value, index, array) {
     // skip 'node' and the name of the app
     if(index < 2) {
