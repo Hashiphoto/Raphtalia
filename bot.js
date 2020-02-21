@@ -45,6 +45,7 @@ client.login(discordConfig.token).then(() => {
 });
 
 client.on('message', message => {
+    message.channel.send("Erkin? More like spare-kin hahahaha goteem!"
     if(message.author.bot) {
         return;
     }
