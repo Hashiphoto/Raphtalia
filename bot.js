@@ -136,7 +136,7 @@ function processCommand(message) {
         }
 
         doForEachMention(sender, message.channel, args, (sender, target) => {
-            if(sender === target) {
+            if(sender.id === target.id) {
                 infract(sender.id, message.channel, 'https://media.giphy.com/media/d5fOmhU24QKMZ2Wv3m/giphy.gif');
                 return;
             }
