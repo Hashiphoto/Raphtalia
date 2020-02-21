@@ -39,6 +39,9 @@ client.once('ready', () => {
     sequelize.sync({ force: false }).then(() => {
         console.log('Database synced!');
     })
+    var today = new Date();
+    var now = today.getHours + ":" + today.getMinutes() + ":" + today.getSeconds
+    console.log(now);
 });
 
 client.login(discordConfig.token).then(() => {
@@ -73,6 +76,19 @@ function processCommand(message) {
             reportInfractions(sender, message.channel);
         }
         break;
+    /*case 'setinfract':
+        if(!verifyPermission(sender, message.channel, permissions.setinfract)){
+            return;
+        }
+
+        doForEachMention(sender, message.channel, args, (sender, target) => {
+            setInfractions(target.id, message.channel, 'Yes sir~!');
+        }).catch(()=> {
+            message.channel.send('Something went wrong...');
+            message.channel.send('Proper format is setinfract ');
+        })
+
+        break;*/
     case 'kick' :
         if(!verifyPermission(sender, message.channel, permissions.kick)) {
             return; 
@@ -321,13 +337,30 @@ function infract(discordId, channel, reason = '') {
             .then((updatedRow) => {
                 var infractionCount = updatedRow.infractionsCount;
                 reportInfractions(discordId, channel, reason + '\n');
-                if(infractionCount > infractionLimit) {
+                if(infractionCount >= infractionLimit) {
                     exile(discordId, channel);
                 }
             })
         })
     });
 }
+
+/*function setInfractions(discordId, amount, channel, reason){
+    sequelize.transaction(function(t) {
+        return infractions.findOrCreate({
+            where: {
+                id: discordId
+            },
+            transaction: t
+        }).spread(function(user, created) {
+            user.infractionCount = amount;
+            reportInfractions(discordId, channel, reason + '\n');
+            if(infractionCount >= infractionLimit) {
+                exile(discordId, channel);
+            }
+        })
+    });
+}*/
 
 function reportInfractions(id, channel, pretext = '') {
     const discordName = channel.guild.members.get(id).toString();
