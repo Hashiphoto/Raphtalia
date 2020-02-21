@@ -172,6 +172,6 @@ exports.processCommand = function(message) {
         break;
     
     default:
-        message.channel.send("Nani the fuck is that command? òwó"
+        message.channel.send("Nani the fuck is that command? òwó");
     }
 }
