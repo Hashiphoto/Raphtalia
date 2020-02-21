@@ -9,7 +9,10 @@ var sequelize = new Sequelize('mysql://'+connection.user+':'+connection.password
 var infractions = sequelize.import('./sequelize_models/infractions.js');
 
 var commandSwitch = require('./commandswitch.js') //include the module
-//let processCommand = commandSwitch.processCommand(); //import the function
+let processCommand = commandSwitch.processCommand; //import the function
+
+var censorfile = require('./censor.js')
+var censor = censorfile.censor;
 
 const prefix = '!';
 const everyoneRole = '@everyone';
