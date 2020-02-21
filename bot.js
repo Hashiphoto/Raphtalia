@@ -116,7 +116,7 @@ function processCommand(message) {
                 target.send(invite.toString())
                 .then(() => {
                     target.kick().then((member) => {
-                        message.channel.send(kickgif.gifs[5]);
+                        message.channel.send(kickgif.gifs.softkick);
                         message.channel.send(':wave: ' + member.displayName + ' has been kicked and invited back');
                     }).catch(() => {
                         message.channel.send('Something went wrong...');
