@@ -3,6 +3,7 @@ const Sequelize = require('sequelize');
 var discordConfig;
 const connection = require('./config/db-config.json');
 const client = new Discord.Client();
+exports.client = client;
 var sequelize = new Sequelize('mysql://'+connection.user+':'+connection.password+'@localhost:3306/raphtalia');
 
 var commandSwitch = require('./commandswitch.js') //include the module

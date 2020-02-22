@@ -5,6 +5,8 @@ var discordConfig;
 const connection = require('./config/db-config.json');
 var sequelize = new Sequelize('mysql://'+connection.user+':'+connection.password+'@localhost:3306/raphtalia');
 var infractions = sequelize.import('./sequelize_models/infractions.js');
+var bot = require('./bot.js');
+var client = bot.client;
 
 
 function getNextRole(member, guild) {
