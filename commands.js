@@ -7,7 +7,7 @@ var sequelize = new Sequelize('mysql://'+connection.user+':'+connection.password
 var infractions = sequelize.import('./sequelize_models/infractions.js');
 
 
-exports.getNextRole = function getNextRole(member, guild) {
+function getNextRole(member, guild) {
     var curRole = member.highestRole;
 
     // Get the next highest role
@@ -27,7 +27,7 @@ exports.getNextRole = function getNextRole(member, guild) {
     return higherRoles[0];
 }
 
-exports.getPreviousRole = function getPreviousRole (member, guild) {
+function getPreviousRole (member, guild) {
     var curRole = member.highestRole;
 
     // Get the next highest role
@@ -81,7 +81,7 @@ function hasPermission(member, minRoleName) {
 }
 
 // check if has permission and infracts the member if they don't
-exports.verifyPermission = function verifyPermission(member, channel, minRoleName) {
+function verifyPermission(member, channel, minRoleName) {
     if(!hasPermission(member, minRoleName)) {
         exports.infract(member.id, channel, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
         return false;
@@ -90,7 +90,7 @@ exports.verifyPermission = function verifyPermission(member, channel, minRoleNam
     return true;
 }
 
-exports.infract = function infract(discordId, channel, reason = '') {
+function infract(discordId, channel, reason = '') {
     sequelize.transaction(function(t) {
         return infractions.findOrCreate({
             where: {
@@ -110,7 +110,7 @@ exports.infract = function infract(discordId, channel, reason = '') {
     });
 }
 
-exports.setInfractions = function setInfractions(discordId, amount, channel, reason){
+function setInfractions(discordId, amount, channel, reason){
     sequelize.transaction(function(t) {
         return infractions.findOrCreate({
             where: {
@@ -127,7 +127,7 @@ exports.setInfractions = function setInfractions(discordId, amount, channel, rea
     });
 }
 
-exports.reportInfractions = function reportInfractions(id, channel, pretext = '') {
+function reportInfractions(id, channel, pretext = '') {
 
     const discordName = channel.guild.members.get(id).toString();
     infractions.findByPk(id)
@@ -139,20 +139,20 @@ exports.reportInfractions = function reportInfractions(id, channel, pretext = ''
     })
 }
 
-exports.pardon = function pardon(id, channel) {
+function pardon(id, channel) {
     setRoles(id, channel, []); // clear all roles
     var member = channel.guild.members.get(id);
     channel.send(member.toString() + ' has been un-exiled');
 }
 
-exports.exile = function exile(id, channel) {
+function exile(id, channel) {
     setRoles(id, channel, ['exile']);
     var member = channel.guild.members.get(id);
     channel.send('Uh oh, gulag for you ' + member.toString());
 }
 
 // Set the roles of a user. The parameter roles is an array of string (names of roles)
-exports.setRoles = function setRoles(id, channel, roles) {
+function setRoles(id, channel, roles) {
     var discordRoles = [];
     var member = channel.guild.members.get(id);
 
@@ -192,7 +192,7 @@ exports.setRoles = function setRoles(id, channel, roles) {
     })
 }
 
-exports.getUserFromMention = function getUserFromMention(mention) {
+function getUserFromMention(mention) {
 	// The id is the first and only match found by the RegEx.
 	const matches = mention.match(/^<@!?(\d+)>$/);
 
@@ -208,5 +208,15 @@ exports.getUserFromMention = function getUserFromMention(mention) {
 	return client.users.get(id);
 }
 
-exports.hasPermission = hasPermission;
+exports.getNextRole = getNextRole;
+exports.getPreviousRole = getPreviousRole;
 exports.doForEachMention = doForEachMention;
+exports.hasPermission = hasPermission;
+exports.verifyPermission = verifyPermission;
+exports.infract = infract;
+exports.setInfractions = setInfractions;
+exports.reportInfractions = reportInfractions;
+exports.pardon = pardon;
+exports.exile = exile;
+exports.setRoles = setRoles;
+exports.getUserFromMention = getUserFromMention;
