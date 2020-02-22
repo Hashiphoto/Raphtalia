@@ -1,18 +1,12 @@
 const Discord = require('discord.js');
 const Sequelize = require('sequelize');
-var discordConfig;
-const connection = require('./config/db-config.json');
 const client = new Discord.Client();
-exports.client = client;
-var sequelize = new Sequelize('mysql://'+connection.user+':'+connection.password+'@localhost:3306/raphtalia');
-
-var commandSwitch = require('./commandswitch.js') //include the module
-let processCommand = commandSwitch.processCommand; //import the function
-const prefix = commandSwitch.prefix;
-
-
-var censorfile = require('./censor.js')
-var censor = censorfile.censor;
+const Commands = require('./commands.js');
+const permissions = require('./permissions.json');
+const prefix = '!';
+var discordConfig;
+var commands = new Commands();
+commands.init();
 
 if(process.argv.length < 3) {
     console.log('Please specify -d dev or -m master');
@@ -39,9 +33,6 @@ console.log('Connected!');
 client.once('ready', () => {
     // Login to Discord with your app's token
     console.log('Ready!');
-    sequelize.sync({ force: false }).then(() => {
-        console.log('Database synced!');
-    })
     var today = new Date();
     var now = today.getHours + ":" + today.getMinutes() + ":" + today.getSeconds
     console.log(now);
@@ -52,7 +43,6 @@ client.login(discordConfig.token).then(() => {
 });
 
 client.on('message', message => {
-    
     if(message.author.bot) {
         return;
     }
@@ -69,3 +59,87 @@ client.on("disconnect", function(event) {
     console.log('Bot disconnecting');
     process.exit();
 });
+
+function processCommand(message) {
+    const args = message.content.slice(prefix.length).split(' ');
+    const command = args.shift().toLowerCase();
+    let sender = message.guild.members.get(message.author.id);
+    let mentionedMembers = getMemberMentions(message.guild, args);
+
+    switch(command) {
+    case 'help' :
+        commands.help(message.channel, sender);
+        break;
+
+    case 'infractions' :
+        commands.getInfractions(message.channel, sender, mentionedMembers);
+        break;
+
+    case 'kick' :
+        commands.kick(message.channel, sender, mentionedMembers, permissions.kick);
+        break;
+
+    case 'report' :
+        commands.report(message.channel, sender, mentionedMembers, permissions.report);
+        break;
+
+    case 'exile' :
+        commands.exile(message.channel, sender, mentionedMembers, permissions.exile);
+        break;
+
+    case 'softkick' :
+        commands.softkick(message.channel, sender, mentionedMembers, permissions.kick);
+        break;
+
+    case 'pardon' :
+        commands.pardon(message.channel, sender, mentionedMembers, permissions.pardon);
+        break;
+
+    case 'promote' :
+        commands.promote(message.channel, sender, mentionedMembers, permissions.promote);
+        break;
+
+    case 'demote' :
+        commands.demote(message.channel, sender, mentionedMembers, permissions.demote);
+        break;
+    
+    default:
+        message.channel.send('Nani the fuck is that command? òwó');
+    }
+}
+
+function getMemberMentions(guild, args) {
+    let members = [];
+    for(let i = 0; i < args.length; i++) {
+        let user = getUserFromMention(args[i]);
+        if(!user) {
+            continue;
+        }
+        let guildMember = guild.members.get(user.id);
+
+        if(!guildMember) {
+            console.log('Could not find that member');
+            return;
+        }
+
+        members.push(guildMember);
+    }
+
+    return members;
+}
+
+function getUserFromMention(mention) {
+	// The id is the first and only match found by the RegEx.
+	let matches = mention.match(/^<@!?(\d+)>$/);
+
+	// If supplied variable was not a mention, matches will be null instead of an array.
+	if (!matches) {
+        return;
+    }
+
+	// However the first element in the matches array will be the entire mention, not just the ID,
+	// so use index 1.
+	let id = matches[1];
+
+	return client.users.get(id);
+}

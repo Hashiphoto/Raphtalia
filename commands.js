@@ -1,224 +1,148 @@
-const infractionLimit = 5;
-const Discord = require('discord.js');
-const Sequelize = require('sequelize');
-var discordConfig;
-const connection = require('./config/db-config.json');
-var sequelize = new Sequelize('mysql://'+connection.user+':'+connection.password+'@localhost:3306/raphtalia');
-var infractions = sequelize.import('./sequelize_models/infractions.js');
-var bot = require('./bot.js');
-var client = bot.client;
+const links = require('./links.json');
+const Helper = require('./helper.js');
+var helper = new Helper();
+helper.init();
 
+function commands() {
 
-function getNextRole(member, guild) {
-    var curRole = member.highestRole;
+    this.init = function() {
 
-    // Get the next highest role
-    var higherRoles = [];
-    guild.roles.forEach(role => {
-        if(role.comparePositionTo(curRole) > 0 && role.managed === false) {
-            higherRoles.push(role);
-        }
-    })
-    if(higherRoles.length === 0) {
-        return null;
-    }
-    higherRoles.sort(function(role1, role2) {
-        return role1.position > role2.position;
-    })
-    
-    return higherRoles[0];
-}
-
-function getPreviousRole (member, guild) {
-    var curRole = member.highestRole;
-
-    // Get the next highest role
-    var lowerRoles = [];
-    guild.roles.forEach(role => {
-        if(role.comparePositionTo(curRole) < 0 && role.managed === false) {
-            lowerRoles.push(role);
-        }
-    })
-    if(lowerRoles.length === 0) {
-        return null;
-    }
-    lowerRoles.sort(function(role1, role2) {
-        return role1.position < role2.position;
-    })
-    
-    return lowerRoles[0];
-}
-
-function doForEachMention(sender, channel, args, action) {
-    for(var i = 0; i < args.length; i++) {
-        const user = getUserFromMention(args[i]);
-        if(!user) {
-            continue;
-        }
-        var target = channel.guild.members.get(user.id);
-
-        if(!target) {
-            console.log('Could not find that member');
-            return;
-        }
-
-        if(sender.highestRole.comparePositionTo(target.highestRole) < 0) {
-            infract(sender, channel, 'Targeting a superior are we?');
-            return;
-        }
-        
-        action(sender, target);
-    }
-}
-
-// This function verifies that the member has a role equal to or greater than the role given by minRoleName
-function hasPermission(member, minRoleName) {
-    var minRole = member.guild.roles.find(role => role.name.toLowerCase() === minRoleName.toLowerCase());
-    if(!minRole) {
-        console.log('There is no role \"' + minRoleName + '\". Go check the permissions file');
-        return false;
     }
 
-    return member.highestRole.comparePositionTo(minRole) >= 0;
-}
-
-// check if has permission and infracts the member if they don't
-function verifyPermission(member, channel, minRoleName) {
-    if(!hasPermission(member, minRoleName)) {
-        exports.infract(member.id, channel, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
-        return false;
+    this.help = function(channel, sender) {
+        channel.send('Help yourself, ' + sender.toString());
     }
 
-    return true;
-}
+    this.getInfractions = function(channel, sender, targets) {
+        if(targets.length === 0) {
+            helper.reportInfractions(sender, channel);
+        }
+        else {
+            helper.reportInfractions(targets[0], channel);
+        }
+    }
 
-function infract(discordId, channel, reason = '') {
-    sequelize.transaction(function(t) {
-        return infractions.findOrCreate({
-            where: {
-                id: discordId
-            },
-            transaction: t
-        }).spread(function(user, created) {
-            user.increment('infractionsCount')
-            .then((updatedRow) => {
-                var infractionCount = updatedRow.infractionsCount;
-                reportInfractions(discordId,  channel, reason + '\n');
-                if(infractionCount >= infractionLimit) {
-                    exile(discordId, channel);
-                }
+    this.kick = function(channel, sender, targets, permissionLevel) {
+        if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
+
+        targets.forEach((target) => {
+            target.kick()
+            .then((member) => {
+                channel.send(':wave: ' + member.displayName + ' has been kicked')
+                .then(() => {
+                    let randInt = Math.floor(Math.random() * links.gifs.kicks.length);
+                    let showkick = links.gifs.kicks[randInt];
+                    channel.send(showkick);
+                })
+            })
+            .catch(() => {
+                channel.send('Something went wrong...');
             })
         })
-    });
-}
+    }
 
-function setInfractions(discordId, amount, channel, reason){
-    sequelize.transaction(function(t) {
-        return infractions.findOrCreate({
-            where: {
-                id: discordId
-            },
-            transaction: t
-        }).spread(function(user, created) {
-            user.infractionCount = amount;
-            reportInfractions(discordId, channel, reason + '\n');
-            if(infractionCount >= infractionLimit) {
-                exile(discordId, channel);
+    this.report = function(channel, sender, targets, permissionLevel) {
+        if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
+
+        targets.forEach((target) => {
+            helper.infract(target, channel, 'Yes sir~!');
+        })
+    }
+
+    this.exile = function(channel, sender, targets, permissionLevel) {
+        if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
+
+        targets.forEach((target) => {
+            helper.exile(target, channel);
+        })
+    }
+
+    this.softkick = function(channel, sender, targets, permissionLevel) {
+        if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
+
+        targets.forEach((target) => {
+            channel.createInvite({ temporary: true, maxAge: 300, maxUses: 1, unique: true })
+            .then(invite => {
+                target.send(invite.toString())
+                .then(() => {
+                    target.kick()
+                    .then((member) => {
+                        channel.send(':wave: ' + member.displayName + ' has been kicked and invited back')
+                        .then(() => {
+                            channel.send(links.gifs.softkick);
+                        })
+                    })
+                    .catch(() => {
+                        channel.send('Something went wrong...');
+                    })
+                })
+            })
+        })
+    }
+
+    this.pardon = function(channel, sender, targets, permissionLevel) {
+        if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
+
+        targets.forEach((target) => {
+            helper.pardon(target, channel);
+        })
+    }
+
+    this.promote = function(channel, sender, targets, permissionLevel) {
+        if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
+
+        targets.forEach((target) => {
+            // Disallow self-promotion
+            if(sender.id === target.id) {
+                helper.infract(sender, channel, links.gifs.bernieNo);
+                return;
             }
+
+            let nextHighest = helper.getNextRole(target, channel.guild);
+
+            if(nextHighest == null) {
+                channel.send(target.toString() + ' holds the highest office already');
+                return;
+            }
+
+            // Ensure the target's next highest role is not higher than the sender's
+            if(sender.highestRole.comparePositionTo(nextHighest) < 0) {
+                helper.infract(sender, channel, 'You can\'t promote above your own role');
+                return;
+            }
+
+            // promote the target
+            helper.setRoles(target, channel, [nextHighest.name]);
+            channel.send(target.toString() + ' has been promoted to ' + nextHighest.name + '!');
         })
-    });
-}
-
-function reportInfractions(id, channel, pretext = '') {
-
-    const discordName = channel.guild.members.get(id).toString();
-    infractions.findByPk(id)
-    .then(user => {
-    	channel.send(pretext + discordName + ' has incurred ' + user.infractionsCount + ' infractions');
-    })
-    .catch(() => {
-		channel.send(discordName + ' is a model citizen <3');
-    })
-}
-
-function pardon(id, channel) {
-    setRoles(id, channel, []); // clear all roles
-    var member = channel.guild.members.get(id);
-    channel.send(member.toString() + ' has been un-exiled');
-}
-
-function exile(id, channel) {
-    setRoles(id, channel, ['exile']);
-    var member = channel.guild.members.get(id);
-    channel.send('Uh oh, gulag for you ' + member.toString());
-}
-
-// Set the roles of a user. The parameter roles is an array of string (names of roles)
-function setRoles(id, channel, roles) {
-    var discordRoles = [];
-    var member = channel.guild.members.get(id);
-
-    // Get the backing roles for the names
-    for(var i = 0; i < roles.length; i++) {
-        var roleObject = channel.guild.roles.find(r => r.name.toLowerCase() === roles[i].toLowerCase());
-        if(!roleObject) {
-            console.log('Could not find role: ' + roles[i])
-            continue;
-        }
-        discordRoles.push(roleObject);
-    }
-    
-    // Check if user already has roles, including @everyone
-    // var hasRoles = true;
-    // if(member.roles.size === discordRoles.size + 1) {
-    //     discordRoles.forEach(role => {
-    //         if(!member.roles.has(role.id)) {
-    //             hasRoles = false;
-    //         }
-    //     })
-    // }
-
-    // if(hasRoles) {
-    //     return;
-    // }
-
-    member.removeRoles(member.roles)
-    .then(() => {
-        member.addRoles(discordRoles)
-        .catch(() => {
-            console.error('Could not add roles to ' + member.toString());
-        })
-    })
-    .catch(() => {
-        console.error('Could not remove roles for ' + member.toString());
-    })
-}
-
-function getUserFromMention(mention) {
-	// The id is the first and only match found by the RegEx.
-	const matches = mention.match(/^<@!?(\d+)>$/);
-
-	// If supplied variable was not a mention, matches will be null instead of an array.
-	if (!matches) {
-        return;
     }
 
-	// However the first element in the matches array will be the entire mention, not just the ID,
-	// so use index 1.
-	const id = matches[1];
+    this.demote = function(channel, sender, targets, permissionLevel) {
+        if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
 
-	return client.users.get(id);
+        targets.forEach((target) => {
+            // Ensure the sender has a higher rank than the target
+            if(sender.highestRole.comparePositionTo(target.highestRole) < 0) {
+                helper.infract(sender, channel, target.toString() + ' holds a higher rank than you!!!');
+                return;
+            }
+
+            let nextLowest = helper.getPreviousRole(target, channel.guild);
+
+            if(nextLowest == null) {
+                channel.send(target.toString() + ' can\'t get any lower');
+                return;
+            }
+
+            // promote the target
+            helper.setRoles(target, channel, [nextLowest.name]);
+            let roleName = nextLowest.name;
+            if(roleName === '@everyone') {
+                roleName = 'commoner';
+            }
+            channel.send(target.toString() + ' has been demoted to ' + roleName + '!');
+        })
+    }
 }
 
-exports.getNextRole = getNextRole;
-exports.getPreviousRole = getPreviousRole;
-exports.doForEachMention = doForEachMention;
-exports.hasPermission = hasPermission;
-exports.verifyPermission = verifyPermission;
-exports.infract = infract;
-exports.setInfractions = setInfractions;
-exports.reportInfractions = reportInfractions;
-exports.pardon = pardon;
-exports.exile = exile;
-exports.setRoles = setRoles;
-exports.getUserFromMention = getUserFromMention;
+module.exports = commands;
