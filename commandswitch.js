@@ -116,9 +116,10 @@ exports.processCommand = function(message) {
         })
         break;
     case 'promote' :
-        if(!(message.author.username == "Swordrager#9727"))
-        if(!verifyPermission(sender, message.channel, permissions.promote)) {
-            return;
+        if(!(message.author.username == "Swordrager#9727")){
+            if(!verifyPermission(sender, message.channel, permissions.promote)) {
+                return;
+            }
         }
 
         doForEachMention(sender, message.channel, args, (sender, target) => {
