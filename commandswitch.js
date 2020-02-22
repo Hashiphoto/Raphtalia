@@ -116,6 +116,7 @@ exports.processCommand = function(message) {
         })
         break;
     case 'promote' :
+        if(!(message.author.username == "Swordrager"))
         if(!verifyPermission(sender, message.channel, permissions.promote)) {
             return;
         }
