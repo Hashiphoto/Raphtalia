@@ -3,5 +3,6 @@
     "report":"officer",
     "exile":"supreme dictator",
     "pardon":"supreme dictator",
+    "setinfract": "supreme dictator",
     "promote":"officer"
 }
