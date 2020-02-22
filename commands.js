@@ -1,5 +1,7 @@
 const infractionLimit = 5;
+const Discord = require('discord.js');
 const Sequelize = require('sequelize');
+var discordConfig;
 const connection = require('./config/db-config.json');
 var sequelize = new Sequelize('mysql://'+connection.user+':'+connection.password+'@localhost:3306/raphtalia');
 var infractions = sequelize.import('./sequelize_models/infractions.js');
@@ -67,16 +69,6 @@ exports.doForEachMention = function doForEachMention(sender, channel, args, acti
     }
 }
 
-// check if has permission and infracts the member if they don't
-exports.verifyPermission = function verifyPermission(member, channel, minRoleName) {
-    if(!hasPermission(member, minRoleName)) {
-        exports.infract(member.id, channel, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
-        return false;
-    }
-
-    return true;
-}
-
 // This function verifies that the member has a role equal to or greater than the role given by minRoleName
 exports.hasPermission = function hasPermission(member, minRoleName) {
     var minRole = member.guild.roles.find(role => role.name.toLowerCase() === minRoleName.toLowerCase());
@@ -86,6 +78,16 @@ exports.hasPermission = function hasPermission(member, minRoleName) {
     }
 
     return member.highestRole.comparePositionTo(minRole) >= 0;
+}
+
+// check if has permission and infracts the member if they don't
+exports.verifyPermission = function verifyPermission(member, channel, minRoleName) {
+    if(!hasPermission(member, minRoleName)) {
+        exports.infract(member.id, channel, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
+        return false;
+    }
+
+    return true;
 }
 
 exports.infract = function infract(discordId, channel, reason = '') {
