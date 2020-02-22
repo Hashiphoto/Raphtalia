@@ -47,7 +47,7 @@ exports.getPreviousRole = function getPreviousRole (member, guild) {
     return lowerRoles[0];
 }
 
-exports.doForEachMention = function doForEachMention(sender, channel, args, action) {
+function doForEachMention(sender, channel, args, action) {
     for(var i = 0; i < args.length; i++) {
         const user = getUserFromMention(args[i]);
         if(!user) {
@@ -70,7 +70,7 @@ exports.doForEachMention = function doForEachMention(sender, channel, args, acti
 }
 
 // This function verifies that the member has a role equal to or greater than the role given by minRoleName
-exports.hasPermission = function hasPermission(member, minRoleName) {
+function hasPermission(member, minRoleName) {
     var minRole = member.guild.roles.find(role => role.name.toLowerCase() === minRoleName.toLowerCase());
     if(!minRole) {
         console.log('There is no role \"' + minRoleName + '\". Go check the permissions file');
@@ -207,3 +207,6 @@ exports.getUserFromMention = function getUserFromMention(mention) {
 
 	return client.users.get(id);
 }
+
+exports.hasPermission = hasPermission;
+exports.doForEachMention = doForEachMention;
