@@ -1,10 +1,6 @@
 const links = require('./links.json');
-const Helper = require('./helper.js');
-var helper = new Helper();
-helper.init();
 
-function commands() {
-
+function commands(helper) {
     this.init = function() {
 
     }

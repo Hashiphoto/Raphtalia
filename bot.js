@@ -1,12 +1,17 @@
 const Discord = require('discord.js');
-const Sequelize = require('sequelize');
 const client = new Discord.Client();
 const Commands = require('./commands.js');
+const Censorship = require('./censorship.js');
+const Helper = require('./helper.js');
 const permissions = require('./permissions.json');
 const prefix = '!';
 var discordConfig;
-var commands = new Commands();
+var helper = new Helper();
+var commands = new Commands(helper);
+var censorship = new Censorship(helper);
+helper.init();
 commands.init();
+censorship.init();
 
 if(process.argv.length < 3) {
     console.log('Please specify -d dev or -m master');
@@ -27,17 +32,16 @@ process.argv.forEach(function(value, index, array) {
     }
 })
 
-console.log('Connected!');
 // When the client is ready, run this code
 // This event will only trigger one time after logging in
 client.once('ready', () => {
-    // Login to Discord with your app's token
     console.log('Ready!');
     var today = new Date();
     var now = today.getHours + ":" + today.getMinutes() + ":" + today.getSeconds
     console.log(now);
 });
 
+// Login to Discord with your app's token
 client.login(discordConfig.token).then(() => {
     console.log('Logged in!');
 });
@@ -51,7 +55,7 @@ client.on('message', message => {
         processCommand(message);
     }
     else {
-        censor(message)
+        censorship.censor(message)
     }
 })
 
