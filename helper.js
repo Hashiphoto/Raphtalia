@@ -12,13 +12,13 @@ function helper() {
         })
     }
 
+    // Get the next highest role that is shown in hierarchy
     function getNextRole(member, guild) {
         var curRole = member.highestRole;
     
-        // Get the next highest role
         var higherRoles = [];
         guild.roles.forEach(role => {
-            if(role.comparePositionTo(curRole) > 0 && role.managed === false) {
+            if(role.comparePositionTo(curRole) > 0 && !role.managed && role.hoist) {
                 higherRoles.push(role);
             }
         })
@@ -32,13 +32,13 @@ function helper() {
         return higherRoles[0];
     }
     
+    // Get the next lowest role that is shown in hierarchy
     function getPreviousRole(member, guild) {
         var curRole = member.highestRole;
     
-        // Get the next highest role
         var lowerRoles = [];
         guild.roles.forEach(role => {
-            if(role.comparePositionTo(curRole) < 0 && role.managed === false) {
+            if(role.comparePositionTo(curRole) < 0 && !role.managed && role.hoist) {
                 lowerRoles.push(role);
             }
         })
@@ -140,7 +140,7 @@ function helper() {
         for(var i = 0; i < roles.length; i++) {
             var roleObject = channel.guild.roles.find(r => r.name.toLowerCase() === roles[i].toLowerCase());
             if(!roleObject) {
-                console.log('Could not find role: ' + roles[i])
+                console.error('Could not find role: ' + roles[i])
                 continue;
             }
             discordRoles.push(roleObject);
@@ -160,7 +160,8 @@ function helper() {
         //     return;
         // }
     
-        member.removeRoles(member.roles)
+        // Remove all hoisted roles and add the ones specified
+        member.removeRoles(member.roles.filter(role => role.hoist))
         .then(() => {
             member.addRoles(discordRoles)
             .catch(() => {
