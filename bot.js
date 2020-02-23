@@ -83,6 +83,7 @@ function processCommand(message) {
         commands.kick(message.channel, sender, mentionedMembers, permissions.kick);
         break;
 
+    case 'infract' :
     case 'report' :
         commands.report(message.channel, sender, mentionedMembers, permissions.report);
         break;
