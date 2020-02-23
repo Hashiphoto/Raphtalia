@@ -104,7 +104,7 @@ function processCommand(message) {
         break;
 
     case 'demote' :
-        commands.demote(message.channel, sender, mentionedMembers, permissions.demote);
+        commands.demote(message.channel, sender, mentionedMembers, permissions.promote);
         break;
     
     default:
