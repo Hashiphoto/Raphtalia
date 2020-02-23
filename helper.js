@@ -85,10 +85,11 @@ function helper() {
                 user.increment('infractionsCount')
                 .then((updatedRow) => {
                     var infractionCount = updatedRow.infractionsCount;
-                    reportInfractions(member,  channel, reason + '\n');
-                    if(infractionCount >= infractionLimit) {
-                        exile(member, channel);
-                    }
+                    reportInfractions(member,  channel, reason + '\n', () => {
+                        if(infractionCount >= infractionLimit) {
+                            exile(member, channel);
+                        }
+                    });
                 })
             })
         });
@@ -111,14 +112,20 @@ function helper() {
         });
     }
     
-    function reportInfractions(member, channel, pretext = '') {
+    function reportInfractions(member, channel, pretext = '', callback) {
         const discordName = member.toString();
         infractions.findByPk(member.id)
         .then(user => {
-            channel.send(pretext + discordName + ' has incurred ' + user.infractionsCount + ' infractions');
+            channel.send(pretext + discordName + ' has incurred ' + user.infractionsCount + ' infractions')
+            .then(() => {
+                callback();
+            })
         })
         .catch(() => {
-            channel.send(discordName + ' is a model citizen <3');
+            channel.send(discordName + ' is a model citizen <3')
+            .then(() => {
+                callback();
+            })
         })
     }
     
