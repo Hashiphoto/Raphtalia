@@ -1,4 +1,4 @@
-const permissions = require('./permissions.json');
+const permissions = require('./resources/permissions.json');
 const helper = require('./helper.js');
 
 function censor(message) {

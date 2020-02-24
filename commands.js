@@ -1,4 +1,4 @@
-const links = require('./links.json');
+const links = require('./resources/links.json');
 const helper = require('./helper.js');
 
 function help(channel, sender) {

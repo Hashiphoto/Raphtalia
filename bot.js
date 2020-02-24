@@ -1,6 +1,6 @@
 const Discord = require('discord.js');
 const client = new Discord.Client();
-const permissions = require('./permissions.json');
+const permissions = require('./resources/permissions.json');
 const prefix = '!';
 var commands = require('./commands.js');
 var censorship = require('./censorship.js');
