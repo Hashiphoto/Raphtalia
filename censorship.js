@@ -1,3 +1,5 @@
+const permissions = require('./permissions.json');
+
 function censorship(helper) {
     this.init = function() {
 
@@ -5,6 +7,10 @@ function censorship(helper) {
 
     this.censor = function(message) {
         const sender = message.guild.members.get(message.author.id);
+        if(helper.hasPermission(sender, permissions.uncensored)) {
+            return;
+        }
+        
         const regex = /(capitalism|freedom|america)/gi;
         // simple banned words
         if(message.content.match(regex) != null) {
