@@ -1,17 +1,10 @@
 const Discord = require('discord.js');
 const client = new Discord.Client();
-const Commands = require('./commands.js');
-const Censorship = require('./censorship.js');
-const Helper = require('./helper.js');
 const permissions = require('./permissions.json');
 const prefix = '!';
+var commands = require('./commands.js');
+var censorship = require('./censorship.js');
 var discordConfig;
-var helper = new Helper();
-var commands = new Commands(helper);
-var censorship = new Censorship(helper);
-helper.init();
-commands.init();
-censorship.init();
 
 if(process.argv.length < 3) {
     console.log('Please specify -d dev or -m master');
