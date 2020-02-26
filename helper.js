@@ -1,15 +1,5 @@
-const connection = require('./config/db-config.json');
-const Sequelize = require('sequelize');
-const sequelize = new Sequelize('mysql://'+connection.user+':'+connection.password+'@localhost:3306/raphtalia');
-const infractions = sequelize.import('./sequelize_models/infractions.js');
+const db = require('./db.js');
 const infractionLimit = 5;
-
-(function() {
-    sequelize.sync({ force: false })
-    .then(() => {
-        console.log('Database synced!');
-    })
-})()
 
 // Get the next highest role that is shown in hierarchy
 function getNextRole(member, guild) {
@@ -73,58 +63,38 @@ function hasPermission(member, minRoleName) {
 }
 
 function infract(member, channel, reason = '') {
-    sequelize.transaction(function(t) {
-        return infractions.findOrCreate({
-            where: {
-                id: member.id
-            },
-            transaction: t
-        })
-        .spread(function(user, created) {
-            user.increment('infractionsCount')
-            .then((updatedRow) => {
-                var infractionCount = updatedRow.infractionsCount;
-                reportInfractions(member,  channel, reason + '\n', () => {
-                    if(infractionCount >= infractionLimit) {
-                        exile(member, channel);
-                    }
-                });
-            })
-        })
-    });
-}
-
-function setInfractions(discordId, amount, channel, reason){
-    sequelize.transaction(function(t) {
-        return infractions.findOrCreate({
-            where: {
-                id: discordId
-            },
-            transaction: t
-        }).spread(function(user, created) {
-            user.infractionCount = amount;
-            reportInfractions(discordId, channel, reason + '\n');
+    db.infractions.increment(member.id)
+    .then(() => {
+        reportInfractions(member,  channel, reason + '\n', () => {
             if(infractionCount >= infractionLimit) {
-                exile(discordId, channel);
+                exile(member, channel);
             }
-        })
-    });
+        });
+    })
 }
 
-function reportInfractions(member, channel, pretext = '', callback) {
-    const discordName = member.toString();
-    infractions.findByPk(member.id)
-    .then(user => {
-        channel.send(pretext + discordName + ' has incurred ' + user.infractionsCount + ' infractions')
-        .then(() => {
-            callback();
-        })
+function setInfractions(member, amount, channel, reason = ''){
+    db.infractions.set(member.id)
+    .then(() => {
+        reportInfractions(member,  channel, reason + '\n', () => {
+            if(infractionCount >= infractionLimit) {
+                exile(member, channel);
+            }
+        });
     })
-    .catch(() => {
-        channel.send(discordName + ' is a model citizen <3')
-        .then(() => {
-            callback();
-        })
+}
+
+function reportInfractions(member, channel, pretext = '') {
+    const discordName = member.toString();
+    db.infractions.get(member.id).then((count) => {
+        let reply;
+        if(count === 0) {
+            reply = discordName + ' is a model citizen <3';
+        }
+        else {
+            reply = pretext + discordName + ' has incurred ' + count + ' infractions';
+        }
+        channel.send(reply);
     })
 }
 
