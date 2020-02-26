@@ -1,7 +1,7 @@
 const connectionConfig = require('./config/db-config.json');
 var mysql = require('mysql2');
 
-var pool = mysql.createPool({
+var pool = mysql.createPool({ //Create database connections
     host     : 'localhost',
     user     : connectionConfig.user,
     password : connectionConfig.password,
