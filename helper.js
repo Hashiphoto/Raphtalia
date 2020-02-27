@@ -65,28 +65,31 @@ function hasPermission(member, minRoleName) {
 function infract(member, channel, reason = '') {
     db.infractions.increment(member.id)
     .then(() => {
-        reportInfractions(member,  channel, reason + '\n', () => {
-            if(infractionCount >= infractionLimit) {
-                exile(member, channel);
-            }
-        });
+        return reportInfractions(member,  channel, reason + '\n')
     })
+    .then((infractionCount) => {
+        if(infractionCount >= infractionLimit) {
+            exile(member, channel);
+        }
+    });
 }
 
 function setInfractions(member, amount, channel, reason = ''){
     db.infractions.set(member.id)
     .then(() => {
-        reportInfractions(member,  channel, reason + '\n', () => {
-            if(infractionCount >= infractionLimit) {
-                exile(member, channel);
-            }
-        });
+        return reportInfractions(member,  channel, reason + '\n')
     })
+    .then((infractionCount) => {
+        if(infractionCount >= infractionLimit) {
+            exile(member, channel);
+        }
+    });
 }
 
 function reportInfractions(member, channel, pretext = '') {
     const discordName = member.toString();
-    db.infractions.get(member.id).then((count) => {
+    return db.infractions.get(member.id)
+    .then((count) => {
         let reply;
         if(count === 0) {
             reply = discordName + ' is a model citizen <3';
@@ -95,6 +98,7 @@ function reportInfractions(member, channel, pretext = '') {
             reply = pretext + discordName + ' has incurred ' + count + ' infractions';
         }
         channel.send(reply);
+        return count;
     })
 }
 
