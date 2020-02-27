@@ -55,19 +55,19 @@ function softkick(channel, sender, targets, permissionLevel) {
     targets.forEach((target) => {
         channel.createInvite({ temporary: true, maxAge: 300, maxUses: 1, unique: true })
         .then(invite => {
-            target.send(invite.toString())
-            .then(() => {
-                target.kick()
-                .then((member) => {
-                    channel.send(':wave: ' + member.displayName + ' has been kicked and invited back')
-                    .then(() => {
-                        channel.send(links.gifs.softkick);
-                    })
-                })
-                .catch(() => {
-                    channel.send('Something went wrong...');
-                })
-            })
+            return target.send(invite.toString());
+        })
+        .then(() => {
+            return target.kick();
+        })
+        .then((member) => {
+            return channel.send(':wave: ' + member.displayName + ' has been kicked and invited back');
+        })
+        .then(() => {
+            channel.send(links.gifs.softkick);
+        })
+        .catch(() => {
+            channel.send('Something went wrong...');
         })
     })
 }

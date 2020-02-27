@@ -121,20 +121,6 @@ function setRoles(member, channel, roles) {
         }
         discordRoles.push(roleObject);
     }
-    
-    // Check if user already has roles, including @everyone
-    // var hasRoles = true;
-    // if(member.roles.size === discordRoles.size + 1) {
-    //     discordRoles.forEach(role => {
-    //         if(!member.roles.has(role.id)) {
-    //             hasRoles = false;
-    //         }
-    //     })
-    // }
-
-    // if(hasRoles) {
-    //     return;
-    // }
 
     // Remove all hoisted roles and add the ones specified
     member.removeRoles(member.roles.filter(role => role.hoist))
