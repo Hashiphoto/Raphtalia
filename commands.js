@@ -53,7 +53,7 @@ function softkick(channel, sender, targets, permissionLevel) {
     if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
 
     targets.forEach((target) => {
-        channel.createInvite({ temporary: true, maxAge: 300, maxUses: 1, unique: true })
+        channel.createInvite({ temporary: true, maxAge: 0, maxUses: 1, unique: true })
         .then(invite => {
             return target.send(invite.toString());
         })
