@@ -127,12 +127,9 @@ function setRoles(member, channel, roles) {
     }
 
     // Remove all hoisted roles and add the ones specified
-    member.removeRoles(member.roles.filter(role => role.hoist))
+    return member.removeRoles(member.roles.filter(role => role.hoist))
     .then(() => {
-        member.addRoles(discordRoles)
-        .catch(() => {
-            console.error('Could not add roles to ' + member.toString());
-        })
+        return member.addRoles(discordRoles)
     })
     .catch(() => {
         console.error('Could not remove roles for ' + member.toString());

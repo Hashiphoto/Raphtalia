@@ -2,6 +2,7 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 const permissions = require('./resources/permissions.json');
 const prefix = '!';
+const db = require('./db.js');
 var commands = require('./commands.js');
 var censorship = require('./censorship.js');
 var discordConfig;
@@ -52,15 +53,22 @@ client.on('message', message => {
     }
 })
 
+client.on('guildMemberAdd', (member) => {
+    let welcomeChannel = member.guild.channels.get(discordConfig.welcomeChannelId);
+    commands.arrive(welcomeChannel, member);
+})
+
 client.on("disconnect", function(event) {
     console.log('Bot disconnecting');
     process.exit();
 });
 
 function processCommand(message) {
+    // args contains every word after the command in an array
     const args = message.content.slice(prefix.length).split(' ');
     const command = args.shift().toLowerCase();
     let sender = message.guild.members.get(message.author.id);
+    // mentionedMembers contains every mention in order in an array
     let mentionedMembers = getMemberMentions(message.guild, args);
 
     switch(command) {
@@ -99,6 +107,23 @@ function processCommand(message) {
 
     case 'demote' :
         commands.demote(message.channel, sender, mentionedMembers, permissions.promote);
+        break;
+
+    case 'comfort' :
+        commands.comfort(message.channel, sender, mentionedMembers, permissions.comfort);
+        break;
+
+    case 'arrive' :
+        let welcomeChannel = sender.guild.channels.get(discordConfig.welcomeChannelId);
+        commands.arrive(welcomeChannel, sender);
+        break;
+
+    case 'unarrive' : 
+        commands.unarrive(message.channel, sender, mentionedMembers);
+        break;
+
+    case 'pledge' :
+        commands.pledge(message.channel, sender, args);
         break;
     
     default:

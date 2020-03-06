@@ -1,5 +1,6 @@
 const links = require('./resources/links.json');
 const helper = require('./helper.js');
+const db = require('./db.js');
 
 function help(channel, sender) {
     channel.send('Help yourself, ' + sender.toString());
@@ -136,6 +137,65 @@ function demote(channel, sender, targets, permissionLevel) {
     })
 }
 
+function comfort(channel, sender, targets, permissionLevel) {
+    if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
+
+    targets.forEach((member) => {
+        channel.send(member.toString() + ' headpat');
+    })
+}
+
+function pledge(channel, sender, args) {
+    if(args.length == 0 && sender.roles.find(role => role.name === 'Immigrant')) {
+        db.papers.createOrUpdate(sender.id, true);
+        channel.send('Thank you! And welcome loyal comrade to ' + channel.guild.name + '!')
+        .then(() => {
+            helper.setRoles(sender, channel, [ 'comrade' ]);
+        })
+    }
+}
+
+function arrive(channel, member) {
+    db.papers.get(member.id)
+    .then(paper => {
+        // Create a new, unfilled paper record
+        if(paper == null) {
+            db.papers.createOrUpdate(member.id, false);
+            return false;
+        }
+        // Check if they have filled out the existing paper
+        return paper.isLoyal;
+    })
+    .then(isLoyal => {
+        if(isLoyal) {
+            helper.setRoles(member, channel, ['comrade']);
+            channel.send('Welcome back comrade ' + member.toString() + '!');
+        }
+        else {
+            helper.setRoles(member, channel, ['immigrant']);
+            channel.send('Welcome to ' + channel.guild.name + ', ' + member.toString() + '!\n' + 
+            'Please pledge your loyalty to the state by typing `!pledge`');
+        }
+    })
+}
+
+// TESTING ONLY
+function unarrive(channel, member, mentions) {
+    let target = member;
+    if(mentions.length > 0) {   
+        target = mentions[0];
+    }
+    db.papers.delete(target.id)
+    .then(() => {
+        return target.roles.forEach((role) => {
+            target.removeRole(role);
+        })
+    })
+    .then(() => {
+        return channel.send(target.toString() + '\'s papers have been deleted from record');
+    })
+}
+
 module.exports = {
     help,
     getInfractions,
@@ -145,5 +205,10 @@ module.exports = {
     softkick,
     pardon,
     promote,
-    demote
+    demote,
+    comfort,
+    pledge,
+
+    arrive,
+    unarrive
 }
