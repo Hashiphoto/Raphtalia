@@ -49,8 +49,26 @@ var papers = (function() {
             .catch((error) => console.error(error));
         },
 
-        createOrUpdate: function(id, isLoyal) {
-            return pool.query('INSERT INTO papers VALUES (?,?) ON DUPLICATE KEY UPDATE isLoyal = VALUES(isLoyal)', [ id, isLoyal ])
+        insert: function(paper) {
+            return pool.query('INSERT IGNORE INTO papers VALUES (?,?,?)', [ paper.id, paper.isLoyal, paper.needsNickname ])
+            .catch((error) => console.error(error));
+        },
+
+        getOrCreate: function(id) {
+            return pool.query('SELECT * FROM papers WHERE id = ?', [ id ])
+            .then(([rows, fields]) => {
+                if(rows.length === 0) {
+                    let paper = { 'id': id, 'isLoyal': false, 'needsNickname': true };
+                    pool.query('INSERT INTO papers VALUES (?,?,?)', [ paper.id, paper.isLoyal, paper.needsNickname ]);
+                    return paper;
+                }
+                return rows[0];
+            })
+            .catch((error) => console.error(error));
+        },
+
+        createOrUpdate: function(id, paper) {
+            return pool.query('INSERT INTO papers VALUES (?,?,?) ON DUPLICATE KEY UPDATE isLoyal = VALUES(isLoyal), needsNickname = VALUES(needsNickname)', [ id, paper.isLoyal, paper.needsNickname ])
             .catch((error) => console.error(error));
         },
 

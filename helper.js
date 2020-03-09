@@ -112,6 +112,10 @@ function exile(member, channel) {
     channel.send('Uh oh, gulag for you ' + member.toString());
 }
 
+function hasRole(member, roleName) {
+    return member.roles.find(role => role.name.toLowerCase() === roleName.toLowerCase());
+}
+
 // Set the roles of a user. The parameter roles is an array of string (names of roles)
 function setRoles(member, channel, roles) {
     var discordRoles = [];
@@ -146,5 +150,6 @@ module.exports = {
     pardon,
     exile,
     hasPermission,
+    hasRole,
     setRoles
 }

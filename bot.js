@@ -3,8 +3,9 @@ const client = new Discord.Client();
 const permissions = require('./resources/permissions.json');
 const prefix = '!';
 const db = require('./db.js');
-var commands = require('./commands.js');
-var censorship = require('./censorship.js');
+const commands = require('./commands.js');
+const helper = require('./helper.js');
+const censorship = require('./censorship.js');
 var discordConfig;
 
 if(process.argv.length < 3) {
@@ -54,7 +55,7 @@ client.on('message', message => {
 })
 
 client.on('guildMemberAdd', (member) => {
-    let welcomeChannel = member.guild.channels.get(discordConfig.welcomeChannelId);
+    const welcomeChannel = client.channels.get(discordConfig.welcomeChannelId);
     commands.arrive(welcomeChannel, member);
 })
 
@@ -113,21 +114,18 @@ function processCommand(message) {
         commands.comfort(message.channel, sender, mentionedMembers, permissions.comfort);
         break;
 
+    // TESTING ONLY
     case 'arrive' :
-        let welcomeChannel = sender.guild.channels.get(discordConfig.welcomeChannelId);
-        commands.arrive(welcomeChannel, sender);
+        commands.arrive(message.channel, sender);
         break;
-
+    
+    // TESTING ONLY
     case 'unarrive' : 
         commands.unarrive(message.channel, sender, mentionedMembers);
         break;
 
-    case 'pledge' :
-        commands.pledge(message.channel, sender, args);
-        break;
-    
     default:
-        message.channel.send('Nani the fuck is that command? òwó');
+        message.channel.send(`I think you're confused, Comrade ${sender}`);
     }
 }
 
