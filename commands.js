@@ -216,7 +216,7 @@ async function arrive(channel, member) {
             })
         }
         catch(e) {
-            softkick(channel, null, [ member ], '', 'Come join the Gulag when you\'re feeling more agreeable.');
+            softkick(channel, null, [ member ], '', 'Come join the Gulag when you\'re feeling more agreeable.\n');
         }
     }
     else {
