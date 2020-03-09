@@ -1,6 +1,7 @@
 const links = require('./resources/links.json');
 const helper = require('./helper.js');
 const db = require('./db.js');
+const welcomeQuestions = require('./resources/welcome-questions.json');
 
 function help(channel, sender) {
     channel.send('Help yourself, ' + sender.toString());
@@ -50,13 +51,13 @@ function exile(channel, sender, targets, permissionLevel) {
     })
 }
 
-function softkick(channel, sender, targets, permissionLevel) {
-    if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
+function softkick(channel, sender, targets, permissionLevel, reason = '') {
+    if(sender != null && !helper.verifyPermission(sender, channel, permissionLevel)) { return; }
 
     targets.forEach((target) => {
         channel.createInvite({ temporary: true, maxAge: 0, maxUses: 1, unique: true })
         .then(invite => {
-            return target.send(invite.toString());
+            return target.send(reason + invite.toString());
         })
         .then(() => {
             return target.kick();
@@ -64,9 +65,9 @@ function softkick(channel, sender, targets, permissionLevel) {
         .then((member) => {
             return channel.send(':wave: ' + member.displayName + ' has been kicked and invited back');
         })
-        .then(() => {
-            channel.send(links.gifs.softkick);
-        })
+        // .then(() => {
+        //     channel.send(links.gifs.softkick);
+        // })
         .catch(() => {
             channel.send('Something went wrong...');
         })
@@ -146,7 +147,7 @@ function comfort(channel, sender, targets, permissionLevel) {
 }
 
 function pledge(channel, sender, args) {
-    if(args.length == 0 && sender.roles.find(role => role.name === 'Immigrant')) {
+    if(args.length == 0 && helper.hasRole(sender, 'immigrant')) {
         db.papers.createOrUpdate(sender.id, true);
         channel.send('Thank you! And welcome loyal comrade to ' + channel.guild.name + '!')
         .then(() => {
@@ -155,28 +156,73 @@ function pledge(channel, sender, args) {
     }
 }
 
-function arrive(channel, member) {
-    db.papers.get(member.id)
-    .then(paper => {
-        // Create a new, unfilled paper record
-        if(paper == null) {
-            db.papers.createOrUpdate(member.id, false);
-            return false;
-        }
-        // Check if they have filled out the existing paper
-        return paper.isLoyal;
+/**
+ * Send a message and wait for the first matching response
+ * 
+ * @param {channel} channel the channel to send the message and listen for responses
+ * @param {object} qItem An object containing question, answer, timeout (in ms)
+ * @return {promise} A Promise(collected) with the collection of messages received
+ *                   Or .catch() if there are no responses
+ */
+function sendTimedMessage(channel, member, qItem) {
+    const filter = function(message) {
+        var re = new RegExp(qItem.answer, 'gi');
+        return message.content.match(re) != null && message.author.id === member.id;
+    };
+    return channel.send(`\`(${qItem.timeout / 1000}s)\`\n${qItem.question}`)
+    .then(() => {
+        // Get the first message that matches the filter. Errors out if the time limit is reached
+        return channel.awaitMessages(filter, { maxMatches: 1, time: qItem.timeout, errors: ['time'] });
     })
-    .then(isLoyal => {
-        if(isLoyal) {
-            helper.setRoles(member, channel, ['comrade']);
-            channel.send('Welcome back comrade ' + member.toString() + '!');
+}
+
+async function arrive(channel, member) {
+    let paper = await db.papers.get(member.id);
+    if(paper == null) {
+        channel.send(`Welcome ${member} to ${channel.guild.name}! I just have a few questions for you, and then you can enjoy go beautiful community with your fellow comrades.`);
+        paper = { 'id': member.id, 'isLoyal': false, 'needsNickname': true };
+        db.papers.insert(paper);
+    }
+
+    await helper.setRoles(member, channel, [ 'immigrant' ]);
+
+    if(paper.needsNickname) {
+        try{
+            let collected = await sendTimedMessage(channel, member, welcomeQuestions.nickname);
+            let nickname = collected.first().content;
+            channel.send(`${member} will be known as ${nickname}!`);
+            member.setNickname(nickname)
+            .catch((e) => {
+                console.error(e);
+                channel.send(`Sorry. I don't have permissions to set your nickname...`);
+            })
         }
-        else {
-            helper.setRoles(member, channel, ['immigrant']);
-            channel.send('Welcome to ' + channel.guild.name + ', ' + member.toString() + '!\n' + 
-            'Please pledge your loyalty to the state by typing `!pledge`');
+        catch(e) {
+            channel.send(`${member} doesn't want a nickname...`);
         }
-    })
+        finally {
+            paper.needsNickname = false;
+            db.papers.createOrUpdate(member.id, paper);
+        }
+    }
+    if(!paper.isLoyal) {
+        try {
+            await sendTimedMessage(channel, member, welcomeQuestions.loyalty);
+            paper.isLoyal = true;
+            db.papers.createOrUpdate(member.id, paper);
+            channel.send('Thank you! And welcome loyal comrade to ' + channel.guild.name + '!')
+            .then(() => {
+                helper.setRoles(member, channel, [ 'comrade' ]);
+            })
+        }
+        catch(e) {
+            softkick(channel, null, [ member ], '', 'Come join the Gulag when you\'re feeling more agreeable.');
+        }
+    }
+    else {
+        channel.send(`Welcome back comrade ${member}!`)
+        helper.setRoles(member, channel, [ 'comrade' ]);
+    }
 }
 
 // TESTING ONLY

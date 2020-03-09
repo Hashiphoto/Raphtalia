@@ -1,0 +1,14 @@
+{
+    "nickname": 
+    {
+        "question": "What do you want to be called?",
+        "answer": ".*",
+        "timeout" : 60000
+    },
+    "loyalty":
+    {
+        "question": "Repeat after me:\n>>> I pledge my heart and soul to the gulag and my fellow comrade. Long live the supreme dictator!",
+        "answer" : "I pledge my heart and soul to the gulag and my fellow comrade. Long live the supreme dictator!",
+        "timeout" : 180000
+    }
+}
