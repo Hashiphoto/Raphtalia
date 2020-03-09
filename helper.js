@@ -1,7 +1,15 @@
 const db = require('./db.js');
+const Discord = require('discord.js');
 const infractionLimit = 5;
 
-// Get the next highest role that is shown in hierarchy
+/**
+ * Get the next highest hoisted role for a given member
+ * 
+ * @param {Discord.GuildMember} member - The guildMember to check the highest role for
+ * @param {Discord.Guild} guild - The guild to check the roles for
+ * @returns {Discord.Role} The Role object that is one higher than the member's current highest
+ * in the hierarchy
+ */
 function getNextRole(member, guild) {
     var curRole = member.highestRole;
 
@@ -21,7 +29,14 @@ function getNextRole(member, guild) {
     return higherRoles[0];
 }
 
-// Get the next lowest role that is shown in hierarchy
+/**
+ * Get the next lowest hoisted role for a given member
+ * 
+ * @param {Discord.GuildMember} member - The guildMember to check the lowest role for
+ * @param {Discord.Guild} guild - The guild to check the roles for
+ * @returns {Discord.Role} The Role object that is one lower than the member's current highest
+ * in the hierarchy
+ */
 function getPreviousRole(member, guild) {
     var curRole = member.highestRole;
 
@@ -41,7 +56,14 @@ function getPreviousRole(member, guild) {
     return lowerRoles[0];
 }
 
-// check if has permission and infracts the member if they don't
+/**
+ * Like hasPermission, but infracts the member if they don't have permission
+ * 
+ * @param {Discord.GuildMember} member - The member to check permissions for
+ * @param {Discord.TextChannel} channel - The channel to send messages in
+ * @param {String} minRoleName - The name of the role that the member must have (or higher)
+ * @returns {Boolean} True if the member has high enough permission
+ */
 function verifyPermission(member, channel, minRoleName) {
     if(!hasPermission(member, minRoleName)) {
         infract(member, channel, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
@@ -51,7 +73,13 @@ function verifyPermission(member, channel, minRoleName) {
     return true;
 }
 
-// This function verifies that the member has a role equal to or greater than the role given by minRoleName
+/**
+ * Verifies that the member has a role equal to or greater than the role given by minRoleName
+ * 
+ * @param {Discord.GuildMember} member - The member to check 
+ * @param {String} minRoleName - The name of the role that the member must have (or higher)
+ * @returns {Boolean} True if the member has high enough permission
+ */
 function hasPermission(member, minRoleName) {
     var minRole = member.guild.roles.find(role => role.name.toLowerCase() === minRoleName.toLowerCase());
     if(!minRole) {
@@ -62,6 +90,14 @@ function hasPermission(member, minRoleName) {
     return member.highestRole.comparePositionTo(minRole) >= 0;
 }
 
+/**
+ * Increases the infraction count for a given member. If they exceed the infractionLimit, the member
+ * is exiled
+ * 
+ * @param {Discord.GuildMember} member - The member to infract
+ * @param {Discord.TextChannel} channel - The channel to send messages in
+ * @param {String} [reason] - A message to append to the end of the infraction notice
+ */
 function infract(member, channel, reason = '') {
     db.infractions.increment(member.id)
     .then(() => {
@@ -74,6 +110,14 @@ function infract(member, channel, reason = '') {
     });
 }
 
+/**
+ * Set the absolute infraction count for a given member
+ * 
+ * @param {Discord.GuildMember} member - The member to set the infractions for
+ * @param {number} amount - The number of infractions they will have
+ * @param {Discord.TextChannel} channel - The channel to send messages in
+ * @param {String} [reason] - A message to append to the end of the infraction notice
+ */
 function setInfractions(member, amount, channel, reason = ''){
     db.infractions.set(member.id)
     .then(() => {
@@ -86,37 +130,72 @@ function setInfractions(member, amount, channel, reason = ''){
     });
 }
 
+/**
+ * Print out the number of infractions a member has incurred in the given channel
+ * 
+ * @param {Discord.GuildMember} member - The member whose fractions are reported
+ * @param {Discord.TextChannel} channel - The channel to send messages in
+ * @param {String} pretext - Text to prepend at the beginning of the infraction message
+ */
 function reportInfractions(member, channel, pretext = '') {
     const discordName = member.toString();
     return db.infractions.get(member.id)
     .then((count) => {
         let reply;
         if(count === 0) {
-            reply = discordName + ' is a model citizen <3';
+            reply = `${discordName} is a model citizen ♥`;
         }
         else {
-            reply = pretext + discordName + ' has incurred ' + count + ' infractions';
+            reply = `${pretext}${discordName} has incurred ${count} infractions`;
         }
         channel.send(reply);
+
         return count;
     })
 }
 
+/**
+ * If the member is an exile, remove all hoisted roles from them. If they are not an exile, nothing happens
+ * 
+ * @param {Discord.GuildMember} member - The guildMember to pardon
+ * @param {Discord.TextChannel} channel - The channel to send messages in
+ */
 function pardon(member, channel) {
+    if(!hasRole(member, 'exile')) {
+        return;
+    }
     setRoles(member, channel, []); // clear all roles
     channel.send(member.toString() + ' has been un-exiled');
 }
 
+/**
+ * Remove all hoisted roles and give the member the exile role
+ * 
+ * @param {Discord.GuildMember} member - The guildMember to exile
+ * @param {Discord.TextChannel} channel - The channel to send messages in
+ */
 function exile(member, channel) {
     setRoles(member, channel, ['exile']);
     channel.send('Uh oh, gulag for you ' + member.toString());
 }
 
+/**
+ * Check if a member has a given role
+ * 
+ * @param {Discord.GuildMember} member - The guildMember to check roles
+ * @param {String} roleName - The name of the role to check that member has
+ */
 function hasRole(member, roleName) {
     return member.roles.find(role => role.name.toLowerCase() === roleName.toLowerCase());
 }
 
-// Set the roles of a user. The parameter roles is an array of string (names of roles)
+/**
+ * Set the roles of a guildMember. All hoisted roles are removed first
+ * 
+ * @param {Discord.GuildMember} member - The member to set the roles for
+ * @param {Discord.TextChannel} channel - The channel to send messages in
+ * @param {String[]} roles - An array of strings representing the names of the roles to give the members
+ */
 function setRoles(member, channel, roles) {
     var discordRoles = [];
 

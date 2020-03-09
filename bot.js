@@ -2,15 +2,13 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 const permissions = require('./resources/permissions.json');
 const prefix = '!';
-const db = require('./db.js');
 const commands = require('./commands.js');
-const helper = require('./helper.js');
 const censorship = require('./censorship.js');
 var discordConfig;
 
 if(process.argv.length < 3) {
     console.log('Please specify -d dev or -m master');
-    throw new Error("No branch specified");
+    throw new Error('No branch specified. Please specify -d dev or -m master');
 }
 
 // Check for master or dev branch configuration
@@ -27,18 +25,18 @@ process.argv.forEach(function(value, index, array) {
     }
 })
 
-// When the client is ready, run this code
-// This event will only trigger one time after logging in
+/**
+ * When the client is ready, do this once
+ */
 client.once('ready', () => {
-    console.log('Ready!');
-    var today = new Date();
-    var now = today.getHours + ":" + today.getMinutes() + ":" + today.getSeconds
-    console.log(now);
+    let date = new Date();
+    let now = date.toLocaleTimeString();
+    console.log(`Ready at ${now}`);
 });
 
-// Login to Discord with your app's token
-client.login(discordConfig.token).then(() => {
-    console.log('Logged in!');
+client.login(discordConfig.token)
+.then(() => {
+    console.log(`Logged in! Listening for messages`);
 });
 
 client.on('message', message => {
@@ -129,6 +127,13 @@ function processCommand(message) {
     }
 }
 
+/**
+ * Parses args and returns the user mentions in the order given 
+ * 
+ * @param {Discord.Guild} guild - The guild to search for members/roles
+ * @param {String[]} args - An array of strings to parse for mentions
+ * @returns {Discord.GuildMember[]} - An array of guildMember objects
+ */
 function getMemberMentions(guild, args) {
     let members = [];
     for(let i = 0; i < args.length; i++) {
@@ -149,6 +154,14 @@ function getMemberMentions(guild, args) {
     return members;
 }
 
+/**
+ * Removes the prefix and suffix characters from a mention.
+ * Discord mentions are the user or role id surrounded by < > and other characters
+ * Read the Discord.js documentation for more info
+ * 
+ * @param {String} mention - A string containing a mention 
+ * @returns {Discord.GuildMember} The guild member that the mention refers to
+ */
 function getUserFromMention(mention) {
 	// The id is the first and only match found by the RegEx.
 	let matches = mention.match(/^<@!?(\d+)>$/);

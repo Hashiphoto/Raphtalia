@@ -2,13 +2,28 @@ const links = require('./resources/links.json');
 const helper = require('./helper.js');
 const db = require('./db.js');
 const welcomeQuestions = require('./resources/welcome-questions.json');
+const Discord = require('discord.js');
 
+/**
+ * Very unhelpful at the moment
+ * 
+ * @param {Discord.TextChannel} channel - The channel to send replies to
+ * @param {Discord.GuildMember} sender - The guildMember who issued the command
+ */
 function help(channel, sender) {
-    channel.send('Help yourself, ' + sender.toString());
+    channel.send(`Help yourself, ${sender}`);
 }
 
+/**
+ * Reports the number of infractions for a list of guildMembers. Pass in an empty array
+ * for targets or leave it as null to report the sender's infractions instead
+ * 
+ * @param {Discord.TextChannel} channel - The channel to send replies to
+ * @param {Discord.GuildMember} sender - Whoever issued the command
+ * @param {Discord.GuildMember[]} targets An array of guildMember objects to get the infractions for
+ */
 function getInfractions(channel, sender, targets) {
-    if(targets.length === 0) {
+    if(targets == null || targets.length === 0) {
         helper.reportInfractions(sender, channel);
     }
     else {
@@ -16,25 +31,39 @@ function getInfractions(channel, sender, targets) {
     }
 }
 
+/**
+ * Kick members and send them off with a nice wave and gif
+ * 
+ * @param {Discord.TextChannel} channel - The channel to send replies to
+ * @param {Discord.GuildMember} sender - The guildMember who issued the command
+ * @param {Discord.GuildMember[]} targets - An array of guildMembers to kick
+ * @param {String} permissionLevel - The string name of the minimum hoisted role to use this command
+ */
 function kick(channel, sender, targets, permissionLevel) {
     if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
 
     targets.forEach((target) => {
         target.kick()
-        .then((member) => {
-            channel.send(':wave: ' + member.displayName + ' has been kicked')
-            .then(() => {
-                let randInt = Math.floor(Math.random() * links.gifs.kicks.length);
-                let showkick = links.gifs.kicks[randInt];
-                channel.send(showkick);
-            })
+        .then((member) => {           
+            let randInt = Math.floor(Math.random() * links.gifs.kicks.length);
+            let kickGif = links.gifs.kicks[randInt];
+            channel.send(`:wave: ${member.displayName} has been kicked\n${kickGif}`);
         })
-        .catch(() => {
+        .catch((e) => {
             channel.send('Something went wrong...');
+            console.error(e);
         })
     })
 }
 
+/**
+ * Increase the infraction count for the list of targets
+ * 
+ * @param {Discord.TextChannel} channel - The channel to send replies to
+ * @param {Discord.GuildMember} sender - The guildMember who issued the command
+ * @param {Discord.GuildMember[]} targets - An array of guildMembers to increase the infraction count for
+ * @param {String} permissionLevel - The string name of the minimum hoisted role to use this command
+ */
 function report(channel, sender, targets, permissionLevel) {
     if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
 
@@ -43,6 +72,14 @@ function report(channel, sender, targets, permissionLevel) {
     })
 }
 
+/**
+ * Remove all hoisted roles from the targets and give the exile role
+ * 
+ * @param {Discord.TextChannel} channel - The channel to send replies to
+ * @param {Discord.GuildMember} sender - The guildMember who issued the command
+ * @param {Discord.GuildMember[]} targets - An array of guildMembers to exile
+ * @param {String} permissionLevel - The string name of the minimum hoisted role to use this command
+ */
 function exile(channel, sender, targets, permissionLevel) {
     if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
 
@@ -51,10 +88,19 @@ function exile(channel, sender, targets, permissionLevel) {
     })
 }
 
+/**
+ * Send all the targets an invite and kick them
+ * 
+ * @param {Discord.TextChannel} channel - The channel to send replies to
+ * @param {Discord.GuildMember} sender - The guildMember who issued the command
+ * @param {Discord.GuildMember[]} targets - An array of guildMembers to softkick
+ * @param {String} permissionLevel - The string name of the minimum hoisted role to use this command
+ */
 function softkick(channel, sender, targets, permissionLevel, reason = '') {
     if(sender != null && !helper.verifyPermission(sender, channel, permissionLevel)) { return; }
 
     targets.forEach((target) => {
+        // Create an invite with 1 usage, no expieration date
         channel.createInvite({ temporary: true, maxAge: 0, maxUses: 1, unique: true })
         .then(invite => {
             return target.send(reason + invite.toString());
@@ -63,17 +109,22 @@ function softkick(channel, sender, targets, permissionLevel, reason = '') {
             return target.kick();
         })
         .then((member) => {
-            return channel.send(':wave: ' + member.displayName + ' has been kicked and invited back');
+            return channel.send(`:wave: ${member.displayName} has been kicked and invited back\n${links.gifs.softkick}`);
         })
-        // .then(() => {
-        //     channel.send(links.gifs.softkick);
-        // })
         .catch(() => {
             channel.send('Something went wrong...');
         })
     })
 }
 
+/**
+ * Remove all roles from targets who have the exile role
+ * 
+ * @param {Discord.TextChannel} channel - The channel to send replies to
+ * @param {Discord.GuildMember} sender - The guildMember who issued the command
+ * @param {Discord.GuildMember[]} targets - An array of guildMembers to pardon
+ * @param {String} permissionLevel - The string name of the minimum hoisted role to use this command
+ */
 function pardon(channel, sender, targets, permissionLevel) {
     if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
 
@@ -82,6 +133,15 @@ function pardon(channel, sender, targets, permissionLevel) {
     })
 }
 
+
+/**
+ * Remove all hoisted roles from each target and increases their former highest role by one
+ * 
+ * @param {Discord.TextChannel} channel - The channel to send replies to
+ * @param {Discord.GuildMember} sender - The guildMember who issued the command
+ * @param {Discord.GuildMember[]} targets - An array of guildMembers to promote
+ * @param {String} permissionLevel - The string name of the minimum hoisted role to use this command
+ */
 function promote(channel, sender, targets, permissionLevel) {
     if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
 
@@ -95,7 +155,7 @@ function promote(channel, sender, targets, permissionLevel) {
         let nextHighest = helper.getNextRole(target, channel.guild);
 
         if(nextHighest == null) {
-            channel.send(target.toString() + ' holds the highest office already');
+            channel.send(`${target} holds the highest office already`);
             return;
         }
 
@@ -107,24 +167,32 @@ function promote(channel, sender, targets, permissionLevel) {
 
         // promote the target
         helper.setRoles(target, channel, [nextHighest.name]);
-        channel.send(target.toString() + ' has been promoted to ' + nextHighest.name + '!');
+        channel.send(`${target} has been promoted to ${nextHighest.name}!`);
     })
 }
 
+/**
+ * Remove all hoisted roles from each target and decreases their former highest role by one
+ * 
+ * @param {Discord.TextChannel} channel - The channel to send replies to
+ * @param {Discord.GuildMember} sender - The guildMember who issued the command
+ * @param {Discord.GuildMember[]} targets - An array of guildMembers to demote
+ * @param {String} permissionLevel - The string name of the minimum hoisted role to use this command
+ */
 function demote(channel, sender, targets, permissionLevel) {
     if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
 
     targets.forEach((target) => {
         // Ensure the sender has a higher rank than the target
         if(sender.highestRole.comparePositionTo(target.highestRole) < 0) {
-            helper.infract(sender, channel, target.toString() + ' holds a higher rank than you!!!');
+            helper.infract(sender, channel, `${target} holds a higher rank than you!!!`);
             return;
         }
 
         let nextLowest = helper.getPreviousRole(target, channel.guild);
 
         if(nextLowest == null) {
-            channel.send(target.toString() + ' can\'t get any lower');
+            channel.send(`${target} can't get any lower`);
             return;
         }
 
@@ -134,10 +202,18 @@ function demote(channel, sender, targets, permissionLevel) {
         if(roleName === '@everyone') {
             roleName = 'commoner';
         }
-        channel.send(target.toString() + ' has been demoted to ' + roleName + '!');
+        channel.send(`${target} has been demoted to ${roleName}!`);
     })
 }
 
+/**
+ * Send some love to the targets
+ * 
+ * @param {Discord.TextChannel} channel - The channel to send replies to
+ * @param {Discord.GuildMember} sender - The guildMember who issued the command
+ * @param {Discord.GuildMember[]} targets - An array of guildMembers to headpat
+ * @param {String} permissionLevel - The string name of the minimum hoisted role to use this command
+ */
 function comfort(channel, sender, targets, permissionLevel) {
     if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
 
@@ -146,23 +222,17 @@ function comfort(channel, sender, targets, permissionLevel) {
     })
 }
 
-function pledge(channel, sender, args) {
-    if(args.length == 0 && helper.hasRole(sender, 'immigrant')) {
-        db.papers.createOrUpdate(sender.id, true);
-        channel.send('Thank you! And welcome loyal comrade to ' + channel.guild.name + '!')
-        .then(() => {
-            helper.setRoles(sender, channel, [ 'comrade' ]);
-        })
-    }
-}
-
 /**
- * Send a message and wait for the first matching response
+ * Send a message and wait for the first matching response. If no responses are recieved within the timeout, 
+ * a 'time' exception is thrown
  * 
- * @param {channel} channel the channel to send the message and listen for responses
- * @param {object} qItem An object containing question, answer, timeout (in ms)
- * @return {promise} A Promise(collected) with the collection of messages received
- *                   Or .catch() if there are no responses
+ * @param {Discord.TextChannel} channel - The channel to send the message and listen for responses
+ * @param {Discord.GuildMember} member - The only guildMember to listen for responses
+ * @param {Object} qItem - The question and answer object
+ * @param {String} qItem.question - The question to ask
+ * @param {String} qItem.answer - The accepted answer that will be accepted on a RegEx match (case insensitive)
+ * @param {number} qItem.timeout - The timeout in milliseconds before a 'time' exception is thrown
+ * @returns {Promise<Discord.Collection<String, Discord.Message>>} On fulfilled, returns a collection of messages received
  */
 function sendTimedMessage(channel, member, qItem) {
     const filter = function(message) {
@@ -176,10 +246,20 @@ function sendTimedMessage(channel, member, qItem) {
     })
 }
 
+/**
+ * Function called when a new member is added to the guild. First, it checks their papers. If they do not have a papers entry, 
+ * it creates a new one and sends a greeting. Second, it gives them the immigrant role. Third, it checks if they need a nickname and
+ * allows them to assign a new one. Fourth, it asks them to recite a pledge (unless they have already given the pledge). 
+ * If they do, they are made a comrade. If they don't, they are softkicked
+ * 
+ * @param {Discord.TextChannel} channel - The channel to send messages in
+ * @param {Discord.GuildMember} member - The guildMember that is being onboarded
+ */
 async function arrive(channel, member) {
     let paper = await db.papers.get(member.id);
     if(paper == null) {
-        channel.send(`Welcome ${member} to ${channel.guild.name}! I just have a few questions for you, and then you can enjoy go beautiful community with your fellow comrades.`);
+        channel.send(`Welcome ${member} to ${channel.guild.name}!\n` + 
+        `I just have a few questions for you, and then you can enjoy go beautiful community with your fellow comrades.`);
         paper = { 'id': member.id, 'isLoyal': false, 'needsNickname': true };
         db.papers.insert(paper);
     }
@@ -210,7 +290,7 @@ async function arrive(channel, member) {
             await sendTimedMessage(channel, member, welcomeQuestions.loyalty);
             paper.isLoyal = true;
             db.papers.createOrUpdate(member.id, paper);
-            channel.send('Thank you! And welcome loyal comrade to ' + channel.guild.name + '!')
+            channel.send(`Thank you! And welcome loyal comrade to ${channel.guild.name}!`)
             .then(() => {
                 helper.setRoles(member, channel, [ 'comrade' ]);
             })
@@ -225,11 +305,18 @@ async function arrive(channel, member) {
     }
 }
 
-// TESTING ONLY
-function unarrive(channel, member, mentions) {
-    let target = member;
-    if(mentions.length > 0) {   
-        target = mentions[0];
+/**
+ * TESTING ONLY - Removes the papers db entry for the target. If no target is given,
+ * it deletes the sender's db entry
+ * 
+ * @param {Discord.Channeel} channel 
+ * @param {Discord.GuildMember} sender 
+ * @param {Discord.GuildMember[]} targets 
+ */
+function unarrive(channel, sender, targets) {
+    let target = sender;
+    if(targets.length > 0) {   
+        target = targets[0];
     }
     db.papers.delete(target.id)
     .then(() => {
@@ -238,7 +325,7 @@ function unarrive(channel, member, mentions) {
         })
     })
     .then(() => {
-        return channel.send(target.toString() + '\'s papers have been deleted from record');
+        return channel.send(`${target}'s papers have been deleted from record`);
     })
 }
 
@@ -253,7 +340,6 @@ module.exports = {
     promote,
     demote,
     comfort,
-    pledge,
 
     arrive,
     unarrive
