@@ -3,12 +3,24 @@
     {
         "question": "What do you want to be called?",
         "answer": ".*",
-        "timeout" : 60000
+        "timeout": 45000
+    },
+    "business":
+    {
+        "question": "Have you ever owned a business or otherwise supported a free market economy? (yes/no)",
+        "answer": ".*",
+        "timeout": 30000
+    },
+    "risk":
+    {
+        "question": "Are you willing to do anything the government asks of you, even risking life and limb? (yes/no)",
+        "answer": ".*",
+        "timeout": 30000
     },
     "loyalty":
     {
         "question": "Repeat after me:\n>>> I pledge my heart and soul to the gulag and my fellow comrade. Long live the supreme dictator!",
-        "answer" : "I pledge my heart and soul to the gulag and my fellow comrade. Long live the supreme dictator!",
-        "timeout" : 180000
+        "answer": "I pledge my heart and soul to the gulag and my fellow comrade. Long live the supreme dictator!",
+        "timeout": 180000
     }
 }

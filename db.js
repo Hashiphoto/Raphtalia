@@ -44,7 +44,7 @@ var infractions = (function() {
 /**
  * Represents the papers db table
  * 
- * Object { "id": varchar, "isLoyal": tinyint, "needsNickname": tinyint }
+ * Object { "id": varchar, "nickname": tinyint, "business": tinyint, "risk": tinyint, "loyalty": tinyint }
  */
 var papers = (function() {
     return {        
@@ -60,25 +60,20 @@ var papers = (function() {
         },
 
         insert: function(paper) {
-            return pool.query('INSERT IGNORE INTO papers VALUES (?,?,?)', [ paper.id, paper.isLoyal, paper.needsNickname ])
+            return pool.query('INSERT IGNORE INTO papers VALUES (?,?,?,?,?)', 
+            [ paper.id, paper.nickname, paper.business, paper.risk, paper.loyalty ])
             .catch((error) => console.error(error));
         },
 
-        getOrCreate: function(id) {
-            return pool.query('SELECT * FROM papers WHERE id = ?', [ id ])
-            .then(([rows, fields]) => {
-                if(rows.length === 0) {
-                    let paper = { 'id': id, 'isLoyal': false, 'needsNickname': true };
-                    pool.query('INSERT INTO papers VALUES (?,?,?)', [ paper.id, paper.isLoyal, paper.needsNickname ]);
-                    return paper;
-                }
-                return rows[0];
+        createOrUpdate: function(id, paper = null) {
+            if(paper == null) {
+                paper = { 'id': id, 'nickname': false, 'business': false, 'risk': false, 'loyalty': false };
+            }
+            return pool.query('INSERT INTO papers VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE nickname = VALUES(nickname), business = VALUES(business), risk = VALUES(risk), loyalty = VALUES(loyalty)', 
+            [ paper.id, paper.nickname, paper.business, paper.risk, paper.loyalty ])
+            .then(() => {
+                return paper;
             })
-            .catch((error) => console.error(error));
-        },
-
-        createOrUpdate: function(id, paper) {
-            return pool.query('INSERT INTO papers VALUES (?,?,?) ON DUPLICATE KEY UPDATE isLoyal = VALUES(isLoyal), needsNickname = VALUES(needsNickname)', [ id, paper.isLoyal, paper.needsNickname ])
             .catch((error) => console.error(error));
         },
 

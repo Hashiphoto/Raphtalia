@@ -255,21 +255,20 @@ function sendTimedMessage(channel, member, qItem) {
  * @param {Discord.GuildMember} member - The guildMember that is being onboarded
  */
 async function arrive(channel, member) {
+    await helper.setRoles(member, channel, [ 'immigrant' ]);
+
     let paper = await db.papers.get(member.id);
     if(paper == null) {
         channel.send(`Welcome ${member} to ${channel.guild.name}!\n` + 
         `I just have a few questions for you, and then you can enjoy go beautiful community with your fellow comrades.`);
-        paper = { 'id': member.id, 'isLoyal': false, 'needsNickname': true };
-        db.papers.insert(paper);
+        paper = await db.papers.createOrUpdate(member.id);
     }
 
-    await helper.setRoles(member, channel, [ 'immigrant' ]);
-
-    if(paper.needsNickname) {
+    if(!paper.nickname) {
         try{
             let collected = await sendTimedMessage(channel, member, welcomeQuestions.nickname);
             let nickname = collected.first().content;
-            channel.send(`${member} will be known as ${nickname}!`);
+            channel.send(`${member.displayName} will be known as ${nickname}!`);
             member.setNickname(nickname)
             .catch((e) => {
                 console.error(e);
@@ -280,22 +279,53 @@ async function arrive(channel, member) {
             channel.send(`${member} doesn't want a nickname...`);
         }
         finally {
-            paper.needsNickname = false;
+            paper.nickname = true;
             db.papers.createOrUpdate(member.id, paper);
         }
     }
-    if(!paper.isLoyal) {
+    if(!paper.business) {
+        try {
+            let collected = await sendTimedMessage(channel, member, welcomeQuestions.business);
+            let response = collected.first().content;
+            if(response.match(/^no?$/gi) == null) {
+                throw new Error('Member likes capitalism smh');
+            }
+            paper.business = true;
+            db.papers.createOrUpdate(member.id, paper);
+        }
+        catch(e) {
+            softkick(channel, null, [ member ], '', 'Come join the Gulag when you\'re feeling more agreeable.\n');
+            return;
+        }
+    }
+    if(!paper.risk) {
+        try {
+            let collected = await sendTimedMessage(channel, member, welcomeQuestions.risk);
+            let response = collected.first().content;
+            if(response.match(/^y[ae]*(s|h)?!?$/gi) == null) {
+                throw new Error('Member is not committed enough smh');
+            }
+            paper.risk = true;
+            db.papers.createOrUpdate(member.id, paper);
+        }
+        catch(e) {
+            softkick(channel, null, [ member ], '', 'Come join the Gulag when you\'re feeling more agreeable.\n');
+            return;
+        }
+    }
+    if(!paper.loyalty) {
         try {
             await sendTimedMessage(channel, member, welcomeQuestions.loyalty);
-            paper.isLoyal = true;
+            paper.loyalty = true;
             db.papers.createOrUpdate(member.id, paper);
-            channel.send(`Thank you! And welcome loyal comrade to ${channel.guild.name}!`)
+            channel.send(`Thank you! And welcome loyal comrade to ${channel.guild.name}! 🎉🎉🎉`)
             .then(() => {
                 helper.setRoles(member, channel, [ 'comrade' ]);
             })
         }
         catch(e) {
             softkick(channel, null, [ member ], '', 'Come join the Gulag when you\'re feeling more agreeable.\n');
+            return;
         }
     }
     else {
