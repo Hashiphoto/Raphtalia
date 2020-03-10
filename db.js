@@ -11,6 +11,11 @@ var pool = mysql.createPool({ //Create database connections
 
 console.log('Connected to db');
 
+/**
+ * Represents the infractions db table
+ * 
+ * Object { "id": varchar, "count": int }
+ */
 var infractions = (function() {
     return {
         get: function(id) {
@@ -36,6 +41,11 @@ var infractions = (function() {
     }
 })();
 
+/**
+ * Represents the papers db table
+ * 
+ * Object { "id": varchar, "isLoyal": tinyint, "needsNickname": tinyint }
+ */
 var papers = (function() {
     return {        
         get: function(id) {

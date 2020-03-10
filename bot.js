@@ -4,6 +4,7 @@ const permissions = require('./resources/permissions.json');
 const prefix = '!';
 const commands = require('./commands.js');
 const censorship = require('./censorship.js');
+const db = require('./db.js');
 var discordConfig;
 
 if(process.argv.length < 3) {
@@ -55,6 +56,10 @@ client.on('message', message => {
 client.on('guildMemberAdd', (member) => {
     const welcomeChannel = client.channels.get(discordConfig.welcomeChannelId);
     commands.arrive(welcomeChannel, member);
+})
+
+client.on('guildMemberRemove', (member) => {
+    db.papers.delete(member.id);
 })
 
 client.on("disconnect", function(event) {

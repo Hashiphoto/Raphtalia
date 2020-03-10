@@ -133,7 +133,6 @@ function pardon(channel, sender, targets, permissionLevel) {
     })
 }
 
-
 /**
  * Remove all hoisted roles from each target and increases their former highest role by one
  * 
@@ -309,7 +308,7 @@ async function arrive(channel, member) {
  * TESTING ONLY - Removes the papers db entry for the target. If no target is given,
  * it deletes the sender's db entry
  * 
- * @param {Discord.Channeel} channel 
+ * @param {Discord.TextChannel} channel 
  * @param {Discord.GuildMember} sender 
  * @param {Discord.GuildMember[]} targets 
  */
@@ -318,7 +317,7 @@ function unarrive(channel, sender, targets) {
     if(targets.length > 0) {   
         target = targets[0];
     }
-    db.papers.delete(target.id)
+    return db.papers.delete(target.id)
     .then(() => {
         return target.roles.forEach((role) => {
             target.removeRole(role);
