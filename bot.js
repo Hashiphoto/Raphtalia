@@ -37,7 +37,7 @@ client.once('ready', () => {
 
 client.login(discordConfig.token)
 .then(() => {
-    console.log(`Logged in! Listening for messages`);
+    console.log(`Logged in! Listening for events...`);
 });
 
 client.on('message', message => {
