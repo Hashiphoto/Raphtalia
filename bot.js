@@ -127,6 +127,11 @@ function processCommand(message) {
         commands.unarrive(message.channel, sender, mentionedMembers);
         break;
 
+    case 'anthem':
+    case 'sing':
+    case 'play':
+        commands.play(message.channel, sender, args);
+        break;
     default:
         message.channel.send(`I think you're confused, Comrade ${sender}`);
     }

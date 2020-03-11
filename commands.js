@@ -3,6 +3,7 @@ const helper = require('./helper.js');
 const db = require('./db.js');
 const welcomeQuestions = require('./resources/welcome-questions.json');
 const Discord = require('discord.js');
+const youtube = require('./youtube.js');
 
 /**
  * Very unhelpful at the moment
@@ -358,6 +359,36 @@ function unarrive(channel, sender, targets) {
     })
 }
 
+function play(channel, sender, args) {
+    let voiceChannel;
+    // Check if a specific voice channel was specified
+    if(args && args.length > 1) {
+        for(let i = 0; i < args.length; i++) {
+            if(args[i] !== 'in') {
+                continue;
+            }
+            if(i === args.length - 1) {
+                channel.send('Please specify which channel to play in');
+                return;
+            }
+            else {
+                let channelName = args[i + 1];
+                voiceChannel = channel.guild.channels.find(channel => channel.type == 'voice' && channel.name.toLowerCase() === channelName.toLowerCase());
+                break;
+            }
+        }
+    }
+    // Play the song in the vc the sender is in
+    else {
+        voiceChannel = sender.voiceChannel;
+    
+        if(!voiceChannel) {
+            return vc.send('Join a voice channel first, comrade!');
+        }
+    }
+    youtube.play(voiceChannel, links.youtube.anthem);
+}
+
 module.exports = {
     help,
     getInfractions,
@@ -369,7 +400,7 @@ module.exports = {
     promote,
     demote,
     comfort,
-
     arrive,
-    unarrive
+    unarrive,
+    play
 }
