@@ -9,7 +9,6 @@ const ytdl = require('ytdl-core');
  * @param {number} vol - The volume to play at (0 to 1)
  */
 function play(voiceChannel, url, vol) {
-    console.log(`Playing at ${vol} volume`);
     voiceChannel.join()
     .then(connection => {
         const stream = ytdl(url, { filter: 'audioonly', quality: 'highestaudio', highWaterMark: 1<<25  });
