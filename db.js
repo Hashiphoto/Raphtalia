@@ -34,8 +34,8 @@ var infractions = (function() {
             .catch((error) => console.error(error));
         },
         
-        set: function(id, amount) {
-            return pool.query('INSERT INTO infractions VALUES (?,?) ON DUPLICATE KEY UPDATE count = VALUES(amount)', [ id, amount ])
+        set: function(id, count) {
+            return pool.query('INSERT INTO infractions VALUES (?,?) ON DUPLICATE KEY UPDATE count = VALUES(count)', [ id, count ])
             .catch((error) => console.error(error));
         }
     }

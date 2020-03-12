@@ -80,12 +80,13 @@ function report(channel, sender, targets, permissionLevel) {
  * @param {Discord.GuildMember} sender - The guildMember who issued the command
  * @param {Discord.GuildMember[]} targets - An array of guildMembers to exile
  * @param {String} permissionLevel - The string name of the minimum hoisted role to use this command
+ * @param {dayjs} releaseDate - The time when the exile will end
  */
-function exile(channel, sender, targets, permissionLevel) {
+function exile(channel, sender, targets, permissionLevel, releaseDate) {
     if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
 
     targets.forEach((target) => {
-        helper.exile(target, channel);
+        helper.exile(target, channel, releaseDate);
     })
 }
 

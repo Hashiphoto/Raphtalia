@@ -1,5 +1,6 @@
 const db = require('./db.js');
 const Discord = require('discord.js');
+const dayjs = require('dayjs');
 const infractionLimit = 5;
 
 /**
@@ -164,8 +165,10 @@ function pardon(member, channel) {
     if(!hasRole(member, 'exile')) {
         return;
     }
-    setRoles(member, channel, []); // clear all roles
-    channel.send(member.toString() + ' has been un-exiled');
+    db.infractions.set(member.id, 0);
+    // Clear all roles
+    setRoles(member, channel, []);
+    channel.send(`${member} has been released from exile`);
 }
 
 /**
@@ -174,9 +177,19 @@ function pardon(member, channel) {
  * @param {Discord.GuildMember} member - The guildMember to exile
  * @param {Discord.TextChannel} channel - The channel to send messages in
  */
-function exile(member, channel) {
+function exile(member, channel, releaseDate = null) {
     setRoles(member, channel, ['exile']);
-    channel.send('Uh oh, gulag for you ' + member.toString());
+    let message = '';
+    if(releaseDate != null) {
+        let duration = releaseDate.diff(dayjs());
+        if(duration > 0x7FFFFFFF) {
+            duration = 0x7FFFFFFF;
+            releaseDate = dayjs().add(duration, 'ms');
+        }
+        setTimeout(() => { pardon(member, channel) }, duration);
+        message = `\nYou will be released at ${releaseDate.format('h:mm A on MMM D, YYYY')}`;
+    }
+    channel.send(`Uh oh, gulag for you ${member}${message}`);
 }
 
 /**
@@ -219,6 +232,31 @@ function setRoles(member, channel, roles) {
     })
 }
 
+/**
+ * Add a specified amount of time to the current time and return a dayjs date that equals
+ * the sum of the current time and the parameter "duration"
+ * 
+ * @param {String} duration - A string representation of a time span. Ex. "5d 4h 3s" or "30m"
+ * @returns {dayjs} The current time + the duration passed in
+ */
+function parseTime(duration) {
+    let matches = duration.match(/\d+[dhms]/g);
+    let timePairs = [];
+    let releaseDate = dayjs();
+    matches.forEach(m => {
+        // Get the last character as the type (h, m, d, s)
+        let timeType = m.slice(-1);
+        // The length is every character before the type
+        let timeLength = m.slice(0, -1);
+        timePairs.push({ type: timeType, length: timeLength });
+    })
+    timePairs.forEach(pair => {
+        releaseDate = releaseDate.add(pair.length, pair.type);
+    })
+
+    return releaseDate;
+}
+
 module.exports = {
     getNextRole,
     getPreviousRole,
@@ -230,5 +268,6 @@ module.exports = {
     exile,
     hasPermission,
     hasRole,
-    setRoles
+    setRoles,
+    parseTime
 }

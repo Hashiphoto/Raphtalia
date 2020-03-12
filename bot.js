@@ -3,6 +3,7 @@ const client = new Discord.Client();
 const permissions = require('./resources/permissions.json');
 const prefix = '!';
 const commands = require('./commands.js');
+const helper = require('./helper.js');
 const censorship = require('./censorship.js');
 const db = require('./db.js');
 var discordConfig;
@@ -94,7 +95,7 @@ function processCommand(message) {
         break;
 
     case 'exile' :
-        commands.exile(message.channel, sender, mentionedMembers, permissions.exile);
+        commands.exile(message.channel, sender, mentionedMembers, permissions.exile, helper.parseTime(message.content));
         break;
 
     case 'softkick' :
@@ -132,6 +133,7 @@ function processCommand(message) {
     case 'play':
         commands.play(message.channel, sender, args);
         break;
+
     default:
         message.channel.send(`I think you're confused, Comrade ${sender}`);
     }
