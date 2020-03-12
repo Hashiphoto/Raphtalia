@@ -360,11 +360,26 @@ function unarrive(channel, sender, targets) {
     })
 }
 
+/**
+ * Play the Soviet Anthem in a voice channel
+ * 
+ * @param {Discord.TextChannel} channel - The channel to send replies to
+ * @param {Discord.GuildMember} sender - The guildMember who issued the command
+ * @param {String[]} args - Arguments to parse. Can contain a float for volume and the phrase "in [channel name]" to specify 
+ * in which voice channel to play, by name.
+ */
 function play(channel, sender, args) {
     let voiceChannel;
-    // Check if a specific voice channel was specified
+    let volume = 0.5;
     if(args && args.length > 1) {
         for(let i = 0; i < args.length; i++) {
+            // Check if a volume is specified
+            let volMatches = args[i].match(/\d.?\d?/);
+            if(volMatches != null) {
+                volume = parseFloat(volMatches[0]);
+                continue;
+            }
+            // Check if a specific voice channel was specified
             if(args[i] !== 'in') {
                 continue;
             }
@@ -375,7 +390,6 @@ function play(channel, sender, args) {
             else {
                 let channelName = args[i + 1];
                 voiceChannel = channel.guild.channels.find(channel => channel.type == 'voice' && channel.name.toLowerCase() === channelName.toLowerCase());
-                break;
             }
         }
     }
@@ -384,10 +398,10 @@ function play(channel, sender, args) {
         voiceChannel = sender.voiceChannel;
     
         if(!voiceChannel) {
-            return vc.send('Join a voice channel first, comrade!');
+            return channel.send('Join a voice channel first, comrade!');
         }
     }
-    youtube.play(voiceChannel, links.youtube.anthem);
+    youtube.play(voiceChannel, links.youtube.anthem, volume);
 }
 
 module.exports = {
