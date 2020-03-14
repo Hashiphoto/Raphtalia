@@ -102,20 +102,7 @@ function softkick(channel, sender, targets, permissionLevel, reason = '') {
     if(sender != null && !helper.verifyPermission(sender, channel, permissionLevel)) { return; }
 
     targets.forEach((target) => {
-        // Create an invite with 1 usage, no expieration date
-        channel.createInvite({ temporary: true, maxAge: 0, maxUses: 1, unique: true })
-        .then(invite => {
-            return target.send(reason + invite.toString());
-        })
-        .then(() => {
-            return target.kick();
-        })
-        .then((member) => {
-            return channel.send(`:wave: ${member.displayName} has been kicked and invited back\n${links.gifs.softkick}`);
-        })
-        .catch(() => {
-            channel.send('Something went wrong...');
-        })
+        helper.softkick(channel, target, reason);
     })
 }
 
@@ -296,7 +283,7 @@ async function arrive(channel, member) {
             db.papers.createOrUpdate(member.id, paper);
         }
         catch(e) {
-            softkick(channel, null, [ member ], '', 'Come join the Gulag when you\'re feeling more agreeable.\n');
+            helper.softkick(channel, member, 'Come join the Gulag when you\'re feeling more agreeable.');
             return;
         }
     }
@@ -311,7 +298,7 @@ async function arrive(channel, member) {
             db.papers.createOrUpdate(member.id, paper);
         }
         catch(e) {
-            softkick(channel, null, [ member ], '', 'Come join the Gulag when you\'re feeling more agreeable.\n');
+            helper.softkick(channel, member, 'Come join the Gulag when you\'re feeling more agreeable.');
             return;
         }
     }
@@ -326,7 +313,7 @@ async function arrive(channel, member) {
             })
         }
         catch(e) {
-            softkick(channel, null, [ member ], '', 'Come join the Gulag when you\'re feeling more agreeable.\n');
+            helper.softkick(channel, member, 'Come join the Gulag when you\'re feeling more agreeable.');
             return;
         }
     }

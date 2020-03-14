@@ -1,4 +1,5 @@
 const db = require('./db.js');
+const links = require('./resources/links.json');
 const Discord = require('discord.js');
 const dayjs = require('dayjs');
 const infractionLimit = 5;
@@ -102,12 +103,10 @@ function hasPermission(member, minRoleName) {
 function infract(member, channel, reason = '') {
     db.infractions.increment(member.id)
     .then(() => {
-        return reportInfractions(member,  channel, reason + '\n')
+        return reportInfractions(member, channel, reason + '\n')
     })
-    .then((infractionCount) => {
-        if(infractionCount >= infractionLimit) {
-            exile(member, channel);
-        }
+    .then((count) => {
+        checkInfractionCount(channel, member, count);
     });
 }
 
@@ -124,10 +123,8 @@ function setInfractions(member, amount, channel, reason = ''){
     .then(() => {
         return reportInfractions(member,  channel, reason + '\n')
     })
-    .then((infractionCount) => {
-        if(infractionCount >= infractionLimit) {
-            exile(member, channel);
-        }
+    .then((count) => {
+        checkInfractionCount(channel, member, count);
     });
 }
 
@@ -162,13 +159,15 @@ function reportInfractions(member, channel, pretext = '') {
  * @param {Discord.TextChannel} channel - The channel to send messages in
  */
 function pardon(member, channel) {
-    if(!hasRole(member, 'exile')) {
-        return;
-    }
     db.infractions.set(member.id, 0);
-    // Clear all roles
-    setRoles(member, channel, []);
-    channel.send(`${member} has been released from exile`);
+
+    if(hasRole(member, 'exile')) {
+        setRoles(member, channel, []);
+        channel.send(`${member} has been released from exile`);
+    }
+    else {
+        channel.send(`${member} has been cleared of all charges`);
+    }
 }
 
 /**
@@ -176,6 +175,7 @@ function pardon(member, channel) {
  * 
  * @param {Discord.GuildMember} member - The guildMember to exile
  * @param {Discord.TextChannel} channel - The channel to send messages in
+ * @param {dayjs} releaseDate - The dayjs object representing when the exile will end
  */
 function exile(member, channel, releaseDate = null) {
     setRoles(member, channel, ['exile']);
@@ -189,7 +189,10 @@ function exile(member, channel, releaseDate = null) {
         setTimeout(() => { pardon(member, channel) }, duration);
         message = `\nYou will be released at ${releaseDate.format('h:mm A on MMM D, YYYY')}`;
     }
-    channel.send(`Uh oh, gulag for you ${member}${message}`);
+    else {
+        message = `\nYou will be held indefinitely! May the Supreme Dictator have mercy on you.`;
+    }
+    channel.send(`Uh oh, gulag for you ${member}${message}\n\nAny infractions while in exile will result in expulsion`);
 }
 
 /**
@@ -257,6 +260,42 @@ function parseTime(duration) {
     return releaseDate;
 }
 
+/**
+ * Check if infractions is over the limit, then exile the member if so.
+ * If they are already in exile, then softkick them.
+ * 
+ * @param {number} count - The number of infractions accrued
+ */
+function checkInfractionCount(channel, member, count = null) {
+    if(count == null) {
+        count = db.infractions.get(member);
+    }
+    if(count >= infractionLimit) {
+        if(hasRole(member, 'exile')) {
+            softkick(channel, member, `Doing something illegal while under exile? Come on back when you're feeling more agreeable.`);
+        }
+        else {
+            exile(member, channel, dayjs().add(1, 'day'));
+        }
+    }
+}
+
+function softkick(channel, target, reason) {
+    channel.createInvite({ temporary: true, maxAge: 0, maxUses: 1, unique: true })
+    .then(invite => {
+        return target.send(reason + '\n' + invite.toString());
+    })
+    .then(() => {
+        return target.kick();
+    })
+    .then((member) => {
+        return channel.send(`:wave: ${member.displayName} has been kicked and invited back\n${links.gifs.softkick}`);
+    })
+    .catch(() => {
+        channel.send('Something went wrong...');
+    })
+}
+
 module.exports = {
     getNextRole,
     getPreviousRole,
@@ -269,5 +308,7 @@ module.exports = {
     hasPermission,
     hasRole,
     setRoles,
-    parseTime
+    parseTime,
+    checkInfractionCount,
+    softkick
 }
