@@ -65,12 +65,38 @@ function kick(channel, sender, targets, permissionLevel) {
  * @param {Discord.GuildMember[]} targets - An array of guildMembers to increase the infraction count for
  * @param {String} permissionLevel - The string name of the minimum hoisted role to use this command
  */
-function report(channel, sender, targets, permissionLevel) {
+function report(channel, sender, targets, permissionLevel, args = null) {
     if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
 
+    let relative = true;
+    let amount = 1;
+
+    for(let i = 0; i < args.length; i++) {
+        // Check for relative set (e.g. +1)
+        let relMatches = args[i].match(/^(\+|-)\d+$/g);
+        if(relMatches) { 
+            amount = parseInt(relMatches[0]);
+            relative = true;
+            break;
+        }
+        // Check for absolute set (e.g. 1)
+        let absMatches = args[i].match(/^\d+$/g);
+        if(absMatches) {
+            amount = parseInt(absMatches[0]);
+            relative = false;
+            break;
+        }
+    }
+
     targets.forEach((target) => {
-        helper.infract(target, channel, 'Yes sir~!');
+        if(relative) {
+            helper.addInfractions(target, channel, amount, 'Yes sir~!');
+        }
+        else {
+            helper.setInfractions(target, channel, amount, 'Yes sir~!');
+        }
     })
+    
 }
 
 /**
@@ -136,7 +162,7 @@ function promote(channel, sender, targets, permissionLevel) {
     targets.forEach((target) => {
         // Disallow self-promotion
         if(sender.id === target.id) {
-            helper.infract(sender, channel, links.gifs.bernieNo);
+            helper.addInfractions(sender, channel, links.gifs.bernieNo);
             return;
         }
 
@@ -149,7 +175,7 @@ function promote(channel, sender, targets, permissionLevel) {
 
         // Ensure the target's next highest role is not higher than the sender's
         if(sender.highestRole.comparePositionTo(nextHighest) < 0) {
-            helper.infract(sender, channel, 'You can\'t promote above your own role');
+            helper.addInfractions(sender, channel, 'You can\'t promote above your own role');
             return;
         }
 
@@ -173,7 +199,7 @@ function demote(channel, sender, targets, permissionLevel) {
     targets.forEach((target) => {
         // Ensure the sender has a higher rank than the target
         if(sender.highestRole.comparePositionTo(target.highestRole) < 0) {
-            helper.infract(sender, channel, `${target} holds a higher rank than you!!!`);
+            helper.addInfractions(sender, channel, `${target} holds a higher rank than you!!!`);
             return;
         }
 

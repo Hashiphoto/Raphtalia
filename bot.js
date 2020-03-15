@@ -91,7 +91,7 @@ function processCommand(message) {
 
     case 'infract' :
     case 'report' :
-        commands.report(message.channel, sender, mentionedMembers, permissions.report);
+        commands.report(message.channel, sender, mentionedMembers, permissions.report, args);
         break;
 
     case 'exile' :

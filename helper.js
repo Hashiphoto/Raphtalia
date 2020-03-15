@@ -68,7 +68,7 @@ function getPreviousRole(member, guild) {
  */
 function verifyPermission(member, channel, minRoleName) {
     if(!hasPermission(member, minRoleName)) {
-        infract(member, channel, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
+        addInfractions(member, channel, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
         return false;
     }
 
@@ -98,10 +98,11 @@ function hasPermission(member, minRoleName) {
  * 
  * @param {Discord.GuildMember} member - The member to infract
  * @param {Discord.TextChannel} channel - The channel to send messages in
+ * @param {Number} [amount] - The amount of infractions to increase by (default is 1)
  * @param {String} [reason] - A message to append to the end of the infraction notice
  */
-function infract(member, channel, reason = '') {
-    db.infractions.increment(member.id)
+function addInfractions(member, channel, amount = 1, reason = '') {
+    db.infractions.increment(member.id, amount)
     .then(() => {
         return reportInfractions(member, channel, reason + '\n')
     })
@@ -114,12 +115,12 @@ function infract(member, channel, reason = '') {
  * Set the absolute infraction count for a given member
  * 
  * @param {Discord.GuildMember} member - The member to set the infractions for
- * @param {number} amount - The number of infractions they will have
  * @param {Discord.TextChannel} channel - The channel to send messages in
+ * @param {number} amount - The number of infractions they will have
  * @param {String} [reason] - A message to append to the end of the infraction notice
  */
-function setInfractions(member, amount, channel, reason = ''){
-    db.infractions.set(member.id)
+function setInfractions(member, channel, amount = 1, reason = ''){
+    db.infractions.set(member.id, amount)
     .then(() => {
         return reportInfractions(member,  channel, reason + '\n')
     })
@@ -300,7 +301,7 @@ module.exports = {
     getNextRole,
     getPreviousRole,
     verifyPermission,
-    infract,
+    addInfractions: addInfractions,
     setInfractions,
     reportInfractions,
     pardon,

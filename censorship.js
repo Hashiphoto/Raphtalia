@@ -14,18 +14,18 @@ function censor(message) {
         message.delete();
         message.channel.send(fixedMessage);
 
-        helper.infract(sender, message.channel, 'This infraction has been recorded');
+        helper.addInfractions(sender, message.channel, 'This infraction has been recorded');
     }
     // supreme leader disrespect
     else if(message.content.match(/(long live|all hail|glory to)/gi) != null &&
             !message.mentions.roles.find(role => role.name === 'Supreme Dictator') &&
             message.content.match(/(gulag|supreme leader|leader|erkin|dictator|supreme dictator|bootylicious supreme dictator)/gi) == null) {
-        helper.infract(sender, message.channel, 'Glory to the Supreme Dictator _alone!_ This infraction has been recorded');
+        helper.addInfractions(sender, message.channel, 'Glory to the Supreme Dictator _alone!_ This infraction has been recorded');
     }
     // :flag_us:
     else if(message.content.includes('🇺🇸')) {
         message.delete();
-        helper.infract(sender, message.channel, 'Uh, oh. ☭☭☭');
+        helper.addInfractions(sender, message.channel, 'Uh, oh. ☭☭☭');
     }
 }
 
