@@ -1,8 +1,12 @@
+// Node libraries
+const Discord = require('discord.js');
+
+// Files
 const links = require('./resources/links.json');
 const helper = require('./helper.js');
 const db = require('./db.js');
 const welcomeQuestions = require('./resources/welcome-questions.json');
-const Discord = require('discord.js');
+const youtube = require('./youtube.js');
 
 /**
  * Very unhelpful at the moment
@@ -64,12 +68,38 @@ function kick(channel, sender, targets, permissionLevel) {
  * @param {Discord.GuildMember[]} targets - An array of guildMembers to increase the infraction count for
  * @param {String} permissionLevel - The string name of the minimum hoisted role to use this command
  */
-function report(channel, sender, targets, permissionLevel) {
+function report(channel, sender, targets, permissionLevel, args = null) {
     if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
 
+    let relative = true;
+    let amount = 1;
+
+    for(let i = 0; i < args.length; i++) {
+        // Check for relative set (e.g. +1)
+        let relMatches = args[i].match(/^(\+|-)\d+$/g);
+        if(relMatches) { 
+            amount = parseInt(relMatches[0]);
+            relative = true;
+            break;
+        }
+        // Check for absolute set (e.g. 1)
+        let absMatches = args[i].match(/^\d+$/g);
+        if(absMatches) {
+            amount = parseInt(absMatches[0]);
+            relative = false;
+            break;
+        }
+    }
+
     targets.forEach((target) => {
-        helper.infract(target, channel, 'Yes sir~!');
+        if(relative) {
+            helper.addInfractions(target, channel, amount, 'Yes sir~!');
+        }
+        else {
+            helper.setInfractions(target, channel, amount, 'Yes sir~!');
+        }
     })
+    
 }
 
 /**
@@ -79,12 +109,13 @@ function report(channel, sender, targets, permissionLevel) {
  * @param {Discord.GuildMember} sender - The guildMember who issued the command
  * @param {Discord.GuildMember[]} targets - An array of guildMembers to exile
  * @param {String} permissionLevel - The string name of the minimum hoisted role to use this command
+ * @param {dayjs} releaseDate - The time when the exile will end
  */
-function exile(channel, sender, targets, permissionLevel) {
+function exile(channel, sender, targets, permissionLevel, releaseDate) {
     if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
 
     targets.forEach((target) => {
-        helper.exile(target, channel);
+        helper.exile(target, channel, releaseDate);
     })
 }
 
@@ -100,20 +131,7 @@ function softkick(channel, sender, targets, permissionLevel, reason = '') {
     if(sender != null && !helper.verifyPermission(sender, channel, permissionLevel)) { return; }
 
     targets.forEach((target) => {
-        // Create an invite with 1 usage, no expieration date
-        channel.createInvite({ temporary: true, maxAge: 0, maxUses: 1, unique: true })
-        .then(invite => {
-            return target.send(reason + invite.toString());
-        })
-        .then(() => {
-            return target.kick();
-        })
-        .then((member) => {
-            return channel.send(`:wave: ${member.displayName} has been kicked and invited back\n${links.gifs.softkick}`);
-        })
-        .catch(() => {
-            channel.send('Something went wrong...');
-        })
+        helper.softkick(channel, target, reason);
     })
 }
 
@@ -147,7 +165,7 @@ function promote(channel, sender, targets, permissionLevel) {
     targets.forEach((target) => {
         // Disallow self-promotion
         if(sender.id === target.id) {
-            helper.infract(sender, channel, links.gifs.bernieNo);
+            helper.addInfractions(sender, channel, links.gifs.bernieNo);
             return;
         }
 
@@ -160,7 +178,7 @@ function promote(channel, sender, targets, permissionLevel) {
 
         // Ensure the target's next highest role is not higher than the sender's
         if(sender.highestRole.comparePositionTo(nextHighest) < 0) {
-            helper.infract(sender, channel, 'You can\'t promote above your own role');
+            helper.addInfractions(sender, channel, 'You can\'t promote above your own role');
             return;
         }
 
@@ -184,7 +202,7 @@ function demote(channel, sender, targets, permissionLevel) {
     targets.forEach((target) => {
         // Ensure the sender has a higher rank than the target
         if(sender.highestRole.comparePositionTo(target.highestRole) < 0) {
-            helper.infract(sender, channel, `${target} holds a higher rank than you!!!`);
+            helper.addInfractions(sender, channel, `${target} holds a higher rank than you!!!`);
             return;
         }
 
@@ -294,7 +312,7 @@ async function arrive(channel, member) {
             db.papers.createOrUpdate(member.id, paper);
         }
         catch(e) {
-            softkick(channel, null, [ member ], '', 'Come join the Gulag when you\'re feeling more agreeable.\n');
+            helper.softkick(channel, member, 'Come join the Gulag when you\'re feeling more agreeable.');
             return;
         }
     }
@@ -309,7 +327,7 @@ async function arrive(channel, member) {
             db.papers.createOrUpdate(member.id, paper);
         }
         catch(e) {
-            softkick(channel, null, [ member ], '', 'Come join the Gulag when you\'re feeling more agreeable.\n');
+            helper.softkick(channel, member, 'Come join the Gulag when you\'re feeling more agreeable.');
             return;
         }
     }
@@ -324,7 +342,7 @@ async function arrive(channel, member) {
             })
         }
         catch(e) {
-            softkick(channel, null, [ member ], '', 'Come join the Gulag when you\'re feeling more agreeable.\n');
+            helper.softkick(channel, member, 'Come join the Gulag when you\'re feeling more agreeable.');
             return;
         }
     }
@@ -358,6 +376,50 @@ function unarrive(channel, sender, targets) {
     })
 }
 
+/**
+ * Play the Soviet Anthem in a voice channel
+ * 
+ * @param {Discord.TextChannel} channel - The channel to send replies to
+ * @param {Discord.GuildMember} sender - The guildMember who issued the command
+ * @param {String[]} args - Arguments to parse. Can contain a float for volume and the phrase "in [channel name]" to specify 
+ * in which voice channel to play, by name.
+ */
+function play(channel, sender, args) {
+    let voiceChannel;
+    let volume = 0.5;
+    if(args && args.length > 1) {
+        for(let i = 0; i < args.length; i++) {
+            // Check if a volume is specified
+            let volMatches = args[i].match(/\d.?\d?/);
+            if(volMatches != null) {
+                volume = parseFloat(volMatches[0]);
+                continue;
+            }
+            // Check if a specific voice channel was specified
+            if(args[i] !== 'in') {
+                continue;
+            }
+            if(i === args.length - 1) {
+                channel.send('Please specify which channel to play in');
+                return;
+            }
+            else {
+                let channelName = args[i + 1];
+                voiceChannel = channel.guild.channels.find(channel => channel.type == 'voice' && channel.name.toLowerCase() === channelName.toLowerCase());
+            }
+        }
+    }
+    // Play the song in the vc the sender is in
+    else {
+        voiceChannel = sender.voiceChannel;
+    
+        if(!voiceChannel) {
+            return channel.send('Join a voice channel first, comrade!');
+        }
+    }
+    youtube.play(voiceChannel, links.youtube.anthem, volume);
+}
+
 module.exports = {
     help,
     getInfractions,
@@ -369,7 +431,7 @@ module.exports = {
     promote,
     demote,
     comfort,
-
     arrive,
-    unarrive
+    unarrive,
+    play
 }

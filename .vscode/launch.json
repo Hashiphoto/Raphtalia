@@ -12,7 +12,10 @@
                 "<node_internals>/**"
             ],
             "program": "${workspaceFolder}\\bot.js",
-            "args": ["-m"]
+            "args": [],
+            "env": {
+                "NODE_ENV": "dev"
+            }
         }
     ]
 }

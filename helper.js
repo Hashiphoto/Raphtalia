@@ -1,5 +1,12 @@
-const db = require('./db.js');
+// Node libraries
 const Discord = require('discord.js');
+const dayjs = require('dayjs');
+
+// Files
+const db = require('./db.js');
+const links = require('./resources/links.json');
+
+// Objects
 const infractionLimit = 5;
 
 /**
@@ -66,7 +73,7 @@ function getPreviousRole(member, guild) {
  */
 function verifyPermission(member, channel, minRoleName) {
     if(!hasPermission(member, minRoleName)) {
-        infract(member, channel, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
+        addInfractions(member, channel, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
         return false;
     }
 
@@ -96,17 +103,16 @@ function hasPermission(member, minRoleName) {
  * 
  * @param {Discord.GuildMember} member - The member to infract
  * @param {Discord.TextChannel} channel - The channel to send messages in
+ * @param {Number} [amount] - The amount of infractions to increase by (default is 1)
  * @param {String} [reason] - A message to append to the end of the infraction notice
  */
-function infract(member, channel, reason = '') {
-    db.infractions.increment(member.id)
+function addInfractions(member, channel, amount = 1, reason = '') {
+    db.infractions.increment(member.id, amount)
     .then(() => {
-        return reportInfractions(member,  channel, reason + '\n')
+        return reportInfractions(member, channel, reason + '\n')
     })
-    .then((infractionCount) => {
-        if(infractionCount >= infractionLimit) {
-            exile(member, channel);
-        }
+    .then((count) => {
+        checkInfractionCount(channel, member, count);
     });
 }
 
@@ -114,19 +120,17 @@ function infract(member, channel, reason = '') {
  * Set the absolute infraction count for a given member
  * 
  * @param {Discord.GuildMember} member - The member to set the infractions for
- * @param {number} amount - The number of infractions they will have
  * @param {Discord.TextChannel} channel - The channel to send messages in
+ * @param {number} amount - The number of infractions they will have
  * @param {String} [reason] - A message to append to the end of the infraction notice
  */
-function setInfractions(member, amount, channel, reason = ''){
-    db.infractions.set(member.id)
+function setInfractions(member, channel, amount = 1, reason = ''){
+    db.infractions.set(member.id, amount)
     .then(() => {
         return reportInfractions(member,  channel, reason + '\n')
     })
-    .then((infractionCount) => {
-        if(infractionCount >= infractionLimit) {
-            exile(member, channel);
-        }
+    .then((count) => {
+        checkInfractionCount(channel, member, count);
     });
 }
 
@@ -161,11 +165,15 @@ function reportInfractions(member, channel, pretext = '') {
  * @param {Discord.TextChannel} channel - The channel to send messages in
  */
 function pardon(member, channel) {
-    if(!hasRole(member, 'exile')) {
-        return;
+    db.infractions.set(member.id, 0);
+
+    if(hasRole(member, 'exile')) {
+        setRoles(member, channel, []);
+        channel.send(`${member} has been released from exile`);
     }
-    setRoles(member, channel, []); // clear all roles
-    channel.send(member.toString() + ' has been un-exiled');
+    else {
+        channel.send(`${member} has been cleared of all charges`);
+    }
 }
 
 /**
@@ -173,10 +181,24 @@ function pardon(member, channel) {
  * 
  * @param {Discord.GuildMember} member - The guildMember to exile
  * @param {Discord.TextChannel} channel - The channel to send messages in
+ * @param {dayjs} releaseDate - The dayjs object representing when the exile will end
  */
-function exile(member, channel) {
+function exile(member, channel, releaseDate = null) {
     setRoles(member, channel, ['exile']);
-    channel.send('Uh oh, gulag for you ' + member.toString());
+    let message = '';
+    if(releaseDate != null) {
+        let duration = releaseDate.diff(dayjs());
+        if(duration > 0x7FFFFFFF) {
+            duration = 0x7FFFFFFF;
+            releaseDate = dayjs().add(duration, 'ms');
+        }
+        setTimeout(() => { pardon(member, channel) }, duration);
+        message = `\nYou will be released at ${releaseDate.format('h:mm A on MMM D, YYYY')}`;
+    }
+    else {
+        message = `\nYou will be held indefinitely! May the Supreme Dictator have mercy on you.`;
+    }
+    channel.send(`Uh oh, gulag for you ${member}${message}\n\nAny infractions while in exile will result in expulsion`);
 }
 
 /**
@@ -219,16 +241,80 @@ function setRoles(member, channel, roles) {
     })
 }
 
+/**
+ * Add a specified amount of time to the current time and return a dayjs date that equals
+ * the sum of the current time and the parameter "duration"
+ * 
+ * @param {String} duration - A string representation of a time span. Ex. "5d 4h 3s" or "30m"
+ * @returns {dayjs} The current time + the duration passed in
+ */
+function parseTime(duration) {
+    let matches = duration.match(/\d+[dhms]/g);
+    let timePairs = [];
+    let releaseDate = dayjs();
+    matches.forEach(m => {
+        // Get the last character as the type (h, m, d, s)
+        let timeType = m.slice(-1);
+        // The length is every character before the type
+        let timeLength = m.slice(0, -1);
+        timePairs.push({ type: timeType, length: timeLength });
+    })
+    timePairs.forEach(pair => {
+        releaseDate = releaseDate.add(pair.length, pair.type);
+    })
+
+    return releaseDate;
+}
+
+/**
+ * Check if infractions is over the limit, then exile the member if so.
+ * If they are already in exile, then softkick them.
+ * 
+ * @param {number} count - The number of infractions accrued
+ */
+function checkInfractionCount(channel, member, count = null) {
+    if(count == null) {
+        count = db.infractions.get(member);
+    }
+    if(count >= infractionLimit) {
+        if(hasRole(member, 'exile')) {
+            softkick(channel, member, `Doing something illegal while under exile? Come on back when you're feeling more agreeable.`);
+        }
+        else {
+            exile(member, channel, dayjs().add(1, 'day'));
+        }
+    }
+}
+
+function softkick(channel, target, reason) {
+    channel.createInvite({ temporary: true, maxAge: 0, maxUses: 1, unique: true })
+    .then(invite => {
+        return target.send(reason + '\n' + invite.toString());
+    })
+    .then(() => {
+        return target.kick();
+    })
+    .then((member) => {
+        return channel.send(`:wave: ${member.displayName} has been kicked and invited back\n${links.gifs.softkick}`);
+    })
+    .catch(() => {
+        channel.send('Something went wrong...');
+    })
+}
+
 module.exports = {
     getNextRole,
     getPreviousRole,
     verifyPermission,
-    infract,
+    addInfractions: addInfractions,
     setInfractions,
     reportInfractions,
     pardon,
     exile,
     hasPermission,
     hasRole,
-    setRoles
+    setRoles,
+    parseTime,
+    checkInfractionCount,
+    softkick
 }

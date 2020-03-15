@@ -1,10 +1,13 @@
-const connectionConfig = require('./config/db-config.json');
+// Node libraries
 var mysql = require('mysql2');
 
+// Files
+const secretConfig = require('./config/secrets.json')[process.env.NODE_ENV || 'dev'];
+
 var pool = mysql.createPool({ //Create database connections
-    host     : 'localhost',
-    user     : connectionConfig.user,
-    password : connectionConfig.password,
+    host     : secretConfig.database.host,
+    user     : secretConfig.database.user,
+    password : secretConfig.database.password,
     database : 'raphtalia',
     connectionLimit: 5
 }).promise();
@@ -29,13 +32,13 @@ var infractions = (function() {
             .catch((error) => console.error(error));
         },
 
-        increment: function(id) {
-            return pool.query('INSERT INTO infractions VALUES (?,?) ON DUPLICATE KEY UPDATE count = count + 1', [ id, 1 ])
+        increment: function(id, count) {
+            return pool.query('INSERT INTO infractions VALUES (?,?) ON DUPLICATE KEY UPDATE count = count + VALUES(count)', [ id, count ])
             .catch((error) => console.error(error));
         },
         
-        set: function(id, amount) {
-            return pool.query('INSERT INTO infractions VALUES (?,?) ON DUPLICATE KEY UPDATE count = VALUES(amount)', [ id, amount ])
+        set: function(id, count) {
+            return pool.query('INSERT INTO infractions VALUES (?,?) ON DUPLICATE KEY UPDATE count = VALUES(count)', [ id, count ])
             .catch((error) => console.error(error));
         }
     }

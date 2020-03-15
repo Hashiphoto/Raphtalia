@@ -17,8 +17,13 @@
   },
   "homepage": "https://github.com/Hashiphoto/Raphtalia#readme",
   "dependencies": {
+    "@discordjs/opus": "^0.1.0",
+    "dayjs": "^1.8.22",
     "discord.js": "^11.5.1",
-    "mysql2": "^2.1.0"
+    "ffmpeg": "0.0.4",
+    "mysql2": "^2.1.0",
+    "node-opus": "^0.3.3",
+    "ytdl-core": "^2.0.0"
   },
   "devDependencies": {}
 }
