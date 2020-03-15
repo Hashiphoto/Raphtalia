@@ -1,31 +1,17 @@
+// Node libraries
 const Discord = require('discord.js');
-const client = new Discord.Client();
-const permissions = require('./resources/permissions.json');
-const prefix = '!';
+
+// Files
 const commands = require('./commands.js');
 const helper = require('./helper.js');
 const censorship = require('./censorship.js');
 const db = require('./db.js');
-var discordConfig;
+const secretConfig = require('./config/secrets.json')[process.env.NODE_ENV || 'dev'];
+const discordConfig = require('./config/discord.json')[process.env.NODE_ENV || 'dev'];
 
-if(process.argv.length < 3) {
-    console.log('Please specify -d dev or -m master');
-    throw new Error('No branch specified. Please specify -d dev or -m master');
-}
-
-// Check for master or dev branch configuration
-process.argv.forEach(function(value, index, array) {
-    // skip 'node' and the name of the app
-    if(index < 2) {
-        return;
-    }
-    if(value === '-d') {
-        discordConfig = require('./config/discord-config-development.json');
-    }
-    else if(value === '-m') {
-        discordConfig = require('./config/discord-config-master.json');
-    }
-})
+// Objects
+const client = new Discord.Client();
+const prefix = '!';
 
 /**
  * When the client is ready, do this once
@@ -36,7 +22,7 @@ client.once('ready', () => {
     console.log(`Ready at ${now}`);
 });
 
-client.login(discordConfig.token)
+client.login(secretConfig.discord.token)
 .then(() => {
     console.log(`Logged in! Listening for events...`);
 });
@@ -73,6 +59,7 @@ function processCommand(message) {
     const args = message.content.slice(prefix.length).split(' ');
     const command = args.shift().toLowerCase();
     let sender = message.guild.members.get(message.author.id);
+
     // mentionedMembers contains every mention in order in an array
     let mentionedMembers = getMemberMentions(message.guild, args);
 
@@ -86,36 +73,36 @@ function processCommand(message) {
         break;
 
     case 'kick' :
-        commands.kick(message.channel, sender, mentionedMembers, permissions.kick);
+        commands.kick(message.channel, sender, mentionedMembers, discordConfig.roles.officer);
         break;
 
     case 'infract' :
     case 'report' :
-        commands.report(message.channel, sender, mentionedMembers, permissions.report, args);
+        commands.report(message.channel, sender, mentionedMembers, discordConfig.roles.officer, args);
         break;
 
     case 'exile' :
-        commands.exile(message.channel, sender, mentionedMembers, permissions.exile, helper.parseTime(message.content));
+        commands.exile(message.channel, sender, mentionedMembers, discordConfig.roles.officer, helper.parseTime(message.content));
         break;
 
     case 'softkick' :
-        commands.softkick(message.channel, sender, mentionedMembers, permissions.kick);
+        commands.softkick(message.channel, sender, mentionedMembers, discordConfig.roles.officer);
         break;
 
     case 'pardon' :
-        commands.pardon(message.channel, sender, mentionedMembers, permissions.pardon);
+        commands.pardon(message.channel, sender, mentionedMembers, discordConfig.roles.dictator);
         break;
 
     case 'promote' :
-        commands.promote(message.channel, sender, mentionedMembers, permissions.promote);
+        commands.promote(message.channel, sender, mentionedMembers, discordConfig.roles.officer);
         break;
 
     case 'demote' :
-        commands.demote(message.channel, sender, mentionedMembers, permissions.promote);
+        commands.demote(message.channel, sender, mentionedMembers, discordConfig.roles.officer);
         break;
 
     case 'comfort' :
-        commands.comfort(message.channel, sender, mentionedMembers, permissions.comfort);
+        commands.comfort(message.channel, sender, mentionedMembers, discordConfig.roles.dictator);
         break;
 
     // TESTING ONLY

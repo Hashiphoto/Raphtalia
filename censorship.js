@@ -1,9 +1,10 @@
-const permissions = require('./resources/permissions.json');
+// Files
+const discordConfig = require('./config/discord.json')[process.env.NODE_ENV || 'dev'];
 const helper = require('./helper.js');
 
 function censor(message) {
     const sender = message.guild.members.get(message.author.id);
-    if(helper.hasPermission(sender, permissions.uncensored)) {
+    if(helper.hasPermission(sender, discordConfig.roles.dictator)) {
         return;
     }
     

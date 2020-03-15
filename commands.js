@@ -1,8 +1,11 @@
+// Node libraries
+const Discord = require('discord.js');
+
+// Files
 const links = require('./resources/links.json');
 const helper = require('./helper.js');
 const db = require('./db.js');
 const welcomeQuestions = require('./resources/welcome-questions.json');
-const Discord = require('discord.js');
 const youtube = require('./youtube.js');
 
 /**

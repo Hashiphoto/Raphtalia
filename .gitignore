@@ -1,3 +1,2 @@
-/config
-connection.json
+/config/secrets.json
 /node_modules

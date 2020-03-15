@@ -1,10 +1,13 @@
-const connectionConfig = require('./config/db-config.json');
+// Node libraries
 var mysql = require('mysql2');
 
+// Files
+const secretConfig = require('./config/secrets.json')[process.env.NODE_ENV || 'dev'];
+
 var pool = mysql.createPool({ //Create database connections
-    host     : 'localhost',
-    user     : connectionConfig.user,
-    password : connectionConfig.password,
+    host     : secretConfig.database.host,
+    user     : secretConfig.database.user,
+    password : secretConfig.database.password,
     database : 'raphtalia',
     connectionLimit: 5
 }).promise();

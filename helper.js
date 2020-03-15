@@ -1,7 +1,12 @@
-const db = require('./db.js');
-const links = require('./resources/links.json');
+// Node libraries
 const Discord = require('discord.js');
 const dayjs = require('dayjs');
+
+// Files
+const db = require('./db.js');
+const links = require('./resources/links.json');
+
+// Objects
 const infractionLimit = 5;
 
 /**
