@@ -306,7 +306,7 @@ module.exports = {
     getNextRole,
     getPreviousRole,
     verifyPermission,
-    addInfractions: addInfractions,
+    addInfractions,
     setInfractions,
     reportInfractions,
     pardon,

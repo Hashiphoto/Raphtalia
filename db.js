@@ -87,7 +87,32 @@ var papers = (function() {
     }
 })();
 
+var bannedWords = (function() {
+    return {
+        getAll: function() {
+            return pool.query('SELECT * FROM bannedwords')
+            .then(([rows, fields]) => {
+                return rows;
+            })
+            .catch(e => {
+                console.error(e);
+            })
+        },
+
+        insert: function(word) {
+            return pool.query('INSERT INTO bannedwords (word) VALUES (?)', [ word ])
+            .then(([results, fields]) => {
+                return results.insertId;
+            })
+            .catch(e => {
+                console.error(e);
+            })
+        }
+    }
+})();
+
 module.exports = {
     infractions,
-    papers
+    papers,
+    bannedWords
 }
