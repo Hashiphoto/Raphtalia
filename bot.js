@@ -36,7 +36,7 @@ client.on('message', message => {
         processCommand(message);
     }
     else {
-        censorship.censor(message)
+        censorship.censorMessage(message);
     }
 })
 
@@ -111,7 +111,7 @@ function processCommand(message) {
         break;
 
     case 'comfort' :
-        commands.comfort(message.channel, sender, mentionedMembers, permissions.comfort);
+        commands.comfort(message.channel, sender, mentionedMembers, discordConfig.roles.dictator);
         break;
 
     // TESTING ONLY
@@ -128,6 +128,11 @@ function processCommand(message) {
     case 'sing':
     case 'play':
         commands.play(message.channel, sender, args);
+        break;
+
+    case 'banword':
+    case 'banwords':
+        censorship.banWords(message.channel, sender, args, discordConfig.roles.officer);
         break;
 
     default:
