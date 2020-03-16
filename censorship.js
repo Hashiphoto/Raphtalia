@@ -68,6 +68,28 @@ function censorMessage(message) {
 function banWords(channel, sender, words, permissionLevel) {
     if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
 
+    if(words.length === 0) {
+        db.bannedWords.getAll()
+        .then(rows => {
+            let banList = '';
+            for(let i = 0; i < rows.length; i++) {
+                if(rows[i].word.includes(" ")){
+                    banList += `"${rows[i].word}"`;
+                }
+                else {
+                    banList += `${rows[i].word}`;
+                }
+                if(i !== rows.length - 1) {
+                    banList += ", ";
+                }
+            }
+
+            channel.send(`Here are all the banned words: ${banList}`);
+        })
+        
+        return;
+    }
+
     // Construct an array of rows to insert into the db
     let values = [];
     words.forEach(word => {
