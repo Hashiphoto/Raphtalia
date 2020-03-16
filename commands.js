@@ -359,8 +359,11 @@ async function arrive(channel, member) {
  * @param {Discord.TextChannel} channel 
  * @param {Discord.GuildMember} sender 
  * @param {Discord.GuildMember[]} targets 
+ * @param {String} permissionLevel - The string name of the minimum hoisted role to use this command
  */
-function unarrive(channel, sender, targets) {
+function unarrive(channel, sender, targets, permissionLevel) {
+    if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
+
     let target = sender;
     if(targets.length > 0) {   
         target = targets[0];
@@ -382,12 +385,13 @@ function unarrive(channel, sender, targets) {
  * @param {Discord.TextChannel} channel - The channel to send replies to
  * @param {Discord.GuildMember} sender - The guildMember who issued the command
  * @param {String[]} args - Arguments to parse. Can contain a float for volume and the phrase "in [channel name]" to specify 
+ * @param {String} permissionLevel - The string name of the minimum hoisted role to use this command in another voice channel
  * in which voice channel to play, by name.
  */
-function play(channel, sender, args) {
-    let voiceChannel;
+function play(channel, sender, args, permissionLevel) {
+    let voiceChannel = null;
     let volume = 0.5;
-    if(args && args.length > 1) {
+    if(helper.hasPermission(member, permissionLevel) && args && args.length > 1) {
         for(let i = 0; i < args.length; i++) {
             // Check if a volume is specified
             let volMatches = args[i].match(/\d.?\d?/);

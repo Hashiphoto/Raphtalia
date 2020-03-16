@@ -105,34 +105,39 @@ function processCommand(message) {
         commands.comfort(message.channel, sender, mentionedMembers, discordConfig.roles.dictator);
         break;
 
-    // TESTING ONLY
-    case 'arrive' :
-        commands.arrive(message.channel, sender);
-        break;
-
     case 'comfort' :
         commands.comfort(message.channel, sender, mentionedMembers, discordConfig.roles.dictator);
         break;
 
     // TESTING ONLY
-    case 'arrive' :
-        commands.arrive(message.channel, sender);
-        break;
-    
-    // TESTING ONLY
     case 'unarrive' : 
-        commands.unarrive(message.channel, sender, mentionedMembers);
+        commands.unarrive(message.channel, sender, mentionedMembers, discordConfig.roles.officer);
         break;
 
     case 'anthem':
     case 'sing':
     case 'play':
-        commands.play(message.channel, sender, args);
+        commands.play(message.channel, sender, args, discordConfig.roles.officer);
         break;
 
     case 'banword':
     case 'banwords':
         censorship.banWords(message.channel, sender, args, discordConfig.roles.officer);
+        break;
+
+    case 'allowword':
+    case 'allowwords':
+    case 'unbanword':
+    case 'unbanwords':
+        censorship.allowWords(message.channel, sender, args, discordConfig.roles.officer);
+        break;
+
+    case 'banphrase':
+        censorship.banPhrase(message.channel, sender, args, discordConfig.roles.officer);
+        break;
+
+    case 'allowphrase':
+        censorship.allowPhrase(message.channel, sender, args, discordConfig.roles.officer);
         break;
 
     default:

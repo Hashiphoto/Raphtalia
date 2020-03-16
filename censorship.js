@@ -66,6 +66,11 @@ function censorMessage(message) {
 }
 
 function banWords(channel, sender, words, permissionLevel) {
+    if(words.length === 0) {
+        printBanList(channel);
+        return;
+    }
+
     if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
 
     // Construct an array of rows to insert into the db
@@ -80,7 +85,42 @@ function banWords(channel, sender, words, permissionLevel) {
     channel.send(`You won't see these words again: ${words}`);
 }
 
+function allowWords(channel, sender, words, permissionLevel) {
+    if(words.length === 0) {
+        printBanList(channel);
+        return;
+    }
+
+    if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
+
+    db.bannedWords.delete(words)
+    .then(() => {
+        rebuildCensorshipList();
+    })
+    channel.send(`These words are allowed again: ${words}`);
+}
+
+function printBanList(channel) {
+    db.bannedWords.getAll()
+    .then(rows => {
+        let banList = '';
+        for(let i = 0; i < rows.length; i++) {
+            if(rows[i].word.includes(" ")){
+                banList += `"${rows[i].word}"`;
+            }
+            else {
+                banList += `${rows[i].word}`;
+            }
+            if(i !== rows.length - 1) {
+                banList += ", ";
+            }
+        }
+        channel.send(`Here are all the banned words: ${banList}`);
+    })
+}
+
 module.exports = {
     censorMessage,
-    banWords
+    banWords,
+    allowWords
 }
