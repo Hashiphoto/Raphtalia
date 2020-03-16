@@ -359,8 +359,11 @@ async function arrive(channel, member) {
  * @param {Discord.TextChannel} channel 
  * @param {Discord.GuildMember} sender 
  * @param {Discord.GuildMember[]} targets 
+ * @param {String} permissionLevel - The string name of the minimum hoisted role to use this command
  */
-function unarrive(channel, sender, targets) {
+function unarrive(channel, sender, targets, permissionLevel) {
+    if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
+
     let target = sender;
     if(targets.length > 0) {   
         target = targets[0];
