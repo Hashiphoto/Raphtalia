@@ -80,7 +80,18 @@ function banWords(channel, sender, words, permissionLevel) {
     channel.send(`You won't see these words again: ${words}`);
 }
 
+function allowWords(channel, sender, words, permissionLevel) {
+    if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
+
+    db.bannedWords.delete(words)
+    .then(() => {
+        rebuildCensorshipList();
+    })
+    channel.send(`These words are allowed again: ${words}`);
+}
+
 module.exports = {
     censorMessage,
-    banWords
+    banWords,
+    allowWords
 }

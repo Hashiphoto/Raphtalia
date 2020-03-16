@@ -114,10 +114,17 @@ var bannedWords = (function() {
         },
 
         insert: function(word) {
-            return pool.query('INSERT INTO bannedwords (word) VALUES (?)', [ word ])
+            return pool.query('INSERT INTO bannedwords (word) VALUES ?', [ word ])
             .then(([results, fields]) => {
                 return results.insertId;
             })
+            .catch(e => {
+                console.error(e);
+            })
+        },
+
+        delete: function(word) {
+            return pool.query('DELETE FROM bannedwords WHERE (word) IN (?)', [ word ])
             .catch(e => {
                 console.error(e);
             })
