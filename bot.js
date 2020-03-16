@@ -117,7 +117,7 @@ function processCommand(message) {
     case 'anthem':
     case 'sing':
     case 'play':
-        commands.play(message.channel, sender, args);
+        commands.play(message.channel, sender, args, discordConfig.roles.officer);
         break;
 
     case 'banword':
