@@ -389,7 +389,7 @@ function unarrive(channel, sender, targets, permissionLevel) {
  * in which voice channel to play, by name.
  */
 function play(channel, sender, args, permissionLevel) {
-    let voiceChannel;
+    let voiceChannel = null;
     let volume = 0.5;
     if(helper.hasPermission(member, permissionLevel) && args && args.length > 1) {
         for(let i = 0; i < args.length; i++) {
