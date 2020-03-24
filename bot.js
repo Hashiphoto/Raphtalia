@@ -122,6 +122,7 @@ function processCommand(message) {
 
     case 'banword':
     case 'banwords':
+    case 'bannedwords':
         censorship.banWords(message.channel, sender, args, discordConfig.roles.officer);
         break;
 
