@@ -45,10 +45,14 @@ function censorMessage(message) {
     }
     
     // simple banned words
-    if(message.content.match(bannedRegex) != null) {
-        const fixedMessage = 'I fixed ' + sender.toString() + '\'s message\n>>> ' + message.content.replace(bannedRegex, '██████');
+    if(message.content.match(bannedRegex) != null) { 
         message.delete();
-        message.channel.send(fixedMessage);
+        message.channel.send({embed: {
+            title: 'Censorship Report',
+            description: `What ${sender} ***meant*** to say is \n> ${message.content.replace(bannedRegex, '██████')}`,
+            color: 13057084,
+            timestamp: new Date()
+        }});
 
         helper.addInfractions(sender, message.channel, 1, 'This infraction has been recorded');
     }
@@ -105,14 +109,14 @@ function printBanList(channel) {
     .then(rows => {
         let banList = '';
         for(let i = 0; i < rows.length; i++) {
-            if(rows[i].word.includes(" ")){
-                banList += `"${rows[i].word}"`;
+            if(rows[i].word.includes(' ')){
+                banList += `'${rows[i].word}'`;
             }
             else {
                 banList += `${rows[i].word}`;
             }
             if(i !== rows.length - 1) {
-                banList += ", ";
+                banList += ', ';
             }
         }
         channel.send(`Here are all the banned words: ${banList}`);
