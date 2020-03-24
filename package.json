@@ -19,12 +19,13 @@
   "dependencies": {
     "@discordjs/opus": "^0.1.0",
     "dayjs": "^1.8.22",
+    "diacritic-regex": "^1.1.0",
     "discord.js": "^11.5.1",
     "ffmpeg": "0.0.4",
+    "minimist": "^1.2.3",
     "mysql2": "^2.1.0",
     "node-opus": "^0.3.3",
-    "ytdl-core": "^2.0.0",
-    "minimist": "^1.2.3"
+    "ytdl-core": "^2.0.0"
   },
   "devDependencies": {}
 }

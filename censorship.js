@@ -1,5 +1,6 @@
 // Node libraries
 const Discord = require('discord.js');
+const diacritic = require('diacritic-regex');
 
 // Files
 const discordConfig = require('./config/discord.json')[process.env.NODE_ENV || 'dev'];
@@ -18,17 +19,17 @@ var bannedRegex;
 
 async function rebuildCensorshipList() {
     let bannedWords = await db.bannedWords.getAll();
-    let regexString = '\\b(';
+    let regexString = '(^|[^\\wÀ-ÖØ-öø-ÿ])(';
     for(let i = 0; i < bannedWords.length; i++) {
         // Last word
         if(i === bannedWords.length - 1) {
-            regexString += bannedWords[i].word;
+            regexString += diacritic.toString()(bannedWords[i].word);
         }
         else {
-            regexString += bannedWords[i].word + '|';
+            regexString += diacritic.toString()(bannedWords[i].word) + '|';
         }
     }
-    regexString += ')\\b';
+    regexString += ')(?![\wÀ-ÖØ-öø-ÿ])';
     console.log(`Banned words: ${regexString}`);
     bannedRegex = new RegExp(regexString, 'gi');
 }
