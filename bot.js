@@ -24,8 +24,8 @@ client.once('ready', () => {
 
 client.login(secretConfig.discord.token)
 .then(() => {
-    console.log(`Logged in! Listening for events...`);
-});
+    console.log(`Logged in! Listening for events. NODE_ENV: ${process.env.NODE_ENV}`);
+})
 
 client.on('message', message => {
     if(message.author.bot) {
@@ -41,7 +41,7 @@ client.on('message', message => {
 })
 
 client.on('guildMemberAdd', (member) => {
-    const welcomeChannel = client.channels.get(discordConfig.welcomeChannelId);
+    const welcomeChannel = client.channels.get(discordConfig.channels.welcomeChannelId);
     commands.arrive(welcomeChannel, member);
 })
 
