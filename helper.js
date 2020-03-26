@@ -7,7 +7,7 @@ const db = require('./db.js');
 const links = require('./resources/links.json');
 
 // Objects
-const infractionLimit = 5;
+const infractionLimit = 3;
 
 /**
  * Get the next highest hoisted role for a given member
