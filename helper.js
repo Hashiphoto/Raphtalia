@@ -147,12 +147,14 @@ function reportInfractions(member, channel, pretext = '') {
     .then((count) => {
         let reply;
         if(count === 0) {
-            reply = `${discordName} is a model citizen ♥`;
+            reply = `${discordName} has no recorded infractions`;
         }
         else {
             reply = `${pretext}${discordName} has incurred ${count} infractions`;
         }
-        channel.send(reply);
+        if(channel != null) {
+            channel.send(reply);
+        }
 
         return count;
     })
@@ -323,6 +325,8 @@ function promote(channel, sender, target) {
         channel.send(`${target} holds the highest office already`);
         return;
     }
+    
+    setInfractions(target, null, 0, null);
 
     // Ensure the target's next highest role is not higher than the sender's
     if(sender.highestRole.comparePositionTo(nextHighest) < 0) {
@@ -355,6 +359,8 @@ function demote(channel, sender, target) {
         channel.send(`${target} can't get any lower`);
         return;
     }
+
+    setInfractions(target, null, 0, null);
 
     if(nextLowest.name.toLowerCase() === 'exile') {
         exile(target, channel, dayjs().add(1, 'day'));
