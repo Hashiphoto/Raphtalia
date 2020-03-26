@@ -163,28 +163,7 @@ function promote(channel, sender, targets, permissionLevel) {
     if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
 
     targets.forEach((target) => {
-        // Disallow self-promotion
-        if(sender.id === target.id) {
-            helper.addInfractions(sender, channel, 1, links.gifs.bernieNo);
-            return;
-        }
-
-        let nextHighest = helper.getNextRole(target, channel.guild);
-
-        if(nextHighest == null) {
-            channel.send(`${target} holds the highest office already`);
-            return;
-        }
-
-        // Ensure the target's next highest role is not higher than the sender's
-        if(sender.highestRole.comparePositionTo(nextHighest) < 0) {
-            helper.addInfractions(sender, channel, 1, 'You can\'t promote above your own role');
-            return;
-        }
-
-        // promote the target
-        helper.setRoles(target, channel, [nextHighest.name]);
-        channel.send(`${target} has been promoted to ${nextHighest.name}!`);
+        helper.promote(channel, sender, target);
     })
 }
 
@@ -200,26 +179,7 @@ function demote(channel, sender, targets, permissionLevel) {
     if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
 
     targets.forEach((target) => {
-        // Ensure the sender has a higher rank than the target
-        if(sender.highestRole.comparePositionTo(target.highestRole) < 0) {
-            helper.addInfractions(sender, channel, 1, `${target} holds a higher rank than you!!!`);
-            return;
-        }
-
-        let nextLowest = helper.getPreviousRole(target, channel.guild);
-
-        if(nextLowest == null) {
-            channel.send(`${target} can't get any lower`);
-            return;
-        }
-
-        // promote the target
-        helper.setRoles(target, channel, [nextLowest.name]);
-        let roleName = nextLowest.name;
-        if(roleName === '@everyone') {
-            roleName = 'commoner';
-        }
-        channel.send(`${target} has been demoted to ${roleName}!`);
+        helper.demote(channel, sender, target);
     })
 }
 

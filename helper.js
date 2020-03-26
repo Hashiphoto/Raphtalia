@@ -303,6 +303,68 @@ function softkick(channel, target, reason) {
     })
 }
 
+/**
+ * Remove all hoisted roles from one target and increase their former highest role by one
+ * 
+ * @param {Discord.TextChannel} channel - The channel to send messages in
+ * @param {Discord.GuildMember} sender - The GuildMember doing the promotion
+ * @param {Discord.GuildMember} target - The GuildMember being promoted
+ */
+function promote(channel, sender, target) {
+    // Disallow self-promotion
+    if(sender.id === target.id) {
+        addInfractions(sender, channel, 1, links.gifs.bernieNo);
+        return;
+    }
+
+    let nextHighest = getNextRole(target, channel.guild);
+
+    if(nextHighest == null) {
+        channel.send(`${target} holds the highest office already`);
+        return;
+    }
+
+    // Ensure the target's next highest role is not higher than the sender's
+    if(sender.highestRole.comparePositionTo(nextHighest) < 0) {
+        addInfractions(sender, channel, 1, 'You can\'t promote above your own role');
+        return;
+    }
+
+    // promote the target
+    setRoles(target, channel, [nextHighest.name]);
+    channel.send(`${target} has been promoted to ${nextHighest.name}!`);
+}
+
+/**
+ * Remove all hoisted roles from one target and decrease their former highest role by one
+ * 
+ * @param {Discord.TextChannel} channel - The channel to send messages in
+ * @param {Discord.GuildMember} sender - The GuildMember doing the promotion
+ * @param {Discord.GuildMember} target - The GuildMember being promoted
+ */
+function demote(channel, sender, target) {
+    // Ensure the sender has a higher rank than the target
+    if(sender.highestRole.comparePositionTo(target.highestRole) < 0) {
+        addInfractions(sender, channel, 1, `${target} holds a higher rank than you!!!`);
+        return;
+    }
+
+    let nextLowest = getPreviousRole(target, channel.guild);
+
+    if(nextLowest == null) {
+        channel.send(`${target} can't get any lower`);
+        return;
+    }
+
+    // promote the target
+    setRoles(target, channel, [nextLowest.name]);
+    let roleName = nextLowest.name;
+    if(roleName === '@everyone') {
+        roleName = 'commoner';
+    }
+    channel.send(`${target} has been demoted to ${roleName}!`);
+}
+
 module.exports = {
     getNextRole,
     getPreviousRole,
@@ -317,5 +379,7 @@ module.exports = {
     setRoles,
     parseTime,
     checkInfractionCount,
-    softkick
+    softkick,
+    promote,
+    demote
 }
