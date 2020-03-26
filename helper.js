@@ -282,7 +282,7 @@ function checkInfractionCount(channel, member, count = null) {
             softkick(channel, member, `Doing something illegal while under exile? Come on back when you're feeling more agreeable.`);
         }
         else {
-            exile(member, channel, dayjs().add(1, 'day'));
+            demote(channel, null, member);
         }
     }
 }
@@ -344,7 +344,7 @@ function promote(channel, sender, target) {
  */
 function demote(channel, sender, target) {
     // Ensure the sender has a higher rank than the target
-    if(sender.highestRole.comparePositionTo(target.highestRole) < 0) {
+    if(sender != null && sender.highestRole.comparePositionTo(target.highestRole) < 0) {
         addInfractions(sender, channel, 1, `${target} holds a higher rank than you!!!`);
         return;
     }
@@ -356,7 +356,12 @@ function demote(channel, sender, target) {
         return;
     }
 
-    // promote the target
+    if(nextLowest.name.toLowerCase() === 'exile') {
+        exile(target, channel, dayjs().add(1, 'day'));
+        return;
+    }
+
+    // demote the target
     setRoles(target, channel, [nextLowest.name]);
     let roleName = nextLowest.name;
     if(roleName === '@everyone') {
