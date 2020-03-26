@@ -165,7 +165,7 @@ function promote(channel, sender, targets, permissionLevel) {
     targets.forEach((target) => {
         // Disallow self-promotion
         if(sender.id === target.id) {
-            helper.addInfractions(sender, channel, links.gifs.bernieNo);
+            helper.addInfractions(sender, channel, 1, links.gifs.bernieNo);
             return;
         }
 
@@ -178,7 +178,7 @@ function promote(channel, sender, targets, permissionLevel) {
 
         // Ensure the target's next highest role is not higher than the sender's
         if(sender.highestRole.comparePositionTo(nextHighest) < 0) {
-            helper.addInfractions(sender, channel, 'You can\'t promote above your own role');
+            helper.addInfractions(sender, channel, 1, 'You can\'t promote above your own role');
             return;
         }
 
@@ -202,7 +202,7 @@ function demote(channel, sender, targets, permissionLevel) {
     targets.forEach((target) => {
         // Ensure the sender has a higher rank than the target
         if(sender.highestRole.comparePositionTo(target.highestRole) < 0) {
-            helper.addInfractions(sender, channel, `${target} holds a higher rank than you!!!`);
+            helper.addInfractions(sender, channel, 1, `${target} holds a higher rank than you!!!`);
             return;
         }
 

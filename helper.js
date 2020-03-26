@@ -73,7 +73,7 @@ function getPreviousRole(member, guild) {
  */
 function verifyPermission(member, channel, minRoleName) {
     if(!hasPermission(member, minRoleName)) {
-        addInfractions(member, channel, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
+        addInfractions(member, channel, 1, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
         return false;
     }
 
@@ -168,7 +168,7 @@ function pardon(member, channel) {
     db.infractions.set(member.id, 0);
 
     if(hasRole(member, 'exile')) {
-        setRoles(member, channel, []);
+        setRoles(member, channel, ['comrade']);
         channel.send(`${member} has been released from exile`);
     }
     else {
@@ -250,6 +250,7 @@ function setRoles(member, channel, roles) {
  */
 function parseTime(duration) {
     let matches = duration.match(/\d+[dhms]/g);
+    if(!matches) { return null }
     let timePairs = [];
     let releaseDate = dayjs();
     matches.forEach(m => {
