@@ -8,6 +8,9 @@ const links = require('./resources/links.json');
 
 // Objects
 const infractionLimit = 3;
+// This will keep track of which process id is tracking the exile release timer for each
+// exile. The Key is the DiscordID and the Value is the object returned by SetTimeout()
+var exileTimers = new Map();
 
 /**
  * Get the next highest hoisted role for a given member
@@ -170,6 +173,7 @@ function pardon(member, channel) {
     db.infractions.set(member.id, 0);
 
     if(hasRole(member, 'exile')) {
+        clearExileTimer(member);
         setRoles(member, channel, ['comrade']);
         channel.send(`${member} has been released from exile`);
     }
@@ -194,13 +198,26 @@ function exile(member, channel, releaseDate = null) {
             duration = 0x7FFFFFFF;
             releaseDate = dayjs().add(duration, 'ms');
         }
-        setTimeout(() => { pardon(member, channel) }, duration);
+        let timerId = setTimeout(() => { pardon(member, channel) }, duration);
+        clearExileTimer(member);
+        exileTimers.set(member.id, timerId);
         message = `\nYou will be released at ${releaseDate.format('h:mm A on MMM D, YYYY')}`;
     }
     else {
         message = `\nYou will be held indefinitely! May the Supreme Dictator have mercy on you.`;
     }
     channel.send(`Uh oh, gulag for you ${member}${message}\n\nAny infractions while in exile will result in expulsion`);
+}
+
+/**
+ * 
+ * @param {Discord.GuildMember} member - The member to clear exile timer for, if it exists
+ */
+function clearExileTimer(member) {
+    if(exileTimers.has(member.id)) {
+        clearTimeout(exileTimers.get(member.id));
+        exileTimers.delete(member.id);
+    }
 }
 
 /**
@@ -319,6 +336,10 @@ function promote(channel, sender, target) {
         return;
     }
 
+    if(hasRole(target, 'exile')) {
+        clearExileTimer(target);
+    }
+
     let nextHighest = getNextRole(target, channel.guild);
 
     if(nextHighest == null) {
@@ -353,6 +374,10 @@ function demote(channel, sender, target) {
         return;
     }
 
+    if(hasRole(target, 'exile')) {
+        clearExileTimer(target);
+    }
+    
     let nextLowest = getPreviousRole(target, channel.guild);
 
     if(nextLowest == null) {
