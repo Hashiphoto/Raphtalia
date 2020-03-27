@@ -19,7 +19,7 @@ var bannedRegex;
 
 async function rebuildCensorshipList() {
     let bannedWords = await db.bannedWords.getAll();
-    let regexString = '(^|[^\\wÀ-ÖØ-öø-ÿ])(';
+    let regexString = '(^|[^a-zA-Z0-9À-ÖØ-öø-ÿ])(';
     for(let i = 0; i < bannedWords.length; i++) {
         // Last word
         if(i === bannedWords.length - 1) {
@@ -29,7 +29,7 @@ async function rebuildCensorshipList() {
             regexString += diacritic.toString()(bannedWords[i].word) + '|';
         }
     }
-    regexString += ')(?![\wÀ-ÖØ-öø-ÿ])';
+    regexString += ')(?![a-zA-Z0-9À-ÖØ-öø-ÿ])';
     console.log(`Banned words: ${regexString}`);
     bannedRegex = new RegExp(regexString, 'gi');
 }
@@ -38,11 +38,13 @@ async function rebuildCensorshipList() {
  * Check a message for banned words and censor it appropriately
  * 
  * @param {Discord.Message} message - The message to check for censorship
+ * @returns {Boolean} - True if the message was censored
  */
 function censorMessage(message) {
     const sender = message.guild.members.get(message.author.id);
-    if(helper.hasPermission(sender, discordConfig.roles.dictator)) {
-        return;
+    // The supreme dictator is not censored. Also, immigrants are handled by the Arrive command
+    if(helper.hasPermission(sender, discordConfig.roles.dictator) || helper.hasRole(sender, 'immigrant')) {
+        return false;
     }
     
     // simple banned words
@@ -56,18 +58,27 @@ function censorMessage(message) {
         }});
 
         helper.addInfractions(sender, message.channel, 1, 'This infraction has been recorded');
+        return true;
     }
     // supreme leader disrespect
     else if(message.content.match(/^(long live|all hail|glory to|hail)/gi) != null &&
             !message.mentions.roles.find(role => role.name === 'Supreme Dictator') &&
             message.content.match(/(gulag|supreme leader|leader|erkin|dictator|supreme dictator)/gi) == null) {
         helper.addInfractions(sender, message.channel, 1, 'Glory to the Supreme Dictator _alone!_ This infraction has been recorded');
+        return true;
     }
     // :flag_us:
     else if(message.content.includes('🇺🇸')) {
         message.delete();
         helper.addInfractions(sender, message.channel, 1, 'What flag is that, comrade?');
+        return true;
     }
+
+    return false;
+}
+
+function containsBannedWords(text) {
+    return text.match(bannedRegex) != null;
 }
 
 function banWords(channel, sender, words, permissionLevel) {
@@ -127,5 +138,6 @@ function printBanList(channel) {
 module.exports = {
     censorMessage,
     banWords,
-    allowWords
+    allowWords,
+    containsBannedWords
 }

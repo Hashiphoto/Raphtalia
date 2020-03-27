@@ -7,6 +7,7 @@ const helper = require('./helper.js');
 const db = require('./db.js');
 const welcomeQuestions = require('./resources/welcome-questions.json');
 const youtube = require('./youtube.js');
+const censorship = require('./censorship.js');
 
 /**
  * Very unhelpful at the moment
@@ -246,6 +247,10 @@ async function arrive(channel, member) {
         try{
             let collected = await sendTimedMessage(channel, member, welcomeQuestions.nickname);
             let nickname = collected.first().content;
+            if(censorship.containsBannedWords(nickname)) {
+                helper.softkick(channel, member, 'We don\'t those words around these parts. Try again');
+                return;
+            }
             channel.send(`${member.displayName} will be known as ${nickname}!`);
             member.setNickname(nickname)
             .catch((e) => {
@@ -265,6 +270,10 @@ async function arrive(channel, member) {
         try {
             let collected = await sendTimedMessage(channel, member, welcomeQuestions.business);
             let response = collected.first().content;
+            if(censorship.containsBannedWords(response)) {
+                helper.softkick(channel, member, 'We don\'t those words around these parts. Try again');
+                return;
+            }
             if(response.match(/^no?$/gi) == null) {
                 throw new Error('Member likes capitalism smh');
             }
@@ -280,6 +289,10 @@ async function arrive(channel, member) {
         try {
             let collected = await sendTimedMessage(channel, member, welcomeQuestions.risk);
             let response = collected.first().content;
+            if(censorship.containsBannedWords(response)) {
+                helper.softkick(channel, member, 'We don\'t those words around these parts. Try again');
+                return;
+            }
             if(response.match(/^y[ae]*(s|h)?!?$/gi) == null) {
                 throw new Error('Member is not committed enough smh');
             }
