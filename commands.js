@@ -405,7 +405,7 @@ function unarrive(channel, sender, targets, permissionLevel) {
 function play(channel, sender, args, permissionLevel) {
     let voiceChannel = null;
     let volume = 0.5;
-    if(helper.hasPermission(member, permissionLevel) && args && args.length > 1) {
+    if(helper.hasPermission(sender, permissionLevel) && args && args.length > 1) {
         for(let i = 0; i < args.length; i++) {
             // Check if a volume is specified
             let volMatches = args[i].match(/\d.?\d?/);
@@ -424,6 +424,10 @@ function play(channel, sender, args, permissionLevel) {
             else {
                 let channelName = args[i + 1];
                 voiceChannel = channel.guild.channels.find(channel => channel.type == 'voice' && channel.name.toLowerCase() === channelName.toLowerCase());
+                if(voiceChannel == null) {
+                    channel.send('I couldn\'t find a voice channel by that name');
+                    return;
+                }
             }
         }
     }

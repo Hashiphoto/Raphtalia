@@ -369,9 +369,15 @@ function promote(channel, sender, target) {
  */
 function demote(channel, sender, target) {
     // Ensure the sender has a higher rank than the target
-    if(sender != null && sender.highestRole.comparePositionTo(target.highestRole) < 0) {
-        addInfractions(sender, channel, 1, `${target} holds a higher rank than you!!!`);
-        return;
+    if(sender != null) {
+        if(sender.highestRole.comparePositionTo(target.highestRole) < 0) {
+            addInfractions(sender, channel, 1, `${target} holds a higher rank than you!!!`);
+            return;
+        }
+        if(sender.id !== target.id && sender.highestRole.comparePositionTo(target.highestRole) == 0) {
+            addInfractions(sender, channel, 1, `${target} holds an equal rank with you`);
+            return;
+        }
     }
 
     if(hasRole(target, 'exile')) {
