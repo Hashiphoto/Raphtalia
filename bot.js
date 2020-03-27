@@ -105,10 +105,6 @@ function processCommand(message) {
         commands.comfort(message.channel, sender, mentionedMembers, discordConfig.roles.dictator);
         break;
 
-    case 'comfort' :
-        commands.comfort(message.channel, sender, mentionedMembers, discordConfig.roles.dictator);
-        break;
-
     // TESTING ONLY
     case 'unarrive' : 
         commands.unarrive(message.channel, sender, mentionedMembers, discordConfig.roles.officer);

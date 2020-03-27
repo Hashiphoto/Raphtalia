@@ -16,6 +16,7 @@ const censorship = require('./censorship.js');
  * @param {Discord.GuildMember} sender - The guildMember who issued the command
  */
 function help(channel, sender) {
+    const helpManual = require('./')
     channel.send(`Help yourself, ${sender}`);
 }
 
@@ -47,6 +48,11 @@ function getInfractions(channel, sender, targets) {
 function kick(channel, sender, targets, permissionLevel) {
     if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
 
+    if(targets.length === 0) {
+        channel.send('Please repeat the command and specify who is getting the boot');
+        return;
+    }
+
     targets.forEach((target) => {
         target.kick()
         .then((member) => {           
@@ -71,6 +77,11 @@ function kick(channel, sender, targets, permissionLevel) {
  */
 function report(channel, sender, targets, permissionLevel, args = null) {
     if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
+
+    if(targets.length === 0) {
+        channel.send('Please repeat the command and specify who is being reported');
+        return;
+    }
 
     let relative = true;
     let amount = 1;
@@ -115,6 +126,11 @@ function report(channel, sender, targets, permissionLevel, args = null) {
 function exile(channel, sender, targets, permissionLevel, releaseDate) {
     if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
 
+    if(targets.length === 0) {
+        channel.send('Please repeat the command and specify who is being exiled');
+        return;
+    }
+
     targets.forEach((target) => {
         helper.exile(target, channel, releaseDate);
     })
@@ -130,6 +146,11 @@ function exile(channel, sender, targets, permissionLevel, releaseDate) {
  */
 function softkick(channel, sender, targets, permissionLevel, reason = '') {
     if(sender != null && !helper.verifyPermission(sender, channel, permissionLevel)) { return; }
+
+    if(targets.length === 0) {
+        channel.send('Please repeat the command and specify who is being gently kicked');
+        return;
+    }
 
     targets.forEach((target) => {
         helper.softkick(channel, target, reason);
@@ -147,6 +168,11 @@ function softkick(channel, sender, targets, permissionLevel, reason = '') {
 function pardon(channel, sender, targets, permissionLevel) {
     if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
 
+    if(targets.length === 0) {
+        channel.send('Please repeat the command and specify who is being pardoned');
+        return;
+    }
+
     targets.forEach((target) => {
         helper.pardon(target, channel);
     })
@@ -162,6 +188,11 @@ function pardon(channel, sender, targets, permissionLevel) {
  */
 function promote(channel, sender, targets, permissionLevel) {
     if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
+
+    if(targets.length === 0) {
+        channel.send('Please repeat the command and specify who is being promoted');
+        return;
+    }
 
     targets.forEach((target) => {
         helper.promote(channel, sender, target);
@@ -179,6 +210,11 @@ function promote(channel, sender, targets, permissionLevel) {
 function demote(channel, sender, targets, permissionLevel) {
     if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
 
+    if(targets.length === 0) {
+        channel.send('Please repeat the command and specify who is being demoted');
+        return;
+    }
+
     targets.forEach((target) => {
         helper.demote(channel, sender, target);
     })
@@ -194,6 +230,11 @@ function demote(channel, sender, targets, permissionLevel) {
  */
 function comfort(channel, sender, targets, permissionLevel) {
     if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
+
+    if(targets.length === 0) {
+        channel.send('Please repeat the command and specify who I\'m headpatting');
+        return;
+    }
 
     targets.forEach((member) => {
         channel.send(member.toString() + ' headpat');
