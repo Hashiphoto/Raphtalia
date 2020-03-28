@@ -398,41 +398,62 @@ function unarrive(channel, sender, targets, permissionLevel) {
  * 
  * @param {Discord.TextChannel} channel - The channel to send replies to
  * @param {Discord.GuildMember} sender - The guildMember who issued the command
- * @param {String[]} args - Arguments to parse. Can contain a float for volume and the phrase "in [channel name]" to specify 
- * @param {String} permissionLevel - The string name of the minimum hoisted role to use this command in another voice channel
+ * @param {String[]} content - The text to parse for args. Can contain a float for volume and the phrase "in [channel name]" to specify 
  * in which voice channel to play, by name.
+ * @param {String} permissionLevel - The string name of the minimum hoisted role to use this command in another voice channel
  */
-function play(channel, sender, args, permissionLevel) {
+function play(channel, sender, content, permissionLevel) {
     let voiceChannel = null;
     let volume = 0.5;
-    if(helper.hasPermission(sender, permissionLevel) && args && args.length > 1) {
-        for(let i = 0; i < args.length; i++) {
-            // Check if a volume is specified
-            let volMatches = args[i].match(/\d.?\d?/);
-            if(volMatches != null) {
-                volume = parseFloat(volMatches[0]);
-                continue;
-            }
-            // Check if a specific voice channel was specified
-            if(args[i] !== 'in') {
-                continue;
-            }
-            if(i === args.length - 1) {
-                channel.send('Please specify which channel to play in');
+    // Remove the command
+    content = content.replace(/!\w+/, '');
+
+    // Check if volume was specified
+    let volRegex = /\b\d+(\.\d*)?v/;
+    let volMatches = content.match(volRegex);
+    if(volMatches != null) {
+        volume = parseFloat(volMatches[0]);
+        // Remove the volume from the string
+        content = content.replace(volRegex, '');
+    }
+
+    // Check if channel was specified
+    let firstMatch = null;
+    let secondMatch = null;
+    let matches = content.match(/\bin [\w ]+/); // Everything from the "in " until the first slash (/)
+    if(matches != null) {
+        firstMatch = matches[0].slice(3).trim(); // remove the "in "
+        matches = content.match(/\/[\w ]+/); // Everything after the first slash (/), if it exists
+        
+        // The first match is the category and the second match is the channel name
+        if(matches != null) {
+            // remove the "in "
+            secondMatch = matches[0].slice(1).trim();
+            voiceChannel = channel.guild.channels.find(channel => 
+                channel.type == 'voice' && 
+                channel.name.toLowerCase() === secondMatch.toLowerCase() && 
+                channel.parent && 
+                channel.parent.name.toLowerCase() === firstMatch.toLowerCase());
+            if(voiceChannel == null) {
+                channel.send('I couldn\'t find a voice channel by that name');
                 return;
             }
-            else {
-                let channelName = args[i + 1];
-                voiceChannel = channel.guild.channels.find(channel => channel.type == 'voice' && channel.name.toLowerCase() === channelName.toLowerCase());
-                if(voiceChannel == null) {
-                    channel.send('I couldn\'t find a voice channel by that name');
-                    return;
-                }
+        }
+
+        // If there is second parameter, then firstMatch is the voice channel name
+        else {
+            voiceChannel = channel.guild.channels.find(channel => 
+                channel.type == 'voice' && 
+                channel.name.toLowerCase() === firstMatch.toLowerCase());
+            if(voiceChannel == null) {
+                channel.send('I couldn\'t find a voice channel by that name');
+                return;
             }
         }
     }
-    // Play the song in the vc the sender is in
-    else {
+
+    // If no voice channel was specified, play the song in the vc the sender is in
+    if(voiceChannel == null) {
         voiceChannel = sender.voiceChannel;
     
         if(!voiceChannel) {

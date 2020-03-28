@@ -58,13 +58,14 @@ Demoting someone at or above your level results in an infraction.
 **Permission**: Supreme Dictator\
 Make Raphtalia headpat someone. This does not work on other bots.
 
-### play [in voicechannel] [volume]
+### play [in [category /] voicechannel] [0.5v]
 **Permission**: Officer\
 **Synonyms**: anthem, sing\
 Play the Soviet Anthem.\
 If a voicechannel is specified, it must be preceded with `in`. Raphtalia will try to find the voicechannel by that name.\
+A category can be specified by preceding the voice channel with a slash (/). Ex: `!play in gaming/general`\
 If no voicechannel is specified, it will play in the voicechannel you are in.\
-Volume is 0.5 by default and goes from range 0 (no sound) to 1 (normal volume).
+Volume is 0.5 by default and goes from range 0.0 (no sound) to 1.0 (normal volume). Number may be formatted as `0.5v` or `1v` only
 
 ### banword [word]*
 **Permission**: Officer\
