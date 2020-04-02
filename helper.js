@@ -5,6 +5,7 @@ const dayjs = require('dayjs');
 // Files
 const db = require('./db.js');
 const links = require('./resources/links.json');
+const discordConfig = require('./config/discord.json')[process.env.NODE_ENV || 'dev'];
 
 // Objects
 const infractionLimit = 3;
@@ -67,15 +68,15 @@ function getPreviousRole(member, guild) {
 }
 
 /**
- * Like hasPermission, but infracts the member if they don't have permission
+ * Like hasRoleOrHigher, but infracts the member if they don't have permission
  * 
  * @param {Discord.GuildMember} member - The member to check permissions for
  * @param {Discord.TextChannel} channel - The channel to send messages in
- * @param {String} minRoleName - The name of the role that the member must have (or higher)
+ * @param {RoleResolvable} allowedRole - The hoisted role that the member must have (or higher)
  * @returns {Boolean} True if the member has high enough permission
  */
-function verifyPermission(member, channel, minRoleName) {
-    if(!hasPermission(member, minRoleName)) {
+function verifyPermission(member, channel, allowedRole) {
+    if(!hasRoleOrHigher(member, allowedRole)) {
         addInfractions(member, channel, 1, 'I don\'t have to listen to a peasant like you. This infraction has been recorded');
         return false;
     }
@@ -83,22 +84,6 @@ function verifyPermission(member, channel, minRoleName) {
     return true;
 }
 
-/**
- * Verifies that the member has a role equal to or greater than the role given by minRoleName
- * 
- * @param {Discord.GuildMember} member - The member to check 
- * @param {String} minRoleName - The name of the role that the member must have (or higher)
- * @returns {Boolean} True if the member has high enough permission
- */
-function hasPermission(member, minRoleName) {
-    var minRole = member.guild.roles.find(role => role.name.toLowerCase() === minRoleName.toLowerCase());
-    if(!minRole) {
-        console.log('There is no role \"' + minRoleName + '\". Go check the permissions file');
-        return false;
-    }
-
-    return member.highestRole.comparePositionTo(minRole) >= 0;
-}
 
 /**
  * Increases the infraction count for a given member. If they exceed the infractionLimit, the member
@@ -172,9 +157,9 @@ function reportInfractions(member, channel, pretext = '') {
 function pardon(member, channel) {
     db.infractions.set(member.id, 0);
 
-    if(hasRole(member, 'exile')) {
+    if(hasRole(member, discordConfig.roles.exile)) {
         clearExileTimer(member);
-        setRoles(member, channel, ['comrade']);
+        setRoles(member, [discordConfig.roles.neutral]);
         channel.send(`${member} has been released from exile`);
     }
     else {
@@ -190,7 +175,7 @@ function pardon(member, channel) {
  * @param {dayjs} releaseDate - The dayjs object representing when the exile will end
  */
 function exile(member, channel, releaseDate = null) {
-    setRoles(member, channel, ['exile']);
+    setRoles(member, [discordConfig.roles.exile]);
     let message = '';
     if(releaseDate != null) {
         let duration = releaseDate.diff(dayjs());
@@ -221,28 +206,40 @@ function clearExileTimer(member) {
 }
 
 /**
- * Check if a member has a given role
+ * Check if a member has a given role specified by role id
  * 
  * @param {Discord.GuildMember} member - The guildMember to check roles
- * @param {String} roleName - The name of the role to check that member has
+ * @param {RoleResolvable} role - The id of the role to check that member has
+ * @returns {Boolean} - True if the member has that role
  */
-function hasRole(member, roleName) {
-    return member.roles.find(role => role.name.toLowerCase() === roleName.toLowerCase());
+function hasRole(member, role) {
+    role = convertToRole(member.guild, role);
+    return member.roles.get(role.id);
+}
+
+/**
+ * Verify that a member has the given role or higher. Ignores non-hoisted roles
+ * 
+ * @param {*} member 
+ * @param {*} role 
+ */
+function hasRoleOrHigher(member, role) {
+    role = convertToRole(member.guild, role);
+    return member.highestRole.comparePositionTo(role) >= 0;
 }
 
 /**
  * Set the roles of a guildMember. All hoisted roles are removed first
  * 
  * @param {Discord.GuildMember} member - The member to set the roles for
- * @param {Discord.TextChannel} channel - The channel to send messages in
- * @param {String[]} roles - An array of strings representing the names of the roles to give the members
+ * @param {RoleResolvable[]} roles - An array of roles representing the names of the roles to give the members
  */
-function setRoles(member, channel, roles) {
+function setRoles(member, roles) {
     var discordRoles = [];
 
     // Get the backing roles for the names
     for(var i = 0; i < roles.length; i++) {
-        var roleObject = channel.guild.roles.find(r => r.name.toLowerCase() === roles[i].toLowerCase());
+        var roleObject = convertToRole(member.guild, roles[i]);
         if(!roleObject) {
             console.error('Could not find role: ' + roles[i])
             continue;
@@ -253,11 +250,34 @@ function setRoles(member, channel, roles) {
     // Remove all hoisted roles and add the ones specified
     return member.removeRoles(member.roles.filter(role => role.hoist))
     .then(() => {
-        return member.addRoles(discordRoles)
+        return member.addRoles(discordRoles);
     })
     .catch(() => {
-        console.error('Could not remove roles for ' + member.toString());
+        console.error('Could not change roles for ' + member.displayName);
     })
+}
+
+/**
+ * Transforms a role name or role ID into a role. Objects that are already a role are ignored
+ * @param {*} guild 
+ * @param {*} roleId 
+ */
+function convertToRole(guild, roleResolvable) {
+    // Test if it's already a role
+    if(roleResolvable instanceof Discord.Role) {
+        return roleResolvable;
+    }
+
+    // Test if it's an ID
+    let role = guild.roles.get(roleResolvable);
+    if(role != null) {
+        return role;
+    }
+
+    // Test if it's a name
+    role = guild.roles.find(r => r.name.toLowerCase() === roleResolvable.toLowerCase());
+    
+    return role;
 }
 
 /**
@@ -297,7 +317,7 @@ function checkInfractionCount(channel, member, count = null) {
         count = db.infractions.get(member);
     }
     if(count >= infractionLimit) {
-        if(hasRole(member, 'exile')) {
+        if(hasRole(member, discordConfig.roles.exile)) {
             softkick(channel, member, `Doing something illegal while under exile? Come on back when you're feeling more agreeable.`);
         }
         else {
@@ -336,7 +356,7 @@ function promote(channel, sender, target) {
         return;
     }
 
-    if(hasRole(target, 'exile')) {
+    if(hasRole(target, discordConfig.roles.exile)) {
         clearExileTimer(target);
     }
 
@@ -356,7 +376,7 @@ function promote(channel, sender, target) {
     }
 
     // promote the target
-    setRoles(target, channel, [nextHighest.name]);
+    setRoles(target, [nextHighest.name]);
     channel.send(`${target} has been promoted to ${nextHighest.name}!`);
 }
 
@@ -380,7 +400,7 @@ function demote(channel, sender, target) {
         }
     }
 
-    if(hasRole(target, 'exile')) {
+    if(hasRole(target, discordConfig.roles.exile)) {
         clearExileTimer(target);
     }
     
@@ -393,13 +413,13 @@ function demote(channel, sender, target) {
 
     setInfractions(target, null, 0, null);
 
-    if(nextLowest.name.toLowerCase() === 'exile') {
+    if(nextLowest.name.toLowerCase() === discordConfig.roles.exile) {
         exile(target, channel, dayjs().add(1, 'day'));
         return;
     }
 
     // demote the target
-    setRoles(target, channel, [nextLowest.name]);
+    setRoles(target, [nextLowest.name]);
     let roleName = nextLowest.name;
     if(roleName === '@everyone') {
         roleName = 'commoner';
@@ -416,8 +436,8 @@ module.exports = {
     reportInfractions,
     pardon,
     exile,
-    hasPermission,
     hasRole,
+    hasRoleOrHigher,
     setRoles,
     parseTime,
     checkInfractionCount,

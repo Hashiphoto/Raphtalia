@@ -9,12 +9,23 @@ const db = require('./db.js');
 
 // Objects
 var bannedRegex;
+var censorshipEnabled = true;
 
 /**
  * Load all the banned words on startup
  */
 (function(){
     rebuildCensorshipList();
+    db.configuration.get()
+    .then(config => {
+        censorshipEnabled = config.censorshipEnabled;
+        if(censorshipEnabled) {
+            console.log("Censorship is enabled");
+        }
+        else {
+            console.log("Censorship is disabled");
+        }
+    })
 })();
 
 async function rebuildCensorshipList() {
@@ -30,7 +41,6 @@ async function rebuildCensorshipList() {
         }
     }
     regexString += ')(?![a-zA-Z0-9À-ÖØ-öø-ÿ])';
-    console.log(`Banned words: ${regexString}`);
     bannedRegex = new RegExp(regexString, 'gi');
 }
 
@@ -41,9 +51,11 @@ async function rebuildCensorshipList() {
  * @returns {Boolean} - True if the message was censored
  */
 function censorMessage(message) {
+    if(!censorshipEnabled) { return }
+    
     const sender = message.guild.members.get(message.author.id);
     // The supreme dictator is not censored. Also, immigrants are handled by the Arrive command
-    if(helper.hasPermission(sender, discordConfig.roles.dictator) || helper.hasRole(sender, 'immigrant')) {
+    if(helper.hasRole(sender, discordConfig.roles.leader) || helper.hasRole(sender, discordConfig.roles.immigrant)) {
         return false;
     }
     

@@ -8,6 +8,7 @@ const db = require('./db.js');
 const welcomeQuestions = require('./resources/welcome-questions.json');
 const youtube = require('./youtube.js');
 const censorship = require('./censorship.js');
+const discordConfig = require('./config/discord.json')[process.env.NODE_ENV || 'dev'];
 
 /**
  * Very unhelpful at the moment
@@ -16,7 +17,6 @@ const censorship = require('./censorship.js');
  * @param {Discord.GuildMember} sender - The guildMember who issued the command
  */
 function help(channel, sender) {
-    const helpManual = require('./')
     channel.send(`Help yourself, ${sender}`);
 }
 
@@ -43,10 +43,10 @@ function getInfractions(channel, sender, targets) {
  * @param {Discord.TextChannel} channel - The channel to send replies to
  * @param {Discord.GuildMember} sender - The guildMember who issued the command
  * @param {Discord.GuildMember[]} targets - An array of guildMembers to kick
- * @param {String} permissionLevel - The string name of the minimum hoisted role to use this command
+ * @param {RoleResolvable} allowedRole - The minimum hoisted role the sender must have to use this command
  */
-function kick(channel, sender, targets, permissionLevel) {
-    if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
+function kick(channel, sender, targets, allowedRole) {
+    if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
 
     if(targets.length === 0) {
         channel.send('Please repeat the command and specify who is getting the boot');
@@ -73,10 +73,10 @@ function kick(channel, sender, targets, permissionLevel) {
  * @param {Discord.TextChannel} channel - The channel to send replies to
  * @param {Discord.GuildMember} sender - The guildMember who issued the command
  * @param {Discord.GuildMember[]} targets - An array of guildMembers to increase the infraction count for
- * @param {String} permissionLevel - The string name of the minimum hoisted role to use this command
+ * @param {RoleResolvable} allowedRole - The minimum hoisted role the sender must have to use this command
  */
-function report(channel, sender, targets, permissionLevel, args = null) {
-    if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
+function report(channel, sender, targets, allowedRole, args = null) {
+    if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
 
     if(targets.length === 0) {
         channel.send('Please repeat the command and specify who is being reported');
@@ -120,11 +120,11 @@ function report(channel, sender, targets, permissionLevel, args = null) {
  * @param {Discord.TextChannel} channel - The channel to send replies to
  * @param {Discord.GuildMember} sender - The guildMember who issued the command
  * @param {Discord.GuildMember[]} targets - An array of guildMembers to exile
- * @param {String} permissionLevel - The string name of the minimum hoisted role to use this command
+ * @param {RoleResolvable} allowedRole - The minimum hoisted role the sender must have to use this command
  * @param {dayjs} releaseDate - The time when the exile will end
  */
-function exile(channel, sender, targets, permissionLevel, releaseDate) {
-    if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
+function exile(channel, sender, targets, allowedRole, releaseDate) {
+    if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
 
     if(targets.length === 0) {
         channel.send('Please repeat the command and specify who is being exiled');
@@ -142,10 +142,10 @@ function exile(channel, sender, targets, permissionLevel, releaseDate) {
  * @param {Discord.TextChannel} channel - The channel to send replies to
  * @param {Discord.GuildMember} sender - The guildMember who issued the command
  * @param {Discord.GuildMember[]} targets - An array of guildMembers to softkick
- * @param {String} permissionLevel - The string name of the minimum hoisted role to use this command
+ * @param {RoleResolvable} allowedRole - The minimum hoisted role the sender must have to use this command
  */
-function softkick(channel, sender, targets, permissionLevel, reason = '') {
-    if(sender != null && !helper.verifyPermission(sender, channel, permissionLevel)) { return; }
+function softkick(channel, sender, targets, allowedRole, reason = '') {
+    if(sender != null && !helper.verifyPermission(sender, channel, allowedRole)) { return; }
 
     if(targets.length === 0) {
         channel.send('Please repeat the command and specify who is being gently kicked');
@@ -163,10 +163,10 @@ function softkick(channel, sender, targets, permissionLevel, reason = '') {
  * @param {Discord.TextChannel} channel - The channel to send replies to
  * @param {Discord.GuildMember} sender - The guildMember who issued the command
  * @param {Discord.GuildMember[]} targets - An array of guildMembers to pardon
- * @param {String} permissionLevel - The string name of the minimum hoisted role to use this command
+ * @param {RoleResolvable} allowedRole - The minimum hoisted role the sender must have to use this command
  */
-function pardon(channel, sender, targets, permissionLevel) {
-    if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
+function pardon(channel, sender, targets, allowedRole) {
+    if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
 
     if(targets.length === 0) {
         channel.send('Please repeat the command and specify who is being pardoned');
@@ -184,10 +184,10 @@ function pardon(channel, sender, targets, permissionLevel) {
  * @param {Discord.TextChannel} channel - The channel to send replies to
  * @param {Discord.GuildMember} sender - The guildMember who issued the command
  * @param {Discord.GuildMember[]} targets - An array of guildMembers to promote
- * @param {String} permissionLevel - The string name of the minimum hoisted role to use this command
+ * @param {RoleResolvable} allowedRole - The minimum hoisted role the sender must have to use this command
  */
-function promote(channel, sender, targets, permissionLevel) {
-    if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
+function promote(channel, sender, targets, allowedRole) {
+    if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
 
     if(targets.length === 0) {
         channel.send('Please repeat the command and specify who is being promoted');
@@ -205,10 +205,10 @@ function promote(channel, sender, targets, permissionLevel) {
  * @param {Discord.TextChannel} channel - The channel to send replies to
  * @param {Discord.GuildMember} sender - The guildMember who issued the command
  * @param {Discord.GuildMember[]} targets - An array of guildMembers to demote
- * @param {String} permissionLevel - The string name of the minimum hoisted role to use this command
+ * @param {RoleResolvable} allowedRole - The minimum hoisted role the sender must have to use this command
  */
-function demote(channel, sender, targets, permissionLevel) {
-    if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
+function demote(channel, sender, targets, allowedRole) {
+    if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
 
     if(targets.length === 0) {
         channel.send('Please repeat the command and specify who is being demoted');
@@ -226,10 +226,10 @@ function demote(channel, sender, targets, permissionLevel) {
  * @param {Discord.TextChannel} channel - The channel to send replies to
  * @param {Discord.GuildMember} sender - The guildMember who issued the command
  * @param {Discord.GuildMember[]} targets - An array of guildMembers to headpat
- * @param {String} permissionLevel - The string name of the minimum hoisted role to use this command
+ * @param {RoleResolvable} allowedRole - The minimum hoisted role the sender must have to use this command
  */
-function comfort(channel, sender, targets, permissionLevel) {
-    if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
+function comfort(channel, sender, targets, allowedRole) {
+    if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
 
     if(targets.length === 0) {
         channel.send('Please repeat the command and specify who I\'m headpatting');
@@ -275,7 +275,7 @@ function sendTimedMessage(channel, member, qItem) {
  * @param {Discord.GuildMember} member - The guildMember that is being onboarded
  */
 async function arrive(channel, member) {
-    await helper.setRoles(member, channel, [ 'immigrant' ]);
+    await helper.setRolesById(member, [ discordConfig.roles.immigrant ]);
 
     let paper = await db.papers.get(member.id);
     if(paper == null) {
@@ -352,7 +352,7 @@ async function arrive(channel, member) {
             db.papers.createOrUpdate(member.id, paper);
             channel.send(`Thank you! And welcome loyal comrade to ${channel.guild.name}! 🎉🎉🎉`)
             .then(() => {
-                helper.setRoles(member, channel, [ 'comrade' ]);
+                helper.setRoles(member, [ discordConfig.roles.neutral ]);
             })
         }
         catch(e) {
@@ -362,7 +362,7 @@ async function arrive(channel, member) {
     }
     else {
         channel.send(`Welcome back comrade ${member}!`)
-        helper.setRoles(member, channel, [ 'comrade' ]);
+        helper.setRoles(member, [ discordConfig.roles.neutral ]);
     }
 }
 
@@ -373,10 +373,10 @@ async function arrive(channel, member) {
  * @param {Discord.TextChannel} channel 
  * @param {Discord.GuildMember} sender 
  * @param {Discord.GuildMember[]} targets 
- * @param {String} permissionLevel - The string name of the minimum hoisted role to use this command
+ * @param {RoleResolvable} allowedRole - The minimum hoisted role the sender must have to use this command
  */
-function unarrive(channel, sender, targets, permissionLevel) {
-    if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
+function unarrive(channel, sender, targets, allowedRole) {
+    if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
 
     let target = sender;
     if(targets.length > 0) {   
@@ -400,9 +400,9 @@ function unarrive(channel, sender, targets, permissionLevel) {
  * @param {Discord.GuildMember} sender - The guildMember who issued the command
  * @param {String[]} content - The text to parse for args. Can contain a float for volume and the phrase "in [channel name]" to specify 
  * in which voice channel to play, by name.
- * @param {String} permissionLevel - The string name of the minimum hoisted role to use this command in another voice channel
+ * @param {RoleResolvable} allowedRole - The minimum hoisted role the sender must have to use this command in another voice channel
  */
-function play(channel, sender, content, permissionLevel) {
+function play(channel, sender, content, allowedRole) {
     let voiceChannel = null;
     let volume = 0.5;
     // Remove the command
@@ -422,6 +422,9 @@ function play(channel, sender, content, permissionLevel) {
     let secondMatch = null;
     let matches = content.match(/\bin [\w ]+/); // Everything from the "in " until the first slash (/)
     if(matches != null) {
+        // Parameters are restricted permission
+        if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
+
         firstMatch = matches[0].slice(3).trim(); // remove the "in "
         matches = content.match(/\/[\w ]+/); // Everything after the first slash (/), if it exists
         

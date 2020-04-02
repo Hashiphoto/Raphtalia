@@ -132,8 +132,33 @@ var bannedWords = (function() {
     }
 })();
 
+var configuration = (function() {
+    return {
+        /**
+         * Get the current configuration. There will always be only 1 row in the table
+         */
+        get: function() {
+            return pool.query('SELECT * FROM configuration')
+            .then(([rows, fields]) => {
+                if(rows.length === 0) {
+                    return null;
+                }
+                return rows[0];
+            })
+            .catch(e => {
+                console.error(e);
+            })
+        },
+
+        update: function(censorshipEnabled) {
+            return pool.query('UPDATE configuration SET censorshipEnabled = ?', [ censorshipEnabled ])
+        }
+    }
+})();
+
 module.exports = {
     infractions,
     papers,
-    bannedWords
+    bannedWords,
+    configuration
 }

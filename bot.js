@@ -73,60 +73,60 @@ function processCommand(message) {
         break;
 
     case 'kick' :
-        commands.kick(message.channel, sender, mentionedMembers, discordConfig.roles.officer);
+        commands.kick(message.channel, sender, mentionedMembers, discordConfig.roles.gov);
         break;
 
     case 'infract' :
     case 'report' :
-        commands.report(message.channel, sender, mentionedMembers, discordConfig.roles.officer, args);
+        commands.report(message.channel, sender, mentionedMembers, discordConfig.roles.gov, args);
         break;
 
     case 'exile' :
-        commands.exile(message.channel, sender, mentionedMembers, discordConfig.roles.officer, helper.parseTime(message.content));
+        commands.exile(message.channel, sender, mentionedMembers, discordConfig.roles.gov, helper.parseTime(message.content));
         break;
 
     case 'softkick' :
-        commands.softkick(message.channel, sender, mentionedMembers, discordConfig.roles.officer);
+        commands.softkick(message.channel, sender, mentionedMembers, discordConfig.roles.gov);
         break;
 
     case 'pardon' :
-        commands.pardon(message.channel, sender, mentionedMembers, discordConfig.roles.dictator);
+        commands.pardon(message.channel, sender, mentionedMembers, discordConfig.roles.leader);
         break;
 
     case 'promote' :
-        commands.promote(message.channel, sender, mentionedMembers, discordConfig.roles.officer);
+        commands.promote(message.channel, sender, mentionedMembers, discordConfig.roles.gov);
         break;
 
     case 'demote' :
-        commands.demote(message.channel, sender, mentionedMembers, discordConfig.roles.officer);
+        commands.demote(message.channel, sender, mentionedMembers, discordConfig.roles.gov);
         break;
 
     case 'comfort' :
-        commands.comfort(message.channel, sender, mentionedMembers, discordConfig.roles.dictator);
+        commands.comfort(message.channel, sender, mentionedMembers, discordConfig.roles.leader);
         break;
 
     // TESTING ONLY
     case 'unarrive' : 
-        commands.unarrive(message.channel, sender, mentionedMembers, discordConfig.roles.officer);
+        commands.unarrive(message.channel, sender, mentionedMembers, discordConfig.roles.gov);
         break;
 
     case 'anthem':
     case 'sing':
     case 'play':
-        commands.play(message.channel, sender, message.content, discordConfig.roles.officer);
+        commands.play(message.channel, sender, message.content, discordConfig.roles.gov);
         break;
 
     case 'banword':
     case 'banwords':
     case 'bannedwords':
-        censorship.banWords(message.channel, sender, args, discordConfig.roles.officer);
+        censorship.banWords(message.channel, sender, args, discordConfig.roles.gov);
         break;
 
     case 'allowword':
     case 'allowwords':
     case 'unbanword':
     case 'unbanwords':
-        censorship.allowWords(message.channel, sender, args, discordConfig.roles.officer);
+        censorship.allowWords(message.channel, sender, args, discordConfig.roles.gov);
         break;
 
     default:
