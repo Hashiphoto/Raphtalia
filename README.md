@@ -78,3 +78,5 @@ If no words are entered, the list of banned words is printed out.
 **Synonyms**: allowwords, unbanword, unbanwords\
 Allows words to be used. Each word (separated by whitespace) entered after the command will be banned.\
 If no words are entered, the list of banned words is printed out.
+
+### EnableCensorship

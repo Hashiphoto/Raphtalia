@@ -21,7 +21,7 @@ pool.query('SELECT 1+1')
     if(process.env.NODE_ENV === 'dev') {
         let command = `ssh -f ${secretConfig.database.user}@${secretConfig.ssh} -L ${secretConfig.database.port}:localhost:3306 -N`
         console.log('Can\'t connect to the database. Make sure that you are forwarding traffic to the server with the powershell command\n' + command);
-        throw new Error();
+        fail; // This isn't defined on purpose. Look carefully at the error message you're given and do that
     }
     else {
         console.error('Can\'t establish connection to the database\n' + e);

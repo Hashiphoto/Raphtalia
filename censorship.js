@@ -94,6 +94,10 @@ function containsBannedWords(text) {
 }
 
 function banWords(channel, sender, words, permissionLevel) {
+    if(!censorshipEnabled) {
+        channel.send('Censorship is currently disabled');
+        return;
+    }
     if(words.length === 0) {
         printBanList(channel);
         return;
@@ -114,6 +118,10 @@ function banWords(channel, sender, words, permissionLevel) {
 }
 
 function allowWords(channel, sender, words, permissionLevel) {
+    if(!censorshipEnabled) {
+        channel.send('Censorship is currently disabled');
+        return;
+    }
     if(words.length === 0) {
         printBanList(channel);
         return;
@@ -147,9 +155,25 @@ function printBanList(channel) {
     })
 }
 
+function enable(channel, sender, isCensoring, allowedRole) {
+    if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
+
+    censorshipEnabled = isCensoring;
+    db.configuration.update(isCensoring)
+    .then(() => {
+        if(isCensoring) {
+            printBanList(channel);
+        }
+        else {
+            channel.send('All speech is permitted!');
+        }
+    })
+}
+
 module.exports = {
     censorMessage,
     banWords,
     allowWords,
-    containsBannedWords
+    containsBannedWords,
+    enable
 }

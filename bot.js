@@ -129,6 +129,14 @@ function processCommand(message) {
         censorship.allowWords(message.channel, sender, args, discordConfig.roles.gov);
         break;
 
+    case 'enablecensorship':
+        censorship.enable(message.channel, sender, true, discordConfig.roles.leader);
+        break;
+    
+    case 'disablecensorship':
+        censorship.enable(message.channel, sender, false, discordConfig.roles.leader);
+        break;
+
     default:
         message.channel.send(`I think you're confused, Comrade ${sender}`);
     }
