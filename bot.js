@@ -32,6 +32,10 @@ client.on('message', message => {
         return;
     }
 
+    if(message.channel.type === "dm") {
+        return;
+    }
+
     if(message.content.startsWith(prefix)) {
         processCommand(message);
     }
