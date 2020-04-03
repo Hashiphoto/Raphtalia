@@ -142,7 +142,7 @@ function processCommand(message) {
         break;
 
     case 'register':
-
+        commands.registerVoter(message.channel, sender);
         break;
 
     case 'holdvote':

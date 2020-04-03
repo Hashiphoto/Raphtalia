@@ -455,6 +455,16 @@ function play(channel, sender, content, allowedRole) {
     youtube.play(voiceChannel, links.youtube.anthem, volume);
 }
 
+function registerVoter(channel, sender) {
+    helper.addRoles(sender, [ discordConfig.roles.voter ])
+    .then(() => {
+        channel.send(`You are now a registered voter!`);
+    })
+    .catch(() => {
+        channel.send(`You are already registered, dingus`);
+    })
+}
+
 module.exports = {
     help,
     getInfractions,
@@ -468,5 +478,6 @@ module.exports = {
     comfort,
     arrive,
     unarrive,
-    play
+    play,
+    registerVoter
 }

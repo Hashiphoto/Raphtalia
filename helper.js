@@ -235,17 +235,7 @@ function hasRoleOrHigher(member, role) {
  * @param {RoleResolvable[]} roles - An array of roles representing the names of the roles to give the members
  */
 function setRoles(member, roles) {
-    var discordRoles = [];
-
-    // Get the backing roles for the names
-    for(var i = 0; i < roles.length; i++) {
-        var roleObject = convertToRole(member.guild, roles[i]);
-        if(!roleObject) {
-            console.error('Could not find role: ' + roles[i])
-            continue;
-        }
-        discordRoles.push(roleObject);
-    }
+    var discordRoles = parseRoles(member.guild, roles);
 
     // Remove all hoisted roles and add the ones specified
     return member.removeRoles(member.roles.filter(role => role.hoist))
@@ -255,6 +245,25 @@ function setRoles(member, roles) {
     .catch(() => {
         console.error('Could not change roles for ' + member.displayName);
     })
+}
+
+function addRoles(member, roles) {
+    var discordRoles = parseRoles(member.guild, roles);
+
+    return member.addRoles(discordRoles);
+}
+
+function parseRoles(guild, roles) {
+    var discordRoles = [];
+    for(var i = 0; i < roles.length; i++) {
+        var roleObject = convertToRole(guild, roles[i]);
+        if(!roleObject) {
+            console.error('Could not find role: ' + roles[i])
+            continue;
+        }
+        discordRoles.push(roleObject);
+    }
+    return discordRoles;
 }
 
 /**
@@ -442,6 +451,7 @@ module.exports = {
     hasRole,
     hasRoleOrHigher,
     setRoles,
+    addRoles,
     parseTime,
     checkInfractionCount,
     softkick,
