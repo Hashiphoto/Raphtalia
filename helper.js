@@ -95,7 +95,7 @@ function verifyPermission(member, channel, allowedRole) {
  * @param {String} [reason] - A message to append to the end of the infraction notice
  */
 function addInfractions(member, channel, amount = 1, reason = '') {
-    db.infractions.increment(member.id, amount)
+    db.users.incrementInfractions(member.id, amount)
     .then(() => {
         return reportInfractions(member, channel, reason + '\n')
     })
@@ -113,7 +113,7 @@ function addInfractions(member, channel, amount = 1, reason = '') {
  * @param {String} [reason] - A message to append to the end of the infraction notice
  */
 function setInfractions(member, channel, amount = 1, reason = ''){
-    db.infractions.set(member.id, amount)
+    db.users.setInfractions(member.id, amount)
     .then(() => {
         return reportInfractions(member,  channel, reason + '\n')
     })
@@ -131,20 +131,20 @@ function setInfractions(member, channel, amount = 1, reason = ''){
  */
 function reportInfractions(member, channel, pretext = '') {
     const discordName = member.toString();
-    return db.infractions.get(member.id)
-    .then((count) => {
+    return db.users.get(member.id)
+    .then((user) => {
         let reply;
-        if(count === 0) {
+        if(user.infractions === 0) {
             reply = `${discordName} has no recorded infractions`;
         }
         else {
-            reply = `${pretext}${discordName} has incurred ${count} infractions`;
+            reply = `${pretext}${discordName} has incurred ${user.infractions} infractions`;
         }
         if(channel != null) {
             channel.send(reply);
         }
 
-        return count;
+        return user.infractions;
     })
 }
 
@@ -155,7 +155,7 @@ function reportInfractions(member, channel, pretext = '') {
  * @param {Discord.TextChannel} channel - The channel to send messages in
  */
 function pardon(member, channel) {
-    db.infractions.set(member.id, 0);
+    db.users.setInfractions(member.id, 0);
 
     if(hasRole(member, discordConfig.roles.exile)) {
         clearExileTimer(member);
@@ -310,11 +310,14 @@ function parseTime(duration) {
  * Check if infractions is over the limit, then exile the member if so.
  * If they are already in exile, then softkick them.
  * 
+ * @param {Discord.TextChannel} channel - The channel to send messages in
+ * @param {Discord.GuildMember} member - The GuildMember to check infractions for
  * @param {number} count - The number of infractions accrued
  */
-function checkInfractionCount(channel, member, count = null) {
+async function checkInfractionCount(channel, member, count = null) {
     if(count == null) {
-        count = db.infractions.get(member);
+        let user = await db.users.get(member.id);
+        count = user.infractions;
     }
     if(count >= infractionLimit) {
         if(hasRole(member, discordConfig.roles.exile)) {

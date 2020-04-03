@@ -29,73 +29,40 @@ pool.query('SELECT 1+1')
 })
 
 /**
- * Represents the infractions db table
+ * Represents the users db table
  * 
  * Object { "id": varchar, "count": int }
  */
-var infractions = (function() {
+var users = (function() {
     return {
         get: function(id) {
-            return pool.query('SELECT * FROM infractions WHERE id = ?', [ id ])
+            return pool.query('SELECT * FROM users WHERE id = ?', [ id ])
             .then(([rows, fields]) => {
                 if(rows.length === 0) {
-                    return 0;
-                }
-                return rows[0].count;
-            })
-            .catch((error) => console.error(error));
-        },
-
-        increment: function(id, count) {
-            return pool.query('INSERT INTO infractions VALUES (?,?) ON DUPLICATE KEY UPDATE count = count + VALUES(count)', [ id, count ])
-            .catch((error) => console.error(error));
-        },
-        
-        set: function(id, count) {
-            return pool.query('INSERT INTO infractions VALUES (?,?) ON DUPLICATE KEY UPDATE count = VALUES(count)', [ id, count ])
-            .catch((error) => console.error(error));
-        }
-    }
-})();
-
-/**
- * Represents the papers db table
- * 
- * Object { "id": varchar, "nickname": tinyint, "business": tinyint, "risk": tinyint, "loyalty": tinyint }
- */
-var papers = (function() {
-    return {        
-        get: function(id) {
-            return pool.query('SELECT * FROM papers WHERE id = ?', [ id ])
-            .then(([rows, fields]) => {
-                if(rows.length === 0) {
-                    return null;
+                    return { id: id, infractions: 0, citizenship: false };
                 }
                 return rows[0];
             })
             .catch((error) => console.error(error));
         },
 
-        insert: function(paper) {
-            return pool.query('INSERT IGNORE INTO papers VALUES (?,?,?,?,?)', 
-            [ paper.id, paper.nickname, paper.business, paper.risk, paper.loyalty ])
+        updateOrCreate: function(id, user) {
+            return pool.query('REPLACE INTO users VALUES (?,?)', [ user.id, user.infractions, user.citizenship ])
             .catch((error) => console.error(error));
         },
 
-        createOrUpdate: function(id, paper = null) {
-            if(paper == null) {
-                paper = { 'id': id, 'nickname': false, 'business': false, 'risk': false, 'loyalty': false };
-            }
-            return pool.query('INSERT INTO papers VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE nickname = VALUES(nickname), business = VALUES(business), risk = VALUES(risk), loyalty = VALUES(loyalty)', 
-            [ paper.id, paper.nickname, paper.business, paper.risk, paper.loyalty ])
-            .then(() => {
-                return paper;
-            })
+        incrementInfractions: function(id, count) {
+            return pool.query('INSERT INTO users (id, infractions) VALUES (?,?) ON DUPLICATE KEY UPDATE infractions = infractions + VALUES(infractions)', [ id, count ])
+            .catch((error) => console.error(error));
+        },
+        
+        setInfractions: function(id, count) {
+            return pool.query('INSERT INTO users (id, infractions) VALUES (?,?) ON DUPLICATE KEY UPDATE infractions = VALUES(infractions)', [ id, count ])
             .catch((error) => console.error(error));
         },
 
-        delete: function(id) {
-            return pool.query('DELETE FROM papers WHERE id = ?', [ id ])
+        setCitizenship: function(id, isCitizen) {
+            return pool.query('INSERT INTO users (id, citizenship) VALUES (?,?) ON DUPLICATE KEY UPDATE citizenship = VALUES(citizenship)', [ id, isCitizen ])
             .catch((error) => console.error(error));
         }
     }
@@ -157,8 +124,7 @@ var configuration = (function() {
 })();
 
 module.exports = {
-    infractions,
-    papers,
+    users,
     bannedWords,
     configuration
 }

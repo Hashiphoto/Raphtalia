@@ -77,6 +77,7 @@ function censorMessage(message) {
 }
 
 function containsBannedWords(text) {
+    if(!censorshipEnabled) { return false; }
     return text.match(bannedRegex) != null;
 }
 

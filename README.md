@@ -24,10 +24,10 @@ If no number is specified, infractions is increased by 1\
 If the number is written as +3 or -2, infractions will be set relative to the target's current amount.\
 If there is no +/-, infractions is set to whatever number is specified
 
-### Exile [target]+ [1d][1h][1m][1s]
+### Exile [target]+ [duration]
 **Permission**: Officer\
 Exile the targets\
-One or all of the time markers can be used. Ex: `!exile @user 4d 22s 3m` or `!exile @user 3s`\
+One or all of the time markers can be used. Ex: `!exile @user 4d 3h 22s 3m` or `!exile @user 3s`\
 If no timespan is specified, they are exiled indefinitely.\
 The longest time possible is about 20 days. Any time above the limit will be shortened to the limit.\
 If the server goes offline or is otherwise interrupted, all un-exile timers will be cleared.
@@ -86,3 +86,9 @@ Start censoring messages according to the banned word list
 ### DisableCensorship
 **Permission**: Supreme Dictator\
 Stop censoring messages
+
+### HoldVote [options, comma-separated] [duration]
+**Permission**: Leader\
+Ex: `!HoldVote apples, oranges, pineapple 30m 2s`
+Sends a direct message to all voters with the given options. After the duration is over, all collected votes are tallied and the results are announced in the channel this command was sent in.\
+Anything that isn't the time is included as part of the option list. Options must be separated by commas.

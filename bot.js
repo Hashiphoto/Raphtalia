@@ -50,7 +50,7 @@ client.on('guildMemberAdd', (member) => {
 })
 
 client.on('guildMemberRemove', (member) => {
-    db.papers.delete(member.id);
+    db.users.setCitizenship(member.id, false);
 })
 
 client.on("disconnect", function(event) {
@@ -139,6 +139,14 @@ function processCommand(message) {
     
     case 'disablecensorship':
         censorship.enable(message.channel, sender, false, discordConfig.roles.leader);
+        break;
+
+    case 'register':
+
+        break;
+
+    case 'holdvote':
+
         break;
 
     default:

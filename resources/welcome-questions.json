@@ -1,26 +1,27 @@
 {
-    "nickname": 
-    {
-        "question": "What do you want to be called?",
+    "nickname": {
+        "prompt": "What do you want to be called?",
         "answer": ".*",
         "timeout": 45000
     },
-    "business":
-    {
-        "question": "Have you ever owned a business or otherwise supported a free market economy? (yes/no)",
-        "answer": ".*",
-        "timeout": 30000
-    },
-    "risk":
-    {
-        "question": "Are you willing to do anything the government asks of you, even risking life and limb? (yes/no)",
-        "answer": ".*",
-        "timeout": 30000
-    },
-    "loyalty":
-    {
-        "question": "Repeat after me:\n>>> I pledge my heart and soul to the gulag and my fellow comrade. Long live the supreme dictator!",
-        "answer": "I pledge my heart and soul to the gulag and my fellow comrade. Long live the supreme dictator!",
-        "timeout": 180000
-    }
+    "gulagQuestions": [
+        {
+            "prompt": "Have you ever owned a business or otherwise supported a free market economy? (yes/no)",
+            "answer": "^no?$",
+            "strict": true,
+            "timeout": 30000
+        },
+        {
+            "prompt": "Are you willing to do anything the government asks of you, even risking life and limb? (yes/no)",
+            "answer": "^y[ae]*(s|h)?!*$",
+            "strict": true,
+            "timeout": 30000
+        },
+        {
+            "prompt": "Repeat after me:\n>>> I pledge my heart and soul to the gulag and my fellow comrade. Long live the supreme dictator!",
+            "answer": "I pledge my heart and soul to the gulag and my fellow comrade. Long live the supreme dictator!",
+            "strict": false,
+            "timeout": 180000
+        }
+    ]
 }

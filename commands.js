@@ -247,22 +247,55 @@ function comfort(channel, sender, targets, allowedRole) {
  * 
  * @param {Discord.TextChannel} channel - The channel to send the message and listen for responses
  * @param {Discord.GuildMember} member - The only guildMember to listen for responses
- * @param {Object} qItem - The question and answer object
- * @param {String} qItem.question - The question to ask
- * @param {String} qItem.answer - The accepted answer that will be accepted on a RegEx match (case insensitive)
- * @param {number} qItem.timeout - The timeout in milliseconds before a 'time' exception is thrown
+ * @param {Object} question - The question and answer object
+ * @param {String} question.prompt - The question to ask
+ * @param {String} question.answer - The accepted answer that will be accepted on a RegEx match (case insensitive)
+ * @param {number} question.timeout - The timeout in milliseconds before a 'time' exception is thrown
  * @returns {Promise<Discord.Collection<String, Discord.Message>>} On fulfilled, returns a collection of messages received
  */
-function sendTimedMessage(channel, member, qItem) {
+function sendTimedMessage(channel, member, question) {
     const filter = function(message) {
-        var re = new RegExp(qItem.answer, 'gi');
+        var re = new RegExp(question.answer, 'gi');
         return message.content.match(re) != null && message.author.id === member.id;
     };
-    return channel.send(`\`(${qItem.timeout / 1000}s)\`\n${qItem.question}`)
+    return channel.send(`\`(${question.timeout / 1000}s)\`\n${question.prompt}`)
     .then(() => {
         // Get the first message that matches the filter. Errors out if the time limit is reached
-        return channel.awaitMessages(filter, { maxMatches: 1, time: qItem.timeout, errors: ['time'] });
+        return channel.awaitMessages(filter, { maxMatches: 1, time: question.timeout, errors: ['time'] });
     })
+    .then(collected => {
+        return collected.first().content;
+    })
+}
+
+/**
+ * Sends the timed message, but also kicks them if they answer incorrectly or include a censored word
+ * @param {} question 
+ */
+async function askGateQuestion(channel, member, question) {
+    try {
+        // For strict questions, always take the first answer
+        let answerRe = new RegExp(question.answer, 'gi');
+        if(question.strict) {
+            question.answer = '.*';
+        }
+
+        let response = await sendTimedMessage(channel, member, question);
+        if(censorship.containsBannedWords(response)) {
+            helper.softkick(channel, member, 'We don\'t allow those words here');
+            return;
+        }
+
+        // For strict questions, kick them if they answer wrong
+        if(question.strict && response.match(answerRe) == null) {
+            throw new Error('Incorrect response given');
+        }
+        return true;
+    }
+    catch(e) {
+        helper.softkick(channel, member, 'Come join the Gulag when you\'re feeling more agreeable.');
+        return false;
+    }
 }
 
 /**
@@ -275,95 +308,51 @@ function sendTimedMessage(channel, member, qItem) {
  * @param {Discord.GuildMember} member - The guildMember that is being onboarded
  */
 async function arrive(channel, member) {
-    await helper.setRolesById(member, [ discordConfig.roles.immigrant ]);
+    await helper.setRoles(member, [ discordConfig.roles.immigrant ]);
 
-    let paper = await db.papers.get(member.id);
-    if(paper == null) {
-        channel.send(`Welcome ${member} to ${channel.guild.name}!\n` + 
-        `I just have a few questions for you, and then you can enjoy go beautiful community with your fellow comrades.`);
-        paper = await db.papers.createOrUpdate(member.id);
-    }
-
-    if(!paper.nickname) {
-        try{
-            let collected = await sendTimedMessage(channel, member, welcomeQuestions.nickname);
-            let nickname = collected.first().content;
-            if(censorship.containsBannedWords(nickname)) {
-                helper.softkick(channel, member, 'We don\'t those words around these parts. Try again');
-                return;
-            }
-            channel.send(`${member.displayName} will be known as ${nickname}!`);
-            member.setNickname(nickname)
-            .catch((e) => {
-                console.error(e);
-                channel.send(`Sorry. I don't have permissions to set your nickname...`);
-            })
-        }
-        catch(e) {
-            channel.send(`${member} doesn't want a nickname...`);
-        }
-        finally {
-            paper.nickname = true;
-            db.papers.createOrUpdate(member.id, paper);
-        }
-    }
-    if(!paper.business) {
-        try {
-            let collected = await sendTimedMessage(channel, member, welcomeQuestions.business);
-            let response = collected.first().content;
-            if(censorship.containsBannedWords(response)) {
-                helper.softkick(channel, member, 'We don\'t those words around these parts. Try again');
-                return;
-            }
-            if(response.match(/^no?$/gi) == null) {
-                throw new Error('Member likes capitalism smh');
-            }
-            paper.business = true;
-            db.papers.createOrUpdate(member.id, paper);
-        }
-        catch(e) {
-            helper.softkick(channel, member, 'Come join the Gulag when you\'re feeling more agreeable.');
-            return;
-        }
-    }
-    if(!paper.risk) {
-        try {
-            let collected = await sendTimedMessage(channel, member, welcomeQuestions.risk);
-            let response = collected.first().content;
-            if(censorship.containsBannedWords(response)) {
-                helper.softkick(channel, member, 'We don\'t those words around these parts. Try again');
-                return;
-            }
-            if(response.match(/^y[ae]*(s|h)?!?$/gi) == null) {
-                throw new Error('Member is not committed enough smh');
-            }
-            paper.risk = true;
-            db.papers.createOrUpdate(member.id, paper);
-        }
-        catch(e) {
-            helper.softkick(channel, member, 'Come join the Gulag when you\'re feeling more agreeable.');
-            return;
-        }
-    }
-    if(!paper.loyalty) {
-        try {
-            await sendTimedMessage(channel, member, welcomeQuestions.loyalty);
-            paper.loyalty = true;
-            db.papers.createOrUpdate(member.id, paper);
-            channel.send(`Thank you! And welcome loyal comrade to ${channel.guild.name}! 🎉🎉🎉`)
-            .then(() => {
-                helper.setRoles(member, [ discordConfig.roles.neutral ]);
-            })
-        }
-        catch(e) {
-            helper.softkick(channel, member, 'Come join the Gulag when you\'re feeling more agreeable.');
-            return;
-        }
-    }
-    else {
+    let dbUser = await db.users.get(member.id);
+    
+    // Check if already a citizen
+    if(dbUser.citizenship) {
         channel.send(`Welcome back comrade ${member}!`)
         helper.setRoles(member, [ discordConfig.roles.neutral ]);
+        return;
     }
+
+    channel.send(`Welcome ${member} to ${channel.guild.name}!\n` + 
+    `I just have a few questions for you, and then you can enjoy go beautiful community with your fellow comrades.`);
+
+    // Set nickname
+    try{
+        let nickname = await sendTimedMessage(channel, member, welcomeQuestions.nickname);
+        if(censorship.containsBannedWords(nickname)) {
+            helper.softkick(channel, member, 'We don\'t those words around these parts. Try again');
+            return;
+        }
+        channel.send(`${member.displayName} will be known as ${nickname}!`);
+        member.setNickname(nickname)
+        .catch((e) => {
+            console.error(e);
+            channel.send(`Sorry. I don't have permissions to set your nickname...`);
+        })
+    }
+    catch(e) {
+        channel.send(`${member} doesn't want a nickname...`);
+    }
+
+    for(let i = 0; i < welcomeQuestions.gulagQuestions.length; i++) {
+        let answeredCorrect = await askGateQuestion(channel, member, welcomeQuestions.gulagQuestions[i]);
+        if(!answeredCorrect) {
+            return;
+        }
+    }
+
+    // Creates the user in the DB if they didn't exist
+    db.users.setCitizenship(member.id, true);
+    channel.send(`Thank you! And welcome loyal comrade to ${channel.guild.name}! 🎉🎉🎉`)
+    .then(() => {
+        helper.setRoles(member, [ discordConfig.roles.neutral ]);
+    })
 }
 
 /**
@@ -382,7 +371,7 @@ function unarrive(channel, sender, targets, allowedRole) {
     if(targets.length > 0) {   
         target = targets[0];
     }
-    return db.papers.delete(target.id)
+    return db.users.setCitizenship(target.id, false)
     .then(() => {
         return target.roles.forEach((role) => {
             target.removeRole(role);
