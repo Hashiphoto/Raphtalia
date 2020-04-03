@@ -1,5 +1,6 @@
 // Node libraries
 const Discord = require('discord.js');
+const dayjs = require('dayjs');
 
 // Files
 const links = require('./resources/links.json');
@@ -253,12 +254,17 @@ function comfort(channel, sender, targets, allowedRole) {
  * @param {number} question.timeout - The timeout in milliseconds before a 'time' exception is thrown
  * @returns {Promise<Discord.Collection<String, Discord.Message>>} On fulfilled, returns a collection of messages received
  */
-function sendTimedMessage(channel, member, question) {
+function sendTimedMessage(channel, member, question, showDuration = true) {
     const filter = function(message) {
         var re = new RegExp(question.answer, 'gi');
         return message.content.match(re) != null && message.author.id === member.id;
     };
-    return channel.send(`\`(${question.timeout / 1000}s)\`\n${question.prompt}`)
+    let text = '';
+    if(showDuration) {
+        text += `\`(${question.timeout / 1000}s)\`\n`;
+    }
+    text += question.prompt;
+    return channel.send(text)
     .then(() => {
         // Get the first message that matches the filter. Errors out if the time limit is reached
         return channel.awaitMessages(filter, { maxMatches: 1, time: question.timeout, errors: ['time'] });
@@ -465,6 +471,151 @@ function registerVoter(channel, sender) {
     })
 }
 
+function holdVote(channel, sender, content, allowedRole) {
+    if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
+    
+    // Remove the command
+    content = content.replace(/^!\w+\s+/, '');
+
+    // Get the duration and remove it from the command. It must come at the end
+    let timeMatches = content.match(/(\s*\d+[dhms]){1,4}\s*$/gi);
+    let endDate;
+    if(timeMatches == null) {
+        endDate = helper.parseTime('1h');
+    }
+    else {
+        let timeText = timeMatches[0];
+        content = content.slice(0, -timeText.length).trim();
+        endDate = helper.parseTime(timeText);
+    }
+    let duration = endDate.diff(dayjs());
+    if(duration > 0x7FFFFFFF) {
+        duration = 0x7FFFFFFF;
+    }
+
+    // Get the options
+    let options = content.split(',');
+    let voteTally = [];
+    let textOptions = '';
+    let answersRegEx = '^(';
+    for(let i = 0; i < options.length; i++) {
+        options[i] = options[i].trim();
+        if(options[i].length === 0) {
+            continue;
+        }
+        let votingNum = i + 1;
+        textOptions += `${votingNum} - ${options[i]}\n`;
+        voteTally.push({ id: votingNum, name: options[i], votes: 0 });
+        if(i === options.length - 1) {
+            answersRegEx += votingNum;
+        }
+        else {
+            answersRegEx += (votingNum) + '|'
+        }
+    }
+    answersRegEx += ')$'
+    if(voteTally.length === 0) {
+        channel.send('Please try again and specify the options of the vote\nEx: `!HoldVote option a, option b  3h 30m`');
+        return;
+    }
+
+    // Send out the voting messages
+    channel.send(`Voting begins now and ends at ${endDate.format(helper.dateFormat)}`);
+
+    let message = {
+        prompt: `**A vote is being held in ${channel.guild.name}!**\n`+
+        `Please vote for one of the options below by replying with the number of the choice.\n`+
+        `Voting ends at ${endDate.format(helper.dateFormat)}\n\n${textOptions}`,
+        answer: answersRegEx,
+        timeout: duration,
+        strict: false
+    }
+
+    let voters = helper.convertToRole(channel.guild, discordConfig.roles.voter).members;
+    if(voters.size === 0) {
+        channel.send(`There are no registered voters :monkaS:`);
+        return;
+    }
+
+    voters.forEach(voter => {
+        let dmChannel;
+        voter.createDM()
+        .then(channel => {
+            dmChannel = channel;
+            return sendTimedMessage(dmChannel, voter, message, false);
+        })
+        .then(choice => {
+            dmChannel.send(`Thank you for your vote!\nResults will be announced in **${channel.guild.name}/#${channel.name}** when voting is closed`);
+            console.log(`${voter.displayName} chose ${choice}`);
+            voteTally.find(v => v.id === parseInt(choice)).votes++;
+        })
+        .catch(() => {
+            dmChannel.send(`Voting has closed.`);
+        })
+    })
+    /**
+     * NEEEED TO RESOLVE TIES SOMEHOW!!!!!!!!!!!!!!!
+     * Also printing out the percentage for each other thing would be cool
+     */
+
+    // Announce results
+    setTimeout(function() {
+        let resultsMsg = '';
+        let totalVotes = 0;
+        voteTally.sort(function(a, b) { return b.votes - a.votes })
+        voteTally.forEach(option => {
+            totalVotes += option.votes;
+        })
+        voteTally.forEach(option => {
+            resultsMsg += `${option.name} (${option.votes} votes | ${percentFormat(option.votes / totalVotes)}%)\n`;
+        })
+
+        // Check for ties
+        let ties = [];
+        ties.push(voteTally[0]);
+        for(let i = 1; i < voteTally.length; i++) {
+            if(voteTally[i].votes == ties[0].votes) {
+                ties.push(voteTally[i]);
+            }
+        }
+        if(ties.length > 1) {
+            let tieList = '';
+            for(let i = 0; i < ties.length; i++) {
+                tieList += ties[i].name.toUpperCase();
+                if(i === ties.length - 2) {
+                    tieList += ', and ';
+                }
+                else if(i < ties.length - 1) {
+                    tieList += ', ';
+                }
+            }
+            channel.send(`Voting is done!\n**There is a ${ties.length}-way tie between ${tieList}** ` + 
+            `with ${percentFormat(ties[0].votes / totalVotes)}% of the vote each\n${resultsMsg}`);
+        }
+        else {
+            channel.send(`Voting is done!\n**The winner is ${voteTally[0].name.toUpperCase()}** ` + 
+            `with ${percentFormat(voteTally[0].votes / totalVotes)}% of the vote\n${resultsMsg}`);
+        }
+    }, duration);
+}
+
+function percentFormat(number) {
+    return (number * 100).toFixed(2);
+}
+
+function whisper(channel, sender, targets, content, allowedRole) {
+    if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
+
+    if(targets.length === 0) {
+        channel.send('Please repeat the command and specify who I am whispering to');
+        return;
+    }
+    // remove the command and targeet from the content
+    content = content.replace(/^\S+\s+<@!?(\d+)>\s+/, '');
+
+    targets[0].send(content);
+}
+
 module.exports = {
     help,
     getInfractions,
@@ -479,5 +630,7 @@ module.exports = {
     arrive,
     unarrive,
     play,
-    registerVoter
+    registerVoter,
+    holdVote,
+    whisper,
 }

@@ -9,6 +9,7 @@ const discordConfig = require('./config/discord.json')[process.env.NODE_ENV || '
 
 // Objects
 const infractionLimit = 3;
+const dateFormat = 'h:mm A on MMM D, YYYY';
 // This will keep track of which process id is tracking the exile release timer for each
 // exile. The Key is the DiscordID and the Value is the object returned by SetTimeout()
 var exileTimers = new Map();
@@ -186,7 +187,7 @@ function exile(member, channel, releaseDate = null) {
         let timerId = setTimeout(() => { pardon(member, channel) }, duration);
         clearExileTimer(member);
         exileTimers.set(member.id, timerId);
-        message = `\nYou will be released at ${releaseDate.format('h:mm A on MMM D, YYYY')}`;
+        message = `\nYou will be released at ${releaseDate.format(dateFormat)}`;
     }
     else {
         message = `\nYou will be held indefinitely! May the Supreme Dictator have mercy on you.`;
@@ -300,7 +301,7 @@ function parseTime(duration) {
     let matches = duration.match(/\d+[dhms]/g);
     if(!matches) { return null }
     let timePairs = [];
-    let releaseDate = dayjs();
+    let endDate = dayjs();
     matches.forEach(m => {
         // Get the last character as the type (h, m, d, s)
         let timeType = m.slice(-1);
@@ -309,10 +310,10 @@ function parseTime(duration) {
         timePairs.push({ type: timeType, length: timeLength });
     })
     timePairs.forEach(pair => {
-        releaseDate = releaseDate.add(pair.length, pair.type);
+        endDate = endDate.add(pair.length, pair.type);
     })
 
-    return releaseDate;
+    return endDate;
 }
 
 /**
@@ -456,5 +457,7 @@ module.exports = {
     checkInfractionCount,
     softkick,
     promote,
-    demote
+    demote,
+    dateFormat,
+    convertToRole
 }

@@ -146,8 +146,13 @@ function processCommand(message) {
         break;
 
     case 'holdvote':
-
+        commands.holdVote(message.channel, sender, message.content, discordConfig.roles.leader);
         break;
+        
+    // Needs more work for it to be useful
+    // case 'whisper':
+    //     commands.whisper(message.channel, sender, mentionedMembers, message.content, discordConfig.roles.leader);
+    //     break;
 
     default:
         message.channel.send(`I think you're confused, Comrade ${sender}`);
