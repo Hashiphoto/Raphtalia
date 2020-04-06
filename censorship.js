@@ -26,6 +26,9 @@ var censorshipEnabled = true;
             console.log("Censorship is disabled");
         }
     })
+    .catch(() => {
+        console.log('Cannot connect to the database');
+    })
 })();
 
 async function rebuildCensorshipList() {

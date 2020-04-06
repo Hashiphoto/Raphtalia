@@ -471,11 +471,21 @@ function registerVoter(channel, sender) {
     })
 }
 
-function holdVote(channel, sender, content, allowedRole) {
+function holdVote(channel, sender, mentionedMembers, content, allowedRole) {
     if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
     
     // Remove the command
     content = content.replace(/^!\w+\s+/, '');
+
+    // Replace the mentions with their nicknames and tags
+    for(let i = 0; i < mentionedMembers.length; i++) {
+        let re = new RegExp(`<@!?${mentionedMembers[i].id}>`);
+        let plainText = mentionedMembers[i].user.tag;
+        if(mentionedMembers[i].nickname) {
+            plainText += ` (${mentionedMembers[i].nickname})`;
+        }
+        content = content.replace(re, plainText);
+    }
 
     // Get the duration and remove it from the command. It must come at the end
     let timeMatches = content.match(/(\s*\d+[dhms]){1,4}\s*$/gi);
@@ -494,6 +504,7 @@ function holdVote(channel, sender, content, allowedRole) {
     }
 
     // Get the options
+    // TODO: For mentions, get the nickname and append that 
     let options = content.split(',');
     let voteTally = [];
     let textOptions = '';
@@ -553,10 +564,6 @@ function holdVote(channel, sender, content, allowedRole) {
             dmChannel.send(`Voting has closed.`);
         })
     })
-    /**
-     * NEEEED TO RESOLVE TIES SOMEHOW!!!!!!!!!!!!!!!
-     * Also printing out the percentage for each other thing would be cool
-     */
 
     // Announce results
     setTimeout(function() {
@@ -600,6 +607,9 @@ function holdVote(channel, sender, content, allowedRole) {
 }
 
 function percentFormat(number) {
+    if(isNaN(number)) {
+        number = 0;
+    }
     return (number * 100).toFixed(2);
 }
 

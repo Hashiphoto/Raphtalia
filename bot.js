@@ -146,7 +146,7 @@ function processCommand(message) {
         break;
 
     case 'holdvote':
-        commands.holdVote(message.channel, sender, message.content, discordConfig.roles.leader);
+        commands.holdVote(message.channel, sender, mentionedMembers, message.content, discordConfig.roles.leader);
         break;
         
     // Needs more work for it to be useful
@@ -196,7 +196,7 @@ function getMemberMentions(guild, args) {
  */
 function getUserFromMention(mention) {
 	// The id is the first and only match found by the RegEx.
-	let matches = mention.match(/^<@!?(\d+)>$/);
+	let matches = mention.match(/<@!?(\d+)>/);
 
 	// If supplied variable was not a mention, matches will be null instead of an array.
 	if (!matches) {
