@@ -504,7 +504,6 @@ function holdVote(channel, sender, mentionedMembers, content, allowedRole) {
     }
 
     // Get the options
-    // TODO: For mentions, get the nickname and append that 
     let options = content.split(',');
     let voteTally = [];
     let textOptions = '';
@@ -516,7 +515,7 @@ function holdVote(channel, sender, mentionedMembers, content, allowedRole) {
         }
         let votingNum = i + 1;
         textOptions += `${votingNum} - ${options[i]}\n`;
-        voteTally.push({ id: votingNum, name: options[i], votes: 0 });
+        voteTally.push({ id: votingNum, name: options[i], votes: 0, percentage: '' });
         if(i === options.length - 1) {
             answersRegEx += votingNum;
         }
@@ -567,15 +566,31 @@ function holdVote(channel, sender, mentionedMembers, content, allowedRole) {
 
     // Announce results
     setTimeout(function() {
-        let resultsMsg = '';
         let totalVotes = 0;
+
+        // Get results 
         voteTally.sort(function(a, b) { return b.votes - a.votes })
         voteTally.forEach(option => {
             totalVotes += option.votes;
         })
         voteTally.forEach(option => {
-            resultsMsg += `${option.name} (${option.votes} votes | ${percentFormat(option.votes / totalVotes)}%)\n`;
+            option.percentage = `${percentFormat(option.votes / totalVotes)}%`;
         })
+
+        // Format results into table
+        let longestName = 0, longestPercent = 0;
+        voteTally.forEach(option => {
+            if(option.name.length > longestName) { longestName = option.name.length; }
+            if(option.percentage.length > longestPercent) { longestPercent = option.percentage.length; }
+        })
+        let fill = ' ';
+        let resultsMsg = '```';
+        voteTally.forEach(option => {
+            let nameFormatted    = option.name + fill.repeat(longestName - option.name.length);
+            let percentFormatted = fill.repeat(longestPercent - option.percentage.length) + option.percentage;
+            resultsMsg += `${nameFormatted} | ${percentFormatted} | ${option.votes} votes\n`
+        })
+        resultsMsg += '```';
 
         // Check for ties
         let ties = [];
@@ -604,6 +619,10 @@ function holdVote(channel, sender, mentionedMembers, content, allowedRole) {
             `with ${percentFormat(voteTally[0].votes / totalVotes)}% of the vote\n${resultsMsg}`);
         }
     }, duration);
+}
+
+function discordTableFormat(table) {
+
 }
 
 function percentFormat(number) {
