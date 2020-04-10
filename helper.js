@@ -451,18 +451,20 @@ function demote(channel, sender, target) {
  * @param {String} pretext - Text to prepend at the beginning of the infraction message
  */
 function reportCurrency(member, channel) {
-    const discordName = member.toString();
     return db.users.get(member.id)
     .then((user) => {
         let reply;
         if(user.currency === 0) {
-            reply = `${discordName} is broke!`;
+            reply = `You are broke!`;
         }
         else if(user.currency < 0) {
-            reply = `${discordName} is $${user.currency.toFixed(2)} in debt`;
+            reply = `You are $${user.currency.toFixed(2)} in debt`;
         }
         else {
-            reply = `${discordName} has $${user.currency.toFixed(2)}`;
+            reply = `You have $${user.currency.toFixed(2)}`;
+        }
+        if(channel.type === 'dm') {
+            reply += ` in ${member.guild.name}`
         }
         if(channel != null) {
             channel.send(reply);
@@ -481,11 +483,8 @@ function reportCurrency(member, channel) {
  * @param {Number} [amount] - The amount of infractions to increase by (default is 1)
  * @param {String} [reason] - A message to append to the end of the infraction notice
  */
-function addCurrency(member, channel, amount = 1) {
-    db.users.incrementCurrency(member.id, amount)
-    .then(() => {
-        return reportCurrency(member, channel);
-    })
+function addCurrency(member, amount = 1) {
+    return db.users.incrementCurrency(member.id, amount)
 }
 
 module.exports = {

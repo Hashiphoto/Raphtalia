@@ -644,17 +644,14 @@ function whisper(channel, sender, targets, content, allowedRole) {
  * Reports the currency for a list of guildMembers. Pass in an empty array
  * for targets or leave it as null to report the sender's infractions instead
  * 
- * @param {Discord.TextChannel} channel - The channel to send replies to
  * @param {Discord.GuildMember} sender - Whoever issued the command
  * @param {Discord.GuildMember[]} targets An array of guildMember objects to get the infractions for
  */
-function getCurrency(channel, sender, targets) {
-    if(targets == null || targets.length === 0) {
-        helper.reportCurrency(sender, channel);
-    }
-    else {
-        helper.reportCurrency(targets[0], channel);
-    }
+function getCurrency(sender) {
+    sender.createDM()
+    .then(dmChannel => {
+        helper.reportCurrency(sender, dmChannel);
+    })
 }
 
 function addCurrency(channel, sender, targets, allowedRole, args) {
@@ -675,12 +672,13 @@ function addCurrency(channel, sender, targets, allowedRole, args) {
     })
 
     if(targets.length === 0) {
-        helper.addCurrency(sender, channel, amount);
+        helper.addCurrency(sender, amount);
         return;
     }
     targets.forEach((target) => {
-        helper.addCurrency(target, channel, amount);
+        helper.addCurrency(target, amount);
     })
+    channel.send('Currency added!');
 }
 
 module.exports = {

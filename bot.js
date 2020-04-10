@@ -154,10 +154,13 @@ function processCommand(message) {
     //     commands.whisper(message.channel, sender, mentionedMembers, message.content, discordConfig.roles.leader);
     //     break;
 
+    case 'wallet':
+    case 'balance':
+    case 'cash':
     case 'bank':
     case 'money':
     case 'currency':
-        commands.getCurrency(message.channel, sender, mentionedMembers);
+        commands.getCurrency(sender);
         break;
 
     case 'addmoney':
