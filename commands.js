@@ -112,7 +112,6 @@ function report(channel, sender, targets, allowedRole, args = null) {
             helper.setInfractions(target, channel, amount, 'Yes sir~!');
         }
     })
-    
 }
 
 /**
@@ -641,6 +640,49 @@ function whisper(channel, sender, targets, content, allowedRole) {
     targets[0].send(content);
 }
 
+/**
+ * Reports the currency for a list of guildMembers. Pass in an empty array
+ * for targets or leave it as null to report the sender's infractions instead
+ * 
+ * @param {Discord.TextChannel} channel - The channel to send replies to
+ * @param {Discord.GuildMember} sender - Whoever issued the command
+ * @param {Discord.GuildMember[]} targets An array of guildMember objects to get the infractions for
+ */
+function getCurrency(channel, sender, targets) {
+    if(targets == null || targets.length === 0) {
+        helper.reportCurrency(sender, channel);
+    }
+    else {
+        helper.reportCurrency(targets[0], channel);
+    }
+}
+
+function addCurrency(channel, sender, targets, allowedRole, args) {
+    if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
+
+    if(!args || args.length === 0) {
+        channel.send('Please try again and specify the amount of money');
+        return;
+    }
+
+    let amount = 1;
+    args.forEach(arg => {
+        if(arg.match(/^.\d*(\.\d+)?$/)) {
+            arg = arg.replace(/[^\d\.]/g, '');
+            amount = parseFloat(arg);
+            amount = (Math.floor(amount * 100) / 100);
+        }
+    })
+
+    if(targets.length === 0) {
+        helper.addCurrency(sender, channel, amount);
+        return;
+    }
+    targets.forEach((target) => {
+        helper.addCurrency(target, channel, amount);
+    })
+}
+
 module.exports = {
     help,
     getInfractions,
@@ -658,4 +700,6 @@ module.exports = {
     registerVoter,
     holdVote,
     whisper,
+    getCurrency,
+    addCurrency
 }

@@ -154,6 +154,17 @@ function processCommand(message) {
     //     commands.whisper(message.channel, sender, mentionedMembers, message.content, discordConfig.roles.leader);
     //     break;
 
+    case 'bank':
+    case 'money':
+    case 'currency':
+        commands.getCurrency(message.channel, sender, mentionedMembers);
+        break;
+
+    case 'addmoney':
+    case 'createmoney':
+        commands.addCurrency(message.channel, sender, mentionedMembers, discordConfig.roles.gov, args)
+        break;
+
     default:
         message.channel.send(`I think you're confused, Comrade ${sender}`);
     }

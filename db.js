@@ -39,7 +39,7 @@ var users = (function() {
             return pool.query('SELECT * FROM users WHERE id = ?', [ id ])
             .then(([rows, fields]) => {
                 if(rows.length === 0) {
-                    return { id: id, infractions: 0, citizenship: false };
+                    return { id: id, infractions: 0, citizenship: false, currency: 0 };
                 }
                 return rows[0];
             })
@@ -58,6 +58,16 @@ var users = (function() {
         
         setInfractions: function(id, count) {
             return pool.query('INSERT INTO users (id, infractions) VALUES (?,?) ON DUPLICATE KEY UPDATE infractions = VALUES(infractions)', [ id, count ])
+            .catch((error) => console.error(error));
+        },
+
+        incrementCurrency: function(id, count) {
+            return pool.query('INSERT INTO users (id, currency) VALUES (?,?) ON DUPLICATE KEY UPDATE currency = currency + VALUES(currency)', [ id, count ])
+            .catch((error) => console.error(error));
+        },
+        
+        setCurrency: function(id, count) {
+            return pool.query('INSERT INTO users (id, currency) VALUES (?,?) ON DUPLICATE KEY UPDATE currency = VALUES(currency)', [ id, count ])
             .catch((error) => console.error(error));
         },
 

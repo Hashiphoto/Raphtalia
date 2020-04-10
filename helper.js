@@ -443,6 +443,51 @@ function demote(channel, sender, target) {
     channel.send(`${target} has been demoted to ${roleName}!`);
 }
 
+/**
+ * Print out the number of infractions a member has incurred in the given channel
+ * 
+ * @param {Discord.GuildMember} member - The member whose fractions are reported
+ * @param {Discord.TextChannel} channel - The channel to send messages in
+ * @param {String} pretext - Text to prepend at the beginning of the infraction message
+ */
+function reportCurrency(member, channel) {
+    const discordName = member.toString();
+    return db.users.get(member.id)
+    .then((user) => {
+        let reply;
+        if(user.currency === 0) {
+            reply = `${discordName} is broke!`;
+        }
+        else if(user.currency < 0) {
+            reply = `${discordName} is $${user.currency.toFixed(2)} in debt`;
+        }
+        else {
+            reply = `${discordName} has $${user.currency.toFixed(2)}`;
+        }
+        if(channel != null) {
+            channel.send(reply);
+        }
+
+        return user.currency;
+    })
+}
+
+/**
+ * Increases the infraction count for a given member. If they exceed the infractionLimit, the member
+ * is exiled
+ * 
+ * @param {Discord.GuildMember} member - The member to infract
+ * @param {Discord.TextChannel} channel - The channel to send messages in
+ * @param {Number} [amount] - The amount of infractions to increase by (default is 1)
+ * @param {String} [reason] - A message to append to the end of the infraction notice
+ */
+function addCurrency(member, channel, amount = 1) {
+    db.users.incrementCurrency(member.id, amount)
+    .then(() => {
+        return reportCurrency(member, channel);
+    })
+}
+
 module.exports = {
     getNextRole,
     getPreviousRole,
@@ -462,5 +507,7 @@ module.exports = {
     promote,
     demote,
     dateFormat,
-    convertToRole
+    convertToRole,
+    reportCurrency,
+    addCurrency
 }
