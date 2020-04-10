@@ -112,10 +112,10 @@ var bannedWords = (function() {
 var configuration = (function() {
     return {
         /**
-         * Get the current configuration. There will always be only 1 row in the table
+         * Get the current configuration. Currently not scalable (only works with 1 guild)
          */
         get: function() {
-            return pool.query('SELECT * FROM configuration')
+            return pool.query('SELECT * FROM guilds')
             .then(([rows, fields]) => {
                 if(rows.length === 0) {
                     return null;
@@ -128,7 +128,7 @@ var configuration = (function() {
         },
 
         update: function(censorshipEnabled) {
-            return pool.query('UPDATE configuration SET censorshipEnabled = ?', [ censorshipEnabled ])
+            return pool.query('UPDATE guilds SET censorshipEnabled = ?', [ censorshipEnabled ])
         }
     }
 })();
