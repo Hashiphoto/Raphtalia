@@ -239,7 +239,8 @@ function setRoles(member, roles) {
     var discordRoles = parseRoles(member.guild, roles);
 
     // Remove all hoisted roles and add the ones specified
-    return member.removeRoles(member.roles.filter(role => role.hoist))
+    let hoistedRoles = member.roles.filter(role => role.hoist);
+    return member.removeRoles(hoistedRoles)
     .then(() => {
         return member.addRoles(discordRoles);
     })
@@ -348,7 +349,9 @@ function softkick(channel, target, reason) {
         return target.kick();
     })
     .then((member) => {
-        return channel.send(`:wave: ${member.displayName} has been kicked and invited back\n${links.gifs.softkick}`);
+        let randInt = Math.floor(Math.random() * links.gifs.kicks.length);
+        let kickGif = links.gifs.kicks[randInt];
+        return channel.send(`:wave: ${member.displayName} has been kicked and invited back\n${kickGif}`);
     })
     .catch(() => {
         channel.send('Something went wrong...');

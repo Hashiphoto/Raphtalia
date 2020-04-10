@@ -56,7 +56,7 @@ function kick(channel, sender, targets, allowedRole) {
 
     targets.forEach((target) => {
         target.kick()
-        .then((member) => {           
+        .then((member) => {
             let randInt = Math.floor(Math.random() * links.gifs.kicks.length);
             let kickGif = links.gifs.kicks[randInt];
             channel.send(`:wave: ${member.displayName} has been kicked\n${kickGif}`);
@@ -619,10 +619,6 @@ function holdVote(channel, sender, mentionedMembers, content, allowedRole) {
             `with ${percentFormat(voteTally[0].votes / totalVotes)}% of the vote\n${resultsMsg}`);
         }
     }, duration);
-}
-
-function discordTableFormat(table) {
-
 }
 
 function percentFormat(number) {
