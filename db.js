@@ -67,7 +67,7 @@ var users = (function() {
         },
 
         setCitizenship: function(id, guildId, isCitizen) {
-            return pool.query('INSERT INTO users (id, guildId, citizenship) VALUES (?,?,?) ON DUPLICATE KEY UPDATE citizenship = VALUES(citizenship)', [ id, guildId, isCitizen ])
+            return pool.query('INSERT INTO users (id, guild_id, citizenship) VALUES (?,?,?) ON DUPLICATE KEY UPDATE citizenship = VALUES(citizenship)', [ id, guildId, isCitizen ])
             .catch((error) => console.error(error));
         }
     }

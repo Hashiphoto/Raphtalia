@@ -286,7 +286,8 @@ async function askGateQuestion(channel, member, question) {
         }
 
         let response = await sendTimedMessage(channel, member, question);
-        if(censorship.containsBannedWords(response)) {
+
+        if(await censorship.containsBannedWords(channel.guild.id, response)) {
             helper.softkick(channel, member, 'We don\'t allow those words here');
             return;
         }
@@ -330,8 +331,8 @@ async function arrive(channel, member) {
     // Set nickname
     try{
         let nickname = await sendTimedMessage(channel, member, welcomeQuestions.nickname);
-        if(censorship.containsBannedWords(nickname)) {
-            helper.softkick(channel, member, 'We don\'t those words around these parts. Try again');
+        if(await censorship.containsBannedWords(channel.guild.id, nickname)) {
+            helper.softkick(channel, member, 'We don\'t allow those words around here');
             return;
         }
         channel.send(`${member.displayName} will be known as ${nickname}!`);
@@ -342,6 +343,7 @@ async function arrive(channel, member) {
         })
     }
     catch(e) {
+        console.error(e);
         channel.send(`${member} doesn't want a nickname...`);
     }
 
