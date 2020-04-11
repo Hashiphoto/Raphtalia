@@ -88,6 +88,9 @@ Start censoring messages according to the banned word list
 **Permission**: Supreme Dictator\
 Stop censoring messages
 
+### Register
+Add the "voter" role to the sender
+
 ### HoldVote [options, comma-separated] [duration]
 **Permission**: Leader\
 Ex: `!HoldVote apples, oranges, pineapple 30m 2s`
