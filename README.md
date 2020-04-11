@@ -18,6 +18,7 @@ If there is no target specified, the number of infractions the sender has is rep
 Kick the targets from the server with a wave and a gif
 
 ### Report [target]+ [number]
+**Permission**: Officer\
 **Synonyms**: infract\
 Increase the infraction count of the targets. This will check if they are over the limit and demote the appropriately as well.\
 If no number is specified, infractions is increased by 1\
