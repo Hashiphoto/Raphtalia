@@ -315,7 +315,7 @@ async function askGateQuestion(channel, member, question) {
 async function arrive(channel, member) {
     await helper.setRoles(member, [ discordConfig.roles.immigrant ]);
 
-    let dbUser = await db.users.get(member.id);
+    let dbUser = await db.users.get(member.id, member.guild.id);
     
     // Check if already a citizen
     if(dbUser.citizenship) {
@@ -353,7 +353,7 @@ async function arrive(channel, member) {
     }
 
     // Creates the user in the DB if they didn't exist
-    db.users.setCitizenship(member.id, true);
+    db.users.setCitizenship(member.id, member.guild.id, true);
     channel.send(`Thank you! And welcome loyal comrade to ${channel.guild.name}! 🎉🎉🎉`)
     .then(() => {
         helper.setRoles(member, [ discordConfig.roles.neutral ]);
@@ -376,7 +376,7 @@ function unarrive(channel, sender, targets, allowedRole) {
     if(targets.length > 0) {   
         target = targets[0];
     }
-    return db.users.setCitizenship(target.id, false)
+    return db.users.setCitizenship(target.id, member.guild.id, false)
     .then(() => {
         return target.roles.forEach((role) => {
             target.removeRole(role);

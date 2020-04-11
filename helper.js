@@ -96,7 +96,7 @@ function verifyPermission(member, channel, allowedRole) {
  * @param {String} [reason] - A message to append to the end of the infraction notice
  */
 function addInfractions(member, channel, amount = 1, reason = '') {
-    db.users.incrementInfractions(member.id, amount)
+    db.users.incrementInfractions(member.id, member.guild.id, amount)
     .then(() => {
         return reportInfractions(member, channel, reason + '\n')
     })
@@ -114,7 +114,7 @@ function addInfractions(member, channel, amount = 1, reason = '') {
  * @param {String} [reason] - A message to append to the end of the infraction notice
  */
 function setInfractions(member, channel, amount = 1, reason = ''){
-    db.users.setInfractions(member.id, amount)
+    db.users.setInfractions(member.id, member.guild.id, amount)
     .then(() => {
         return reportInfractions(member,  channel, reason + '\n')
     })
@@ -132,7 +132,7 @@ function setInfractions(member, channel, amount = 1, reason = ''){
  */
 function reportInfractions(member, channel, pretext = '') {
     const discordName = member.toString();
-    return db.users.get(member.id)
+    return db.users.get(member.id, member.guild.id)
     .then((user) => {
         let reply;
         if(user.infractions === 0) {
@@ -156,7 +156,7 @@ function reportInfractions(member, channel, pretext = '') {
  * @param {Discord.TextChannel} channel - The channel to send messages in
  */
 function pardon(member, channel) {
-    db.users.setInfractions(member.id, 0);
+    db.users.setInfractions(member.id, member.guild.id, 0);
 
     if(hasRole(member, discordConfig.roles.exile)) {
         clearExileTimer(member);
@@ -327,7 +327,7 @@ function parseTime(duration) {
  */
 async function checkInfractionCount(channel, member, count = null) {
     if(count == null) {
-        let user = await db.users.get(member.id);
+        let user = await db.users.get(member.id, member.guild.id);
         count = user.infractions;
     }
     if(count >= infractionLimit) {
@@ -451,7 +451,7 @@ function demote(channel, sender, target) {
  * @param {String} pretext - Text to prepend at the beginning of the infraction message
  */
 function reportCurrency(member, channel) {
-    return db.users.get(member.id)
+    return db.users.get(member.id, member.guild.id)
     .then((user) => {
         let reply;
         if(user.currency === 0) {
@@ -484,7 +484,7 @@ function reportCurrency(member, channel) {
  * @param {String} [reason] - A message to append to the end of the infraction notice
  */
 function addCurrency(member, amount = 1) {
-    return db.users.incrementCurrency(member.id, amount)
+    return db.users.incrementCurrency(member.id, member.guild.id, amount)
 }
 
 module.exports = {

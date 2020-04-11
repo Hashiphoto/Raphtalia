@@ -50,7 +50,7 @@ client.on('guildMemberAdd', (member) => {
 })
 
 client.on('guildMemberRemove', (member) => {
-    db.users.setCitizenship(member.id, false);
+    db.users.setCitizenship(member.id, member.guild.id, false);
 })
 
 client.on("disconnect", function(event) {
