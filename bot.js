@@ -163,10 +163,10 @@ function processCommand(message) {
         commands.getCurrency(sender);
         break;
 
-    case 'addmoney':
-    case 'createmoney':
-        commands.addCurrency(message.channel, sender, mentionedMembers, discordConfig.roles.gov, args)
-        break;
+    // case 'addmoney':
+    // case 'createmoney':
+    //     commands.addCurrency(message.channel, sender, mentionedMembers, discordConfig.roles.gov, args)
+    //     break;
 
     default:
         message.channel.send(`I think you're confused, Comrade ${sender}`);
