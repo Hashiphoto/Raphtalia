@@ -218,6 +218,10 @@ async function processCommand(message) {
         commands.setAutoDelete(responseChannel, sender, args, discordConfig.roles.leader);
         break;
 
+    case 'give':
+        commands.giveCurrency(responseChannel, sender, mentionedMembers, args);
+        break;
+
     default:
         if(responseChannel) {
             responseChannel.watchSend(`I think you're confused, Comrade ${sender}`);

@@ -651,33 +651,6 @@ function getCurrency(sender) {
     })
 }
 
-function addCurrency(channel, sender, targets, allowedRole, args) {
-    if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
-
-    if(!args || args.length === 0) {
-        if(channel) channel.watchSend('Please try again and specify the amount of money');
-        return;
-    }
-
-    let amount = 1;
-    args.forEach(arg => {
-        if(arg.match(/^.\d*(\.\d+)?$/)) {
-            arg = arg.replace(/[^\d\.]/g, '');
-            amount = parseFloat(arg);
-            amount = (Math.floor(amount * 100) / 100);
-        }
-    })
-
-    if(targets.length === 0) {
-        helper.addCurrency(sender, amount);
-        return;
-    }
-    targets.forEach((target) => {
-        helper.addCurrency(target, amount);
-    })
-    if(channel) channel.watchSend('Currency added!');
-}
-
 function setAutoDelete(channel, sender, args, allowedRole) {
     if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
     if(!args || args.length === 0) {
@@ -746,6 +719,34 @@ async function clearChannel(channel) {
     while(fetched.size > pinnedMessages.size);
 }
 
+function giveCurrency(channel, sender, targets, args) {
+    if(!args || args.length === 0) {
+        if(channel) channel.watchSend('Please try again and specify the amount of money');
+        return;
+    }
+
+    let amount = 1;
+    args.forEach(arg => {
+        if(arg.match(/^.\d*(\.\d+)?$/)) {
+            arg = arg.replace(/[^\d\.]/g, '');
+            amount = parseFloat(arg);
+            amount = (Math.floor(amount * 100) / 100);
+        }
+    })
+    let totalAmount = amount * targets.length;
+    db.users.get(sender.id, sender.guild.id)
+    .then(dbUser => {
+        if(dbUser.currency < totalAmount) {
+            return channel.watchSend('You don\'t have enough money for that');
+        }
+        helper.addCurrency(sender, -totalAmount);
+        targets.forEach((target) => {
+            helper.addCurrency(target, amount);
+        })
+        channel.watchSend('Money transferred!');
+    })
+}
+
 module.exports = {
     help,
     getInfractions,
@@ -764,6 +765,6 @@ module.exports = {
     holdVote,
     whisper,
     getCurrency,
-    addCurrency,
-    setAutoDelete
+    setAutoDelete,
+    giveCurrency
 }
