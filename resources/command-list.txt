@@ -1,0 +1,28 @@
+**COMMANDS**
+Commands are not case-sensitive. There are also many synonyms for commands that are identical (infract = report, money = balance, etc.)
+Commands work in any channel @Raphtalia#7020 is in, but should only be used in other channels if they are relevant to the conversation or need to be logged permanently. Messages and replies by the bot are automatically deleted in this channel. 
+
+**Leader only**
+`!Pardon @target(s)` : Clear all infractions and release from exile
+`!HoldVote option a, option b, etc [1d] [1h] [1m] [1s]` : Hold a vote for the options given. Default time is 1h
+`!EnableCensorship` : Start censoring the server according to the ban list
+`!DisableCensorship` : Stop censoring the server
+`!AutoDelete (start|stop) [clear] [delay ms]` : Start or stop deleting all messages in a channel. Use the clear flag to delete all messages in a channel. 
+
+**Officer and Up**
+`!Report @target(s) [1]` : Give the target an infraction (default is 1)
+`!Kick @target(s)` : Remove the target from the server
+`!SoftKick @target(s)` : Remove the target from the server and invite them back
+`!Exile @target(s) [1d] [1h] [1m] [1s]` : Exile the target for the given duration
+`!Promote @target(s)` : Increase the target's rank by 1
+`!Demote @target(s)` : Decrease the target's rank by 1
+`!Play [in (voicechannel | category/voice channel)] [1v]` : Play the server anthem in the target voice channel. Volume range is 0 to 1
+`!BanWord [word]+` : Add every word in the command to the ban list
+`!AllowWord [word]+` : Remove every word in the command from the ban list
+`!BannedWords` : Print the censor list
+
+**Anyone**
+`!Infractions [@target]` : Print the number of infractions you or the target has incurred
+`!Register` : Register to vote in the next election
+`!Balance` : Get your bank balance sent to you in a dm
+`!Play` : Play the server anthem in the voice channel you are currently in

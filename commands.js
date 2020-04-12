@@ -678,6 +678,74 @@ function addCurrency(channel, sender, targets, allowedRole, args) {
     if(channel) channel.watchSend('Currency added!');
 }
 
+function setAutoDelete(channel, sender, args, allowedRole) {
+    if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
+    if(!args || args.length === 0) {
+        if(channel) channel.watchSend('Usage: `AutoDelete (start|stop) [delete delay ms]`');
+        return;
+    }
+
+    let clearHistory = false;
+    let enable = null;
+    let deleteDelay = 2000;
+    for(let i = 0; i < args.length; i++) {
+        switch(args[i].toLowerCase()) {
+            case 'start':
+                enable = true;
+                break;
+            case 'stop':
+                enable = false;
+                break;
+            case 'clear':
+                clearHistory = true;
+            default:
+                let num = parseInt(args[i]);
+                if(isNaN(num)) { 
+                    continue;
+                }
+                deleteDelay = num;
+        }
+    }
+
+    if(enable === null) {
+        if(channel) channel.watchSend('Usage: `AutoDelete (start|stop) [delete delay ms]`');
+        return;
+    }
+
+    if(!enable) {
+        deleteDelay = -1;
+    }
+
+    db.channels.setAutoDelete(channel.id, deleteDelay)
+    .then(() => {
+        if(enable) {
+            // clear all msgs
+            if(clearHistory) {
+                clearChannel(channel);
+            }
+
+            if(channel) {
+                channel.send(`Messages are deleted after ${deleteDelay}ms`)
+            }
+        }
+        else {
+            if(channel) {
+                channel.send('Messages are no longer deleted');
+            }
+        }
+    })
+}
+
+async function clearChannel(channel) {
+    let pinnedMessages = await channel.fetchPinnedMessages();
+    let fetched;
+    do {
+        fetched = await channel.fetchMessages({limit: 100});
+        await channel.bulkDelete(fetched.filter(message => !message.pinned));
+    }
+    while(fetched.size > pinnedMessages.size);
+}
+
 module.exports = {
     help,
     getInfractions,
@@ -696,5 +764,6 @@ module.exports = {
     holdVote,
     whisper,
     getCurrency,
-    addCurrency
+    addCurrency,
+    setAutoDelete
 }

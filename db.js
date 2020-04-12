@@ -121,10 +121,12 @@ var guilds = (function() {
 
         setCensorship: function(guildId, enabled) {
             return pool.query('INSERT INTO guilds VALUES (?,?,?) ON DUPLICATE KEY UPDATE censorship_enabled = VALUES(censorship_enabled)', [ guildId, enabled, '' ])
+            .catch((error) => console.error(error));
         },
 
         updateCensorshipRegex: function(guildId, regex) {
             return pool.query('INSERT INTO guilds (id, censor_regex) VALUES (?,?) ON DUPLICATE KEY UPDATE censor_regex = VALUES(censor_regex)', [ guildId, regex ])
+            .catch((error) => console.error(error));
         }
     }
 })();
@@ -142,6 +144,11 @@ var channels = (function() {
             .catch(e => {
                 console.error(e);
             })
+        },
+
+        setAutoDelete: function(channelId, deleteDelay) {
+            return pool.query('INSERT INTO channels (id, delete_ms) VALUES (?,?) ON DUPLICATE KEY UPDATE delete_ms = VALUES(delete_ms)', [ channelId, deleteDelay ])
+            .catch((error) => console.error(error));
         }
     }
 })();
