@@ -78,7 +78,7 @@ function banWords(channel, sender, words, permissionLevel) {
     return db.guilds.get(sender.guild.id)
     .then(guild => {
         if(!guild.censorship_enabled) { 
-            if(channel) return channel.send('Censorship is currently disabled');
+            if(channel) return channel.watchSend('Censorship is currently disabled');
             return;
         }
 
@@ -98,7 +98,7 @@ function banWords(channel, sender, words, permissionLevel) {
         .then(() => {
             rebuildCensorshipList(sender.guild.id);
         })
-        if(channel) return channel.send(`You won't see these words again: ${words}`);
+        if(channel) return channel.watchSend(`You won't see these words again: ${words}`);
     })
 }
 
@@ -106,7 +106,7 @@ function allowWords(channel, sender, words, permissionLevel) {
     return db.guilds.get(sender.guild.id)
     .then(guild => {
         if(!guild.censorship_enabled) { 
-            if(channel) return channel.send('Censorship is currently disabled');
+            if(channel) return channel.watchSend('Censorship is currently disabled');
             return;
         }
 
@@ -121,7 +121,7 @@ function allowWords(channel, sender, words, permissionLevel) {
         .then(() => {
             rebuildCensorshipList(sender.guild.id);
         })
-        if(channel) return channel.send(`These words are allowed again: ${words}`);
+        if(channel) return channel.watchSend(`These words are allowed again: ${words}`);
     })
 }
 
@@ -141,7 +141,7 @@ function printBanList(channel) {
                 banList += ', ';
             }
         }
-        if(channel) return channel.send(`Here are all the banned words: ${banList}`);
+        if(channel) return channel.watchSend(`Here are all the banned words: ${banList}`);
     })
 }
 
@@ -155,7 +155,7 @@ function enable(channel, sender, isCensoring, allowedRole) {
             return printBanList(channel);
         }
         else {
-            if(channel) return channel.send('All speech is permitted!');
+            if(channel) return channel.watchSend('All speech is permitted!');
         }
     })
 }

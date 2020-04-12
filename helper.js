@@ -141,7 +141,7 @@ function reportInfractions(member, channel, pretext = '') {
         else {
             reply = `${pretext}${discordName} has incurred ${user.infractions} infractions`;
         }
-        if(channel) channel.send(reply);
+        if(channel) channel.watchSend(reply);
 
         return user.infractions;
     })
@@ -159,10 +159,10 @@ function pardon(member, channel) {
     if(hasRole(member, discordConfig.roles.exile)) {
         clearExileTimer(member);
         setRoles(member, [discordConfig.roles.neutral]);
-        if(channel) channel.send(`${member} has been released from exile`);
+        if(channel) channel.watchSend(`${member} has been released from exile`);
     }
     else {
-        if(channel) channel.send(`${member} has been cleared of all charges`);
+        if(channel) channel.watchSend(`${member} has been cleared of all charges`);
     }
 }
 
@@ -190,7 +190,7 @@ function exile(member, channel, releaseDate = null) {
     else {
         message = `\nYou will be held indefinitely! May the Supreme Dictator have mercy on you.`;
     }
-    if(channel) channel.send(`Uh oh, gulag for you ${member}${message}\n\nAny infractions while in exile will result in expulsion`);
+    if(channel) channel.watchSend(`Uh oh, gulag for you ${member}${message}\n\nAny infractions while in exile will result in expulsion`);
 }
 
 /**
@@ -359,11 +359,11 @@ function softkick(channel, target, reason) {
     .then((member) => {
         let randInt = Math.floor(Math.random() * links.gifs.kicks.length);
         let kickGif = links.gifs.kicks[randInt];
-        if(channel) return channel.send(`:wave: ${member.displayName} has been kicked and invited back\n${kickGif}`);
+        if(channel) return channel.watchSend(`:wave: ${member.displayName} has been kicked and invited back\n${kickGif}`);
     })
     .catch((e) => {
         console.error(e);
-        if(channel) channel.send('Something went wrong...');
+        if(channel) channel.watchSend('Something went wrong...');
     })
 }
 
@@ -388,7 +388,7 @@ function promote(channel, sender, target) {
     let nextHighest = getNextRole(target, sender.guild);
 
     if(nextHighest == null) {
-        if(channel) channel.send(`${target} holds the highest office already`);
+        if(channel) channel.watchSend(`${target} holds the highest office already`);
         return;
     }
     
@@ -402,7 +402,7 @@ function promote(channel, sender, target) {
 
     // promote the target
     setRoles(target, [nextHighest.name]);
-    if(channel) channel.send(`${target} has been promoted to ${nextHighest.name}!`);
+    if(channel) channel.watchSend(`${target} has been promoted to ${nextHighest.name}!`);
 }
 
 /**
@@ -432,7 +432,7 @@ function demote(channel, sender, target) {
     let nextLowest = getPreviousRole(target, target.guild);
 
     if(nextLowest == null) {
-        if(channel) channel.send(`${target} can't get any lower`);
+        if(channel) channel.watchSend(`${target} can't get any lower`);
         return;
     }
 
@@ -449,7 +449,7 @@ function demote(channel, sender, target) {
     if(roleName === '@everyone') {
         roleName = 'commoner';
     }
-    if(channel) channel.send(`${target} has been demoted to ${roleName}!`);
+    if(channel) channel.watchSend(`${target} has been demoted to ${roleName}!`);
 }
 
 /**

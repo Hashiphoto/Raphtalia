@@ -32,34 +32,35 @@ client.on('message', message => {
         return;
     }
 
-    if(message.channel.type === "dm") {
+    if(message.channel.type === "dm" || message.type !== "DEFAULT") {
         return;
     }
     
-    db.channels.get(message.channel.id)
-    .then(dbChannel => {
-        let quietMode = false;
-        if(dbChannel && dbChannel.auto_delete) {
-            quietMode = true;
+    attachWatchCommand(message.channel)
+    .then(deleteTime => {
+        if(deleteTime >= 0) {
             setTimeout(function() {
                 message.delete()
                 .catch(error => {
                     console.error('Message was probably already deleted\n' + error);
                 })
-            }, 1000);
+            }, deleteTime);
         }
         if(message.content.startsWith(prefix)) {
-            processCommand(message, quietMode);
+            processCommand(message);
         }
         else {
-            censorship.censorMessage(message, quietMode);
+            censorship.censorMessage(message);
         }
     })
 })
 
 client.on('guildMemberAdd', (member) => {
     const welcomeChannel = client.channels.get(discordConfig.channels.welcomeChannelId);
-    commands.arrive(welcomeChannel, member);
+    attachWatchCommand(welcomeChannel)
+    .then(() => {
+        commands.arrive(welcomeChannel, member);
+    })
 })
 
 client.on('guildMemberRemove', (member) => {
@@ -71,7 +72,28 @@ client.on("disconnect", function(event) {
     process.exit();
 });
 
-async function processCommand(message, quietMode) {
+function attachWatchCommand(channel) {
+    return db.channels.get(channel.id)
+    .then(dbChannel => {
+        let deleteTime = -1;
+        if(dbChannel && dbChannel.delete_ms >= 0) {
+            deleteTime = dbChannel.delete_ms;
+        }
+        channel.watchSend = function(content) {
+            return this.send(content)
+            .then(message => {
+                if(deleteTime >= 0) {
+                    message.delete(deleteTime);
+                }
+                return message;
+            })
+        }
+
+        return deleteTime;
+    })
+}
+
+async function processCommand(message) {
     // args contains every word after the command in an array
     const args = message.content.slice(prefix.length).split(' ');
     const command = args.shift().toLowerCase();
@@ -80,9 +102,6 @@ async function processCommand(message, quietMode) {
     // mentionedMembers contains every mention in order in an array
     let mentionedMembers = getMemberMentions(message.guild, args);
     let responseChannel = message.channel;
-    if(quietMode) {
-        responseChannel = null;
-    }
 
     switch(command) {
     case 'help' :
@@ -187,7 +206,7 @@ async function processCommand(message, quietMode) {
 
     default:
         if(responseChannel) {
-            responseChannel.send(`I think you're confused, Comrade ${sender}`);
+            responseChannel.watchSend(`I think you're confused, Comrade ${sender}`);
         }
     }
 }
