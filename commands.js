@@ -19,7 +19,7 @@ const discordConfig = require('./config/discord.json')[process.env.NODE_ENV || '
  */
 function help(channel, sender) {
     if(channel) {
-        if(channel) channel.send(`Help yourself, ${sender}`);
+        if(channel) channel.watchSend(`Help yourself, ${sender}`);
     }
 }
 
@@ -52,7 +52,7 @@ function kick(channel, sender, targets, allowedRole) {
     if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
 
     if(targets.length === 0) {
-        if(channel) channel.send('Please repeat the command and specify who is getting the boot');
+        if(channel) channel.watchSend('Please repeat the command and specify who is getting the boot');
         return;
     }
 
@@ -61,10 +61,10 @@ function kick(channel, sender, targets, allowedRole) {
         .then((member) => {
             let randInt = Math.floor(Math.random() * links.gifs.kicks.length);
             let kickGif = links.gifs.kicks[randInt];
-            if(channel) channel.send(`:wave: ${member.displayName} has been kicked\n${kickGif}`);
+            if(channel) channel.watchSend(`:wave: ${member.displayName} has been kicked\n${kickGif}`);
         })
         .catch((e) => {
-            if(channel) channel.send('Something went wrong...');
+            if(channel) channel.watchSend('Something went wrong...');
             console.error(e);
         })
     })
@@ -82,7 +82,7 @@ function report(channel, sender, targets, allowedRole, args = null) {
     if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
 
     if(targets.length === 0) {
-        if(channel) channel.send('Please repeat the command and specify who is being reported');
+        if(channel) channel.watchSend('Please repeat the command and specify who is being reported');
         return;
     }
 
@@ -129,7 +129,7 @@ function exile(channel, sender, targets, allowedRole, releaseDate) {
     if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
 
     if(targets.length === 0) {
-        if(channel) channel.send('Please repeat the command and specify who is being exiled');
+        if(channel) channel.watchSend('Please repeat the command and specify who is being exiled');
         return;
     }
 
@@ -150,7 +150,7 @@ function softkick(channel, sender, targets, allowedRole, reason = '') {
     if(sender != null && !helper.verifyPermission(sender, channel, allowedRole)) { return; }
 
     if(targets.length === 0) {
-        if(channel) channel.send('Please repeat the command and specify who is being gently kicked');
+        if(channel) channel.watchSend('Please repeat the command and specify who is being gently kicked');
         return;
     }
 
@@ -171,7 +171,7 @@ function pardon(channel, sender, targets, allowedRole) {
     if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
 
     if(targets.length === 0) {
-        if(channel) channel.send('Please repeat the command and specify who is being pardoned');
+        if(channel) channel.watchSend('Please repeat the command and specify who is being pardoned');
         return;
     }
 
@@ -213,7 +213,7 @@ function demote(channel, sender, targets, allowedRole) {
     if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
 
     if(targets.length === 0) {
-        if(channel) channel.send('Please repeat the command and specify who is being demoted');
+        if(channel) channel.watchSend('Please repeat the command and specify who is being demoted');
         return;
     }
 
@@ -235,12 +235,12 @@ function comfort(channel, sender, targets, allowedRole) {
     if(!channel) return;
 
     if(targets.length === 0) {
-        channel.send('Please repeat the command and specify who I\'m headpatting');
+        channel.watchSend('Please repeat the command and specify who I\'m headpatting');
         return;
     }
 
     targets.forEach((member) => {
-        channel.send(member.toString() + ' headpat');
+        channel.watchSend(member.toString() + ' headpat');
     })
 }
 
@@ -267,7 +267,7 @@ function sendTimedMessage(channel, member, question, showDuration = true) {
         text += `\`(${question.timeout / 1000}s)\`\n`;
     }
     text += question.prompt;
-    return channel.send(text)
+    return channel.watchSend(text)
     .then(() => {
         // Get the first message that matches the filter. Errors out if the time limit is reached
         return channel.awaitMessages(filter, { maxMatches: 1, time: question.timeout, errors: ['time'] });
@@ -325,12 +325,12 @@ async function arrive(channel, member) {
     
     // Check if already a citizen
     if(dbUser.citizenship) {
-        channel.send(`Welcome back comrade ${member}!`)
+        channel.watchSend(`Welcome back comrade ${member}!`)
         helper.setRoles(member, [ discordConfig.roles.neutral ]);
         return;
     }
 
-    channel.send(`Welcome ${member} to ${channel.guild.name}!\n` + 
+    channel.watchSend(`Welcome ${member} to ${channel.guild.name}!\n` + 
     `I just have a few questions for you, and then you can enjoy go beautiful community with your fellow comrades.`);
 
     // Set nickname
@@ -340,16 +340,16 @@ async function arrive(channel, member) {
             helper.softkick(channel, member, 'We don\'t allow those words around here');
             return;
         }
-        channel.send(`${member.displayName} will be known as ${nickname}!`);
+        channel.watchSend(`${member.displayName} will be known as ${nickname}!`);
         member.setNickname(nickname)
         .catch((e) => {
             console.error(e);
-            channel.send(`Sorry. I don't have permissions to set your nickname...`);
+            channel.watchSend(`Sorry. I don't have permissions to set your nickname...`);
         })
     }
     catch(e) {
         console.error(e);
-        channel.send(`${member} doesn't want a nickname...`);
+        channel.watchSend(`${member} doesn't want a nickname...`);
     }
 
     for(let i = 0; i < welcomeQuestions.gulagQuestions.length; i++) {
@@ -361,7 +361,7 @@ async function arrive(channel, member) {
 
     // Creates the user in the DB if they didn't exist
     db.users.setCitizenship(member.id, member.guild.id, true);
-    channel.send(`Thank you! And welcome loyal comrade to ${channel.guild.name}! 🎉🎉🎉`)
+    channel.watchSend(`Thank you! And welcome loyal comrade to ${channel.guild.name}! 🎉🎉🎉`)
     .then(() => {
         helper.setRoles(member, [ discordConfig.roles.neutral ]);
     })
@@ -390,7 +390,7 @@ function unarrive(channel, sender, targets, allowedRole) {
         })
     })
     .then(() => {
-        if(channel) return channel.send(`${target}'s papers have been deleted from record`);
+        if(channel) return channel.watchSend(`${target}'s papers have been deleted from record`);
     })
 }
 
@@ -439,7 +439,7 @@ function play(channel, sender, content, allowedRole) {
                 channel.parent && 
                 channel.parent.name.toLowerCase() === firstMatch.toLowerCase());
             if(voiceChannel == null) {
-                if(channel) channel.send('I couldn\'t find a voice channel by that name');
+                if(channel) channel.watchSend('I couldn\'t find a voice channel by that name');
                 return;
             }
         }
@@ -450,7 +450,7 @@ function play(channel, sender, content, allowedRole) {
                 channel.type == 'voice' && 
                 channel.name.toLowerCase() === firstMatch.toLowerCase());
             if(voiceChannel == null) {
-                if(channel) channel.send('I couldn\'t find a voice channel by that name');
+                if(channel) channel.watchSend('I couldn\'t find a voice channel by that name');
                 return;
             }
         }
@@ -461,7 +461,7 @@ function play(channel, sender, content, allowedRole) {
         voiceChannel = sender.voiceChannel;
     
         if(!voiceChannel) {
-            if(channel) return channel.send('Join a voice channel first, comrade!');
+            if(channel) return channel.watchSend('Join a voice channel first, comrade!');
             return;
         }
     }
@@ -471,10 +471,10 @@ function play(channel, sender, content, allowedRole) {
 function registerVoter(channel, sender) {
     helper.addRoles(sender, [ discordConfig.roles.voter ])
     .then(() => {
-        if(channel) channel.send(`You are now a registered voter!`);
+        if(channel) channel.watchSend(`You are now a registered voter!`);
     })
     .catch(() => {
-        if(channel) channel.send(`You are already registered, dingus`);
+        if(channel) channel.watchSend(`You are already registered, dingus`);
     })
 }
 
@@ -532,12 +532,12 @@ function holdVote(channel, sender, mentionedMembers, content, allowedRole) {
     }
     answersRegEx += ')$'
     if(voteTally.length === 0) {
-        if(channel) channel.send('Please try again and specify the options of the vote\nEx: `!HoldVote option a, option b  3h 30m`');
+        if(channel) channel.watchSend('Please try again and specify the options of the vote\nEx: `!HoldVote option a, option b  3h 30m`');
         return;
     }
 
     // Send out the voting messages
-    if(channel) channel.send(`Voting begins now and ends at ${endDate.format(helper.dateFormat)}`);
+    if(channel) channel.watchSend(`Voting begins now and ends at ${endDate.format(helper.dateFormat)}`);
 
     let message = {
         prompt: `**A vote is being held in ${sender.guild.name}!**\n`+
@@ -550,7 +550,7 @@ function holdVote(channel, sender, mentionedMembers, content, allowedRole) {
 
     let voters = helper.convertToRole(sender.guild, discordConfig.roles.voter).members;
     if(voters.size === 0) {
-        if(channel) channel.send(`There are no registered voters :monkaS:`);
+        if(channel) channel.watchSend(`There are no registered voters :monkaS:`);
         return;
     }
 
@@ -628,7 +628,7 @@ function holdVote(channel, sender, mentionedMembers, content, allowedRole) {
             finalResults = `Voting is done!\n**The winner is ${voteTally[0].name.toUpperCase()}** ` + 
             `with ${percentFormat(voteTally[0].votes / totalVotes)}% of the vote\n${resultsMsg}`;
         }
-        if(channel) channel.send(finalResults);
+        if(channel) channel.watchSend(finalResults);
     }, duration);
 }
 
@@ -643,7 +643,7 @@ function whisper(channel, sender, targets, content, allowedRole) {
     if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
 
     if(targets.length === 0) {
-        if(channel) channel.send('Please repeat the command and specify who I am whispering to');
+        if(channel) channel.watchSend('Please repeat the command and specify who I am whispering to');
         return;
     }
     // remove the command and targeet from the content
@@ -670,7 +670,7 @@ function addCurrency(channel, sender, targets, allowedRole, args) {
     if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
 
     if(!args || args.length === 0) {
-        if(channel) channel.send('Please try again and specify the amount of money');
+        if(channel) channel.watchSend('Please try again and specify the amount of money');
         return;
     }
 
@@ -690,7 +690,7 @@ function addCurrency(channel, sender, targets, allowedRole, args) {
     targets.forEach((target) => {
         helper.addCurrency(target, amount);
     })
-    if(channel) channel.send('Currency added!');
+    if(channel) channel.watchSend('Currency added!');
 }
 
 module.exports = {
