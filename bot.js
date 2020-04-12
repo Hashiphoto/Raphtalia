@@ -35,13 +35,26 @@ client.on('message', message => {
     if(message.channel.type === "dm") {
         return;
     }
-
-    if(message.content.startsWith(prefix)) {
-        processCommand(message);
-    }
-    else {
-        censorship.censorMessage(message);
-    }
+    
+    db.channels.get(message.channel.id)
+    .then(dbChannel => {
+        let quietMode = false;
+        if(dbChannel && dbChannel.auto_delete) {
+            quietMode = true;
+            setTimeout(function() {
+                message.delete()
+                .catch(error => {
+                    console.error('Message was probably already deleted\n' + error);
+                })
+            }, 1000);
+        }
+        if(message.content.startsWith(prefix)) {
+            processCommand(message, quietMode);
+        }
+        else {
+            censorship.censorMessage(message, quietMode);
+        }
+    })
 })
 
 client.on('guildMemberAdd', (member) => {
@@ -58,7 +71,7 @@ client.on("disconnect", function(event) {
     process.exit();
 });
 
-function processCommand(message) {
+async function processCommand(message, quietMode) {
     // args contains every word after the command in an array
     const args = message.content.slice(prefix.length).split(' ');
     const command = args.shift().toLowerCase();
@@ -66,92 +79,96 @@ function processCommand(message) {
 
     // mentionedMembers contains every mention in order in an array
     let mentionedMembers = getMemberMentions(message.guild, args);
+    let responseChannel = message.channel;
+    if(quietMode) {
+        responseChannel = null;
+    }
 
     switch(command) {
     case 'help' :
-        commands.help(message.channel, sender);
+        commands.help(responseChannel, sender);
         break;
 
     case 'infractions' :
-        commands.getInfractions(message.channel, sender, mentionedMembers);
+        commands.getInfractions(responseChannel, sender, mentionedMembers);
         break;
 
     case 'kick' :
-        commands.kick(message.channel, sender, mentionedMembers, discordConfig.roles.gov);
+        commands.kick(responseChannel, sender, mentionedMembers, discordConfig.roles.gov);
         break;
 
     case 'infract' :
     case 'report' :
-        commands.report(message.channel, sender, mentionedMembers, discordConfig.roles.gov, args);
+        commands.report(responseChannel, sender, mentionedMembers, discordConfig.roles.gov, args);
         break;
 
     case 'exile' :
-        commands.exile(message.channel, sender, mentionedMembers, discordConfig.roles.gov, helper.parseTime(message.content));
+        commands.exile(responseChannel, sender, mentionedMembers, discordConfig.roles.gov, helper.parseTime(message.content));
         break;
 
     case 'softkick' :
-        commands.softkick(message.channel, sender, mentionedMembers, discordConfig.roles.gov);
+        commands.softkick(responseChannel, sender, mentionedMembers, discordConfig.roles.gov);
         break;
 
     case 'pardon' :
-        commands.pardon(message.channel, sender, mentionedMembers, discordConfig.roles.leader);
+        commands.pardon(responseChannel, sender, mentionedMembers, discordConfig.roles.leader);
         break;
 
     case 'promote' :
-        commands.promote(message.channel, sender, mentionedMembers, discordConfig.roles.gov);
+        commands.promote(responseChannel, sender, mentionedMembers, discordConfig.roles.gov);
         break;
 
     case 'demote' :
-        commands.demote(message.channel, sender, mentionedMembers, discordConfig.roles.gov);
+        commands.demote(responseChannel, sender, mentionedMembers, discordConfig.roles.gov);
         break;
 
     case 'comfort' :
-        commands.comfort(message.channel, sender, mentionedMembers, discordConfig.roles.leader);
+        commands.comfort(responseChannel, sender, mentionedMembers, discordConfig.roles.leader);
         break;
 
     // TESTING ONLY
     case 'unarrive' : 
-        commands.unarrive(message.channel, sender, mentionedMembers, discordConfig.roles.gov);
+        commands.unarrive(responseChannel, sender, mentionedMembers, discordConfig.roles.gov);
         break;
 
     case 'anthem':
     case 'sing':
     case 'play':
-        commands.play(message.channel, sender, message.content, discordConfig.roles.gov);
+        commands.play(responseChannel, sender, message.content, discordConfig.roles.gov);
         break;
 
     case 'banword':
     case 'banwords':
     case 'bannedwords':
-        censorship.banWords(message.channel, sender, args, discordConfig.roles.gov);
+        censorship.banWords(responseChannel, sender, args, discordConfig.roles.gov);
         break;
 
     case 'allowword':
     case 'allowwords':
     case 'unbanword':
     case 'unbanwords':
-        censorship.allowWords(message.channel, sender, args, discordConfig.roles.gov);
+        censorship.allowWords(responseChannel, sender, args, discordConfig.roles.gov);
         break;
 
     case 'enablecensorship':
-        censorship.enable(message.channel, sender, true, discordConfig.roles.leader);
+        censorship.enable(responseChannel, sender, true, discordConfig.roles.leader);
         break;
     
     case 'disablecensorship':
-        censorship.enable(message.channel, sender, false, discordConfig.roles.leader);
+        censorship.enable(responseChannel, sender, false, discordConfig.roles.leader);
         break;
 
     case 'register':
-        commands.registerVoter(message.channel, sender);
+        commands.registerVoter(responseChannel, sender);
         break;
 
     case 'holdvote':
-        commands.holdVote(message.channel, sender, mentionedMembers, message.content, discordConfig.roles.leader);
+        commands.holdVote(responseChannel, sender, mentionedMembers, message.content, discordConfig.roles.leader);
         break;
         
     // Needs more work for it to be useful
     // case 'whisper':
-    //     commands.whisper(message.channel, sender, mentionedMembers, message.content, discordConfig.roles.leader);
+    //     commands.whisper(responseChannel, sender, mentionedMembers, message.content, discordConfig.roles.leader);
     //     break;
 
     case 'wallet':
@@ -165,11 +182,13 @@ function processCommand(message) {
 
     // case 'addmoney':
     // case 'createmoney':
-    //     commands.addCurrency(message.channel, sender, mentionedMembers, discordConfig.roles.gov, args)
+    //     commands.addCurrency(responseChannel, sender, mentionedMembers, discordConfig.roles.gov, args)
     //     break;
 
     default:
-        message.channel.send(`I think you're confused, Comrade ${sender}`);
+        if(responseChannel) {
+            responseChannel.send(`I think you're confused, Comrade ${sender}`);
+        }
     }
 }
 

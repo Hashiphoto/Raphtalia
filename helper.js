@@ -141,9 +141,7 @@ function reportInfractions(member, channel, pretext = '') {
         else {
             reply = `${pretext}${discordName} has incurred ${user.infractions} infractions`;
         }
-        if(channel != null) {
-            channel.send(reply);
-        }
+        if(channel) channel.send(reply);
 
         return user.infractions;
     })
@@ -161,10 +159,10 @@ function pardon(member, channel) {
     if(hasRole(member, discordConfig.roles.exile)) {
         clearExileTimer(member);
         setRoles(member, [discordConfig.roles.neutral]);
-        channel.send(`${member} has been released from exile`);
+        if(channel) channel.send(`${member} has been released from exile`);
     }
     else {
-        channel.send(`${member} has been cleared of all charges`);
+        if(channel) channel.send(`${member} has been cleared of all charges`);
     }
 }
 
@@ -192,7 +190,7 @@ function exile(member, channel, releaseDate = null) {
     else {
         message = `\nYou will be held indefinitely! May the Supreme Dictator have mercy on you.`;
     }
-    channel.send(`Uh oh, gulag for you ${member}${message}\n\nAny infractions while in exile will result in expulsion`);
+    if(channel) channel.send(`Uh oh, gulag for you ${member}${message}\n\nAny infractions while in exile will result in expulsion`);
 }
 
 /**
@@ -340,8 +338,18 @@ async function checkInfractionCount(channel, member, count = null) {
     }
 }
 
+/**
+ * 
+ * @param {Discord.TextChannel} channel - The channel to send invites from and replies. If channel is null, invites are sent from the system channel
+ * @param {Discord.GuildMember} target - The member to softkick
+ * @param {String} reason - The message to send to the kicked member 
+ */
 function softkick(channel, target, reason) {
-    channel.createInvite({ temporary: true, maxAge: 0, maxUses: 1, unique: true })
+    let inviteChannel = channel;
+    if(!channel) {
+        inviteChannel = target.guild.systemChannel;
+    }
+    inviteChannel.createInvite({ temporary: true, maxAge: 0, maxUses: 1, unique: true })
     .then(invite => {
         return target.send(reason + '\n' + invite.toString());
     })
@@ -351,10 +359,11 @@ function softkick(channel, target, reason) {
     .then((member) => {
         let randInt = Math.floor(Math.random() * links.gifs.kicks.length);
         let kickGif = links.gifs.kicks[randInt];
-        return channel.send(`:wave: ${member.displayName} has been kicked and invited back\n${kickGif}`);
+        if(channel) return channel.send(`:wave: ${member.displayName} has been kicked and invited back\n${kickGif}`);
     })
-    .catch(() => {
-        channel.send('Something went wrong...');
+    .catch((e) => {
+        console.error(e);
+        if(channel) channel.send('Something went wrong...');
     })
 }
 
@@ -376,10 +385,10 @@ function promote(channel, sender, target) {
         clearExileTimer(target);
     }
 
-    let nextHighest = getNextRole(target, channel.guild);
+    let nextHighest = getNextRole(target, sender.guild);
 
     if(nextHighest == null) {
-        channel.send(`${target} holds the highest office already`);
+        if(channel) channel.send(`${target} holds the highest office already`);
         return;
     }
     
@@ -393,7 +402,7 @@ function promote(channel, sender, target) {
 
     // promote the target
     setRoles(target, [nextHighest.name]);
-    channel.send(`${target} has been promoted to ${nextHighest.name}!`);
+    if(channel) channel.send(`${target} has been promoted to ${nextHighest.name}!`);
 }
 
 /**
@@ -420,10 +429,10 @@ function demote(channel, sender, target) {
         clearExileTimer(target);
     }
     
-    let nextLowest = getPreviousRole(target, channel.guild);
+    let nextLowest = getPreviousRole(target, target.guild);
 
     if(nextLowest == null) {
-        channel.send(`${target} can't get any lower`);
+        if(channel) channel.send(`${target} can't get any lower`);
         return;
     }
 
@@ -440,7 +449,7 @@ function demote(channel, sender, target) {
     if(roleName === '@everyone') {
         roleName = 'commoner';
     }
-    channel.send(`${target} has been demoted to ${roleName}!`);
+    if(channel) channel.send(`${target} has been demoted to ${roleName}!`);
 }
 
 /**
@@ -453,6 +462,9 @@ function demote(channel, sender, target) {
 function reportCurrency(member, channel) {
     return db.users.get(member.id, member.guild.id)
     .then((user) => {
+        if(!channel) {
+            return user.currency;
+        }
         let reply;
         if(user.currency === 0) {
             reply = `You are broke!`;
@@ -466,9 +478,7 @@ function reportCurrency(member, channel) {
         if(channel.type === 'dm') {
             reply += ` in ${member.guild.name}`
         }
-        if(channel != null) {
-            channel.send(reply);
-        }
+        channel.send(reply);
 
         return user.currency;
     })

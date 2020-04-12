@@ -129,8 +129,26 @@ var guilds = (function() {
     }
 })();
 
+var channels = (function() {
+    return {
+        get: function(channelId) {
+            return pool.query('SELECT * FROM channels WHERE id = ?', [ channelId ])
+            .then(([rows, fields]) => {
+                if(rows.length === 0) {
+                    return null;
+                }
+                return rows[0];
+            })
+            .catch(e => {
+                console.error(e);
+            })
+        }
+    }
+})();
+
 module.exports = {
     users,
     bannedWords,
-    guilds
+    guilds,
+    channels
 }

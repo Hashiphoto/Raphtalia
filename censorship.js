@@ -30,7 +30,9 @@ async function rebuildCensorshipList(guildId) {
  * @param {Discord.Message} message - The message to check for censorship
  * @returns {Boolean} - True if the message was censored
  */
-function censorMessage(message) {
+function censorMessage(message, quietMode) {
+    let responseChannel = quietMode ? null : message.channel;
+
     return db.guilds.get(message.guild.id)
     .then(guild => {
         if(!guild.censorship_enabled) { 
@@ -47,14 +49,16 @@ function censorMessage(message) {
         let bannedRegex = new RegExp(guild.censor_regex, 'gi');
         if(message.content.match(bannedRegex) != null) { 
             message.delete();
-            message.channel.send({embed: {
-                title: 'Censorship Report',
-                description: `What ${sender.displayName} ***meant*** to say is \n> ${message.content.replace(bannedRegex, '██████')}`,
-                color: 13057084,
-                timestamp: new Date()
-            }});
+            if(responseChannel) {
+                responseChannel.send({embed: {
+                    title: 'Censorship Report',
+                    description: `What ${sender.displayName} ***meant*** to say is \n> ${message.content.replace(bannedRegex, '██████')}`,
+                    color: 13057084,
+                    timestamp: new Date()
+                }});
+            }
     
-            helper.addInfractions(sender, message.channel, 1, `This infraction has been recorded`);
+            helper.addInfractions(sender, responseChannel, 1, `This infraction has been recorded`);
         }
     })
 }
@@ -71,10 +75,11 @@ function containsBannedWords(guildId, text) {
 }
 
 function banWords(channel, sender, words, permissionLevel) {
-    return db.guilds.get(channel.guild.id)
+    return db.guilds.get(sender.guild.id)
     .then(guild => {
         if(!guild.censorship_enabled) { 
-            return channel.send('Censorship is currently disabled');
+            if(channel) return channel.send('Censorship is currently disabled');
+            return;
         }
 
         if(words.length === 0) {
@@ -87,21 +92,22 @@ function banWords(channel, sender, words, permissionLevel) {
         // Construct an array of rows to insert into the db
         let values = [];
         words.forEach(word => {
-            values.push([ word, channel.guild.id ]);
+            values.push([ word, sender.guild.id ]);
         })
         db.bannedWords.insert(values)
         .then(() => {
-            rebuildCensorshipList(channel.guild.id);
+            rebuildCensorshipList(sender.guild.id);
         })
-        return channel.send(`You won't see these words again: ${words}`);
+        if(channel) return channel.send(`You won't see these words again: ${words}`);
     })
 }
 
 function allowWords(channel, sender, words, permissionLevel) {
-    return db.guilds.get(channel.guild.id)
+    return db.guilds.get(sender.guild.id)
     .then(guild => {
         if(!guild.censorship_enabled) { 
-            return channel.send('Censorship is currently disabled');
+            if(channel) return channel.send('Censorship is currently disabled');
+            return;
         }
 
         if(words.length === 0) {
@@ -111,15 +117,16 @@ function allowWords(channel, sender, words, permissionLevel) {
 
         if(!helper.verifyPermission(sender, channel, permissionLevel)) { return; }
 
-        db.bannedWords.delete(channel.guild.id, words)
+        db.bannedWords.delete(sender.guild.id, words)
         .then(() => {
-            rebuildCensorshipList(channel.guild.id);
+            rebuildCensorshipList(sender.guild.id);
         })
-        return channel.send(`These words are allowed again: ${words}`);
+        if(channel) return channel.send(`These words are allowed again: ${words}`);
     })
 }
 
 function printBanList(channel) {
+    if(!channel) return;
     db.bannedWords.getAll(channel.guild.id)
     .then(rows => {
         let banList = '';
@@ -134,7 +141,7 @@ function printBanList(channel) {
                 banList += ', ';
             }
         }
-        return channel.send(`Here are all the banned words: ${banList}`);
+        if(channel) return channel.send(`Here are all the banned words: ${banList}`);
     })
 }
 
@@ -142,13 +149,13 @@ function enable(channel, sender, isCensoring, allowedRole) {
     if(!helper.hasRoleOrHigher(sender, allowedRole)) { 
         return permissionInfract(channel);
     }
-    db.guilds.setCensorship(channel.guild.id, isCensoring)
+    db.guilds.setCensorship(sender.guild.id, isCensoring)
     .then(() => {
         if(isCensoring) {
             return printBanList(channel);
         }
         else {
-            return channel.send('All speech is permitted!');
+            if(channel) return channel.send('All speech is permitted!');
         }
     })
 }
