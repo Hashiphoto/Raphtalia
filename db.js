@@ -35,44 +35,39 @@ pool.query('SELECT 1+1')
  */
 var users = (function() {
     return {
-        get: function(id) {
-            return pool.query('SELECT * FROM users WHERE id = ?', [ id ])
+        get: function(id, guildId) {
+            return pool.query('SELECT * FROM users WHERE id = ? AND guild_id = ?', [ id, guildId ])
             .then(([rows, fields]) => {
                 if(rows.length === 0) {
-                    return { id: id, infractions: 0, citizenship: false, currency: 0 };
+                    return { id: id, guild_id: guildId, infractions: 0, citizenship: false, currency: 0 };
                 }
                 return rows[0];
             })
             .catch((error) => console.error(error));
         },
 
-        updateOrCreate: function(id, user) {
-            return pool.query('REPLACE INTO users VALUES (?,?)', [ user.id, user.infractions, user.citizenship ])
-            .catch((error) => console.error(error));
-        },
-
-        incrementInfractions: function(id, count) {
-            return pool.query('INSERT INTO users (id, infractions) VALUES (?,?) ON DUPLICATE KEY UPDATE infractions = infractions + VALUES(infractions)', [ id, count ])
+        incrementInfractions: function(id, guildId, count) {
+            return pool.query('INSERT INTO users (id, guild_id, infractions) VALUES (?,?,?) ON DUPLICATE KEY UPDATE infractions = infractions + VALUES(infractions)', [ id, guildId, count ])
             .catch((error) => console.error(error));
         },
         
-        setInfractions: function(id, count) {
-            return pool.query('INSERT INTO users (id, infractions) VALUES (?,?) ON DUPLICATE KEY UPDATE infractions = VALUES(infractions)', [ id, count ])
+        setInfractions: function(id, guildId, count) {
+            return pool.query('INSERT INTO users (id, guild_id, infractions) VALUES (?,?,?) ON DUPLICATE KEY UPDATE infractions = VALUES(infractions)', [ id, guildId, count ])
             .catch((error) => console.error(error));
         },
 
-        incrementCurrency: function(id, count) {
-            return pool.query('INSERT INTO users (id, currency) VALUES (?,?) ON DUPLICATE KEY UPDATE currency = currency + VALUES(currency)', [ id, count ])
+        incrementCurrency: function(id, guildId, amount) {
+            return pool.query('INSERT INTO users (id, guild_id, currency) VALUES (?,?,?) ON DUPLICATE KEY UPDATE currency = currency + VALUES(currency)', [ id, guildId, amount ])
             .catch((error) => console.error(error));
         },
         
-        setCurrency: function(id, count) {
-            return pool.query('INSERT INTO users (id, currency) VALUES (?,?) ON DUPLICATE KEY UPDATE currency = VALUES(currency)', [ id, count ])
+        setCurrency: function(id, guildId, amount) {
+            return pool.query('INSERT INTO users (id, guild_id, currency) VALUES (?,?,?) ON DUPLICATE KEY UPDATE currency = VALUES(currency)', [ id, guildId, amount ])
             .catch((error) => console.error(error));
         },
 
-        setCitizenship: function(id, isCitizen) {
-            return pool.query('INSERT INTO users (id, citizenship) VALUES (?,?) ON DUPLICATE KEY UPDATE citizenship = VALUES(citizenship)', [ id, isCitizen ])
+        setCitizenship: function(id, guildId, isCitizen) {
+            return pool.query('INSERT INTO users (id, guild_id, citizenship) VALUES (?,?,?) ON DUPLICATE KEY UPDATE citizenship = VALUES(citizenship)', [ id, guildId, isCitizen ])
             .catch((error) => console.error(error));
         }
     }
@@ -80,8 +75,8 @@ var users = (function() {
 
 var bannedWords = (function() {
     return {
-        getAll: function() {
-            return pool.query('SELECT * FROM bannedwords')
+        getAll: function(guildId) {
+            return pool.query('SELECT * FROM banned_words WHERE guild_id = ?', [ guildId ])
             .then(([rows, fields]) => {
                 return rows;
             })
@@ -90,8 +85,8 @@ var bannedWords = (function() {
             })
         },
 
-        insert: function(word) {
-            return pool.query('INSERT INTO bannedwords (word) VALUES ?', [ word ])
+        insert: function(wordList) {
+            return pool.query('INSERT IGNORE INTO banned_words VALUES ?', [ wordList ])
             .then(([results, fields]) => {
                 return results.insertId;
             })
@@ -100,8 +95,8 @@ var bannedWords = (function() {
             })
         },
 
-        delete: function(word) {
-            return pool.query('DELETE FROM bannedwords WHERE (word) IN (?)', [ word ])
+        delete: function(guildId, word) {
+            return pool.query('DELETE FROM banned_words WHERE (word) IN (?) AND guild_id = ?', [ word, guildId ])
             .catch(e => {
                 console.error(e);
             })
@@ -109,13 +104,10 @@ var bannedWords = (function() {
     }
 })();
 
-var configuration = (function() {
+var guilds = (function() {
     return {
-        /**
-         * Get the current configuration. Currently not scalable (only works with 1 guild)
-         */
-        get: function() {
-            return pool.query('SELECT * FROM guilds')
+        get: function(guildId) {
+            return pool.query('SELECT * FROM guilds WHERE id = ?', [ guildId ])
             .then(([rows, fields]) => {
                 if(rows.length === 0) {
                     return null;
@@ -127,8 +119,29 @@ var configuration = (function() {
             })
         },
 
-        update: function(censorshipEnabled) {
-            return pool.query('UPDATE guilds SET censorshipEnabled = ?', [ censorshipEnabled ])
+        setCensorship: function(guildId, enabled) {
+            return pool.query('INSERT INTO guilds VALUES (?,?,?) ON DUPLICATE KEY UPDATE censorship_enabled = VALUES(censorship_enabled)', [ guildId, enabled, '' ])
+        },
+
+        updateCensorshipRegex: function(guildId, regex) {
+            return pool.query('INSERT INTO guilds (id, censor_regex) VALUES (?,?) ON DUPLICATE KEY UPDATE censor_regex = VALUES(censor_regex)', [ guildId, regex ])
+        }
+    }
+})();
+
+var channels = (function() {
+    return {
+        get: function(channelId) {
+            return pool.query('SELECT * FROM channels WHERE id = ?', [ channelId ])
+            .then(([rows, fields]) => {
+                if(rows.length === 0) {
+                    return null;
+                }
+                return rows[0];
+            })
+            .catch(e => {
+                console.error(e);
+            })
         }
     }
 })();
@@ -136,5 +149,6 @@ var configuration = (function() {
 module.exports = {
     users,
     bannedWords,
-    configuration
+    guilds,
+    channels
 }
