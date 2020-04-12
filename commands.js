@@ -727,10 +727,10 @@ function giveCurrency(channel, sender, targets, args) {
 
     let amount = 1;
     args.forEach(arg => {
-        if(arg.match(/^.\d*(\.\d+)?$/)) {
-            arg = arg.replace(/[^\d\.]/g, '');
-            amount = parseFloat(arg);
-            amount = (Math.floor(amount * 100) / 100);
+        let temp = getDollarAmount(arg);
+        if(temp) {
+            amount = temp;
+            return;
         }
     })
     let totalAmount = amount * targets.length;
@@ -745,6 +745,38 @@ function giveCurrency(channel, sender, targets, args) {
         })
         channel.watchSend('Money transferred!');
     })
+}
+
+function fine(channel, sender, targets, args, allowedRole) {
+    if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
+    if(!targets || targets.length === 0) {
+        return channel.watchSend('Please try again and specify who is being fined');
+    }
+
+    let amount = 1;
+    args.forEach(arg => {
+        let temp = getDollarAmount(arg);
+        if(temp) {
+            amount = temp;
+            return;
+        }
+    })
+    helper.addCurrency(sender, amount * targets.length);
+    for(let i = 0; i < targets.length; i++) {
+        helper.addCurrency(targets[i], -amount);
+    }
+    let message = `Fined $${amount.toFixed(2)}` + ((targets.length > 1) ? ` each!` : `!`);
+    channel.send(message);
+}
+
+function getDollarAmount(text) {
+    let amount = null;
+    if(text.match(/^.\d*(\.\d+)?$/)) {
+        text = text.replace(/[^\d\.]/g, '');
+        amount = parseFloat(text);
+        amount = (Math.floor(amount * 100) / 100);
+    }
+    return amount;
 }
 
 module.exports = {
@@ -766,5 +798,6 @@ module.exports = {
     whisper,
     getCurrency,
     setAutoDelete,
-    giveCurrency
+    giveCurrency,
+    fine
 }

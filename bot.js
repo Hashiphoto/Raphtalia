@@ -222,6 +222,10 @@ async function processCommand(message) {
         commands.giveCurrency(responseChannel, sender, mentionedMembers, args);
         break;
 
+    case 'fine':
+        commands.fine(responseChannel, sender, mentionedMembers, args, discordConfig.roles.gov);
+        break;
+
     default:
         if(responseChannel) {
             responseChannel.watchSend(`I think you're confused, Comrade ${sender}`);
@@ -239,18 +243,11 @@ async function processCommand(message) {
 function getMemberMentions(guild, args) {
     let members = [];
     for(let i = 0; i < args.length; i++) {
-        let user = getUserFromMention(args[i]);
-        if(!user) {
+        let member = getMemberFromMention(guild, args[i]);
+        if(!member) {
             continue;
         }
-        let guildMember = guild.members.get(user.id);
-
-        if(!guildMember) {
-            console.log('Could not find that member');
-            return;
-        }
-
-        members.push(guildMember);
+        members = members.concat(member);
     }
 
     return members;
@@ -264,18 +261,19 @@ function getMemberMentions(guild, args) {
  * @param {String} mention - A string containing a mention 
  * @returns {Discord.GuildMember} The guild member that the mention refers to
  */
-function getUserFromMention(mention) {
+function getMemberFromMention(guild, mention) {
 	// The id is the first and only match found by the RegEx.
-	let matches = mention.match(/<@!?(\d+)>/);
-
-	// If supplied variable was not a mention, matches will be null instead of an array.
-	if (!matches) {
-        return;
+    let memberMatches = mention.match(/<@!?(\d+)>/);
+    if (memberMatches) {
+        // The first element in the matches array will be the entire mention, not just the ID,
+	    // so use index 1.
+        return guild.members.get(memberMatches[1]);
     }
 
-	// However the first element in the matches array will be the entire mention, not just the ID,
-	// so use index 1.
-	let id = matches[1];
-
-	return client.users.get(id);
+    // Check if a role was mentioned instead
+    let roleMatches = mention.match(/<@&(\d+)>/);
+    if(roleMatches) {
+        let role = guild.roles.get(roleMatches[1]);
+        return role.members.array();
+    }
 }
