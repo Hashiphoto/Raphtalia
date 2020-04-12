@@ -50,7 +50,17 @@ client.on('message', message => {
             processCommand(message);
         }
         else {
-            censorship.censorMessage(message);
+            censorship.censorMessage(message)
+            .then(censored => {
+                if(censored) return;
+
+                let amount = ((message.content.length - 20) / 4);
+                if(amount <= 0) return;
+                
+                let sender = message.guild.members.get(message.author.id);
+                message.channel.send(`\`Debug only\` | ${sender} +$${amount.toFixed(2)}`);
+                return helper.addCurrency(sender, amount)
+            })
         }
     })
 })
