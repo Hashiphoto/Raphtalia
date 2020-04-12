@@ -438,7 +438,7 @@ function demote(channel, sender, target) {
 
     setInfractions(target, null, 0, null);
 
-    if(nextLowest.name.toLowerCase() === discordConfig.roles.exile) {
+    if(nextLowest.id == discordConfig.roles.exile) {
         exile(target, channel, dayjs().add(1, 'day'));
         return;
     }

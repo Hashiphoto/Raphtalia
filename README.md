@@ -22,8 +22,7 @@ Kick the targets from the server with a wave and a gif
 **Synonyms**: infract\
 Increase the infraction count of the targets. This will check if they are over the limit and demote the appropriately as well.\
 If no number is specified, infractions is increased by 1\
-If the number is written as +3 or -2, infractions will be set relative to the target's current amount.\
-If there is no +/-, infractions is set to whatever number is specified
+Increase is always relative to the target's current amount.
 
 ### Exile [target]+ [duration]
 **Permission**: Officer\

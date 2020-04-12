@@ -86,33 +86,18 @@ function report(channel, sender, targets, allowedRole, args = null) {
         return;
     }
 
-    let relative = true;
     let amount = 1;
 
     for(let i = 0; i < args.length; i++) {
-        // Check for relative set (e.g. +1)
-        let relMatches = args[i].match(/^(\+|-)\d+$/g);
+        let relMatches = args[i].match(/^\+?\d+$/g);
         if(relMatches) { 
             amount = parseInt(relMatches[0]);
-            relative = true;
-            break;
-        }
-        // Check for absolute set (e.g. 1)
-        let absMatches = args[i].match(/^\d+$/g);
-        if(absMatches) {
-            amount = parseInt(absMatches[0]);
-            relative = false;
             break;
         }
     }
 
     targets.forEach((target) => {
-        if(relative) {
-            helper.addInfractions(target, channel, amount, 'Yes sir~!');
-        }
-        else {
-            helper.setInfractions(target, channel, amount, 'Yes sir~!');
-        }
+        helper.addInfractions(target, channel, amount, 'Yes sir~!');
     })
 }
 
