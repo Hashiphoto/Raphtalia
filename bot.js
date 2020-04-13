@@ -52,7 +52,7 @@ client.on('message', message => {
         else {
             censorship.censorMessage(message)
             .then(censored => {
-                if(censored) return;
+                if(censored || message.channel.autoDelete) return;
                 return db.guilds.get(message.guild.id);
             })
             .then(dbGuild => {
@@ -96,6 +96,7 @@ function attachWatchCommand(channel) {
         if(dbChannel && dbChannel.delete_ms >= 0) {
             deleteTime = dbChannel.delete_ms;
         }
+        channel.autoDelete = deleteTime >= 0;
         channel.watchSend = function(content) {
             return this.send(content)
             .then(message => {
