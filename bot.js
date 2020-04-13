@@ -53,12 +53,19 @@ client.on('message', message => {
             censorship.censorMessage(message)
             .then(censored => {
                 if(censored) return;
+                return db.guilds.get(message.guild.id);
+            })
+            .then(dbGuild => {
+                if(!dbGuild) return;
+                if(message.content.length < dbGuild.min_length) return;
 
-                let amount = ((message.content.length - 20) / 4);
-                if(amount <= 0) return;
-                
+                let amount = Math.min(dbGuild.base_payout + (message.content.length * dbGuild.character_value), dbGuild.max_payout);
+
                 let sender = message.guild.members.get(message.author.id);
-                message.channel.send(`\`Debug only\` | ${sender} +$${amount.toFixed(2)}`);
+                
+                if(process.env.NODE_ENV === 'dev') {
+                    message.channel.send(`\`Debug only\` | ${sender} +$${amount.toFixed(2)}`);
+                }
                 return helper.addCurrency(sender, amount)
             })
         }
@@ -224,6 +231,10 @@ async function processCommand(message) {
 
     case 'fine':
         commands.fine(responseChannel, sender, mentionedMembers, args, discordConfig.roles.gov);
+        break;
+
+    case 'economy':
+        commands.setEconomy(responseChannel, sender, args, discordConfig.roles.leader);
         break;
 
     default:

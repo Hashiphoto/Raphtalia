@@ -727,7 +727,7 @@ function giveCurrency(channel, sender, targets, args) {
 
     let amount = 1;
     args.forEach(arg => {
-        let temp = getDollarAmount(arg);
+        let temp = extractNumber(arg);
         if(temp) {
             amount = temp;
             return;
@@ -755,7 +755,7 @@ function fine(channel, sender, targets, args, allowedRole) {
 
     let amount = 1;
     args.forEach(arg => {
-        let temp = getDollarAmount(arg);
+        let temp = extractNumber(arg);
         if(temp) {
             amount = temp;
             return;
@@ -769,14 +769,45 @@ function fine(channel, sender, targets, args, allowedRole) {
     channel.send(message);
 }
 
-function getDollarAmount(text) {
+function extractNumber(text) {
     let amount = null;
-    if(text.match(/^.\d*(\.\d+)?$/)) {
-        text = text.replace(/[^\d\.]/g, '');
-        amount = parseFloat(text);
+    let matches = text.match(/^[^\d\.]?(\d*(\.\d*)?).?$/);
+    if(matches) {
+        amount = parseFloat(matches[1]); // Get the second group, just the numbers
         amount = (Math.floor(amount * 100) / 100);
     }
     return amount;
+}
+
+function setEconomy(channel, sender, args, allowedRole) {
+    if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
+    if(!args || args.length <= 1) {
+        return channel.watchSend('Usage: `Economy [MinLength 1] [CharValue 1] [BasePayout 1] [MaxPayout 1]`');
+    }
+
+    for(let i = 0; i < args.length - 1; i += 2) {
+        let amount = extractNumber(args[i + 1]);
+        if(amount == null) return channel.watchSend('Could not understand arguments');
+
+        switch(args[i].toLowerCase()) {
+            case 'minlength':
+                db.guilds.setMinLength(sender.guild.id, amount);
+                channel.watchSend(`The minimum length for a message to be a paid is now ${amount.toFixed(0)} characters`);
+                break;
+            case 'charvalue':
+                db.guilds.setCharacterValue(sender.guild.id, amount);
+                channel.watchSend(`Messages over the minimum length earn $${amount.toFixed(2)} per character`);
+                break;
+            case 'maxpayout':
+                db.guilds.setMaxPayout(sender.guild.id, amount);
+                channel.watchSend(`The max value earned from a paid message is now $${amount.toFixed(2)}`);
+                break;
+            case 'basepayout':
+                db.guilds.setBasePayout(sender.guild.id, amount);
+                channel.watchSend(`Messages over the minimum length earn a base pay of $${amount.toFixed(2)}`);
+                break;
+        }
+    }
 }
 
 module.exports = {
@@ -799,5 +830,6 @@ module.exports = {
     getCurrency,
     setAutoDelete,
     giveCurrency,
-    fine
+    fine,
+    setEconomy
 }
