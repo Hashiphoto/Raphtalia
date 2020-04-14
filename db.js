@@ -129,24 +129,29 @@ var guilds = (function() {
         },
 
         setCharacterValue: function(guildId, characterValue) {
-            return pool.query('INSERT INTO guilds (id, character_value, censor_regex) VALUES (?,?,?) ON DUPLICATE KEY UPDATE character_value = VALUES(character_value)', [ guildId, characterValue, '' ])
+            return pool.query('INSERT INTO guilds (id, character_value) VALUES (?,?) ON DUPLICATE KEY UPDATE character_value = VALUES(character_value)', [ guildId, characterValue ])
             .catch((error) => console.error(error));
         },
 
         setMaxPayout: function(guildId, maxPayout) {
-            return pool.query('INSERT INTO guilds (id, max_payout, censor_regex) VALUES (?,?,?) ON DUPLICATE KEY UPDATE max_payout = VALUES(max_payout)', [ guildId, maxPayout, '' ])
+            return pool.query('INSERT INTO guilds (id, max_payout) VALUES (?,?) ON DUPLICATE KEY UPDATE max_payout = VALUES(max_payout)', [ guildId, maxPayout ])
             .catch((error) => console.error(error));
         },
 
         setBasePayout: function(guildId, basePayout) {
-            return pool.query('INSERT INTO guilds (id, base_payout, censor_regex) VALUES (?,?,?) ON DUPLICATE KEY UPDATE base_payout = VALUES(base_payout)', [ guildId, basePayout, '' ])
+            return pool.query('INSERT INTO guilds (id, base_payout) VALUES (?,?) ON DUPLICATE KEY UPDATE base_payout = VALUES(base_payout)', [ guildId, basePayout ])
             .catch((error) => console.error(error));
         },
 
         setMinLength: function(guildId, minLength) {
-            return pool.query('INSERT INTO guilds (id, min_length, censor_regex) VALUES (?,?,?) ON DUPLICATE KEY UPDATE min_length = VALUES(min_length)', [ guildId, minLength, '' ])
+            return pool.query('INSERT INTO guilds (id, min_length) VALUES (?,?) ON DUPLICATE KEY UPDATE min_length = VALUES(min_length)', [ guildId, minLength ])
             .catch((error) => console.error(error));
         }
+
+        // setTaxRate: function(guildId, taxRate) {
+        //     return pool.query('INSERT INTO guilds (id, tax_rate) VALUES (?,?) ON DUPLICATE KEY UPDATE tax_rate = VALUES(tax_rate)', [ guildId, taxRate ])
+        //     .catch((error) => console.error(error));
+        // }
     }
 })();
 

@@ -806,6 +806,8 @@ function setEconomy(channel, sender, args, allowedRole) {
                 db.guilds.setBasePayout(sender.guild.id, amount);
                 channel.watchSend(`Messages over the minimum length earn a base pay of $${amount.toFixed(2)}`);
                 break;
+            // case 'taxrate':
+            //     db.guilds.
         }
     }
 }
