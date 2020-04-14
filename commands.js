@@ -810,6 +810,22 @@ function setEconomy(channel, sender, args, allowedRole) {
     }
 }
 
+function setIncome(channel, sender, args, allowedRole) {
+    if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
+    if(!args || args.length < 2) {
+        return channel.watchSend('Usage: `!SetIncome (@role) (daily income)');
+    }
+
+    let role = helper.convertToRole(sender.guild, args[0]);
+    let amount = extractNumber(args[1]);
+    if(!role || amount == null) {
+        return channel.watchSend('Usage: `!SetIncome (@role) (daily income)');
+    }
+
+    db.roles.setRoleIncome(role.id, amount);
+    return channel.send(`${role.name} will now earn $${amount.toFixed(2)} daily`);
+}
+
 module.exports = {
     help,
     getInfractions,
@@ -831,5 +847,6 @@ module.exports = {
     setAutoDelete,
     giveCurrency,
     fine,
-    setEconomy
+    setEconomy,
+    setIncome
 }

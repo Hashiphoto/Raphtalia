@@ -8,6 +8,7 @@ const censorship = require('./censorship.js');
 const db = require('./db.js');
 const secretConfig = require('./config/secrets.json')[process.env.NODE_ENV || 'dev'];
 const discordConfig = require('./config/discord.json')[process.env.NODE_ENV || 'dev'];
+const tasks = require('./scheduled-tasks');
 
 // Objects
 const client = new Discord.Client();
@@ -26,6 +27,8 @@ client.login(secretConfig.discord.token)
 .then(() => {
     console.log(`Logged in! Listening for events. NODE_ENV: ${process.env.NODE_ENV}`);
 })
+
+tasks.init(client);
 
 client.on('message', message => {
     if(message.author.bot) {
@@ -64,7 +67,7 @@ client.on('message', message => {
                 let sender = message.guild.members.get(message.author.id);
                 
                 if(process.env.NODE_ENV === 'dev') {
-                    message.channel.send(`\`Debug only\` | ${sender} +$${amount.toFixed(2)}`);
+                    // message.channel.send(`\`Debug only\` | ${sender} +$${amount.toFixed(2)}`);
                 }
                 return helper.addCurrency(sender, amount)
             })
@@ -217,11 +220,6 @@ async function processCommand(message) {
         commands.getCurrency(sender);
         break;
 
-    // case 'addmoney':
-    // case 'createmoney':
-    //     commands.addCurrency(responseChannel, sender, mentionedMembers, discordConfig.roles.gov, args)
-    //     break;
-
     case 'autodelete':
         commands.setAutoDelete(responseChannel, sender, args, discordConfig.roles.leader);
         break;
@@ -236,6 +234,22 @@ async function processCommand(message) {
 
     case 'economy':
         commands.setEconomy(responseChannel, sender, args, discordConfig.roles.leader);
+        break;
+
+    case 'income':
+        commands.setIncome(responseChannel, sender, args, discordConfig.roles.leader);
+        break;
+
+    case 'createmoney':
+        if(process.env.NODE_ENV !== 'dev') { break; }
+        commands.addCurrency(responseChannel, sender, mentionedMembers, discordConfig.roles.gov, args)
+        break;
+
+    case 'doincome':
+        if(process.env.NODE_ENV !== 'dev') { break; }
+        let tasks = require('./scheduled-tasks');
+        tasks.dailyIncome(message.guild);
+        responseChannel.send('`Debug only` | Income has been distrubted');
         break;
 
     default:
@@ -289,3 +303,5 @@ function getMemberFromMention(guild, mention) {
         return role.members.array();
     }
 }
+
+module.exports = client;

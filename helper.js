@@ -283,6 +283,15 @@ function convertToRole(guild, roleResolvable) {
         return role;
     }
 
+    // Test if it's a mention
+    let matches = roleResolvable.match(/\d+/);
+    if(matches) {
+        role = guild.roles.get(matches[0]);
+        if(role != null) {
+            return role;
+        }
+    }
+
     // Test if it's a name
     role = guild.roles.find(r => r.name.toLowerCase() === roleResolvable.toLowerCase());
     

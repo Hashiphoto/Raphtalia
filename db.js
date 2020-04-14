@@ -172,9 +172,40 @@ var channels = (function() {
     }
 })();
 
+var roles = (function() {
+    return {
+        getSingle: function(roleId) {
+            return pool.query('SELECT * FROM roles WHERE id = ?', [ roleId ])
+            .then(([rows, fields]) => {
+                if(rows.length === 0) {
+                    return { id: roleId, income: 0 };
+                }
+                return rows[0];
+            })
+            .catch(e => {
+                console.error(e);
+            })
+        },
+
+        getMulti: function(roleIds) {
+            return pool.query('SELECT * FROM roles WHERE id IN (?)', [ roleIds ])
+            .then(([rows, fields]) => {
+                return rows;
+            })
+            .catch((error) => console.error(error));
+        },
+
+        setRoleIncome: function(roleId, income) {
+            return pool.query('INSERT INTO roles (id, income) VALUES (?,?) ON DUPLICATE KEY UPDATE income = VALUES(income)', [ roleId, income ])
+            .catch((error) => console.error(error));
+        }
+    }
+})();
+
 module.exports = {
     users,
     bannedWords,
     guilds,
-    channels
+    channels,
+    roles
 }
