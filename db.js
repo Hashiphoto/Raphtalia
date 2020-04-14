@@ -45,6 +45,11 @@ var users = (function() {
             .catch((error) => console.error(error));
         },
 
+        getGuildUsers: function(guildId) {
+            return pool.query('SELECT * FROM users WHERE guild_id = ?', [ guildId ])
+            .catch((error) => console.error(error));
+        },
+
         incrementInfractions: function(id, guildId, count) {
             return pool.query('INSERT INTO users (id, guild_id, infractions) VALUES (?,?,?) ON DUPLICATE KEY UPDATE infractions = infractions + VALUES(infractions)', [ id, guildId, count ])
             .catch((error) => console.error(error));
@@ -146,12 +151,12 @@ var guilds = (function() {
         setMinLength: function(guildId, minLength) {
             return pool.query('INSERT INTO guilds (id, min_length) VALUES (?,?) ON DUPLICATE KEY UPDATE min_length = VALUES(min_length)', [ guildId, minLength ])
             .catch((error) => console.error(error));
-        }
+        },
 
-        // setTaxRate: function(guildId, taxRate) {
-        //     return pool.query('INSERT INTO guilds (id, tax_rate) VALUES (?,?) ON DUPLICATE KEY UPDATE tax_rate = VALUES(tax_rate)', [ guildId, taxRate ])
-        //     .catch((error) => console.error(error));
-        // }
+        setTaxRate: function(guildId, taxRate) {
+            return pool.query('INSERT INTO guilds (id, tax_rate) VALUES (?,?) ON DUPLICATE KEY UPDATE tax_rate = VALUES(tax_rate)', [ guildId, taxRate ])
+            .catch((error) => console.error(error));
+        }
     }
 })();
 

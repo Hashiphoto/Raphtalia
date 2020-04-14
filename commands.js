@@ -782,7 +782,7 @@ function extractNumber(text) {
 function setEconomy(channel, sender, args, allowedRole) {
     if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
     if(!args || args.length <= 1) {
-        return channel.watchSend('Usage: `Economy [MinLength 1] [CharValue 1] [BasePayout 1] [MaxPayout 1]`');
+        return channel.watchSend('Usage: `Economy [MinLength $1] [CharValue $1] [BasePayout $1] [MaxPayout $1] [TaxRate 1%]`');
     }
 
     for(let i = 0; i < args.length - 1; i += 2) {
@@ -806,8 +806,10 @@ function setEconomy(channel, sender, args, allowedRole) {
                 db.guilds.setBasePayout(sender.guild.id, amount);
                 channel.watchSend(`Messages over the minimum length earn a base pay of $${amount.toFixed(2)}`);
                 break;
-            // case 'taxrate':
-            //     db.guilds.
+            case 'taxrate':
+                db.guilds.setTaxRate(sender.guild.id, amount/100);
+                channel.watchSend(`Members are taxed ${amount.toFixed(2)}% of their role income on a weekly basis`);
+                break;
         }
     }
 }

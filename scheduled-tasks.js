@@ -47,7 +47,32 @@ function dailyIncome(guild) {
     })
 }
 
+function tax(guild) {
+    db.guilds.get(guild.id)
+    .then(guild => {
+        return guild.tax_rate;
+    })
+    .then(taxRate => {
+        guild.members.forEach(member => {
+            if(!member.hoistRole) return;
+    
+            let highestRoleId = member.hoistRole.id;
+            db.roles.getSingle(highestRoleId)
+            .then(dbRole => {
+                return dbRole.income;
+            })
+            .then((income) => {
+                if(income === 0) return;
+                let weeklyIncome = income * 7;
+                let tax = weeklyIncome * taxRate;
+                db.users.incrementCurrency(member.id, member.guild.id, -tax);
+            })
+        })
+    })
+}
+
 module.exports = {
     init,
-    dailyIncome
+    dailyIncome,
+    tax
 }

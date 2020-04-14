@@ -247,9 +247,14 @@ async function processCommand(message) {
 
     case 'doincome':
         if(process.env.NODE_ENV !== 'dev') { break; }
-        let tasks = require('./scheduled-tasks');
         tasks.dailyIncome(message.guild);
         responseChannel.send('`Debug only` | Income has been distrubted');
+        break;
+
+    case 'dotaxes':
+        if(process.env.NODE_ENV !== 'dev') { break; }
+        tasks.tax(message.guild);
+        responseChannel.send('`Debug only` | Members have been taxed');
         break;
 
     default:
