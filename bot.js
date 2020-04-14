@@ -240,11 +240,6 @@ async function processCommand(message) {
         commands.setIncome(responseChannel, sender, args, discordConfig.roles.leader);
         break;
 
-    case 'createmoney':
-        if(process.env.NODE_ENV !== 'dev') { break; }
-        commands.addCurrency(responseChannel, sender, mentionedMembers, discordConfig.roles.gov, args)
-        break;
-
     case 'doincome':
         if(process.env.NODE_ENV !== 'dev') { break; }
         tasks.dailyIncome(message.guild);
