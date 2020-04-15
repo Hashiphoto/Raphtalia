@@ -124,7 +124,7 @@ var guilds = (function() {
         },
 
         setCensorship: function(guildId, enabled) {
-            return pool.query('INSERT INTO guilds VALUES (?,?,?) ON DUPLICATE KEY UPDATE censorship_enabled = VALUES(censorship_enabled)', [ guildId, enabled, '' ])
+            return pool.query('INSERT INTO guilds (id, censorship_enabled) VALUES (?,?) ON DUPLICATE KEY UPDATE censorship_enabled = VALUES(censorship_enabled)', [ guildId, enabled ])
             .catch((error) => console.error(error));
         },
 
