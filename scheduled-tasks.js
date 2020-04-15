@@ -62,6 +62,8 @@ function tax(guild) {
         return guild.tax_rate;
     })
     .then(taxRate => {
+        // Get the highest hoisted role that has members in it.
+        let leaderRole = guild.roles.filter(role => role.hoist && role.members.size > 0).sort((a,b) => b.calculatedPosition - a.calculatedPosition).first();
         guild.members.forEach(member => {
             if(!member.hoistRole) return;
     
@@ -75,6 +77,9 @@ function tax(guild) {
                 let weeklyIncome = income * 7;
                 let tax = weeklyIncome * taxRate;
                 db.users.incrementCurrency(member.id, member.guild.id, -tax);
+                leaderRole.members.forEach(member => {
+                    db.users.incrementCurrency(member.id, member.guild.id, tax / leaderRole.members.size);
+                })
             })
         })
     })
