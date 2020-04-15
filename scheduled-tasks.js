@@ -29,6 +29,15 @@ function init(client) {
             dailyIncome(guild);
         })
     }, null, true, 'America/Los_Angeles');
+
+    /**
+     * Weekly Taxes. Runs at Sunday midnight
+     */
+    new CronJob('0 0 * * 0', function() {
+        client.guilds.forEach(guild => {
+            tax(guild);
+        })
+    }, null, true, 'America/Los_Angeles');
 }
 
 function dailyIncome(guild) {
