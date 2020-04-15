@@ -269,22 +269,27 @@ function sendTimedMessage(channel, member, question, showDuration = true) {
 async function askGateQuestion(channel, member, question) {
     try {
         // For strict questions, always take the first answer
-        let answerRe = new RegExp(question.answer, 'gi');
+        let questionCopy = JSON.parse(JSON.stringify(question));
         if(question.strict) {
-            question.answer = '.*';
+            questionCopy.answer = '.*';
         }
 
-        let response = await sendTimedMessage(channel, member, question);
+        // Wait until they supply an answer matching the question.answer regex
+        let response = await sendTimedMessage(channel, member, questionCopy);
 
         if(await censorship.containsBannedWords(member.guild.id, response)) {
             helper.softkick(channel, member, 'We don\'t allow those words here');
-            return;
+            return false;
         }
 
         // For strict questions, kick them if they answer wrong
-        if(question.strict && response.match(answerRe) == null) {
-            throw new Error('Incorrect response given');
+        if(question.strict) {
+            let answerRe = new RegExp(question.answer, 'gi');
+            if(response.match(answerRe) == null) {
+                throw new Error('Incorrect response given');
+            }
         }
+        
         return true;
     }
     catch(e) {
