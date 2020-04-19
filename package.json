@@ -26,7 +26,7 @@
     "minimist": "^1.2.3",
     "mysql2": "^2.1.0",
     "node-opus": "^0.3.3",
-    "ytdl-core": "^2.0.0"
+    "ytdl-core": "^2.1.0"
   },
   "devDependencies": {}
 }
