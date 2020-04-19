@@ -506,6 +506,29 @@ function addCurrency(member, amount = 1) {
     return db.users.incrementCurrency(member.id, member.guild.id, amount)
 }
 
+function getLeaderRole(guild) {
+    return guild.roles.filter(role => role.hoist && role.members.size > 0).sort((a,b) => b.calculatedPosition - a.calculatedPosition).first();
+}
+
+function getUserIncome(member) {
+    return db.users.get(member.id, member.guild.id)
+    .then(dbUser => {
+        // Check for personally-set income
+        let bonusIncome = 0;
+        if(dbUser.bonus_income != 0) {
+            bonusIncome = dbUser.bonus_income;
+        }
+        // Check for role income
+        if(!member.hoistRole) { return bonusIncome }
+        return db.roles.getSingle(member.hoistRole.id)
+        .then(dbRole => {
+            if(!dbRole) { return bonusIncome }
+
+            return dbRole.income;
+        })
+    })
+}
+
 module.exports = {
     getNextRole,
     getPreviousRole,
@@ -527,5 +550,7 @@ module.exports = {
     dateFormat,
     convertToRole,
     reportCurrency,
-    addCurrency
+    addCurrency,
+    getLeaderRole,
+    getUserIncome
 }

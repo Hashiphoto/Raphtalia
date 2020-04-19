@@ -63,7 +63,8 @@ function tax(guild) {
     })
     .then(taxRate => {
         // Get the highest hoisted role that has members in it.
-        let leaderRole = guild.roles.filter(role => role.hoist && role.members.size > 0).sort((a,b) => b.calculatedPosition - a.calculatedPosition).first();
+        let leaderRole = helper.getLeaderRole(guild);
+        if(!leaderRole) { return }
         guild.members.forEach(member => {
             if(!member.hoistRole) return;
     

@@ -122,6 +122,7 @@ async function processCommand(message) {
 
     // mentionedMembers contains every mention in order in an array
     let mentionedMembers = getMemberMentions(message.guild, args);
+    let mentionedRoles = getRoleMentions(message.guild, args);
     let responseChannel = message.channel;
 
     switch(command) {
@@ -237,13 +238,13 @@ async function processCommand(message) {
         break;
 
     case 'income':
-        commands.setIncome(responseChannel, sender, args, discordConfig.roles.leader);
+        commands.income(responseChannel, sender, mentionedMembers, mentionedRoles, args, discordConfig.roles.leader);
         break;
 
     case 'doincome':
         if(process.env.NODE_ENV !== 'dev') { break; }
         tasks.dailyIncome(message.guild);
-        responseChannel.send('`Debug only` | Income has been distrubted');
+        responseChannel.send('`Debug only` | Income has been distributed');
         break;
 
     case 'dotaxes':
@@ -267,6 +268,26 @@ async function processCommand(message) {
  * @returns {Discord.GuildMember[]} - An array of guildMember objects
  */
 function getMemberMentions(guild, args) {
+    let roles = [];
+    for(let i = 0; i < args.length; i++) {
+        let roleMatches = args[i].match(/<@&(\d+)>/);
+        if(roleMatches) {
+            let role = guild.roles.get(roleMatches[1]);
+            roles.push(role);
+        }
+    }
+
+    return roles;
+}
+
+/**
+ * Parses args and returns the user mentions in the order given 
+ * 
+ * @param {Discord.Guild} guild - The guild to search for members/roles
+ * @param {String[]} args - An array of strings to parse for mentions
+ * @returns {Discord.GuildMember[]} - An array of guildMember objects
+ */
+function getRoleMentions(guild, args) {
     let members = [];
     for(let i = 0; i < args.length; i++) {
         let member = getMemberFromMention(guild, args[i]);

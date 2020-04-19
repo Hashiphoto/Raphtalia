@@ -819,16 +819,27 @@ function setEconomy(channel, sender, args, allowedRole) {
     }
 }
 
-function setIncome(channel, sender, args, allowedRole) {
+function income(channel, sender, mentionedMembers, mentionedRoles, args, allowedRole) {
+    if(!args || args.length === 0) {
+        return helper.getUserIncome(sender)
+        .then(income => {
+            return channel.send(`Your daily income is $${income.toFixed(2)}`)
+        })
+    }
     if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
     if(!args || args.length < 2) {
-        return channel.watchSend('Usage: `!SetIncome (@role) (daily income)');
+        return channel.watchSend('Usage: `!Income (base|scale) [+|-]($1|1%)');
+    }
+
+    switch(args[0].toLowerCase()) {
+        case 'base':
+            // Set all 
     }
 
     let role = helper.convertToRole(sender.guild, args[0]);
     let amount = extractNumber(args[1]);
     if(!role || amount == null) {
-        return channel.watchSend('Usage: `!SetIncome (@role) (daily income)');
+        return channel.watchSend('Usage: `!Income (@role) (daily income)');
     }
 
     db.roles.setRoleIncome(role.id, amount);
@@ -857,5 +868,5 @@ module.exports = {
     giveCurrency,
     fine,
     setEconomy,
-    setIncome
+    income
 }
