@@ -411,7 +411,7 @@ function play(channel, sender, content, allowedRole) {
     // Check if channel was specified
     let firstMatch = null;
     let secondMatch = null;
-    let matches = content.match(/\bin [\w ]+/); // Everything from the "in " until the first slash (/)
+    let matches = content.match(/\bin [-\w ]+/); // Everything from the "in " until the first slash (/)
     if(matches != null) {
         // Parameters are restricted permission
         if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
@@ -455,7 +455,11 @@ function play(channel, sender, content, allowedRole) {
             return;
         }
     }
-    youtube.play(voiceChannel, links.youtube.anthem, volume);
+    const permissions = voiceChannel.permissionsFor(sender.client.user);
+    if (!permissions.has('VIEW_CHANNEL') || !permissions.has('CONNECT') || !permissions.has('SPEAK')) {
+        return channel.watchSend('I don\'t have permission to join that channel');
+    }
+    return youtube.play(voiceChannel, links.youtube.anthem, volume);
 }
 
 function registerVoter(channel, sender) {
