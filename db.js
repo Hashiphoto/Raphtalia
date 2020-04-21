@@ -156,6 +156,11 @@ var guilds = (function() {
         setTaxRate: function(guildId, taxRate) {
             return pool.query('INSERT INTO guilds (id, tax_rate) VALUES (?,?) ON DUPLICATE KEY UPDATE tax_rate = VALUES(tax_rate)', [ guildId, taxRate ])
             .catch((error) => console.error(error));
+        },
+
+        setBaseIncome: function(guildId, baseIncome) {
+            return pool.query('INSERT INTO guilds (id, base_income) VALUES (?,?) ON DUPLICATE KEY UPDATE base_income = VALUES(base_income)', [ guildId, baseIncome ])
+            .catch((error) => console.error(error));
         }
     }
 })();

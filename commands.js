@@ -736,7 +736,7 @@ function giveCurrency(channel, sender, targets, args) {
 
     let amount = 1;
     args.forEach(arg => {
-        let temp = extractNumber(arg);
+        let temp = extractNumber(arg).number;
         if(temp) {
             amount = temp;
             return;
@@ -764,7 +764,7 @@ function fine(channel, sender, targets, args, allowedRole) {
 
     let amount = 1;
     args.forEach(arg => {
-        let temp = extractNumber(arg);
+        let temp = extractNumber(arg).number;
         if(temp) {
             amount = temp;
             return;
@@ -778,14 +778,43 @@ function fine(channel, sender, targets, args, allowedRole) {
     channel.send(message);
 }
 
+/**
+ * Extract a decimal number from a string. Can be dollar format or percentage with a leading +/- sign
+ * 
+ * @param {String} text - The number in string form to extract the number from
+ * @returns {Object} - An Object with the following properties: "number" {Number}, "isDollar" {Boolean}, "isPercent" {Boolean}
+ */
 function extractNumber(text) {
     let amount = null;
-    let matches = text.match(/^[^\d\.]?(\d*(\.\d*)?).?$/);
+    let isDollar = false;
+    let isPercent = false;
+    let matches = text.match(/^(\+|-)?(\$)?(\d*\.?\d+)(%)?$/);
+    /**
+     * Index    Contains            Example
+     * 0        The whole match     +$400.00%
+     * 1        Plus or Minus       +
+     * 2        Dollar Sign         $
+     * 3        Number              400.00
+     * 4        Percent Sign        %
+     */
     if(matches) {
-        amount = parseFloat(matches[1]); // Get the second group, just the numbers
+        amount = parseFloat(matches[3]);
+        if(matches[1] === '-') {
+            amount *= -1;
+        }
+        if(matches[4] === '%') {
+            isPercent = true;
+            amount /= 100;
+        }
+        isDollar = matches[2] === '$';
         amount = (Math.floor(amount * 100) / 100);
     }
-    return amount;
+
+    return {
+        number: amount,
+        isDollar: isDollar,
+        isPercent: isPercent
+    }
 }
 
 function setEconomy(channel, sender, args, allowedRole) {
@@ -795,8 +824,8 @@ function setEconomy(channel, sender, args, allowedRole) {
     }
 
     for(let i = 0; i < args.length - 1; i += 2) {
-        let amount = extractNumber(args[i + 1]);
-        if(amount == null) return channel.watchSend('Could not understand arguments');
+        let amount = extractNumber(args[i + 1]).number;
+        if(amount.number == null) return channel.watchSend('Could not understand arguments');
 
         switch(args[i].toLowerCase()) {
             case 'minlength':
@@ -823,7 +852,7 @@ function setEconomy(channel, sender, args, allowedRole) {
     }
 }
 
-function income(channel, sender, mentionedMembers, mentionedRoles, args, allowedRole) {
+async function income(channel, sender, mentionedMembers, mentionedRoles, args, allowedRole) {
     if(!args || args.length === 0) {
         return helper.getUserIncome(sender)
         .then(income => {
@@ -832,22 +861,61 @@ function income(channel, sender, mentionedMembers, mentionedRoles, args, allowed
     }
     if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
     if(!args || args.length < 2) {
-        return channel.watchSend('Usage: `!Income (base|scale) [+|-]($1|1%)');
+        return channel.watchSend('Usage: `!Income [base $1] [scale ($1|1%)]');
     }
 
-    switch(args[0].toLowerCase()) {
-        case 'base':
-            // Set all 
+    // Check for base income set
+    for(let i = 0; i < args.length - 1; i++) {
+        if(args[i] !== 'base') {
+            continue;
+
+        }
+        let amount = extractNumber(args[i + 1]);
+        if(amount.number == null || amount.isPercent) {
+            return channel.watchSend('Please try again and specify the base pay in dollars. e.g. `!Income base $100`');
+        }
+        db.guilds.setBaseIncome(channel.guild.id, amount.number);
     }
 
-    let role = helper.convertToRole(sender.guild, args[0]);
-    let amount = extractNumber(args[1]);
-    if(!role || amount == null) {
-        return channel.watchSend('Usage: `!Income (@role) (daily income)');
-    }
+    let baseIncome = await db.guilds.get(channel.guild.id).base_income;
+    
+    // Income scale
+    for(let i = 0; i < args.length - 1; i++) {
+        if(args[i] !== 'scale') {
+            continue;
+        }
 
-    db.roles.setRoleIncome(role.id, amount);
-    return channel.send(`${role.name} will now earn $${amount.toFixed(2)} daily`);
+        let amount = extractNumber(args[i + 1]);
+        if(amount.number == null || (amount.isDollar === amount.isPercent)) {
+            return channel.watchSend('Please try again and specify the scale as a percent or dollar amount. e.g. `!Income scale $100` or `!Income scale 125%');
+        }
+        if(amount.isPercent && amount.number < 1) {
+            return channel.watchSend('Income scale must be at least 100%');
+        }
+        let neutralRole = helper.convertToRole(sender.guild, discordConfig.roles.neutral);
+        if(!neutralRole) {
+            return channel.watchSend('There is no neutral role');
+        }
+        let roles = channel.guild.roles.filter(role => role.hoist && role.calculatedPosition >= neutralRole.calculatedPosition).sort((a,b) => a.calculatedPosition - b.calculatedPosition).array();
+
+        return channel.watchSend(await setIncomeScale(baseIncome, roles, amount));
+    }
+}
+
+async function setIncomeScale(baseIncome, roles, amount) {
+    let nextIncome = baseIncome;
+    let announcement = '';
+    for(let i = 0; i < roles.length; i++) {
+        await db.roles.setRoleIncome(roles[i].id, nextIncome);
+        announcement += `${roles[i].name} will now earn $${nextIncome.toFixed(2)}\n`;
+        if(amount.isDollar) {
+            nextIncome += amount.number;
+        }
+        else {
+            nextIncome = nextIncome * amount.number;
+        }
+    }
+    return announcement;
 }
 
 module.exports = {
