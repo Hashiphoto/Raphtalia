@@ -252,7 +252,7 @@ function sendTimedMessage(channel, member, question, showDuration = true) {
         text += `\`(${question.timeout / 1000}s)\`\n`;
     }
     text += question.prompt;
-    return channel.watchSend(text)
+    return channel.send(text)
     .then(() => {
         // Get the first message that matches the filter. Errors out if the time limit is reached
         return channel.awaitMessages(filter, { maxMatches: 1, time: question.timeout, errors: ['time'] });
@@ -562,7 +562,8 @@ function holdVote(channel, sender, mentionedMembers, content, allowedRole) {
             console.log(`${voter.displayName} chose ${choice}`);
             voteTally.find(v => v.id === parseInt(choice)).votes++;
         })
-        .catch(() => {
+        .catch((error) => {
+            console.log(error);
             dmChannel.send(`Voting has closed.`);
         })
     })
