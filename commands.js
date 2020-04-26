@@ -563,7 +563,7 @@ function holdVote(channel, sender, mentionedMembers, content, allowedRole) {
             voteTally.find(v => v.id === parseInt(choice)).votes++;
         })
         .catch((error) => {
-            console.log(error);
+            console.log(`${voter.displayName} did not vote`);
             dmChannel.send(`Voting has closed.`);
         })
     })
