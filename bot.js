@@ -252,6 +252,15 @@ async function processCommand(message) {
         tasks.tax(message.guild);
         responseChannel.send('`Debug only` | Members have been taxed');
         break;
+    
+    case 'purchase':
+    case 'buy':
+        commands.buy(responseChannel, sender, args);
+        break;
+
+    case 'roleprice':
+        commands.setRolePrice(responseChannel, sender, args, discordConfig.roles.leader);
+        break;
 
     default:
         if(responseChannel) {
