@@ -875,10 +875,10 @@ async function income(channel, sender, mentionedMembers, mentionedRoles, args, a
         if(amount.number == null || amount.isPercent) {
             return channel.watchSend('Please try again and specify the base pay in dollars. e.g. `!Income base $100`');
         }
-        db.guilds.setBaseIncome(channel.guild.id, amount.number);
+        await db.guilds.setBaseIncome(channel.guild.id, amount.number);
     }
 
-    let baseIncome = await db.guilds.get(channel.guild.id).base_income;
+    let baseIncome = (await db.guilds.get(channel.guild.id)).base_income;
     
     // Income scale
     for(let i = 0; i < args.length - 1; i++) {
