@@ -789,7 +789,7 @@ function extractNumber(text) {
     let amount = null;
     let isDollar = false;
     let isPercent = false;
-    let matches = text.match(/^(\+|-)?(\$)?(\d*\.?\d+)(%)?$/);
+    let matches = text.match(/^(\+|-)?(\$)?(\d*\.?\d+)(%|X)?$/i);
     /**
      * Index    Contains            Example
      * 0        The whole match     +$400.00%
@@ -953,25 +953,31 @@ async function buy(channel, sender, args) {
  * @param {String[]} args - The command arguments
  * @param {String | Discord.RoleResolvable} allowedRole - The minimum hoist role to use this command
  */
-function setRolePrice(channel, sender, args, allowedRole) {
+async function setRolePrice(channel, sender, args, allowedRole) {
     if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
 
     if(!args || args.length === 0) {
         return channel.watchSend(`Usage: !RolePrice 1`);
     }
-    let multiplier = parseFloat(args[0]);
+    let multiplier = extractNumber(args[0]).number;
     if(multiplier == null) {
         return channel.watchSend(`Usage: !RolePrice 1`);
     }
 
-    let roleIds = sender.guild.roles.filter(role => role.hoist).map(role => role.id);
-    db.roles.getMulti(roleIds)
-    .then(dbRoles => {
-        dbRoles.forEach(role => {
-            db.roles.setRolePrice(role.id, role.income * multiplier);
-            channel.send(`DEBUG: ${role.id} now costs ${role.income * multiplier}`)
-        })
-    })
+    let announcement = `Every role's purchase price is now ${multiplier.toFixed(2)}x its daily income!\n`;
+    let neutralRole = helper.convertToRole(sender.guild, discordConfig.roles.neutral);
+    if(!neutralRole) {
+        return channel.watchSend('There is no neutral role');
+    }
+    let discordRoles = channel.guild.roles.filter(role => role.hoist && role.calculatedPosition >= neutralRole.calculatedPosition).sort((a,b) => b.calculatedPosition - a.calculatedPosition).array();
+
+    for(let i = 0; i < discordRoles.length; i++) {
+        let dbRole = await db.roles.getSingle(discordRoles[i].id);
+        let newPrice = dbRole.income * multiplier;
+        db.roles.setRolePrice(discordRoles[i].id, newPrice);
+        announcement += `${discordRoles[i].name} new price: $${newPrice.toFixed(2)}\n`;
+    }
+    channel.watchSend(announcement);
 }
 
 module.exports = {

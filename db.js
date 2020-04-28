@@ -193,7 +193,7 @@ var roles = (function() {
             return pool.query('SELECT * FROM roles WHERE id = ?', [ roleId ])
             .then(([rows, fields]) => {
                 if(rows.length === 0) {
-                    return { id: roleId, income: 0 };
+                    return { id: roleId, income: 0, price: 0 };
                 }
                 return rows[0];
             })
