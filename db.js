@@ -213,6 +213,11 @@ var roles = (function() {
         setRoleIncome: function(roleId, income) {
             return pool.query('INSERT INTO roles (id, income) VALUES (?,?) ON DUPLICATE KEY UPDATE income = VALUES(income)', [ roleId, income ])
             .catch((error) => console.error(error));
+        },
+
+        setRolePrice: function(roleId, price) {
+            return pool.query('INSERT INTO roles (id, price) VALUES (?,?) ON DUPLICATE KEY UPDATE price = VALUES(price)', [ roleId, price ])
+            .catch((error) => console.error(error));
         }
     }
 })();

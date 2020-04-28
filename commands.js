@@ -937,12 +937,41 @@ async function buy(channel, sender, args) {
             if(dbUser.currency < dbRole.price) {
                 return channel.watchSend(`You cannot afford a promotion. Promotion to ${nextRole.name} costs $${dbRole.price.toFixed(2)}`);
             }
+            helper.addCurrency(sender, -dbRole.price);
             helper.promote(channel, null, sender);
         })
         break;
     default:
         return channel.watchSend(`Unknown item`);
     }
+}
+
+/**
+ * 
+ * @param {Discord.TextChannel} channel - The channel to send replies in
+ * @param {Discord.GuildMember} sender - The guild member who issued the command
+ * @param {String[]} args - The command arguments
+ * @param {String | Discord.RoleResolvable} allowedRole - The minimum hoist role to use this command
+ */
+function setRolePrice(channel, sender, args, allowedRole) {
+    if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
+
+    if(!args || args.length === 0) {
+        return channel.watchSend(`Usage: !RolePrice 1`);
+    }
+    let multiplier = parseFloat(args[0]);
+    if(multiplier == null) {
+        return channel.watchSend(`Usage: !RolePrice 1`);
+    }
+
+    let roleIds = sender.guild.roles.filter(role => role.hoist).map(role => role.id);
+    db.roles.getMulti(roleIds)
+    .then(dbRoles => {
+        dbRoles.forEach(role => {
+            db.roles.setRolePrice(role.id, role.income * multiplier);
+            channel.send(`DEBUG: ${role.id} now costs ${role.income * multiplier}`)
+        })
+    })
 }
 
 module.exports = {
@@ -968,5 +997,6 @@ module.exports = {
     fine,
     setEconomy,
     income,
-    buy
+    buy,
+    setRolePrice
 }
