@@ -342,7 +342,7 @@ async function arrive(channel, member) {
         channel.watchSend(`${member} doesn't want a nickname...`);
     }
 
-    for(let i = 0; i < welcomeQuestions.gulagQuestions.length; i++) {
+    for(let i = 0; i < welcomeQuestions.republicQuestions.length; i++) {
         let answeredCorrect = await askGateQuestion(channel, member, welcomeQuestions.gulagQuestions[i]);
         if(!answeredCorrect) {
             return;
