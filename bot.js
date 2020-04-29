@@ -252,6 +252,15 @@ async function processCommand(message) {
         tasks.tax(message.guild);
         responseChannel.send('`Debug only` | Members have been taxed');
         break;
+    
+    case 'purchase':
+    case 'buy':
+        commands.buy(responseChannel, sender, args);
+        break;
+
+    case 'roleprice':
+        commands.setRolePrice(responseChannel, sender, args, discordConfig.roles.leader);
+        break;
 
     default:
         if(responseChannel) {
@@ -268,26 +277,6 @@ async function processCommand(message) {
  * @returns {Discord.GuildMember[]} - An array of guildMember objects
  */
 function getMemberMentions(guild, args) {
-    let roles = [];
-    for(let i = 0; i < args.length; i++) {
-        let roleMatches = args[i].match(/<@&(\d+)>/);
-        if(roleMatches) {
-            let role = guild.roles.get(roleMatches[1]);
-            roles.push(role);
-        }
-    }
-
-    return roles;
-}
-
-/**
- * Parses args and returns the user mentions in the order given 
- * 
- * @param {Discord.Guild} guild - The guild to search for members/roles
- * @param {String[]} args - An array of strings to parse for mentions
- * @returns {Discord.GuildMember[]} - An array of guildMember objects
- */
-function getRoleMentions(guild, args) {
     let members = [];
     for(let i = 0; i < args.length; i++) {
         let member = getMemberFromMention(guild, args[i]);
@@ -298,6 +287,26 @@ function getRoleMentions(guild, args) {
     }
 
     return members;
+}
+
+/**
+ * Parses args and returns the user mentions in the order given 
+ * 
+ * @param {Discord.Guild} guild - The guild to search for members/roles
+ * @param {String[]} args - An array of strings to parse for mentions
+ * @returns {Discord.GuildMember[]} - An array of guildMember objects
+ */
+function getRoleMentions(guild, args) {
+    let roles = [];
+    for(let i = 0; i < args.length; i++) {
+        let roleMatches = args[i].match(/<@&(\d+)>/);
+        if(roleMatches) {
+            let role = guild.roles.get(roleMatches[1]);
+            roles.push(role);
+        }
+    }
+
+    return roles;
 }
 
 /**

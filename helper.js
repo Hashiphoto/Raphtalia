@@ -158,7 +158,7 @@ function pardon(member, channel) {
 
     if(hasRole(member, discordConfig.roles.exile)) {
         clearExileTimer(member);
-        setRoles(member, [discordConfig.roles.neutral]);
+        setHoistedRole(member, discordConfig.roles.neutral);
         if(channel) channel.watchSend(`${member} has been released from exile`);
     }
     else {
@@ -174,7 +174,7 @@ function pardon(member, channel) {
  * @param {dayjs} releaseDate - The dayjs object representing when the exile will end
  */
 function exile(member, channel, releaseDate = null) {
-    setRoles(member, [discordConfig.roles.exile]);
+    setHoistedRole(member, discordConfig.roles.exile);
     let message = '';
     if(releaseDate != null) {
         let duration = releaseDate.diff(dayjs());
@@ -231,19 +231,25 @@ function hasRoleOrHigher(member, role) {
  * Set the roles of a guildMember. All hoisted roles are removed first
  * 
  * @param {Discord.GuildMember} member - The member to set the roles for
- * @param {RoleResolvable[]} roles - An array of roles representing the names of the roles to give the members
+ * @param {RoleResolvable[]} role - An array of roles representing the names of the roles to give the members
  */
-function setRoles(member, roles) {
-    var discordRoles = parseRoles(member.guild, roles);
+async function setHoistedRole(member, role) {
+    let discordRole = convertToRole(member.guild, role);
 
+    let dbRole = await db.roles.getSingle(discordRole.id);
+    if(dbRole.member_limit >= 0 && discordRole.members.size >= dbRole.member_limit) {
+        return Promise.resolve([false, dbRole.member_limit]);
+    }
     // Remove all hoisted roles and add the ones specified
     let hoistedRoles = member.roles.filter(role => role.hoist);
     return member.removeRoles(hoistedRoles)
     .then(() => {
-        return member.addRoles(discordRoles);
+        member.addRoles(discordRole);
+        return [true, dbRole.member_limit];
     })
     .catch(() => {
         console.error('Could not change roles for ' + member.displayName);
+        return [false, dbRole.member_limit];
     })
 }
 
@@ -384,17 +390,24 @@ function softkick(channel, target, reason) {
  * @param {Discord.GuildMember} target - The GuildMember being promoted
  */
 function promote(channel, sender, target) {
+    let nextHighest = getNextRole(target, target.guild);
+
     // Disallow self-promotion
-    if(sender.id === target.id) {
-        addInfractions(sender, channel, 1, links.gifs.bernieNo);
-        return;
+    if(sender != null) {
+        if(sender.id === target.id) {
+            addInfractions(sender, channel, 1, links.gifs.bernieNo);
+            return;
+        }
+        // Ensure the target's next highest role is not higher than the sender's
+        if(sender.highestRole.comparePositionTo(nextHighest) < 0) {
+            addInfractions(sender, channel, 1, 'You can\'t promote above your own role');
+            return;
+        }
     }
 
     if(hasRole(target, discordConfig.roles.exile)) {
         clearExileTimer(target);
     }
-
-    let nextHighest = getNextRole(target, sender.guild);
 
     if(nextHighest == null) {
         if(channel) channel.watchSend(`${target} holds the highest office already`);
@@ -403,15 +416,16 @@ function promote(channel, sender, target) {
     
     setInfractions(target, null, 0, null);
 
-    // Ensure the target's next highest role is not higher than the sender's
-    if(sender.highestRole.comparePositionTo(nextHighest) < 0) {
-        addInfractions(sender, channel, 1, 'You can\'t promote above your own role');
-        return;
-    }
-
     // promote the target
-    setRoles(target, [nextHighest.name]);
-    if(channel) channel.watchSend(`${target} has been promoted to ${nextHighest.name}!`);
+    setHoistedRole(target, nextHighest)
+    .then(([roleChanged, memberLimit]) => {
+        if(roleChanged) {
+            channel.watchSend(`${target} has been promoted to ${nextHighest.name}!`);
+        }
+        else {
+            channel.watchSend(`Cannot promote because ${nextHighest.name} already has ${nextHighest.members.size}/${memberLimit} members!`);
+        }
+    })
 }
 
 /**
@@ -453,12 +467,20 @@ function demote(channel, sender, target) {
     }
 
     // demote the target
-    setRoles(target, [nextLowest.name]);
+    setHoistedRole(target, nextLowest);
     let roleName = nextLowest.name;
     if(roleName === '@everyone') {
         roleName = 'commoner';
     }
-    if(channel) channel.watchSend(`${target} has been demoted to ${roleName}!`);
+    setHoistedRole(target, nextLowest)
+    .then(([roleChanged, memberLimit]) => {
+        if(roleChanged) {
+            channel.watchSend(`${target} has been demoted to ${roleName}!`);
+        }
+        else {
+            channel.watchSend(`Cannot demote because ${roleName} already has ${nextLowest.members.size}/${memberLimit} members!`);
+        }
+    })
 }
 
 /**
@@ -540,7 +562,7 @@ module.exports = {
     exile,
     hasRole,
     hasRoleOrHigher,
-    setRoles,
+    setHoistedRole,
     addRoles,
     parseTime,
     checkInfractionCount,

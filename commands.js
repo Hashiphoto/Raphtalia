@@ -252,7 +252,7 @@ function sendTimedMessage(channel, member, question, showDuration = true) {
         text += `\`(${question.timeout / 1000}s)\`\n`;
     }
     text += question.prompt;
-    return channel.watchSend(text)
+    return channel.send(text)
     .then(() => {
         // Get the first message that matches the filter. Errors out if the time limit is reached
         return channel.awaitMessages(filter, { maxMatches: 1, time: question.timeout, errors: ['time'] });
@@ -309,14 +309,14 @@ async function askGateQuestion(channel, member, question) {
  */
 async function arrive(channel, member) {
     if(!channel) return;
-    await helper.setRoles(member, [ discordConfig.roles.immigrant ]);
+    await helper.setHoistedRole(member, discordConfig.roles.immigrant);
 
     let dbUser = await db.users.get(member.id, member.guild.id);
     
     // Check if already a citizen
     if(dbUser.citizenship) {
         channel.watchSend(`Welcome back comrade ${member}!`)
-        helper.setRoles(member, [ discordConfig.roles.neutral ]);
+        helper.setHoistedRole(member, discordConfig.roles.neutral);
         return;
     }
 
@@ -353,7 +353,7 @@ async function arrive(channel, member) {
     db.users.setCitizenship(member.id, member.guild.id, true);
     channel.watchSend(`Thank you! And welcome loyal comrade to ${channel.guild.name}! 🎉🎉🎉`)
     .then(() => {
-        helper.setRoles(member, [ discordConfig.roles.neutral ]);
+        helper.setHoistedRole(member, discordConfig.roles.neutral);
     })
 }
 
@@ -562,7 +562,8 @@ function holdVote(channel, sender, mentionedMembers, content, allowedRole) {
             console.log(`${voter.displayName} chose ${choice}`);
             voteTally.find(v => v.id === parseInt(choice)).votes++;
         })
-        .catch(() => {
+        .catch((error) => {
+            console.log(`${voter.displayName} did not vote`);
             dmChannel.send(`Voting has closed.`);
         })
     })
@@ -788,7 +789,7 @@ function extractNumber(text) {
     let amount = null;
     let isDollar = false;
     let isPercent = false;
-    let matches = text.match(/^(\+|-)?(\$)?(\d*\.?\d+)(%)?$/);
+    let matches = text.match(/^(\+|-)?(\$)?(\d*\.?\d+)(%|X)?$/i);
     /**
      * Index    Contains            Example
      * 0        The whole match     +$400.00%
@@ -874,10 +875,10 @@ async function income(channel, sender, mentionedMembers, mentionedRoles, args, a
         if(amount.number == null || amount.isPercent) {
             return channel.watchSend('Please try again and specify the base pay in dollars. e.g. `!Income base $100`');
         }
-        db.guilds.setBaseIncome(channel.guild.id, amount.number);
+        await db.guilds.setBaseIncome(channel.guild.id, amount.number);
     }
 
-    let baseIncome = await db.guilds.get(channel.guild.id).base_income;
+    let baseIncome = (await db.guilds.get(channel.guild.id)).base_income;
     
     // Income scale
     for(let i = 0; i < args.length - 1; i++) {
@@ -918,6 +919,67 @@ async function setIncomeScale(baseIncome, roles, amount) {
     return announcement;
 }
 
+async function buy(channel, sender, args) {
+    if(!args || args.length === 0) {
+        return channel.watchSend(`Usage: !Buy (Item Name)`);
+    }
+    // Get store items
+    switch(args[0]) {
+    case 'promotion':
+        let nextRole = helper.getNextRole(sender, sender.guild);
+        if(!nextRole) {
+            return channel.watchSend(`You cannot be promoted any higher!`);
+        }
+
+        let dbRole = await db.roles.getSingle(nextRole.id);
+        db.users.get(sender.id, sender.guild.id)
+        .then(dbUser => {
+            if(dbUser.currency < dbRole.price) {
+                return channel.watchSend(`You cannot afford a promotion. Promotion to ${nextRole.name} costs $${dbRole.price.toFixed(2)}`);
+            }
+            helper.addCurrency(sender, -dbRole.price);
+            helper.promote(channel, null, sender);
+        })
+        break;
+    default:
+        return channel.watchSend(`Unknown item`);
+    }
+}
+
+/**
+ * 
+ * @param {Discord.TextChannel} channel - The channel to send replies in
+ * @param {Discord.GuildMember} sender - The guild member who issued the command
+ * @param {String[]} args - The command arguments
+ * @param {String | Discord.RoleResolvable} allowedRole - The minimum hoist role to use this command
+ */
+async function setRolePrice(channel, sender, args, allowedRole) {
+    if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
+
+    if(!args || args.length === 0) {
+        return channel.watchSend(`Usage: !RolePrice 1`);
+    }
+    let multiplier = extractNumber(args[0]).number;
+    if(multiplier == null) {
+        return channel.watchSend(`Usage: !RolePrice 1`);
+    }
+
+    let announcement = `Every role's purchase price is now ${multiplier.toFixed(2)}x its daily income!\n`;
+    let neutralRole = helper.convertToRole(sender.guild, discordConfig.roles.neutral);
+    if(!neutralRole) {
+        return channel.watchSend('There is no neutral role');
+    }
+    let discordRoles = channel.guild.roles.filter(role => role.hoist && role.calculatedPosition >= neutralRole.calculatedPosition).sort((a,b) => b.calculatedPosition - a.calculatedPosition).array();
+
+    for(let i = 0; i < discordRoles.length; i++) {
+        let dbRole = await db.roles.getSingle(discordRoles[i].id);
+        let newPrice = dbRole.income * multiplier;
+        db.roles.setRolePrice(discordRoles[i].id, newPrice);
+        announcement += `${discordRoles[i].name} new price: $${newPrice.toFixed(2)}\n`;
+    }
+    channel.watchSend(announcement);
+}
+
 module.exports = {
     help,
     getInfractions,
@@ -940,5 +1002,7 @@ module.exports = {
     giveCurrency,
     fine,
     setEconomy,
-    income
+    income,
+    buy,
+    setRolePrice
 }

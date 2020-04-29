@@ -193,7 +193,7 @@ var roles = (function() {
             return pool.query('SELECT * FROM roles WHERE id = ?', [ roleId ])
             .then(([rows, fields]) => {
                 if(rows.length === 0) {
-                    return { id: roleId, income: 0 };
+                    return { id: roleId, income: 0, price: 0 };
                 }
                 return rows[0];
             })
@@ -212,6 +212,11 @@ var roles = (function() {
 
         setRoleIncome: function(roleId, income) {
             return pool.query('INSERT INTO roles (id, income) VALUES (?,?) ON DUPLICATE KEY UPDATE income = VALUES(income)', [ roleId, income ])
+            .catch((error) => console.error(error));
+        },
+
+        setRolePrice: function(roleId, price) {
+            return pool.query('INSERT INTO roles (id, price) VALUES (?,?) ON DUPLICATE KEY UPDATE price = VALUES(price)', [ roleId, price ])
             .catch((error) => console.error(error));
         }
     }
