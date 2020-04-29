@@ -260,6 +260,10 @@ async function processCommand(message) {
         commands.setRolePrice(responseChannel, sender, args, discordConfig.roles.leader);
         break;
 
+    case 'serverstatus':
+        commands.postServerStatus(responseChannel, sender, discordConfig.roles.leader);
+        break;
+
     default:
         if(responseChannel) {
             responseChannel.watchSend(`I think you're confused, Comrade ${sender}`);

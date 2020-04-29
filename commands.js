@@ -899,7 +899,8 @@ async function income(channel, sender, mentionedMembers, mentionedRoles, args, a
         }
         let roles = channel.guild.roles.filter(role => role.hoist && role.calculatedPosition >= neutralRole.calculatedPosition).sort((a,b) => a.calculatedPosition - b.calculatedPosition).array();
 
-        return channel.watchSend(await setIncomeScale(baseIncome, roles, amount));
+        return channel.watchSend(await setIncomeScale(baseIncome, roles, amount))
+        .then(updateServerStatus(channel));
     }
 }
 
@@ -978,6 +979,80 @@ async function setRolePrice(channel, sender, args, allowedRole) {
         announcement += `${discordRoles[i].name} new price: $${newPrice.toFixed(2)}\n`;
     }
     channel.watchSend(announcement);
+    updateServerStatus(channel);
+}
+
+async function postServerStatus(channel, sender, allowedRole) {
+    if(!helper.verifyPermission(sender, channel, allowedRole)) { return; }
+    const statusEmbed = await generateServerStatus(channel.guild);
+
+    db.guilds.get(channel.guild.id)
+    .then(async (guild) => {
+        // Delete the existing status message, if it exists
+        if(!guild || !guild.status_message_id) {
+            return;
+        }
+        let textChannels = channel.guild.channels.filter(channel => channel.type === "text" && !channel.deleted).array();
+        for(let i = 0; i < textChannels.length; i++) {
+            try {
+                let message = await textChannels[i].fetchMessage(guild.status_message_id);
+                message.delete();
+                return;
+            }
+            catch(e) { }
+        }
+    })
+    .then(() => {
+        // Post the new status message
+        return channel.send({ embed: statusEmbed })
+    })
+    .then(message => {
+        // Update the status message in the db
+        return db.guilds.setStatusMessage(channel.guild.id, message.id);
+    })
+}
+
+async function updateServerStatus(channel) {
+    const statusEmbed = await generateServerStatus(channel.guild);
+
+    return db.guilds.get(channel.guild.id)
+    .then(async (guild) => {
+        // Delete the existing status message, if it exists
+        if(!guild || !guild.status_message_id) {
+            return;
+        }
+        let deleted = false;
+        let textChannels = channel.guild.channels.filter(channel => channel.type === "text" && !channel.deleted).array();
+        for(let i = 0; i < textChannels.length && !deleted; i++) {
+            try {
+                let message = await textChannels[i].fetchMessage(guild.status_message_id);
+                message.edit({ embed: statusEmbed });
+                break;
+            }
+            catch (e) { }
+        }
+    })
+}
+
+async function generateServerStatus(guild) {
+    let embedFields = [];
+    let discordRoles = guild.roles.filter(role => role.hoist).sort((a,b) => b.calculatedPosition - a.calculatedPosition).array();
+    for(let i = 0; i < discordRoles.length; i++) {
+        let dbRole = await db.roles.getSingle(discordRoles[i].id);
+        let roleInfo = `Daily Income: $${dbRole.income.toFixed(2)}\nPurchase Price: $${dbRole.price.toFixed(2)}\nMembers: ${discordRoles[i].members.size}`;
+        if(dbRole.member_limit >= 0) {
+            roleInfo += `/${dbRole.member_limit}`;
+        }
+        embedFields.push({ name: discordRoles[i].name, value: roleInfo, inline: true });
+    }
+    const statusEmbed = {
+        color: 0x73f094,
+        title: `SERVER STATUS`,
+        timestamp: new Date(),
+        fields: embedFields
+    }
+
+    return statusEmbed;
 }
 
 module.exports = {
@@ -1004,5 +1079,6 @@ module.exports = {
     setEconomy,
     income,
     buy,
-    setRolePrice
+    setRolePrice,
+    postServerStatus
 }

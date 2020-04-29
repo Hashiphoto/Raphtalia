@@ -161,6 +161,11 @@ var guilds = (function() {
         setBaseIncome: function(guildId, baseIncome) {
             return pool.query('INSERT INTO guilds (id, base_income) VALUES (?,?) ON DUPLICATE KEY UPDATE base_income = VALUES(base_income)', [ guildId, baseIncome ])
             .catch((error) => console.error(error));
+        },
+
+        setStatusMessage: function(guildId, messageId) {
+            return pool.query('INSERT INTO guilds (id, status_message_id) VALUES (?,?) ON DUPLICATE KEY UPDATE status_message_id = VALUES(status_message_id)', [ guildId, messageId ])
+            .catch((error) => console.error(error));
         }
     }
 })();
