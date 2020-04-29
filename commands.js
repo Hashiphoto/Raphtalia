@@ -1008,6 +1008,7 @@ async function postServerStatus(channel, sender, allowedRole) {
     })
     .then(message => {
         // Update the status message in the db
+        message.pin();
         return db.guilds.setStatusMessage(channel.guild.id, message.id);
     })
 }
@@ -1017,13 +1018,13 @@ async function updateServerStatus(channel) {
 
     return db.guilds.get(channel.guild.id)
     .then(async (guild) => {
-        // Delete the existing status message, if it exists
+        // Exit if no message to update
         if(!guild || !guild.status_message_id) {
             return;
         }
-        let deleted = false;
+        // Find the existing message and update it
         let textChannels = channel.guild.channels.filter(channel => channel.type === "text" && !channel.deleted).array();
-        for(let i = 0; i < textChannels.length && !deleted; i++) {
+        for(let i = 0; i < textChannels.length; i++) {
             try {
                 let message = await textChannels[i].fetchMessage(guild.status_message_id);
                 message.edit({ embed: statusEmbed });
