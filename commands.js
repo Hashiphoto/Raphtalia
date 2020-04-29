@@ -315,16 +315,16 @@ async function arrive(channel, member) {
     
     // Check if already a citizen
     if(dbUser.citizenship) {
-        channel.watchSend(`Welcome back comrade ${member}!`)
+        channel.watchSend(`Welcome back ${member}!`)
         helper.setHoistedRole(member, discordConfig.roles.neutral);
         return;
     }
 
     channel.watchSend(`Welcome ${member} to ${channel.guild.name}!\n` + 
-    `I just have a few questions for you, and then you can enjoy go beautiful community with your fellow comrades.`);
+    `I just have a few questions for you first. If you answer correctly, you will be granted citizenship.`);
 
     // Set nickname
-    try{
+    try {
         let nickname = await sendTimedMessage(channel, member, welcomeQuestions.nickname);
         if(await censorship.containsBannedWords(channel.guild.id, nickname)) {
             helper.softkick(channel, member, 'We don\'t allow those words around here');
@@ -343,7 +343,7 @@ async function arrive(channel, member) {
     }
 
     for(let i = 0; i < welcomeQuestions.republicQuestions.length; i++) {
-        let answeredCorrect = await askGateQuestion(channel, member, welcomeQuestions.gulagQuestions[i]);
+        let answeredCorrect = await askGateQuestion(channel, member, welcomeQuestions.republicQuestions[i]);
         if(!answeredCorrect) {
             return;
         }
@@ -351,7 +351,7 @@ async function arrive(channel, member) {
 
     // Creates the user in the DB if they didn't exist
     db.users.setCitizenship(member.id, member.guild.id, true);
-    channel.watchSend(`Thank you! And welcome loyal comrade to ${channel.guild.name}! 🎉🎉🎉`)
+    channel.watchSend(`Thank you! And welcome loyal citizen to ${channel.guild.name}! 🎉🎉🎉`)
     .then(() => {
         helper.setHoistedRole(member, discordConfig.roles.neutral);
     })

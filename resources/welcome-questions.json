@@ -38,11 +38,10 @@
             "timeout": 30000
         },
         {
-            "prompt": "Repeat after me:\n>>> I pledge my heart and soul to the Land and the pursuit of money. May the president prosper!",
-            "answer": "I pledge my heart and soul to the Land and the pursuit of money. May the president prosper!",
+            "prompt": "Repeat after me:\n>>> I pledge my heart and soul to this great nation and to the pursuit of money. May the president prosper!",
+            "answer": "I pledge my heart and soul to this great nation and to the pursuit of money. May the president prosper!",
             "strict": false,
             "timeout": 180000
         }
-    ],
-
+    ]
 }
