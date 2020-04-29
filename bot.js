@@ -1,7 +1,6 @@
-// Node libraries
 const Discord = require('discord.js');
+const dayjs = require('dayjs');
 
-// Files
 const commands = require('./commands.js');
 const helper = require('./helper.js');
 const censorship = require('./censorship.js');
@@ -10,17 +9,16 @@ const secretConfig = require('./config/secrets.json')[process.env.NODE_ENV || 'd
 const discordConfig = require('./config/discord.json')[process.env.NODE_ENV || 'dev'];
 const tasks = require('./scheduled-tasks');
 
-// Objects
 const client = new Discord.Client();
 const prefix = '!';
+
+require('log-timestamp')(() => { return `[${dayjs().format(`MMMD,YY|hh:mm:ssA`)}] %s`});
 
 /**
  * When the client is ready, do this once
  */
 client.once('ready', () => {
-    let date = new Date();
-    let now = date.toLocaleTimeString();
-    console.log(`Ready at ${now}`);
+    console.log(`Ready`);
 });
 
 client.login(secretConfig.discord.token)
