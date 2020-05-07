@@ -1170,6 +1170,26 @@ async function setRolePrice(channel, sender, args, allowedRole) {
   channel.watchSend(announcement);
 }
 
+function createMoney(channel, sender, targets, args, allowedRole) {
+  if (!helper.verifyPermission(sender, channel, allowedRole)) {
+    return;
+  }
+
+  if (targets.length === 0 || !args || args.length < 2) {
+    return channel.watchSend("Usage: `!DeliverCheck @target $1`");
+  }
+
+  let amount = extractNumber(args[1]);
+  if (amount.number == null) {
+    return channel.watchSend("Usage: `!DeliverCheck @target $1`");
+  }
+
+  targets.forEach((target) => {
+    helper.addCurrency(target, amount.number);
+  });
+  channel.watchSend("Money has been distributed!");
+}
+
 module.exports = {
   help,
   getInfractions,
@@ -1195,4 +1215,5 @@ module.exports = {
   income,
   buy,
   setRolePrice,
+  createMoney,
 };
