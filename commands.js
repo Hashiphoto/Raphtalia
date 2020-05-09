@@ -1013,7 +1013,7 @@ async function income(
 ) {
   if (!args || args.length === 0) {
     return helper.getUserIncome(sender).then((income) => {
-      return channel.send(`Your daily income is $${income.toFixed(2)}`);
+      return channel.watchSend(`Your daily income is $${income.toFixed(2)}`);
     });
   }
   if (!helper.verifyPermission(sender, channel, allowedRole)) {
