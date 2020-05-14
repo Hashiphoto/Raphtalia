@@ -122,7 +122,7 @@ function attachWatchCommand(channel) {
 
 async function processCommand(message) {
   // args contains every word after the command in an array
-  const args = message.content.slice(prefix.length).split(" ");
+  const args = message.content.slice(prefix.length).split(/\s+/);
   const command = args.shift().toLowerCase();
   let sender = message.guild.members.get(message.author.id);
 
@@ -384,6 +384,14 @@ async function processCommand(message) {
         sender,
         mentionedMembers,
         args,
+        discordConfig.roles.leader
+      );
+      break;
+
+    case "serverstatus":
+      commands.postServerStatus(
+        responseChannel,
+        sender,
         discordConfig.roles.leader
       );
       break;
