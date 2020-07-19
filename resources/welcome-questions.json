@@ -4,7 +4,7 @@
         "answer": ".*",
         "timeout": 45000
     },
-    "gulagQuestions": [
+    "gulagQuestions": [ //search .gulagQuestions or .republicQuestions in commands.js to and replace with the other choice
         {
             "prompt": "Have you ever owned a business or otherwise supported a free market economy? (yes/no)",
             "answer": "^no?$",
@@ -12,14 +12,14 @@
             "timeout": 30000
         },
         {
-            "prompt": "Are you willing to do anything the government asks of you, even risking life and limb? (yes/no)",
+            "prompt": "Are you willing to do anything the government or your waifu/husbando asks of you, even risking life and limb? (yes/no)",
             "answer": "^y[ae]*(s|h)?!*$",
             "strict": true,
             "timeout": 30000
         },
         {
-            "prompt": "Repeat after me:\n>>> I pledge my heart and soul to the gulag and my fellow comrade. Long live the supreme dictator!",
-            "answer": "I pledge my heart and soul to the gulag and my fellow comrade. Long live the supreme dictator!",
+            "prompt": "Repeat after me:\n>>> I pledge my heart and soul to the gulag and my fellow comrade. Long live the supreme anime leader!",
+            "answer": "I pledge my heart and soul to the gulag and my fellow comrade. Long live the supreme anime leader!",
             "strict": false,
             "timeout": 180000
         }
