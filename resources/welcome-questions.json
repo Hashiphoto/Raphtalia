@@ -4,7 +4,7 @@
         "answer": ".*",
         "timeout": 45000
     },
-    "gulagQuestions": [ //Search welcomeQuestions.gulagQuestions to change in commands.js
+    "gulagQuestions": [
         {
             "prompt": "Have you ever owned a business or otherwise supported a free market economy? (yes/no)",
             "answer": "^no?$",
@@ -24,7 +24,7 @@
             "timeout": 180000
         }
     ],
-    "republicQuestions": [ //Search welcomeQuestions.republicQuestions to change in commands.js
+    "republicQuestions": [ 
         {
             "prompt": "Have you ever joined a union or otherwise opposed a free market economy? (yes/no)",
             "answer": "^no?$",
