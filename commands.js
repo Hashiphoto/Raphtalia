@@ -866,6 +866,14 @@ function giveCurrency(channel, sender, targets, args) {
       return;
     }
   });
+  if (amount < 0) {
+    return helper.addInfractions(
+      sender,
+      channel,
+      1,
+      "What are you trying to pull?"
+    );
+  }
   let totalAmount = amount * targets.length;
   db.users.get(sender.id, sender.guild.id).then((dbUser) => {
     if (dbUser.currency < totalAmount) {
