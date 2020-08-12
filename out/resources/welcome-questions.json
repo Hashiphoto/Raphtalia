@@ -2,6 +2,7 @@
     "nickname": {
         "prompt": "What do you want to be called?",
         "answer": ".*",
+        "strict": false,
         "timeout": 45000
     },
     "gulagQuestions": [
@@ -24,7 +25,7 @@
             "timeout": 180000
         }
     ],
-    "republicQuestions": [ 
+    "republicQuestions": [
         {
             "prompt": "Have you ever joined a union or otherwise opposed a free market economy? (yes/no)",
             "answer": "^no?$",

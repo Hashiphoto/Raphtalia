@@ -1,33 +1,35 @@
 {
-  "name": "raphtalia",
-  "version": "0.0.1",
-  "description": "A discord bot to assist with managing the Gulag. Still in development right now, but the planned features are as follows:\r 1. Kick members\r 2. Count infractions\r 3. Detect pro-capitalist or pro-democracy language\r 4. Play the soviet national anthem on a voice channel\r 5. Post the communist manifesto",
-  "main": "bot.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Hashiphoto/Raphtalia.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/Hashiphoto/Raphtalia/issues"
-  },
-  "homepage": "https://github.com/Hashiphoto/Raphtalia#readme",
-  "dependencies": {
-    "@discordjs/opus": "^0.1.0",
-    "cron": "^1.8.2",
-    "dayjs": "^1.8.22",
-    "diacritic-regex": "^1.1.0",
-    "discord.js": "^11.5.1",
-    "ffmpeg": "0.0.4",
-    "log-timestamp": "^0.3.0",
-    "minimist": "^1.2.3",
-    "mysql2": "^2.1.0",
-    "node-opus": "^0.3.3",
-    "ytdl-core": "^2.1.0"
-  },
-  "devDependencies": {}
+	"name": "raphtalia",
+	"version": "0.0.1",
+	"description": "A discord bot to assist with managing the Gulag. Still in development right now, but the planned features are as follows:\r 1. Kick members\r 2. Count infractions\r 3. Detect pro-capitalist or pro-democracy language\r 4. Play the soviet national anthem on a voice channel\r 5. Post the communist manifesto",
+	"main": "bot.js",
+	"scripts": {
+		"test": "mocha"
+	},
+	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Hashiphoto/Raphtalia.git"
+	},
+	"author": "",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/Hashiphoto/Raphtalia/issues"
+	},
+	"homepage": "https://github.com/Hashiphoto/Raphtalia#readme",
+	"dependencies": {
+		"@discordjs/opus": "^0.1.0",
+		"cron": "^1.8.2",
+		"dayjs": "^1.8.22",
+		"diacritic-regex": "^1.1.0",
+		"discord.js": "^11.5.1",
+		"ffmpeg": "0.0.4",
+		"log-timestamp": "^0.3.0",
+		"minimist": "^1.2.3",
+		"mysql2": "^2.1.0",
+		"ytdl-core": "^2.1.0"
+	},
+	"devDependencies": {
+		"mocha": "^8.1.1"
+	}
 }
