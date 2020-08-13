@@ -2,7 +2,7 @@ import Discord from "discord.js";
 import dayjs from "dayjs";
 import commands from "./commands.js";
 import censorship from "./censorship.js";
-import db from "./db.js";
+import db from "./db/db.js";
 import secretConfig from "../config/secrets.config.js";
 import discordConfig from "../config/discord.config.js";
 import tasks from "./scheduled-tasks.js";
@@ -16,6 +16,7 @@ const client = new Discord.Client();
  * When the client is ready, do this once
  */
 client.once("ready", () => {
+  db.init();
   console.log(
     `NODE_ENV: ${process.env.NODE_ENV} | ${dayjs(
       new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" })

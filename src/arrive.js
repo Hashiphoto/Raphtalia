@@ -1,5 +1,5 @@
 import Discord from "discord.js";
-import db from "./db.js";
+import db from "./db/db.js";
 import sendTimedMessage from "./util/timedMessage.js";
 import welcomeQuestions from "../resources/welcome-questions.js";
 import { setHoistedRole } from "./util/roleManagement.js";

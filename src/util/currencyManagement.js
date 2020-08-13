@@ -1,6 +1,6 @@
 import Discord from "discord.js";
 
-import db from "../db.js";
+import db from "../db/db.js";
 
 export function payoutMessage(message, dbGuild) {
   var amount = calculatePayout(message, dbGuild);

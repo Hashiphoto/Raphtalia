@@ -1,6 +1,6 @@
 import Discord from "discord.js";
 
-import db from "../db.js";
+import db from "../db/db.js";
 import discordConfig from "../../config/discord.config.js";
 import { hasRole, demoteMember } from "./roleManagement.js";
 import { softkickMember } from "./guildManagement.js";

@@ -2,7 +2,7 @@ import Discord from "discord.js";
 import dayjs from "dayjs";
 
 import links from "../resources/links.js";
-import db from "./db.js";
+import db from "./db/db.js";
 import youtube from "./youtube.js";
 import censorship from "./censorship.js";
 import discordConfig from "../config/discord.config.js";
