@@ -1,8 +1,9 @@
 import Discord from "discord.js";
 
-import db from "./db.js";
-import discordConfig from "../config/discord.config.js";
-import { hasRole, demoteMember } from "./util/roleManagement.js";
+import db from "../db.js";
+import discordConfig from "../../config/discord.config.js";
+import { hasRole, demoteMember } from "./roleManagement.js";
+import { softkickMember } from "./guildManagement.js";
 
 const infractionLimit = 3;
 
@@ -82,7 +83,7 @@ export async function checkInfractionCount(channel, member, count = null) {
   }
   if (count >= infractionLimit) {
     if (hasRole(member, discordConfig().roles.exile)) {
-      softkick(
+      softkickMember(
         channel,
         member,
         `Doing something illegal while under exile? Come on back when you're feeling more agreeable.`

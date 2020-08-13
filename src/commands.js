@@ -1,19 +1,17 @@
-// Node libraries
 import Discord from "discord.js";
 import dayjs from "dayjs";
 
-// Files
 import links from "../resources/links.js";
-import helper from "./helper.js";
 import db from "./db.js";
 import youtube from "./youtube.js";
 import censorship from "./censorship.js";
 import discordConfig from "../config/discord.config.js";
 import sendTimedMessage from "./util/timedMessage.js";
 import { percentFormat, extractNumber } from "./util/format.js";
-import clearChannel from "./util/clearChannel.js";
+import { clearChannel } from "./util/guildManagement.js";
 import { dateFormat, parseTime } from "./util/format.js";
 import arrive from "./arrive.js";
+import { softkickMember } from "./util/guildManagement.js";
 import {
   updateServerStatus,
   generateServerStatus,
@@ -167,7 +165,7 @@ function softkick(message, allowedRole, reason = "") {
   }
 
   message.mentionedMembers.forEach((target) => {
-    helper.softkick(message.channel, target, reason);
+    softkickMember(message.channel, target, reason);
   });
 }
 
@@ -381,7 +379,7 @@ async function askGateQuestion(channel, member, question) {
     let response = await sendTimedMessage(channel, member, questionCopy);
 
     if (await censorship.containsBannedWords(member.guild.id, response)) {
-      helper.softkick(channel, member, "We don't allow those words here");
+      softkickMember(channel, member, "We don't allow those words here");
       return false;
     }
 
@@ -395,7 +393,7 @@ async function askGateQuestion(channel, member, question) {
 
     return true;
   } catch (e) {
-    helper.softkick(
+    softkickMember(
       channel,
       member,
       "Come join the Gulag when you're feeling more agreeable."

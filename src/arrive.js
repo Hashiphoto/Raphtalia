@@ -3,6 +3,7 @@ import db from "./db.js";
 import sendTimedMessage from "./util/timedMessage.js";
 import welcomeQuestions from "../resources/welcome-questions.js";
 import { setHoistedRole } from "./util/roleManagement.js";
+import { softkickMember } from "./util/guildManagement.js";
 
 /**
  * Function called when a new member is added to the guild. First, it checks their papers. If they do not have a papers entry,
@@ -39,11 +40,7 @@ async function arrive(channel, member) {
       welcomeQuestions.nickname
     );
     if (await censorship.containsBannedWords(channel.guild.id, nickname)) {
-      helper.softkick(
-        channel,
-        member,
-        "We don't allow those words around here"
-      );
+      softkickMember(channel, member, "We don't allow those words around here");
       return;
     }
     channel.watchSend(`${member.displayName} will be known as ${nickname}!`);

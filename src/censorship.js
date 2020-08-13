@@ -4,7 +4,6 @@ import diacritic from "diacritic-regex";
 
 // Files
 import discordConfig from "../config/discord.config.js";
-import helper from "./helper.js";
 import db from "./db.js";
 import {
   verifyPermission,

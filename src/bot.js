@@ -1,7 +1,6 @@
 import Discord from "discord.js";
 import dayjs from "dayjs";
 import commands from "./commands.js";
-import helper from "./helper.js";
 import censorship from "./censorship.js";
 import db from "./db.js";
 import secretConfig from "../config/secrets.config.js";

@@ -1,8 +1,14 @@
-// Node libraries
 import Discord from "discord.js";
+import links from "../../resources/links.js";
 
-// Files
-import links from "../resources/links.js";
+export async function clearChannel(channel) {
+  let pinnedMessages = await channel.fetchPinnedMessages();
+  let fetched;
+  do {
+    fetched = await channel.fetchMessages({ limit: 100 });
+    await channel.bulkDelete(fetched.filter((message) => !message.pinned));
+  } while (fetched.size > pinnedMessages.size);
+}
 
 /**
  *
@@ -10,7 +16,7 @@ import links from "../resources/links.js";
  * @param {Discord.GuildMember} target - The member to softkick
  * @param {String} reason - The message to send to the kicked member
  */
-export function softkick(channel, target, reason) {
+export function softkickMember(channel, target, reason) {
   let inviteChannel = channel;
   if (!channel) {
     inviteChannel = target.guild.systemChannel;

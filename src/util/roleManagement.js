@@ -1,7 +1,7 @@
 import Discord from "discord.js";
 
 import { addInfractions, setInfractions } from "./infractionManagement.js";
-import { dateFormat } from "./util/format.js";
+import { dateFormat } from "./format.js";
 
 // This will keep track of which process id is tracking the exile release timer for each
 // exile. The Key is the DiscordID and the Value is the object returned by SetTimeout()
@@ -171,7 +171,7 @@ export function hasRoleOrHigher(member, role) {
  * @param {Discord.GuildMember} member - The member to set the roles for
  * @param {RoleResolvable[]} role - An array of roles representing the names of the roles to give the members
  */
-async function setHoistedRole(member, role) {
+export async function setHoistedRole(member, role) {
   let discordRole = convertToRole(member.guild, role);
 
   let dbRole = await db.roles.getSingle(discordRole.id);

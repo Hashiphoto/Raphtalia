@@ -1,6 +1,6 @@
 import Discord from "discord.js";
 
-import db from "./db.js";
+import db from "../db.js";
 
 /**
  * Increases the infraction count for a given member. If they exceed the infractionLimit, the member
