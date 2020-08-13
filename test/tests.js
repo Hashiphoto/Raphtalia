@@ -1,4 +1,3 @@
-import Discord from "discord.js";
 import assert from "assert";
 import commands from "../src/commands.js";
 import Channel from "./structures/Channel.js";

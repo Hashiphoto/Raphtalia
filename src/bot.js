@@ -7,7 +7,7 @@ import secretConfig from "../config/secrets.config.js";
 import discordConfig from "../config/discord.config.js";
 import tasks from "./scheduled-tasks.js";
 import parseCommand, { prefix } from "./util/parseCommand.js";
-import { addCurrency } from "./util/currencyManagement.js";
+import { payoutMessage } from "./util/currencyManagement.js";
 import { parseTime } from "./util/format.js";
 
 const client = new Discord.Client();
@@ -53,27 +53,15 @@ client.on("message", (message) => {
       censorship
         .censorMessage(message)
         .then((censored) => {
-          if (censored || message.channel.autoDelete) return;
+          if (censored || message.channel.autoDelete) {
+            throw new Error("Cannot payout a censored message");
+          }
           return db.guilds.get(message.guild.id);
         })
         .then((dbGuild) => {
-          // TODO: Move to a function for message payout
-          if (!dbGuild) return;
-          if (message.content.length < dbGuild.min_length) return;
-
-          let amount = Math.min(
-            dbGuild.base_payout +
-              message.content.length * dbGuild.character_value,
-            dbGuild.max_payout
-          );
-
-          let sender = message.guild.members.get(message.author.id);
-
-          if (process.env.NODE_ENV === "dev") {
-            // message.channel.send(`\`Debug only\` | ${sender} +$${amount.toFixed(2)}`);
-          }
-          return addCurrency(sender, amount);
-        });
+          return payoutMessage(message, dbGuild);
+        })
+        .catch((error) => {});
     }
   });
 });
@@ -169,11 +157,6 @@ async function processCommand(message) {
       commands.comfort(message, discordConfig().roles.leader);
       break;
 
-    // TESTING ONLY
-    case "unarrive":
-      commands.unarrive(message, discordConfig().roles.gov);
-      break;
-
     case "anthem":
     case "sing":
     case "play":
@@ -209,11 +192,6 @@ async function processCommand(message) {
       commands.holdVote(message, discordConfig().roles.leader);
       break;
 
-    // Needs more work for it to be useful
-    // case 'whisper':
-    //     commands.whisper(responseChannel, sender, message.mentionedMembers, message.content, discordConfig().roles.leader);
-    //     break;
-
     case "wallet":
     case "balance":
     case "cash":
@@ -243,22 +221,6 @@ async function processCommand(message) {
       commands.income(message, discordConfig().roles.leader);
       break;
 
-    case "doincome":
-      if (process.env.NODE_ENV !== "dev") {
-        break;
-      }
-      tasks.dailyIncome(message.guild);
-      message.channel.send("`Debug only` | Income has been distributed");
-      break;
-
-    case "dotaxes":
-      if (process.env.NODE_ENV !== "dev") {
-        break;
-      }
-      tasks.tax(message.guild);
-      message.channel.send("`Debug only` | Members have been taxed");
-      break;
-
     case "purchase":
     case "buy":
       commands.buy(message);
@@ -275,6 +237,31 @@ async function processCommand(message) {
     case "serverstatus":
       commands.postServerStatus(message, discordConfig().roles.leader);
       break;
+
+    //// DEV ONLY ////
+    case "unarrive":
+      if (process.env.NODE_ENV !== "dev") {
+        break;
+      }
+      commands.unarrive(message, discordConfig().roles.gov);
+      break;
+
+    case "doincome":
+      if (process.env.NODE_ENV !== "dev") {
+        break;
+      }
+      tasks.dailyIncome(message.guild);
+      message.channel.send("`Debug only` | Income has been distributed");
+      break;
+
+    case "dotaxes":
+      if (process.env.NODE_ENV !== "dev") {
+        break;
+      }
+      tasks.tax(message.guild);
+      message.channel.send("`Debug only` | Members have been taxed");
+      break;
+    /////////////////
 
     default:
       if (message.channel) {

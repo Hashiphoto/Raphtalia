@@ -600,24 +600,6 @@ function holdVote(message, allowedRole) {
   }, duration);
 }
 
-function whisper(message, allowedRole) {
-  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
-    return;
-  }
-
-  if (message.mentionedMembers.length === 0) {
-    if (message.channel)
-      message.channel.watchSend(
-        "Please repeat the command and specify who I am whispering to"
-      );
-    return;
-  }
-  // remove the command and targeet from the content
-  let content = message.content.replace(/^\S+\s+<@!?(\d+)>\s+/, "");
-
-  message.mentionedMembers[0].send(content);
-}
-
 /**
  * Reports the currency for a list of guildMembers. Pass in an empty array
  * for message.mentionedMembers or leave it as null to report the sender's infractions instead

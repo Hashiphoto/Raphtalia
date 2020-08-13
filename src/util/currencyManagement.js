@@ -2,6 +2,22 @@ import Discord from "discord.js";
 
 import db from "../db.js";
 
+export function payoutMessage(message, dbGuild) {
+  if (message.content.length < dbGuild.min_length) return;
+
+  let amount = Math.min(
+    dbGuild.base_payout + message.content.length * dbGuild.character_value,
+    dbGuild.max_payout
+  );
+
+  let sender = message.guild.members.get(message.author.id);
+
+  if (process.env.NODE_ENV === "dev") {
+    // message.channel.send(`\`Debug only\` | ${sender} +$${amount.toFixed(2)}`);
+  }
+  return addCurrency(sender, amount);
+}
+
 /**
  * Increases the infraction count for a given member. If they exceed the infractionLimit, the member
  * is exiled
