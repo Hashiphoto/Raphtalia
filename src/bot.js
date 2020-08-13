@@ -8,12 +8,10 @@ import secretConfig from "../config/secrets.config.js";
 import discordConfig from "../config/discord.config.js";
 import tasks from "./scheduled-tasks.js";
 import parseCommand, { prefix } from "./util/parseCommand.js";
+import { addCurrency } from "./util/currencyManagement.js";
+import { parseTime } from "./util/format.js";
 
 const client = new Discord.Client();
-
-// require("log-timestamp")(() => {
-// 	return `[${dayjs().format(`MMMD,YY|hh:mm:ssA`)}] %s`;
-// });
 
 /**
  * When the client is ready, do this once
@@ -75,7 +73,7 @@ client.on("message", (message) => {
           if (process.env.NODE_ENV === "dev") {
             // message.channel.send(`\`Debug only\` | ${sender} +$${amount.toFixed(2)}`);
           }
-          return helper.addCurrency(sender, amount);
+          return addCurrency(sender, amount);
         });
     }
   });
@@ -148,7 +146,7 @@ async function processCommand(message) {
       commands.exile(
         message,
         discordConfig().roles.gov,
-        helper.parseTime(message.content)
+        parseTime(message.content)
       );
       break;
 

@@ -10,20 +10,36 @@ import youtube from "./youtube.js";
 import censorship from "./censorship.js";
 import discordConfig from "../config/discord.config.js";
 import sendTimedMessage from "./util/timedMessage.js";
-import { percentFormat } from "./util/format.js";
+import { percentFormat, extractNumber } from "./util/format.js";
 import clearChannel from "./util/clearChannel.js";
-import extractNumber from "./util/extractNumber.js";
-import arrive from "./handleArrival.js";
+import { dateFormat, parseTime } from "./util/format.js";
+import arrive from "./arrive.js";
 import {
   updateServerStatus,
   generateServerStatus,
 } from "./util/serverStatus.js";
+import {
+  addInfractions,
+  reportInfractions,
+} from "./util/infractionManagement.js";
+import {
+  addCurrency,
+  getUserIncome,
+  reportCurrency,
+} from "./util/currencyManagement.js";
+import {
+  getNextRole,
+  verifyPermission,
+  pardonMember,
+  exileMember,
+  addRoles,
+  convertToRole,
+  promoteMember,
+  demoteMember,
+} from "./util/roleManagement.js";
 
 /**
  * Very unhelpful at the moment
- *
- * @param {Discord.TextChannel} channel - The channel to send replies to
- * @param {Discord.GuildMember} sender - The guildMember who issued the command
  */
 function help(message) {
   return message.channel.watchSend(`Help yourself, ${message.sender}`);
@@ -32,32 +48,23 @@ function help(message) {
 /**
  * Reports the number of infractions for a list of guildMembers. Pass in an empty array
  * for message.mentionedMembers or leave it as null to report the sender's infractions instead
- *
- * @param {Discord.TextChannel} channel - The channel to send replies to
- * @param {Discord.GuildMember} sender - Whoever issued the command
- * @param {Discord.GuildMember[]} message.mentionedMembers An array of guildMember objects to get the infractions for
  */
 function getInfractions(message) {
   if (
     message.mentionedMembers == null ||
     message.mentionedMembers.length === 0
   ) {
-    helper.reportInfractions(message.sender, message.channel);
+    reportInfractions(message.sender, message.channel);
   } else {
-    helper.reportInfractions(message.mentionedMembers[0], message.channel);
+    reportInfractions(message.mentionedMembers[0], message.channel);
   }
 }
 
 /**
  * Kick members and send them off with a nice wave and gif
- *
- * @param {Discord.TextChannel} channel - The channel to send replies to
- * @param {Discord.GuildMember} sender - The guildMember who issued the command
- * @param {Discord.GuildMember[]} message.mentionedMembers - An array of guildMembers to kick
- * @param {RoleResolvable} allowedRole - The minimum hoisted role the sender must have to use this command
  */
 function kick(message, allowedRole) {
-  if (!helper.verifyPermission(message.sender, message.channel, allowedRole)) {
+  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
     return;
   }
 
@@ -90,14 +97,9 @@ function kick(message, allowedRole) {
 
 /**
  * Increase the infraction count for the list of message.mentionedMembers
- *
- * @param {Discord.TextChannel} channel - The channel to send replies to
- * @param {Discord.GuildMember} sender - The guildMember who issued the command
- * @param {Discord.GuildMember[]} message.mentionedMembers - An array of guildMembers to increase the infraction count for
- * @param {RoleResolvable} allowedRole - The minimum hoisted role the sender must have to use this command
  */
 function report(message, allowedRole) {
-  if (!helper.verifyPermission(message.sender, message.channel, allowedRole)) {
+  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
     return;
   }
 
@@ -120,21 +122,15 @@ function report(message, allowedRole) {
   }
 
   message.mentionedMembers.forEach((target) => {
-    helper.addInfractions(target, message.channel, amount, "Yes sir~!");
+    addInfractions(target, message.channel, amount, "Yes sir~!");
   });
 }
 
 /**
  * Remove all hoisted roles from the message.mentionedMembers and give the exile role
- *
- * @param {Discord.TextChannel} channel - The channel to send replies to
- * @param {Discord.GuildMember} sender - The guildMember who issued the command
- * @param {Discord.GuildMember[]} message.mentionedMembers - An array of guildMembers to exile
- * @param {RoleResolvable} allowedRole - The minimum hoisted role the sender must have to use this command
- * @param {dayjs} releaseDate - The time when the exile will end
  */
 function exile(message, allowedRole, releaseDate) {
-  if (!helper.verifyPermission(message.sender, message.channel, allowedRole)) {
+  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
     return;
   }
 
@@ -147,22 +143,17 @@ function exile(message, allowedRole, releaseDate) {
   }
 
   message.mentionedMembers.forEach((target) => {
-    helper.exile(target, message.channel, releaseDate);
+    exileMember(target, message.channel, releaseDate);
   });
 }
 
 /**
  * Send all the message.mentionedMembers an invite and kick them
- *
- * @param {Discord.TextChannel} channel - The channel to send replies to
- * @param {Discord.GuildMember} sender - The guildMember who issued the command
- * @param {Discord.GuildMember[]} message.mentionedMembers - An array of guildMembers to softkick
- * @param {RoleResolvable} allowedRole - The minimum hoisted role the sender must have to use this command
  */
 function softkick(message, allowedRole, reason = "") {
   if (
     message.sender != null &&
-    !helper.verifyPermission(message.sender, message.channel, allowedRole)
+    !verifyPermission(message.sender, message.channel, allowedRole)
   ) {
     return;
   }
@@ -182,14 +173,9 @@ function softkick(message, allowedRole, reason = "") {
 
 /**
  * Remove all roles from message.mentionedMembers who have the exile role
- *
- * @param {Discord.TextChannel} channel - The channel to send replies to
- * @param {Discord.GuildMember} sender - The guildMember who issued the command
- * @param {Discord.GuildMember[]} message.mentionedMembers - An array of guildMembers to pardon
- * @param {RoleResolvable} allowedRole - The minimum hoisted role the sender must have to use this command
  */
 function pardon(message, allowedRole) {
-  if (!helper.verifyPermission(message.sender, message.channel, allowedRole)) {
+  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
     return;
   }
 
@@ -202,20 +188,15 @@ function pardon(message, allowedRole) {
   }
 
   message.mentionedMembers.forEach((target) => {
-    helper.pardon(target, message.channel);
+    pardonMember(target, message.channel);
   });
 }
 
 /**
  * Remove all hoisted roles from each target and increases their former highest role by one
- *
- * @param {Discord.TextChannel} channel - The channel to send replies to
- * @param {Discord.GuildMember} sender - The guildMember who issued the command
- * @param {Discord.GuildMember[]} message.mentionedMembers - An array of guildMembers to promote
- * @param {RoleResolvable} allowedRole - The minimum hoisted role the sender must have to use this command
  */
 function promote(message, allowedRole) {
-  if (!helper.verifyPermission(message.sender, message.channel, allowedRole)) {
+  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
     return;
   }
 
@@ -224,20 +205,15 @@ function promote(message, allowedRole) {
   }
 
   message.mentionedMembers.forEach((target) => {
-    helper.promote(message.channel, message.sender, target);
+    promoteMember(message.channel, message.sender, target);
   });
 }
 
 /**
  * Remove all hoisted roles from each target and decreases their former highest role by one
- *
- * @param {Discord.TextChannel} channel - The channel to send replies to
- * @param {Discord.GuildMember} sender - The guildMember who issued the command
- * @param {Discord.GuildMember[]} message.mentionedMembers - An array of guildMembers to demote
- * @param {RoleResolvable} allowedRole - The minimum hoisted role the sender must have to use this command
  */
 function demote(message, allowedRole) {
-  if (!helper.verifyPermission(message.sender, message.channel, allowedRole)) {
+  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
     return;
   }
 
@@ -250,20 +226,15 @@ function demote(message, allowedRole) {
   }
 
   message.mentionedMembers.forEach((target) => {
-    helper.demote(message.channel, sender, target);
+    demoteMember(message.channel, message.sender, target);
   });
 }
 
 /**
  * Send some love to the message.mentionedMembers
- *
- * @param {Discord.TextChannel} channel - The channel to send replies to
- * @param {Discord.GuildMember} sender - The guildMember who issued the command
- * @param {Discord.GuildMember[]} message.mentionedMembers - An array of guildMembers to headpat
- * @param {RoleResolvable} allowedRole - The minimum hoisted role the sender must have to use this command
  */
 function comfort(message, allowedRole) {
-  if (!helper.verifyPermission(message.sender, message.channel, allowedRole)) {
+  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
     return;
   }
   if (!message.channel) return;
@@ -283,14 +254,9 @@ function comfort(message, allowedRole) {
 /**
  * TESTING ONLY - Removes the papers db entry for the target. If no target is given,
  * it deletes the sender's db entry
- *
- * @param {Discord.TextChannel} channel
- * @param {Discord.GuildMember} sender
- * @param {Discord.GuildMember[]} message.mentionedMembers
- * @param {RoleResolvable} allowedRole - The minimum hoisted role the sender must have to use this command
  */
 function unarrive(message, allowedRole) {
-  if (!helper.verifyPermission(message.sender, message.channel, allowedRole)) {
+  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
     return;
   }
 
@@ -315,12 +281,6 @@ function unarrive(message, allowedRole) {
 
 /**
  * Play the Soviet Anthem in a voice channel
- *
- * @param {Discord.TextChannel} channel - The channel to send replies to
- * @param {Discord.GuildMember} sender - The guildMember who issued the command
- * @param {String[]} content - The text to parse for args. Can contain a float for volume and the phrase "in [channel name]" to specify
- * in which voice channel to play, by name.
- * @param {RoleResolvable} allowedRole - The minimum hoisted role the sender must have to use this command in another voice channel
  */
 function play(message, allowedRole) {
   let voiceChannel = null;
@@ -343,9 +303,7 @@ function play(message, allowedRole) {
   let matches = content.match(/\bin [-\w ]+/); // Everything from the "in " until the first slash (/)
   if (matches != null) {
     // Parameters are restricted permission
-    if (
-      !helper.verifyPermission(message.sender, message.channel, allowedRole)
-    ) {
+    if (!verifyPermission(message.sender, message.channel, allowedRole)) {
       return;
     }
 
@@ -389,7 +347,7 @@ function play(message, allowedRole) {
 
   // If no voice channel was specified, play the song in the vc the sender is in
   if (voiceChannel == null) {
-    voiceChannel = sender.voiceChannel;
+    voiceChannel = message.sender.voiceChannel;
 
     if (!voiceChannel) {
       if (channel)
@@ -397,7 +355,7 @@ function play(message, allowedRole) {
       return;
     }
   }
-  const permissions = voiceChannel.permissionsFor(sender.client.user);
+  const permissions = voiceChannel.permissionsFor(message.sender.client.user);
   if (
     !permissions.has("VIEW_CHANNEL") ||
     !permissions.has("CONNECT") ||
@@ -410,7 +368,6 @@ function play(message, allowedRole) {
 
 /**
  * Sends the timed message, but also kicks them if they answer incorrectly or include a censored word
- * @param {} question
  */
 async function askGateQuestion(channel, member, question) {
   try {
@@ -448,8 +405,7 @@ async function askGateQuestion(channel, member, question) {
 }
 
 function registerVoter(message) {
-  helper
-    .addRoles(sender, [discordConfig().roles.voter])
+  addRoles(message.sender, [discordConfig().roles.voter])
     .then(() => {
       if (message.channel)
         message.channel.watchSend(`You are now a registered voter!`);
@@ -461,7 +417,7 @@ function registerVoter(message) {
 }
 
 function holdVote(message, allowedRole) {
-  if (!helper.verifyPermission(message.sender, message.channel, allowedRole)) {
+  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
     return;
   }
 
@@ -470,7 +426,7 @@ function holdVote(message, allowedRole) {
 
   // Replace the mentions with their nicknames and tags
   for (let i = 0; i < message.mentionedMembers.length; i++) {
-    let re = new RegExp(`<@!?${mentionedMembers[i].id}>`);
+    let re = new RegExp(`<@!?${message.mentionedMembers[i].id}>`);
     let plainText = message.mentionedMembers[i].user.tag;
     if (message.mentionedMembers[i].nickname) {
       plainText += ` (${message.mentionedMembers[i].nickname})`;
@@ -482,11 +438,11 @@ function holdVote(message, allowedRole) {
   let timeMatches = content.match(/(\s*\d+[dhms]){1,4}\s*$/gi);
   let endDate;
   if (timeMatches == null) {
-    endDate = helper.parseTime("1h");
+    endDate = parseTime("1h");
   } else {
     let timeText = timeMatches[0];
     content = content.slice(0, -timeText.length).trim();
-    endDate = helper.parseTime(timeText);
+    endDate = parseTime(timeText);
   }
   let duration = endDate.diff(dayjs());
   if (duration > 0x7fffffff) {
@@ -529,20 +485,20 @@ function holdVote(message, allowedRole) {
   // Send out the voting messages
   if (message.channel)
     message.channel.watchSend(
-      `Voting begins now and ends at ${endDate.format(helper.dateFormat)}`
+      `Voting begins now and ends at ${endDate.format(dateFormat)}`
     );
 
   let announcement = {
     prompt:
       `**A vote is being held in ${message.guild.name}!**\n` +
       `Please vote for one of the options below by replying with the number of the choice.\n` +
-      `Voting ends at ${endDate.format(helper.dateFormat)}\n\n${textOptions}`,
+      `Voting ends at ${endDate.format(dateFormat)}\n\n${textOptions}`,
     answer: answersRegEx,
     timeout: duration,
     strict: false,
   };
 
-  let voters = helper.convertToRole(message.guild, discordConfig().roles.voter)
+  let voters = convertToRole(message.guild, discordConfig().roles.voter)
     .members;
   if (voters.size === 0) {
     if (message.channel)
@@ -560,13 +516,14 @@ function holdVote(message, allowedRole) {
       })
       .then((choice) => {
         let msg = `Thank you for your vote!`;
-        if (channel)
-          msg += `\nResults will be announced in **${sender.guild.name}/#${channel.name}** when voting is closed`;
+        if (dmChannel)
+          msg += `\nResults will be announced in **${message.guild.name}/#${message.channel.name}** when voting is closed`;
         dmChannel.send(msg);
         console.log(`${voter.displayName} chose ${choice}`);
         voteTally.find((v) => v.id === parseInt(choice)).votes++;
       })
       .catch((error) => {
+        console.error(error);
         console.log(`${voter.displayName} did not vote`);
         dmChannel.send(`Voting has closed.`);
       });
@@ -646,7 +603,7 @@ function holdVote(message, allowedRole) {
 }
 
 function whisper(message, allowedRole) {
-  if (!helper.verifyPermission(message.sender, message.channel, allowedRole)) {
+  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
     return;
   }
 
@@ -666,18 +623,15 @@ function whisper(message, allowedRole) {
 /**
  * Reports the currency for a list of guildMembers. Pass in an empty array
  * for message.mentionedMembers or leave it as null to report the sender's infractions instead
- *
- * @param {Discord.GuildMember} sender - Whoever issued the command
- * @param {Discord.GuildMember[]} message.mentionedMembers An array of guildMember objects to get the infractions for
  */
 function getCurrency(message) {
   message.sender.createDM().then((dmChannel) => {
-    helper.reportCurrency(message.sender, dmChannel);
+    reportCurrency(message.sender, dmChannel);
   });
 }
 
 function setAutoDelete(message, allowedRole) {
-  if (!helper.verifyPermission(message.sender, message.channel, allowedRole)) {
+  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
     return;
   }
   if (!message.args || message.args.length === 0) {
@@ -692,7 +646,7 @@ function setAutoDelete(message, allowedRole) {
   let enable = null;
   let deleteDelay = 2000;
   for (let i = 0; i < message.args.length; i++) {
-    switch (args[i].toLowerCase()) {
+    switch (message.args[i].toLowerCase()) {
       case "start":
         enable = true;
         break;
@@ -702,7 +656,7 @@ function setAutoDelete(message, allowedRole) {
       case "clear":
         clearHistory = true;
       default:
-        let num = parseInt(args[i]);
+        let num = parseInt(message.args[i]);
         if (isNaN(num)) {
           continue;
         }
@@ -758,7 +712,7 @@ function giveCurrency(message) {
     }
   });
   if (amount < 0) {
-    return helper.addInfractions(
+    return addInfractions(
       message.sender,
       message.channel,
       1,
@@ -770,16 +724,16 @@ function giveCurrency(message) {
     if (dbUser.currency < totalAmount) {
       return message.channel.watchSend("You don't have enough money for that");
     }
-    helper.addCurrency(message.sender, -totalAmount);
+    addCurrency(message.sender, -totalAmount);
     message.mentionedMembers.forEach((target) => {
-      helper.addCurrency(target, amount);
+      addCurrency(target, amount);
     });
     message.channel.watchSend("Money transferred!");
   });
 }
 
 function fine(message, allowedRole) {
-  if (!helper.verifyPermission(message.sender, message.channel, allowedRole)) {
+  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
     return;
   }
   if (!message.mentionedMembers || message.mentionedMembers.length === 0) {
@@ -789,16 +743,16 @@ function fine(message, allowedRole) {
   }
 
   let amount = 1;
-  args.forEach((arg) => {
+  message.args.forEach((arg) => {
     let temp = extractNumber(arg).number;
     if (temp) {
       amount = temp;
       return;
     }
   });
-  helper.addCurrency(message.sender, amount * message.mentionedMembers.length);
+  addCurrency(message.sender, amount * message.mentionedMembers.length);
   for (let i = 0; i < message.mentionedMembers.length; i++) {
-    helper.addCurrency(message.mentionedMembers[i], -amount);
+    addCurrency(message.mentionedMembers[i], -amount);
   }
   let reply =
     `Fined $${amount.toFixed(2)}` +
@@ -807,7 +761,7 @@ function fine(message, allowedRole) {
 }
 
 function setEconomy(message, allowedRole) {
-  if (!helper.verifyPermission(message.sender, message.channel, allowedRole)) {
+  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
     return;
   }
   if (!message.args || message.args.length <= 1) {
@@ -817,7 +771,7 @@ function setEconomy(message, allowedRole) {
   }
 
   for (let i = 0; i < message.args.length - 1; i += 2) {
-    let amount = extractNumber(args[i + 1]).number;
+    let amount = extractNumber(message.args[i + 1]).number;
     if (amount == null)
       return message.channel.watchSend("Could not understand arguments");
 
@@ -868,13 +822,13 @@ function setEconomy(message, allowedRole) {
 
 async function income(message, allowedRole) {
   if (!message.args || message.args.length === 0) {
-    return helper.getUserIncome(sender).then((income) => {
+    return getUserIncome(sender).then((income) => {
       return message.channel.watchSend(
         `Your daily income is $${income.toFixed(2)}`
       );
     });
   }
-  if (!helper.verifyPermission(message.sender, message.channel, allowedRole)) {
+  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
     return;
   }
   if (message.args.length < 2) {
@@ -900,7 +854,7 @@ async function income(message, allowedRole) {
   let baseIncome = (await db.guilds.get(channel.guild.id)).base_income;
 
   // Income scale
-  for (let i = 0; i < args.length - 1; i++) {
+  for (let i = 0; i < message.args.length - 1; i++) {
     if (args[i] !== "scale") {
       continue;
     }
@@ -914,8 +868,8 @@ async function income(message, allowedRole) {
     if (amount.isPercent && amount.number < 1) {
       return channel.watchSend("Income scale must be at least 100%");
     }
-    let neutralRole = helper.convertToRole(
-      sender.guild,
+    let neutralRole = convertToRole(
+      message.guild,
       discordConfig().roles.neutral
     );
     if (!neutralRole) {
@@ -953,20 +907,20 @@ async function setIncomeScale(baseIncome, roles, amount) {
   return announcement;
 }
 
-async function buy(channel, sender, args) {
-  if (!args || args.length === 0) {
+async function buy(message) {
+  if (!message.args || message.args.length === 0) {
     return channel.watchSend(`Usage: !Buy (Item Name)`);
   }
   // Get store items
-  switch (args[0]) {
+  switch (message.args[0]) {
     case "promotion":
-      let nextRole = helper.getNextRole(sender, sender.guild);
+      let nextRole = getNextRole(message.sender, message.guild);
       if (!nextRole) {
         return channel.watchSend(`You cannot be promoted any higher!`);
       }
 
       let dbRole = await db.roles.getSingle(nextRole.id);
-      db.users.get(sender.id, sender.guild.id).then((dbUser) => {
+      db.users.get(message.sender.id, message.guild.id).then((dbUser) => {
         if (dbUser.currency < dbRole.price) {
           return channel.watchSend(
             `You cannot afford a promotion. Promotion to ${
@@ -974,8 +928,8 @@ async function buy(channel, sender, args) {
             } costs $${dbRole.price.toFixed(2)}`
           );
         }
-        helper.addCurrency(sender, -dbRole.price);
-        helper.promote(channel, null, sender);
+        addCurrency(sender, -dbRole.price);
+        promoteMember(channel, null, message.sender);
       });
       break;
     default:
@@ -985,17 +939,13 @@ async function buy(channel, sender, args) {
 
 /**
  *
- * @param {Discord.TextChannel} channel - The channel to send replies in
- * @param {Discord.GuildMember} sender - The guild member who issued the command
- * @param {String[]} args - The command arguments
- * @param {String | Discord.RoleResolvable} allowedRole - The minimum hoist role to use this command
  */
 async function setRolePrice(message, allowedRole) {
-  if (!helper.verifyPermission(message.sender, message.channel, allowedRole)) {
+  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
     return;
   }
 
-  if (!args || args.length === 0) {
+  if (!message.args || message.args.length === 0) {
     return message.channel.watchSend(`Usage: !RolePrice 1`);
   }
   let multiplier = extractNumber(args[0]).number;
@@ -1006,10 +956,7 @@ async function setRolePrice(message, allowedRole) {
   let announcement = `Every role's purchase price is now ${multiplier.toFixed(
     2
   )}x its daily income!\n`;
-  let neutralRole = helper.convertToRole(
-    message.guild,
-    discordConfig().roles.neutral
-  );
+  let neutralRole = convertToRole(message.guild, discordConfig().roles.neutral);
   if (!neutralRole) {
     return message.channel.watchSend("There is no neutral role");
   }
@@ -1033,27 +980,31 @@ async function setRolePrice(message, allowedRole) {
 }
 
 function createMoney(message, allowedRole) {
-  if (!helper.verifyPermission(message.sender, message.channel, allowedRole)) {
+  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
     return;
   }
 
-  if (message.mentionedMembers.length === 0 || !args || args.length < 2) {
+  if (
+    message.mentionedMembers.length === 0 ||
+    !message.args ||
+    message.args.length < 2
+  ) {
     return channel.watchSend("Usage: `!DeliverCheck @target $1`");
   }
 
-  let amount = extractNumber(args[args.length - 1]);
+  let amount = extractNumber(message.args[message.args.length - 1]);
   if (amount.number == null) {
     return channel.watchSend("Usage: `!DeliverCheck @target $1`");
   }
 
   message.mentionedMembers.forEach((target) => {
-    helper.addCurrency(target, amount.number);
+    addCurrency(target, amount.number);
   });
   channel.watchSend("Money has been distributed!");
 }
 
 async function postServerStatus(message, allowedRole) {
-  if (!helper.verifyPermission(message.sender, message.channel, allowedRole)) {
+  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
     return;
   }
   const statusEmbed = await generateServerStatus(message.guild);

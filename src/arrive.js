@@ -2,6 +2,7 @@ import Discord from "discord.js";
 import db from "./db.js";
 import sendTimedMessage from "./util/timedMessage.js";
 import welcomeQuestions from "../resources/welcome-questions.js";
+import { setHoistedRole } from "./util/roleManagement.js";
 
 /**
  * Function called when a new member is added to the guild. First, it checks their papers. If they do not have a papers entry,
@@ -14,14 +15,14 @@ import welcomeQuestions from "../resources/welcome-questions.js";
  */
 async function arrive(channel, member) {
   if (!channel) return;
-  await helper.setHoistedRole(member, discordConfig().roles.immigrant);
+  await setHoistedRole(member, discordConfig().roles.immigrant);
 
   let dbUser = await db.users.get(member.id, member.guild.id);
 
   // Check if already a citizen
   if (dbUser.citizenship) {
     channel.watchSend(`Welcome back ${member}!`);
-    helper.setHoistedRole(member, discordConfig().roles.neutral);
+    setHoistedRole(member, discordConfig().roles.neutral);
     return;
   }
 
@@ -75,7 +76,7 @@ async function arrive(channel, member) {
       `Thank you! And welcome loyal citizen to ${channel.guild.name}! 🎉🎉🎉`
     )
     .then(() => {
-      helper.setHoistedRole(member, discordConfig().roles.neutral);
+      setHoistedRole(member, discordConfig().roles.neutral);
     });
 }
 
