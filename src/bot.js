@@ -128,166 +128,88 @@ function attachWatchCommand(channel) {
 async function processCommand(message) {
   switch (message.command) {
     case "help":
-      commands.help(message.channel, message.sender);
+      commands.help(message);
       break;
 
     case "infractions":
-      commands.getInfractions(
-        message.channel,
-        message.sender,
-        message.mentionedMembers
-      );
+      commands.getInfractions(message);
       break;
 
     case "kick":
-      commands.kick(
-        message.channel,
-        message.sender,
-        message.mentionedMembers,
-        discordConfig().roles.gov
-      );
+      commands.kick(message, discordConfig().roles.gov);
       break;
 
     case "infract":
     case "report":
-      commands.report(
-        message.channel,
-        message.sender,
-        message.mentionedMembers,
-        discordConfig().roles.gov,
-        message.args
-      );
+      commands.report(message, discordConfig().roles.gov);
       break;
 
     case "exile":
       commands.exile(
-        message.channel,
-        message.sender,
-        message.mentionedMembers,
+        message,
         discordConfig().roles.gov,
         helper.parseTime(message.content)
       );
       break;
 
     case "softkick":
-      commands.softkick(
-        message.channel,
-        message.sender,
-        message.mentionedMembers,
-        discordConfig().roles.gov
-      );
+      commands.softkick(message, discordConfig().roles.gov);
       break;
 
     case "pardon":
-      commands.pardon(
-        message.channel,
-        message.sender,
-        message.mentionedMembers,
-        discordConfig().roles.leader
-      );
+      commands.pardon(message, discordConfig().roles.leader);
       break;
 
     case "promote":
-      commands.promote(
-        message.channel,
-        message.sender,
-        message.mentionedMembers,
-        discordConfig().roles.gov
-      );
+      commands.promote(message, discordConfig().roles.gov);
       break;
 
     case "demote":
-      commands.demote(
-        message.channel,
-        message.sender,
-        message.mentionedMembers,
-        discordConfig().roles.gov
-      );
+      commands.demote(message, discordConfig().roles.gov);
       break;
 
     case "comfort":
-      commands.comfort(
-        message.channel,
-        message.sender,
-        message.mentionedMembers,
-        discordConfig().roles.leader
-      );
+      commands.comfort(message, discordConfig().roles.leader);
       break;
 
     // TESTING ONLY
     case "unarrive":
-      commands.unarrive(
-        message.channel,
-        message.sender,
-        message.mentionedMembers,
-        discordConfig().roles.gov
-      );
+      commands.unarrive(message, discordConfig().roles.gov);
       break;
 
     case "anthem":
     case "sing":
     case "play":
-      commands.play(
-        message.channel,
-        message.sender,
-        message.content,
-        discordConfig().roles.gov
-      );
+      commands.play(message, discordConfig().roles.gov);
       break;
 
     case "banword":
     case "banwords":
     case "bannedwords":
-      censorship.banWords(
-        message.channel,
-        message.sender,
-        message.args,
-        discordConfig().roles.gov
-      );
+      censorship.banWords(message, discordConfig().roles.gov);
       break;
 
     case "allowword":
     case "allowwords":
     case "unbanword":
     case "unbanwords":
-      censorship.allowWords(
-        message.channel,
-        message.sender,
-        message.args,
-        discordConfig().roles.gov
-      );
+      censorship.allowWords(message, discordConfig().roles.gov);
       break;
 
     case "enablecensorship":
-      censorship.enable(
-        message.channel,
-        message.sender,
-        true,
-        discordConfig().roles.leader
-      );
+      censorship.enable(message, true, discordConfig().roles.leader);
       break;
 
     case "disablecensorship":
-      censorship.enable(
-        message.channel,
-        message.sender,
-        false,
-        discordConfig().roles.leader
-      );
+      censorship.enable(message, false, discordConfig().roles.leader);
       break;
 
     case "register":
-      commands.registerVoter(message.channel, message.sender);
+      commands.registerVoter(message);
       break;
 
     case "holdvote":
-      commands.holdVote(
-        message.channel,
-        message.sender,
-        message.mentionedMembers,
-        message.content,
-        discordConfig().roles.leader
-      );
+      commands.holdVote(message, discordConfig().roles.leader);
       break;
 
     // Needs more work for it to be useful
@@ -301,55 +223,27 @@ async function processCommand(message) {
     case "bank":
     case "money":
     case "currency":
-      commands.getCurrency(message.sender);
+      commands.getCurrency(message);
       break;
 
     case "autodelete":
-      commands.setAutoDelete(
-        message.channel,
-        message.sender,
-        message.args,
-        discordConfig().roles.leader
-      );
+      commands.setAutoDelete(message, discordConfig().roles.leader);
       break;
 
     case "give":
-      commands.giveCurrency(
-        message.channel,
-        message.sender,
-        message.mentionedMembers,
-        message.args
-      );
+      commands.giveCurrency(message);
       break;
 
     case "fine":
-      commands.fine(
-        message.channel,
-        message.sender,
-        message.mentionedMembers,
-        message.args,
-        discordConfig().roles.gov
-      );
+      commands.fine(message, discordConfig().roles.gov);
       break;
 
     case "economy":
-      commands.setEconomy(
-        message.channel,
-        message.sender,
-        message.args,
-        discordConfig().roles.leader
-      );
+      commands.setEconomy(message, discordConfig().roles.leader);
       break;
 
     case "income":
-      commands.income(
-        message.channel,
-        message.sender,
-        message.mentionedMembers,
-        message.mentionedRoles,
-        message.args,
-        discordConfig().roles.leader
-      );
+      commands.income(message, discordConfig().roles.leader);
       break;
 
     case "doincome":
@@ -370,34 +264,19 @@ async function processCommand(message) {
 
     case "purchase":
     case "buy":
-      commands.buy(message.channel, message.sender, message.args);
+      commands.buy(message);
       break;
 
     case "roleprice":
-      commands.setRolePrice(
-        message.channel,
-        message.sender,
-        message.args,
-        discordConfig().roles.leader
-      );
+      commands.setRolePrice(message, discordConfig().roles.leader);
       break;
 
     case "delivercheck":
-      commands.createMoney(
-        message.channel,
-        message.sender,
-        message.mentionedMembers,
-        message.args,
-        discordConfig().roles.leader
-      );
+      commands.createMoney(message, discordConfig().roles.leader);
       break;
 
     case "serverstatus":
-      commands.postServerStatus(
-        message.channel,
-        message.sender,
-        discordConfig().roles.leader
-      );
+      commands.postServerStatus(message, discordConfig().roles.leader);
       break;
 
     default:
