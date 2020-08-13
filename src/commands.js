@@ -52,9 +52,9 @@ function getInfractions(message) {
     message.mentionedMembers == null ||
     message.mentionedMembers.length === 0
   ) {
-    reportInfractions(message.sender, message.channel);
+    return reportInfractions(message.sender, message.channel);
   } else {
-    reportInfractions(message.mentionedMembers[0], message.channel);
+    return reportInfractions(message.mentionedMembers[0], message.channel);
   }
 }
 
@@ -1036,7 +1036,6 @@ export default {
   play,
   registerVoter,
   holdVote,
-  whisper,
   getCurrency,
   setAutoDelete,
   giveCurrency,

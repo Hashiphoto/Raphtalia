@@ -3,19 +3,26 @@ import Discord from "discord.js";
 import db from "../db.js";
 
 export function payoutMessage(message, dbGuild) {
-  if (message.content.length < dbGuild.min_length) return;
+  var amount = calculatePayout(message, dbGuild);
 
-  let amount = Math.min(
-    dbGuild.base_payout + message.content.length * dbGuild.character_value,
-    dbGuild.max_payout
-  );
+  if (!amount) {
+    return;
+  }
 
   let sender = message.guild.members.get(message.author.id);
 
-  if (process.env.NODE_ENV === "dev") {
-    // message.channel.send(`\`Debug only\` | ${sender} +$${amount.toFixed(2)}`);
-  }
   return addCurrency(sender, amount);
+}
+
+export function calculatePayout(message, dbGuild) {
+  if (message.content.length < dbGuild.min_length) {
+    return 0;
+  }
+
+  return Math.min(
+    dbGuild.base_payout + message.content.length * dbGuild.character_value,
+    dbGuild.max_payout
+  );
 }
 
 /**
@@ -51,6 +58,7 @@ export function getUserIncome(member) {
     });
   });
 }
+
 /**
  * Print out the number of infractions a member has incurred in the given channel
  *
