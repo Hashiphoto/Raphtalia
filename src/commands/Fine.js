@@ -7,7 +7,6 @@ import db from "../db/db.js";
 import youtube from "../youtube.js";
 import censorship from "../censorship.js";
 import discordConfig from "../../config/discord.config.js";
-import sendTimedMessage from "../util/timedMessage.js";
 import { percentFormat, extractNumber } from "../util/format.js";
 import { clearChannel } from "../util/guildManagement.js";
 import { dateFormat, parseTime } from "../util/format.js";
@@ -39,7 +38,34 @@ import {
 
 class Fine extends Command {
   execute() {
-    this.inputChannel.watchSend("This command has not been implemented yet");
+    if (
+      !this.message.mentionedMembers ||
+      this.message.mentionedMembers.length === 0
+    ) {
+      return this.inputChannel.watchSend(
+        "Please try again and specify who is being fined"
+      );
+    }
+
+    let amount = 1;
+    this.message.args.forEach((arg) => {
+      let temp = extractNumber(arg).number;
+      if (temp) {
+        amount = temp;
+        return;
+      }
+    });
+    addCurrency(
+      this.message.sender,
+      amount * this.message.mentionedMembers.length
+    );
+    for (let i = 0; i < this.message.mentionedMembers.length; i++) {
+      addCurrency(this.message.mentionedMembers[i], -amount);
+    }
+    let reply =
+      `Fined $${amount.toFixed(2)}` +
+      (this.message.mentionedMembers.length > 1 ? ` each!` : `!`);
+    this.inputChannel.watchSend(reply);
   }
 }
 

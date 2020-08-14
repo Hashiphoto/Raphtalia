@@ -517,34 +517,6 @@ function giveCurrency(message) {
   });
 }
 
-function fine(message, allowedRole) {
-  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
-    return;
-  }
-  if (!message.mentionedMembers || message.mentionedMembers.length === 0) {
-    return message.channel.watchSend(
-      "Please try again and specify who is being fined"
-    );
-  }
-
-  let amount = 1;
-  message.args.forEach((arg) => {
-    let temp = extractNumber(arg).number;
-    if (temp) {
-      amount = temp;
-      return;
-    }
-  });
-  addCurrency(message.sender, amount * message.mentionedMembers.length);
-  for (let i = 0; i < message.mentionedMembers.length; i++) {
-    addCurrency(message.mentionedMembers[i], -amount);
-  }
-  let reply =
-    `Fined $${amount.toFixed(2)}` +
-    (message.mentionedMembers.length > 1 ? ` each!` : `!`);
-  message.channel.watchSend(reply);
-}
-
 async function income(message, allowedRole) {
   if (!message.args || message.args.length === 0) {
     return getUserIncome(message.sender).then((income) => {
@@ -726,7 +698,6 @@ export default {
   registerVoter,
   holdVote,
   giveCurrency,
-  fine,
   income,
   setRolePrice,
   postServerStatus,
