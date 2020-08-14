@@ -543,70 +543,6 @@ function getCurrency(message) {
   });
 }
 
-function setAutoDelete(message, allowedRole) {
-  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
-    return;
-  }
-  if (!message.args || message.args.length === 0) {
-    if (message.channel)
-      message.channel.watchSend(
-        "Usage: `AutoDelete (start|stop) [delete delay ms]`"
-      );
-    return;
-  }
-
-  let clearHistory = false;
-  let enable = null;
-  let deleteDelay = 2000;
-  for (let i = 0; i < message.args.length; i++) {
-    switch (message.args[i].toLowerCase()) {
-      case "start":
-        enable = true;
-        break;
-      case "stop":
-        enable = false;
-        break;
-      case "clear":
-        clearHistory = true;
-      default:
-        let num = parseInt(message.args[i]);
-        if (isNaN(num)) {
-          continue;
-        }
-        deleteDelay = num;
-    }
-  }
-
-  if (enable === null) {
-    if (message.channel)
-      message.channel.watchSend(
-        "Usage: `AutoDelete (start|stop) [delete delay ms]`"
-      );
-    return;
-  }
-
-  if (!enable) {
-    deleteDelay = -1;
-  }
-
-  db.channels.setAutoDelete(message.channel.id, deleteDelay).then(() => {
-    if (enable) {
-      // clear all msgs
-      if (clearHistory) {
-        clearChannel(message.channel);
-      }
-
-      if (message.channel) {
-        message.channel.send(`Messages are deleted after ${deleteDelay}ms`);
-      }
-    } else {
-      if (message.channel) {
-        message.channel.send("Messages are no longer deleted");
-      }
-    }
-  });
-}
-
 function giveCurrency(message) {
   if (!message.args || message.args.length === 0) {
     if (message.channel)
@@ -969,7 +905,6 @@ export default {
   registerVoter,
   holdVote,
   getCurrency,
-  setAutoDelete,
   giveCurrency,
   fine,
   setEconomy,
