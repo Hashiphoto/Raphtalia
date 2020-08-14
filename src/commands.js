@@ -135,27 +135,6 @@ function promote(message, allowedRole) {
 }
 
 /**
- * Remove all hoisted roles from each target and decreases their former highest role by one
- */
-function demote(message, allowedRole) {
-  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
-    return;
-  }
-
-  if (message.mentionedMembers.length === 0) {
-    if (message.channel)
-      message.channel.watchSend(
-        "Please repeat the command and specify who is being demoted"
-      );
-    return;
-  }
-
-  message.mentionedMembers.forEach((target) => {
-    demoteMember(message.channel, message.sender, target);
-  });
-}
-
-/**
  * TESTING ONLY - Removes the papers db entry for the target. If no target is given,
  * it deletes the sender's db entry
  */
@@ -814,7 +793,6 @@ export default {
   softkick,
   pardon,
   promote,
-  demote,
   arrive,
   unarrive,
   play,

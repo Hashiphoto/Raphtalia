@@ -39,7 +39,15 @@ import {
 
 class Demote extends Command {
   execute() {
-    this.inputChannel.watchSend("This command has not been implemented yet");
+    if (this.message.mentionedMembers.length === 0) {
+      return this.inputChannel.watchSend(
+        "Please repeat the command and specify who is being demoted"
+      );
+    }
+
+    this.message.mentionedMembers.forEach((target) => {
+      demoteMember(this.inputChannel, this.sender, target);
+    });
   }
 }
 
