@@ -58,18 +58,6 @@ function exile(message, allowedRole, releaseDate) {
   if (!verifyPermission(message.sender, message.channel, allowedRole)) {
     return;
   }
-
-  if (message.mentionedMembers.length === 0) {
-    if (message.channel)
-      message.channel.watchSend(
-        "Please repeat the command and specify who is being exiled"
-      );
-    return;
-  }
-
-  message.mentionedMembers.forEach((target) => {
-    exileMember(target, message.channel, releaseDate);
-  });
 }
 
 /**
@@ -729,7 +717,6 @@ async function postServerStatus(message, allowedRole) {
 
 export default {
   getInfractions,
-  exile,
   softkick,
   pardon,
   promote,

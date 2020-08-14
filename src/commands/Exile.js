@@ -7,7 +7,6 @@ import db from "../db/db.js";
 import youtube from "../youtube.js";
 import censorship from "../censorship.js";
 import discordConfig from "../../config/discord.config.js";
-import sendTimedMessage from "../util/timedMessage.js";
 import { percentFormat, extractNumber } from "../util/format.js";
 import { clearChannel } from "../util/guildManagement.js";
 import { dateFormat, parseTime } from "../util/format.js";
@@ -39,7 +38,19 @@ import {
 
 class Exile extends Command {
   execute() {
-    this.inputChannel.watchSend("This command has not been implemented yet");
+    if (this.message.mentionedMembers.length === 0) {
+      if (this.inputChannel)
+        this.inputChannel.watchSend(
+          "Please repeat the command and specify who is being exiled"
+        );
+      return;
+    }
+
+    const releaseDate = parseTime(this.message.content);
+
+    this.message.mentionedMembers.forEach((target) => {
+      exileMember(target, this.inputChannel, releaseDate);
+    });
   }
 }
 
