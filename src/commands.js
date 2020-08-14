@@ -52,15 +52,6 @@ function getInfractions(message) {
 }
 
 /**
- * Remove all hoisted roles from the message.mentionedMembers and give the exile role
- */
-function exile(message, allowedRole, releaseDate) {
-  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
-    return;
-  }
-}
-
-/**
  * Send all the message.mentionedMembers an invite and kick them
  */
 function softkick(message, allowedRole, reason = "") {
@@ -479,44 +470,6 @@ function holdVote(message, allowedRole) {
   }, duration);
 }
 
-function giveCurrency(message) {
-  if (!message.args || message.args.length === 0) {
-    if (message.channel)
-      message.channel.watchSend(
-        "Please try again and specify the amount of money"
-      );
-    return;
-  }
-
-  let amount = 1;
-  message.args.forEach((arg) => {
-    let temp = extractNumber(arg).number;
-    if (temp) {
-      amount = temp;
-      return;
-    }
-  });
-  if (amount < 0) {
-    return addInfractions(
-      message.sender,
-      message.channel,
-      1,
-      "What are you trying to pull?"
-    );
-  }
-  let totalAmount = amount * message.mentionedMembers.length;
-  db.users.get(message.sender.id, message.sender.guild.id).then((dbUser) => {
-    if (dbUser.currency < totalAmount) {
-      return message.channel.watchSend("You don't have enough money for that");
-    }
-    addCurrency(message.sender, -totalAmount);
-    message.mentionedMembers.forEach((target) => {
-      addCurrency(target, amount);
-    });
-    message.channel.watchSend("Money transferred!");
-  });
-}
-
 async function income(message, allowedRole) {
   if (!message.args || message.args.length === 0) {
     return getUserIncome(message.sender).then((income) => {
@@ -697,7 +650,6 @@ export default {
   play,
   registerVoter,
   holdVote,
-  giveCurrency,
   income,
   setRolePrice,
   postServerStatus,
