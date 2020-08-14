@@ -39,7 +39,9 @@ import {
 
 class Balance extends Command {
   execute() {
-    this.inputChannel.watchSend("This command has not been implemented yet");
+    this.sender.createDM().then((dmChannel) => {
+      reportCurrency(this.sender, dmChannel);
+    });
   }
 }
 

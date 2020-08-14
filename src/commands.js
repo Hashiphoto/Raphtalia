@@ -533,16 +533,6 @@ function holdVote(message, allowedRole) {
   }, duration);
 }
 
-/**
- * Reports the currency for a list of guildMembers. Pass in an empty array
- * for message.mentionedMembers or leave it as null to report the sender's infractions instead
- */
-function getCurrency(message) {
-  message.sender.createDM().then((dmChannel) => {
-    reportCurrency(message.sender, dmChannel);
-  });
-}
-
 function giveCurrency(message) {
   if (!message.args || message.args.length === 0) {
     if (message.channel)
@@ -904,7 +894,6 @@ export default {
   play,
   registerVoter,
   holdVote,
-  getCurrency,
   giveCurrency,
   fine,
   setEconomy,
