@@ -557,66 +557,6 @@ function fine(message, allowedRole) {
   message.channel.watchSend(reply);
 }
 
-function setEconomy(message, allowedRole) {
-  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
-    return;
-  }
-  if (!message.args || message.args.length <= 1) {
-    return message.channel.watchSend(
-      "Usage: `Economy [MinLength $1] [CharValue $1] [BasePayout $1] [MaxPayout $1] [TaxRate 1%]`"
-    );
-  }
-
-  for (let i = 0; i < message.args.length - 1; i += 2) {
-    let amount = extractNumber(message.args[i + 1]).number;
-    if (amount == null)
-      return message.channel.watchSend("Could not understand arguments");
-
-    switch (message.args[i].toLowerCase()) {
-      case "minlength":
-        db.guilds.setMinLength(message.guild.id, amount);
-        message.channel.watchSend(
-          `The minimum length for a message to be a paid is now ${amount.toFixed(
-            0
-          )} characters`
-        );
-        break;
-      case "charvalue":
-        db.guilds.setCharacterValue(message.guild.id, amount);
-        message.channel.watchSend(
-          `Messages over the minimum length earn $${amount.toFixed(
-            2
-          )} per character`
-        );
-        break;
-      case "maxpayout":
-        db.guilds.setMaxPayout(message.guild.id, amount);
-        message.channel.watchSend(
-          `The max value earned from a paid message is now $${amount.toFixed(
-            2
-          )}`
-        );
-        break;
-      case "basepayout":
-        db.guilds.setBasePayout(message.guild.id, amount);
-        message.channel.watchSend(
-          `Messages over the minimum length earn a base pay of $${amount.toFixed(
-            2
-          )}`
-        );
-        break;
-      case "taxrate":
-        db.guilds.setTaxRate(message.guild.id, amount / 100);
-        message.channel.watchSend(
-          `Members are taxed ${amount.toFixed(
-            2
-          )}% of their role income on a weekly basis`
-        );
-        break;
-    }
-  }
-}
-
 async function income(message, allowedRole) {
   if (!message.args || message.args.length === 0) {
     return getUserIncome(message.sender).then((income) => {
@@ -800,7 +740,6 @@ export default {
   holdVote,
   giveCurrency,
   fine,
-  setEconomy,
   income,
   setRolePrice,
   postServerStatus,
