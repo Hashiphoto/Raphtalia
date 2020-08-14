@@ -746,35 +746,7 @@ async function setIncomeScale(baseIncome, roles, amount) {
   return announcement;
 }
 
-async function buy(message) {
-  if (!message.args || message.args.length === 0) {
-    return message.channel.watchSend(`Usage: !Buy (Item Name)`);
-  }
-  // Get store items
-  switch (message.args[0]) {
-    case "promotion":
-      let nextRole = getNextRole(message.sender, message.guild);
-      if (!nextRole) {
-        return message.channel.watchSend(`You cannot be promoted any higher!`);
-      }
-
-      let dbRole = await db.roles.getSingle(nextRole.id);
-      db.users.get(message.sender.id, message.guild.id).then((dbUser) => {
-        if (dbUser.currency < dbRole.price) {
-          return message.channel.watchSend(
-            `You cannot afford a promotion. Promotion to ${
-              nextRole.name
-            } costs $${dbRole.price.toFixed(2)}`
-          );
-        }
-        addCurrency(message.sender, -dbRole.price);
-        promoteMember(message.channel, null, message.sender);
-      });
-      break;
-    default:
-      return message.channel.watchSend(`Unknown item`);
-  }
-}
+async function buy(message) {}
 
 /**
  *
@@ -898,7 +870,6 @@ export default {
   fine,
   setEconomy,
   income,
-  buy,
   setRolePrice,
   postServerStatus,
   createMoney,
