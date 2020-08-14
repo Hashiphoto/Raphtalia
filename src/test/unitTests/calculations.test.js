@@ -1,20 +1,8 @@
 import assert from "assert";
-import commands from "../src/commands.js";
-import Channel from "./structures/Channel.js";
-import Message from "./structures/Message.js";
-import { calculatePayout } from "../src/util/currencyManagement.js";
-import { percentFormat } from "../src/util/format.js";
+import { calculatePayout } from "../../util/currencyManagement.js";
+import { percentFormat } from "../../util/format.js";
 
 describe("Calculations", () => {
-  describe("Help", () => {
-    it("sends the help message", async () => {
-      const message = new Message();
-      message.sender = "test";
-      let response = commands.help(message);
-      assert.equal(response, "Help yourself, test");
-    });
-  });
-
   describe("Message payout", () => {
     it("gives money for each character", () => {
       let message = { content: { length: 10 } };

@@ -656,7 +656,7 @@ function setAutoDelete(message, allowedRole) {
     deleteDelay = -1;
   }
 
-  db.channels.setAutoDelete(channel.id, deleteDelay).then(() => {
+  db.channels.setAutoDelete(message.channel.id, deleteDelay).then(() => {
     if (enable) {
       // clear all msgs
       if (clearHistory) {
@@ -755,7 +755,7 @@ function setEconomy(message, allowedRole) {
     if (amount == null)
       return message.channel.watchSend("Could not understand arguments");
 
-    switch (args[i].toLowerCase()) {
+    switch (message.args[i].toLowerCase()) {
       case "minlength":
         db.guilds.setMinLength(message.guild.id, amount);
         message.channel.watchSend(
@@ -802,7 +802,7 @@ function setEconomy(message, allowedRole) {
 
 async function income(message, allowedRole) {
   if (!message.args || message.args.length === 0) {
-    return getUserIncome(sender).then((income) => {
+    return getUserIncome(message.sender).then((income) => {
       return message.channel.watchSend(
         `Your daily income is $${income.toFixed(2)}`
       );
@@ -822,40 +822,40 @@ async function income(message, allowedRole) {
     if (message.args[i] !== "base") {
       continue;
     }
-    let amount = extractNumber(args[i + 1]);
+    let amount = extractNumber(message.args[i + 1]);
     if (amount.number == null || amount.isPercent) {
       return channel.watchSend(
         "Please try again and specify the base pay in dollars. e.g. `!Income base $100`"
       );
     }
-    await db.guilds.setBaseIncome(channel.guild.id, amount.number);
+    await db.guilds.setBaseIncome(message.guild.id, amount.number);
   }
 
-  let baseIncome = (await db.guilds.get(channel.guild.id)).base_income;
+  let baseIncome = (await db.guilds.get(message.guild.id)).base_income;
 
   // Income scale
   for (let i = 0; i < message.args.length - 1; i++) {
-    if (args[i] !== "scale") {
+    if (message.args[i] !== "scale") {
       continue;
     }
 
-    let amount = extractNumber(args[i + 1]);
+    let amount = extractNumber(message.args[i + 1]);
     if (amount.number == null || amount.isDollar === amount.isPercent) {
-      return channel.watchSend(
+      return message.channel.watchSend(
         "Please try again and specify the scale as a percent or dollar amount. e.g. `!Income scale $100` or `!Income scale 125%"
       );
     }
     if (amount.isPercent && amount.number < 1) {
-      return channel.watchSend("Income scale must be at least 100%");
+      return message.channel.watchSend("Income scale must be at least 100%");
     }
     let neutralRole = convertToRole(
       message.guild,
       discordConfig().roles.neutral
     );
     if (!neutralRole) {
-      return channel.watchSend("There is no neutral role");
+      return message.channel.watchSend("There is no neutral role");
     }
-    let roles = channel.guild.roles
+    let roles = message.guild.roles
       .filter(
         (role) =>
           role.hoist &&
@@ -864,7 +864,7 @@ async function income(message, allowedRole) {
       .sort((a, b) => a.calculatedPosition - b.calculatedPosition)
       .array();
 
-    return channel
+    return message.channel
       .watchSend(await setIncomeScale(baseIncome, roles, amount))
       .then(updateServerStatus(channel));
   }

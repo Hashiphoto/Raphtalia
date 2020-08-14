@@ -1,7 +1,10 @@
 import Discord from "discord.js";
+import dayjs from "dayjs";
 
 import { addInfractions, setInfractions } from "./infractionManagement.js";
 import { dateFormat } from "./format.js";
+import discordConfig from "../../config/discord.config.js";
+import db from "../db/db.js";
 
 // This will keep track of which process id is tracking the exile release timer for each
 // exile. The Key is the DiscordID and the Value is the object returned by SetTimeout()

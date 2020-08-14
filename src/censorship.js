@@ -106,7 +106,7 @@ function banWords(message, permissionLevel) {
       return;
     }
 
-    if (verifyPermission(message.sender, message.channel, permissionLevel)) {
+    if (!verifyPermission(message.sender, message.channel, permissionLevel)) {
       return;
     }
 
@@ -138,7 +138,7 @@ function allowWords(message, permissionLevel) {
       return;
     }
 
-    if (verifyPermission(message.sender, message.channel, permissionLevel)) {
+    if (!verifyPermission(message.sender, message.channel, permissionLevel)) {
       return;
     }
 

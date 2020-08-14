@@ -4,7 +4,7 @@
   "description": "A discord bot to assist with managing the Gulag. Still in development right now, but the planned features are as follows:\r 1. Kick members\r 2. Count infractions\r 3. Detect pro-capitalist or pro-democracy language\r 4. Play the soviet national anthem on a voice channel\r 5. Post the communist manifesto",
   "main": "bot.js",
   "scripts": {
-    "test": "set NODE_ENV=test&& mocha"
+    "test": "set NODE_ENV=test&& mocha './src/**/*.test.js'"
   },
   "type": "module",
   "repository": {

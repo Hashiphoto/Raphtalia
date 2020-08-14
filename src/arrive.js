@@ -1,9 +1,10 @@
 import Discord from "discord.js";
 import db from "./db/db.js";
 import sendTimedMessage from "./util/timedMessage.js";
-import welcomeQuestions from "../resources/welcome-questions.js";
+import welcomeQuestions from "../resources/welcomeQuestions.js";
 import { setHoistedRole } from "./util/roleManagement.js";
 import { softkickMember } from "./util/guildManagement.js";
+import discordConfig from "../config/discord.config.js";
 
 /**
  * Function called when a new member is added to the guild. First, it checks their papers. If they do not have a papers entry,
