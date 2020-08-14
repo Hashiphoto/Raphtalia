@@ -156,27 +156,6 @@ function demote(message, allowedRole) {
 }
 
 /**
- * Send some love to the message.mentionedMembers
- */
-function comfort(message, allowedRole) {
-  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
-    return;
-  }
-  if (!message.channel) return;
-
-  if (message.mentionedMembers.length === 0) {
-    message.channel.watchSend(
-      "Please repeat the command and specify who I'm headpatting"
-    );
-    return;
-  }
-
-  message.mentionedMembers.forEach((member) => {
-    message.channel.watchSend(member.toString() + " headpat");
-  });
-}
-
-/**
  * TESTING ONLY - Removes the papers db entry for the target. If no target is given,
  * it deletes the sender's db entry
  */
@@ -792,30 +771,6 @@ async function setRolePrice(message, allowedRole) {
     .then(updateServerStatus(message.channel));
 }
 
-function createMoney(message, allowedRole) {
-  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
-    return;
-  }
-
-  if (
-    message.mentionedMembers.length === 0 ||
-    !message.args ||
-    message.args.length < 2
-  ) {
-    return message.channel.watchSend("Usage: `!DeliverCheck @target $1`");
-  }
-
-  let amount = extractNumber(message.args[message.args.length - 1]);
-  if (amount.number == null) {
-    return message.channel.watchSend("Usage: `!DeliverCheck @target $1`");
-  }
-
-  message.mentionedMembers.forEach((target) => {
-    addCurrency(target, amount.number);
-  });
-  message.channel.watchSend("Money has been distributed!");
-}
-
 async function postServerStatus(message, allowedRole) {
   if (!verifyPermission(message.sender, message.channel, allowedRole)) {
     return;
@@ -860,7 +815,6 @@ export default {
   pardon,
   promote,
   demote,
-  comfort,
   arrive,
   unarrive,
   play,
@@ -872,5 +826,4 @@ export default {
   income,
   setRolePrice,
   postServerStatus,
-  createMoney,
 };
