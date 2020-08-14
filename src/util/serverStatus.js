@@ -1,3 +1,5 @@
+import db from "../db/db.js";
+
 export async function updateServerStatus(channel) {
   const statusEmbed = await generateServerStatus(channel.guild);
 

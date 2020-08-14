@@ -37,13 +37,6 @@ import {
 } from "./util/roleManagement.js";
 
 /**
- * Very unhelpful at the moment
- */
-function help(message) {
-  return message.channel.watchSend(`Help yourself, ${message.sender}`);
-}
-
-/**
  * Reports the number of infractions for a list of guildMembers. Pass in an empty array
  * for message.mentionedMembers or leave it as null to report the sender's infractions instead
  */
@@ -56,72 +49,6 @@ function getInfractions(message) {
   } else {
     return reportInfractions(message.mentionedMembers[0], message.channel);
   }
-}
-
-/**
- * Kick members and send them off with a nice wave and gif
- */
-function kick(message, allowedRole) {
-  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
-    return;
-  }
-
-  if (message.mentionedMembers.length === 0) {
-    if (message.channel)
-      message.channel.watchSend(
-        "Please repeat the command and specify who is getting the boot"
-      );
-    return;
-  }
-
-  message.mentionedMembers.forEach((target) => {
-    target
-      .kick()
-      .then((member) => {
-        let randInt = Math.floor(Math.random() * links.gifs.kicks.length);
-        let kickGif = links.gifs.kicks[randInt];
-        if (message.channel)
-          message.channel.watchSend(
-            `:wave: ${member.displayName} has been kicked\n${kickGif}`
-          );
-      })
-      .catch((e) => {
-        if (message.channel)
-          message.channel.watchSend("Something went wrong...");
-        console.error(e);
-      });
-  });
-}
-
-/**
- * Increase the infraction count for the list of message.mentionedMembers
- */
-function report(message, allowedRole) {
-  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
-    return;
-  }
-
-  if (message.mentionedMembers.length === 0) {
-    if (message.channel)
-      message.channel.watchSend(
-        "Please repeat the command and specify who is being reported"
-      );
-    return;
-  }
-
-  let amount = 1;
-
-  for (let i = 0; i < message.args.length; i++) {
-    let relMatches = message.args[i].match(/^\+?\d+$/g);
-    if (relMatches) {
-      amount = parseInt(relMatches[0]);
-      break;
-    }
-  }
-
-  message.mentionedMembers.forEach((target) => {
-    addInfractions(target, message.channel, amount, "Yes sir~!");
-  });
 }
 
 /**
@@ -336,8 +263,10 @@ function play(message, allowedRole) {
           channel.name.toLowerCase() === firstMatch.toLowerCase()
       );
       if (voiceChannel == null) {
-        if (channel)
-          channel.watchSend("I couldn't find a voice channel by that name");
+        if (message.channel)
+          message.channel.watchSend(
+            "I couldn't find a voice channel by that name"
+          );
         return;
       }
     }
@@ -348,8 +277,10 @@ function play(message, allowedRole) {
     voiceChannel = message.sender.voiceChannel;
 
     if (!voiceChannel) {
-      if (channel)
-        return channel.watchSend("Join a voice channel first, comrade!");
+      if (message.channel)
+        return message.channel.watchSend(
+          "Join a voice channel first, comrade!"
+        );
       return;
     }
   }
@@ -359,7 +290,9 @@ function play(message, allowedRole) {
     !permissions.has("CONNECT") ||
     !permissions.has("SPEAK")
   ) {
-    return channel.watchSend("I don't have permission to join that channel");
+    return message.channel.watchSend(
+      "I don't have permission to join that channel"
+    );
   }
   return youtube.play(voiceChannel, links.youtube.anthem, volume);
 }
@@ -660,7 +593,7 @@ function setAutoDelete(message, allowedRole) {
     if (enable) {
       // clear all msgs
       if (clearHistory) {
-        clearChannel(channel);
+        clearChannel(message.channel);
       }
 
       if (message.channel) {
@@ -824,7 +757,7 @@ async function income(message, allowedRole) {
     }
     let amount = extractNumber(message.args[i + 1]);
     if (amount.number == null || amount.isPercent) {
-      return channel.watchSend(
+      return message.channel.watchSend(
         "Please try again and specify the base pay in dollars. e.g. `!Income base $100`"
       );
     }
@@ -866,7 +799,7 @@ async function income(message, allowedRole) {
 
     return message.channel
       .watchSend(await setIncomeScale(baseIncome, roles, amount))
-      .then(updateServerStatus(channel));
+      .then(updateServerStatus(message.channel));
   }
 }
 
@@ -889,31 +822,31 @@ async function setIncomeScale(baseIncome, roles, amount) {
 
 async function buy(message) {
   if (!message.args || message.args.length === 0) {
-    return channel.watchSend(`Usage: !Buy (Item Name)`);
+    return message.channel.watchSend(`Usage: !Buy (Item Name)`);
   }
   // Get store items
   switch (message.args[0]) {
     case "promotion":
       let nextRole = getNextRole(message.sender, message.guild);
       if (!nextRole) {
-        return channel.watchSend(`You cannot be promoted any higher!`);
+        return message.channel.watchSend(`You cannot be promoted any higher!`);
       }
 
       let dbRole = await db.roles.getSingle(nextRole.id);
       db.users.get(message.sender.id, message.guild.id).then((dbUser) => {
         if (dbUser.currency < dbRole.price) {
-          return channel.watchSend(
+          return message.channel.watchSend(
             `You cannot afford a promotion. Promotion to ${
               nextRole.name
             } costs $${dbRole.price.toFixed(2)}`
           );
         }
-        addCurrency(sender, -dbRole.price);
-        promoteMember(channel, null, message.sender);
+        addCurrency(message.sender, -dbRole.price);
+        promoteMember(message.channel, null, message.sender);
       });
       break;
     default:
-      return channel.watchSend(`Unknown item`);
+      return message.channel.watchSend(`Unknown item`);
   }
 }
 
@@ -928,7 +861,7 @@ async function setRolePrice(message, allowedRole) {
   if (!message.args || message.args.length === 0) {
     return message.channel.watchSend(`Usage: !RolePrice 1`);
   }
-  let multiplier = extractNumber(args[0]).number;
+  let multiplier = extractNumber(message.args[0]).number;
   if (multiplier == null) {
     return message.channel.watchSend(`Usage: !RolePrice 1`);
   }
@@ -956,7 +889,9 @@ async function setRolePrice(message, allowedRole) {
       2
     )}\n`;
   }
-  message.channel.watchSend(announcement).then(updateServerStatus(channel));
+  message.channel
+    .watchSend(announcement)
+    .then(updateServerStatus(message.channel));
 }
 
 function createMoney(message, allowedRole) {
@@ -969,18 +904,18 @@ function createMoney(message, allowedRole) {
     !message.args ||
     message.args.length < 2
   ) {
-    return channel.watchSend("Usage: `!DeliverCheck @target $1`");
+    return message.channel.watchSend("Usage: `!DeliverCheck @target $1`");
   }
 
   let amount = extractNumber(message.args[message.args.length - 1]);
   if (amount.number == null) {
-    return channel.watchSend("Usage: `!DeliverCheck @target $1`");
+    return message.channel.watchSend("Usage: `!DeliverCheck @target $1`");
   }
 
   message.mentionedMembers.forEach((target) => {
     addCurrency(target, amount.number);
   });
-  channel.watchSend("Money has been distributed!");
+  message.channel.watchSend("Money has been distributed!");
 }
 
 async function postServerStatus(message, allowedRole) {
@@ -990,13 +925,13 @@ async function postServerStatus(message, allowedRole) {
   const statusEmbed = await generateServerStatus(message.guild);
 
   db.guilds
-    .get(channel.guild.id)
+    .get(message.guild.id)
     .then(async (guild) => {
       // Delete the existing status message, if it exists
       if (!guild || !guild.status_message_id) {
         return;
       }
-      let textChannels = channel.guild.channels
+      let textChannels = message.guild.channels
         .filter((channel) => channel.type === "text" && !channel.deleted)
         .array();
       for (let i = 0; i < textChannels.length; i++) {
@@ -1011,20 +946,17 @@ async function postServerStatus(message, allowedRole) {
     })
     .then(() => {
       // Post the new status message
-      return channel.send({ embed: statusEmbed });
+      return message.channel.send({ embed: statusEmbed });
     })
     .then((message) => {
       // Update the status message in the db
       message.pin();
-      return db.guilds.setStatusMessage(channel.guild.id, message.id);
+      return db.guilds.setStatusMessage(message.guild.id, message.id);
     });
 }
 
 export default {
-  help,
   getInfractions,
-  kick,
-  report,
   exile,
   softkick,
   pardon,

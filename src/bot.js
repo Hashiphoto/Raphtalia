@@ -9,13 +9,35 @@ import tasks from "./scheduledTasks.js";
 import parseCommand, { prefix } from "./util/parseCommand.js";
 import { payoutMessage } from "./util/currencyManagement.js";
 import { parseTime } from "./util/format.js";
+import AutoDelete from "./commands/AutoDelete.js";
+import Balance from "./commands/Balance.js";
+import Buy from "./commands/Buy.js";
+import Comfort from "./commands/Comfort.js";
+import DeliverCheck from "./commands/DeliverCheck.js";
+import Demote from "./commands/Demote.js";
+import Economy from "./commands/Economy.js";
+import Exile from "./commands/Exile.js";
+import Fine from "./commands/Fine.js";
+import Give from "./commands/Give.js";
+import Help from "./commands/Help.js";
+import HoldVote from "./commands/HoldVote.js";
+import Income from "./commands/Income.js";
+import Infractions from "./commands/Infractions.js";
+import Kick from "./commands/Kick.js";
+import Pardon from "./commands/Pardon.js";
+import Play from "./commands/Play.js";
+import Promote from "./commands/Promote.js";
+import Register from "./commands/Register.js";
+import Report from "./commands/Report.js";
+import RolePrice from "./commands/RolePrice.js";
+import ServerStatus from "./commands/ServerStatus.js";
+import SoftKick from "./commands/SoftKick.js";
+import UnrecognizedCommand from "./commands/UnrecognizedCommand.js";
 
 const client = new Discord.Client();
 
-/**
- * When the client is ready, do this once
- */
 client.once("ready", () => {
+  db.init();
   console.log(
     `NODE_ENV: ${process.env.NODE_ENV} | ${dayjs(
       new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" })
@@ -110,59 +132,63 @@ function attachWatchCommand(channel) {
   });
 }
 
-async function processCommand(message) {
+function processCommand(message) {
+  let command = getCommandByName(message);
+  if (command.userCanExecute()) {
+    command.execute();
+  }
+}
+
+function getCommandByName(message) {
   switch (message.command) {
-    case "help":
-      commands.help(message);
-      break;
-
-    case "infractions":
-      commands.getInfractions(message);
-      break;
-
-    case "kick":
-      commands.kick(message, discordConfig().roles.gov);
-      break;
-
-    case "infract":
-    case "report":
-      commands.report(message, discordConfig().roles.gov);
-      break;
-
-    case "exile":
-      commands.exile(
-        message,
-        discordConfig().roles.gov,
-        parseTime(message.content)
-      );
-      break;
-
-    case "softkick":
-      commands.softkick(message, discordConfig().roles.gov);
-      break;
-
-    case "pardon":
-      commands.pardon(message, discordConfig().roles.leader);
-      break;
-
-    case "promote":
-      commands.promote(message, discordConfig().roles.gov);
-      break;
-
-    case "demote":
-      commands.demote(message, discordConfig().roles.gov);
-      break;
-
+    case "autodelete":
+      return new AutoDelete(message);
+    case "balance":
+      return new Balance(message);
+    case "buy":
+      return new Buy(message);
     case "comfort":
-      commands.comfort(message, discordConfig().roles.leader);
-      break;
-
-    case "anthem":
-    case "sing":
+      return new Comfort(message);
+    case "delivercheck":
+      return new DeliverCheck(message);
+    case "demote":
+      return new Demote(message);
+    case "economy":
+      return new Economy(message);
+    case "exile":
+      return new Exile(message);
+    case "fine":
+      return new Fine(message);
+    case "give":
+      return new Give(message);
+    case "help":
+      return new Help(message);
+    case "holdvote":
+      return new HoldVote(message);
+    case "income":
+      return new Income(message);
+    case "infractions":
+      return new Infractions(message);
+    case "kick":
+      return new Kick(message);
+    case "pardon":
+      return new Pardon(message);
     case "play":
-      commands.play(message, discordConfig().roles.gov);
-      break;
+      return new Play(message);
+    case "promote":
+      return new Promote(message);
+    case "register":
+      return new Register(message);
+    case "report":
+      return new Report(message);
+    case "roleprice":
+      return new RolePrice(message);
+    case "serverstatus":
+      return new ServerStatus(message);
+    case "softkick":
+      return new SoftKick(message);
 
+    // TODO: Move these into commands also
     case "banword":
     case "banwords":
     case "bannedwords":
@@ -184,60 +210,7 @@ async function processCommand(message) {
       censorship.enable(message, false, discordConfig().roles.leader);
       break;
 
-    case "register":
-      commands.registerVoter(message);
-      break;
-
-    case "holdvote":
-      commands.holdVote(message, discordConfig().roles.leader);
-      break;
-
-    case "wallet":
-    case "balance":
-    case "cash":
-    case "bank":
-    case "money":
-    case "currency":
-      commands.getCurrency(message);
-      break;
-
-    case "autodelete":
-      commands.setAutoDelete(message, discordConfig().roles.leader);
-      break;
-
-    case "give":
-      commands.giveCurrency(message);
-      break;
-
-    case "fine":
-      commands.fine(message, discordConfig().roles.gov);
-      break;
-
-    case "economy":
-      commands.setEconomy(message, discordConfig().roles.leader);
-      break;
-
-    case "income":
-      commands.income(message, discordConfig().roles.leader);
-      break;
-
-    case "purchase":
-    case "buy":
-      commands.buy(message);
-      break;
-
-    case "roleprice":
-      commands.setRolePrice(message, discordConfig().roles.leader);
-      break;
-
-    case "delivercheck":
-      commands.createMoney(message, discordConfig().roles.leader);
-      break;
-
-    case "serverstatus":
-      commands.postServerStatus(message, discordConfig().roles.leader);
-      break;
-
+    // TODO: Move these into commands
     //// DEV ONLY ////
     case "unarrive":
       if (process.env.NODE_ENV !== "dev") {
@@ -264,11 +237,7 @@ async function processCommand(message) {
     /////////////////
 
     default:
-      if (message.channel) {
-        message.channel.watchSend(
-          `I think you're confused, Comrade ${message.sender}`
-        );
-      }
+      return new UnrecognizedCommand(message);
   }
 }
 
