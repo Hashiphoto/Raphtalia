@@ -37,21 +37,6 @@ import {
 } from "./util/roleManagement.js";
 
 /**
- * Reports the number of infractions for a list of guildMembers. Pass in an empty array
- * for message.mentionedMembers or leave it as null to report the sender's infractions instead
- */
-function getInfractions(message) {
-  if (
-    message.mentionedMembers == null ||
-    message.mentionedMembers.length === 0
-  ) {
-    return reportInfractions(message.sender, message.channel);
-  } else {
-    return reportInfractions(message.mentionedMembers[0], message.channel);
-  }
-}
-
-/**
  * Send all the message.mentionedMembers an invite and kick them
  */
 function softkick(message, allowedRole, reason = "") {
@@ -366,7 +351,6 @@ async function postServerStatus(message, allowedRole) {
 }
 
 export default {
-  getInfractions,
   softkick,
   pardon,
   promote,
