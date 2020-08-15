@@ -284,95 +284,6 @@ function registerVoter(message) {
     });
 }
 
-async function income(message, allowedRole) {
-  if (!message.args || message.args.length === 0) {
-    return getUserIncome(message.sender).then((income) => {
-      return message.channel.watchSend(
-        `Your daily income is $${income.toFixed(2)}`
-      );
-    });
-  }
-  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
-    return;
-  }
-  if (message.args.length < 2) {
-    return message.channel.watchSend(
-      "Usage: `!Income [base $1] [scale ($1|1%)]`"
-    );
-  }
-
-  // Check for base income set
-  for (let i = 0; i < message.args.length - 1; i++) {
-    if (message.args[i] !== "base") {
-      continue;
-    }
-    let amount = extractNumber(message.args[i + 1]);
-    if (amount.number == null || amount.isPercent) {
-      return message.channel.watchSend(
-        "Please try again and specify the base pay in dollars. e.g. `!Income base $100`"
-      );
-    }
-    await db.guilds.setBaseIncome(message.guild.id, amount.number);
-  }
-
-  let baseIncome = (await db.guilds.get(message.guild.id)).base_income;
-
-  // Income scale
-  for (let i = 0; i < message.args.length - 1; i++) {
-    if (message.args[i] !== "scale") {
-      continue;
-    }
-
-    let amount = extractNumber(message.args[i + 1]);
-    if (amount.number == null || amount.isDollar === amount.isPercent) {
-      return message.channel.watchSend(
-        "Please try again and specify the scale as a percent or dollar amount. e.g. `!Income scale $100` or `!Income scale 125%"
-      );
-    }
-    if (amount.isPercent && amount.number < 1) {
-      return message.channel.watchSend("Income scale must be at least 100%");
-    }
-    let neutralRole = convertToRole(
-      message.guild,
-      discordConfig().roles.neutral
-    );
-    if (!neutralRole) {
-      return message.channel.watchSend("There is no neutral role");
-    }
-    let roles = message.guild.roles
-      .filter(
-        (role) =>
-          role.hoist &&
-          role.calculatedPosition >= neutralRole.calculatedPosition
-      )
-      .sort((a, b) => a.calculatedPosition - b.calculatedPosition)
-      .array();
-
-    return message.channel
-      .watchSend(await setIncomeScale(baseIncome, roles, amount))
-      .then(updateServerStatus(message.channel));
-  }
-}
-
-async function setIncomeScale(baseIncome, roles, amount) {
-  let nextIncome = baseIncome;
-  let announcement = "";
-  for (let i = 0; i < roles.length; i++) {
-    await db.roles.setRoleIncome(roles[i].id, nextIncome);
-    announcement += `${roles[i].name} will now earn $${nextIncome.toFixed(
-      2
-    )}\n`;
-    if (amount.isDollar) {
-      nextIncome += amount.number;
-    } else {
-      nextIncome = nextIncome * amount.number;
-    }
-  }
-  return announcement;
-}
-
-async function buy(message) {}
-
 /**
  *
  */
@@ -463,7 +374,6 @@ export default {
   unarrive,
   play,
   registerVoter,
-  income,
   setRolePrice,
   postServerStatus,
 };
