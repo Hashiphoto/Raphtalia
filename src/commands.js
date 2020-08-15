@@ -126,18 +126,6 @@ async function askGateQuestion(channel, member, question) {
   }
 }
 
-function registerVoter(message) {
-  addRoles(message.sender, [discordConfig().roles.voter])
-    .then(() => {
-      if (message.channel)
-        message.channel.watchSend(`You are now a registered voter!`);
-    })
-    .catch(() => {
-      if (message.channel)
-        message.channel.watchSend(`You are already registered, dingus`);
-    });
-}
-
 /**
  *
  */
@@ -223,7 +211,6 @@ export default {
   softkick,
   arrive,
   unarrive,
-  registerVoter,
   setRolePrice,
   postServerStatus,
 };
