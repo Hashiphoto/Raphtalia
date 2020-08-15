@@ -1,45 +1,52 @@
 import Discord from "discord.js";
-import dayjs from "dayjs";
 
 import Command from "./Command.js";
-import links from "../../resources/links.js";
 import db from "../db/db.js";
-import youtube from "../youtube.js";
-import censorship from "../censorship.js";
 import discordConfig from "../../config/discord.config.js";
-import sendTimedMessage from "../util/timedMessage.js";
-import { percentFormat, extractNumber } from "../util/format.js";
-import { clearChannel } from "../util/guildManagement.js";
-import { dateFormat, parseTime } from "../util/format.js";
-import arrive from "../arrive.js";
-import { softkickMember } from "../util/guildManagement.js";
-import {
-  updateServerStatus,
-  generateServerStatus,
-} from "../util/serverStatus.js";
-import {
-  addInfractions,
-  reportInfractions,
-} from "../util/infractionManagement.js";
-import {
-  addCurrency,
-  getUserIncome,
-  reportCurrency,
-} from "../util/currencyManagement.js";
-import {
-  getNextRole,
-  verifyPermission,
-  pardonMember,
-  exileMember,
-  addRoles,
-  convertToRole,
-  promoteMember,
-  demoteMember,
-} from "../util/roleManagement.js";
+import { extractNumber } from "../util/format.js";
+import { updateServerStatus } from "../util/serverStatus.js";
+import { convertToRole } from "../util/roleManagement.js";
 
 class RolePrice extends Command {
-  execute() {
-    this.inputChannel.watchSend("This command has not been implemented yet");
+  async execute() {
+    if (!this.message.args || this.message.args.length === 0) {
+      return this.inputChannel.watchSend(`Usage: !RolePrice 1`);
+    }
+    let multiplier = extractNumber(this.message.args[0]).number;
+    if (multiplier == null) {
+      return this.inputChannel.watchSend(`Usage: !RolePrice 1`);
+    }
+
+    let announcement = `Every role's purchase price is now ${multiplier.toFixed(
+      2
+    )}x its daily income!\n`;
+    let neutralRole = convertToRole(
+      this.message.guild,
+      discordConfig().roles.neutral
+    );
+    if (!neutralRole) {
+      return this.inputChannel.watchSend("There is no neutral role");
+    }
+    let discordRoles = this.message.guild.roles
+      .filter(
+        (role) =>
+          role.hoist &&
+          role.calculatedPosition >= neutralRole.calculatedPosition
+      )
+      .sort((a, b) => b.calculatedPosition - a.calculatedPosition)
+      .array();
+
+    for (let i = 0; i < discordRoles.length; i++) {
+      let dbRole = await db.roles.getSingle(discordRoles[i].id);
+      let newPrice = dbRole.income * multiplier;
+      db.roles.setRolePrice(discordRoles[i].id, newPrice);
+      announcement += `${discordRoles[i].name} new price: $${newPrice.toFixed(
+        2
+      )}\n`;
+    }
+    this.inputChannel
+      .watchSend(announcement)
+      .then(updateServerStatus(this.inputChannel));
   }
 }
 

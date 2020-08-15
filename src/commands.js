@@ -126,50 +126,6 @@ async function askGateQuestion(channel, member, question) {
   }
 }
 
-/**
- *
- */
-async function setRolePrice(message, allowedRole) {
-  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
-    return;
-  }
-
-  if (!message.args || message.args.length === 0) {
-    return message.channel.watchSend(`Usage: !RolePrice 1`);
-  }
-  let multiplier = extractNumber(message.args[0]).number;
-  if (multiplier == null) {
-    return message.channel.watchSend(`Usage: !RolePrice 1`);
-  }
-
-  let announcement = `Every role's purchase price is now ${multiplier.toFixed(
-    2
-  )}x its daily income!\n`;
-  let neutralRole = convertToRole(message.guild, discordConfig().roles.neutral);
-  if (!neutralRole) {
-    return message.channel.watchSend("There is no neutral role");
-  }
-  let discordRoles = message.guild.roles
-    .filter(
-      (role) =>
-        role.hoist && role.calculatedPosition >= neutralRole.calculatedPosition
-    )
-    .sort((a, b) => b.calculatedPosition - a.calculatedPosition)
-    .array();
-
-  for (let i = 0; i < discordRoles.length; i++) {
-    let dbRole = await db.roles.getSingle(discordRoles[i].id);
-    let newPrice = dbRole.income * multiplier;
-    db.roles.setRolePrice(discordRoles[i].id, newPrice);
-    announcement += `${discordRoles[i].name} new price: $${newPrice.toFixed(
-      2
-    )}\n`;
-  }
-  message.channel
-    .watchSend(announcement)
-    .then(updateServerStatus(message.channel));
-}
-
 async function postServerStatus(message, allowedRole) {
   if (!verifyPermission(message.sender, message.channel, allowedRole)) {
     return;
@@ -211,6 +167,5 @@ export default {
   softkick,
   arrive,
   unarrive,
-  setRolePrice,
   postServerStatus,
 };
