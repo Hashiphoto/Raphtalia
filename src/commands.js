@@ -37,30 +37,6 @@ import {
 } from "./util/roleManagement.js";
 
 /**
- * Send all the message.mentionedMembers an invite and kick them
- */
-function softkick(message, allowedRole, reason = "") {
-  if (
-    message.sender != null &&
-    !verifyPermission(message.sender, message.channel, allowedRole)
-  ) {
-    return;
-  }
-
-  if (message.mentionedMembers.length === 0) {
-    if (message.channel)
-      message.channel.watchSend(
-        "Please repeat the command and specify who is being gently kicked"
-      );
-    return;
-  }
-
-  message.mentionedMembers.forEach((target) => {
-    softkickMember(message.channel, target, reason);
-  });
-}
-
-/**
  * TESTING ONLY - Removes the papers db entry for the target. If no target is given,
  * it deletes the sender's db entry
  */
@@ -129,7 +105,6 @@ async function askGateQuestion(channel, member, question) {
 async function postServerStatus(message, allowedRole) {}
 
 export default {
-  softkick,
   arrive,
   unarrive,
 };

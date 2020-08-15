@@ -16,7 +16,7 @@ export async function clearChannel(channel) {
  * @param {Discord.GuildMember} target - The member to softkick
  * @param {String} reason - The message to send to the kicked member
  */
-export function softkickMember(channel, target, reason) {
+export function softkickMember(channel, target, reason = "") {
   let inviteChannel = channel;
   if (!channel) {
     inviteChannel = target.guild.systemChannel;
