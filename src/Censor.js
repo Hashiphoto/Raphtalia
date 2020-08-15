@@ -12,6 +12,26 @@ import {
 } from "./util/roleManagement.js";
 import { addInfractions } from "./util/infractionManagement.js";
 
+class Censor {
+  static async rebuildCensorshipList(guildId) {
+    let bannedWords = await db.bannedWords.getAll(guildId);
+    let regexString = "(^|[^a-zA-Z0-9À-ÖØ-öø-ÿ])(";
+    for (let i = 0; i < bannedWords.length; i++) {
+      // Last word
+      if (i === bannedWords.length - 1) {
+        regexString += diacritic.toString()(bannedWords[i].word);
+      } else {
+        regexString += diacritic.toString()(bannedWords[i].word) + "|";
+      }
+    }
+    regexString += ")(?![a-zA-Z0-9À-ÖØ-öø-ÿ])";
+
+    return db.guilds.updateCensorshipRegex(guildId, regexString);
+  }
+}
+
+export default Censor;
+
 async function rebuildCensorshipList(guildId) {
   let bannedWords = await db.bannedWords.getAll(guildId);
   let regexString = "(^|[^a-zA-Z0-9À-ÖØ-öø-ÿ])(";
@@ -89,66 +109,6 @@ function containsBannedWords(guildId, text) {
     }
 
     return text.match(guild.censor_regex) != null;
-  });
-}
-
-function banWords(message, permissionLevel) {
-  return db.guilds.get(message.guild.id).then((guild) => {
-    if (!guild.censorship_enabled) {
-      if (channel)
-        return message.channel.watchSend("Censorship is currently disabled");
-      return;
-    }
-
-    let words = message.args;
-    if (words.length === 0) {
-      printBanList(message.channel);
-      return;
-    }
-
-    if (!verifyPermission(message.sender, message.channel, permissionLevel)) {
-      return;
-    }
-
-    // Construct an array of rows to insert into the db
-    let values = [];
-    words.forEach((word) => {
-      values.push([word, message.guild.id]);
-    });
-    db.bannedWords.insert(values).then(() => {
-      rebuildCensorshipList(message.guild.id);
-    });
-    if (message.channel)
-      return message.channel.watchSend(
-        `You won't see these words again: ${words}`
-      );
-  });
-}
-
-function allowWords(message, permissionLevel) {
-  return db.guilds.get(message.guild.id).then((guild) => {
-    if (!guild.censorship_enabled) {
-      if (channel) return channel.watchSend("Censorship is currently disabled");
-      return;
-    }
-
-    let words = message.args;
-    if (words.length === 0) {
-      printBanList(message.channel);
-      return;
-    }
-
-    if (!verifyPermission(message.sender, message.channel, permissionLevel)) {
-      return;
-    }
-
-    db.bannedWords.delete(message.guild.id, words).then(() => {
-      rebuildCensorshipList(message.guild.id);
-    });
-    if (message.channel)
-      return message.channel.watchSend(
-        `These words are allowed again: ${words}`
-      );
   });
 }
 

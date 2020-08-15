@@ -1,13 +1,16 @@
 import Discord from "discord.js";
 import dayjs from "dayjs";
+
 import commands from "./commands.js";
-import censorship from "./censorship.js";
+import censorship from "./Censor.js";
 import db from "./db/db.js";
 import secretConfig from "../config/secrets.config.js";
 import discordConfig from "../config/discord.config.js";
 import tasks from "./scheduledTasks.js";
 import parseCommand, { prefix } from "./util/parseCommand.js";
 import { payoutMessage } from "./util/currencyManagement.js";
+import Onboarder from "./Onboarder.js";
+
 import AutoDelete from "./commands/AutoDelete.js";
 import Balance from "./commands/Balance.js";
 import Buy from "./commands/Buy.js";
@@ -32,6 +35,8 @@ import RolePrice from "./commands/RolePrice.js";
 import ServerStatus from "./commands/ServerStatus.js";
 import SoftKick from "./commands/SoftKick.js";
 import UnrecognizedCommand from "./commands/UnrecognizedCommand.js";
+import BanWord from "./commands/BanWord.js";
+import AllowWord from "./commands/AllowWord.js";
 
 const client = new Discord.Client();
 
@@ -92,7 +97,7 @@ client.on("guildMemberAdd", (member) => {
     discordConfig().channels.welcomeChannelId
   );
   attachWatchCommand(welcomeChannel).then(() => {
-    commands.arrive(welcomeChannel, member);
+    new Onboarder().onBoard(member, welcomeChannel);
   });
 });
 
@@ -139,11 +144,20 @@ function processCommand(message) {
 }
 
 function getCommandByName(message) {
+  // Keep alphabetical by primary command word
+  // The primary command keyword should be listed first
   switch (message.command) {
+    case "allowword":
+    case "allowwords":
+      return new AllowWord(message);
     case "autodelete":
       return new AutoDelete(message);
     case "balance":
+    case "wallet":
       return new Balance(message);
+    case "banword":
+    case "banwords":
+      return new BanWord(message);
     case "buy":
       return new Buy(message);
     case "comfort":
