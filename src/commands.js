@@ -61,23 +61,6 @@ function softkick(message, allowedRole, reason = "") {
 }
 
 /**
- * Remove all hoisted roles from each target and increases their former highest role by one
- */
-function promote(message, allowedRole) {
-  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
-    return;
-  }
-
-  if (message.mentionedMembers.length === 0) {
-    if (message.channel) return;
-  }
-
-  message.mentionedMembers.forEach((target) => {
-    promoteMember(message.channel, message.sender, target);
-  });
-}
-
-/**
  * TESTING ONLY - Removes the papers db entry for the target. If no target is given,
  * it deletes the sender's db entry
  */
@@ -238,7 +221,6 @@ async function postServerStatus(message, allowedRole) {
 
 export default {
   softkick,
-  promote,
   arrive,
   unarrive,
   registerVoter,
