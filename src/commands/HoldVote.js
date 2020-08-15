@@ -7,8 +7,8 @@ import sendTimedMessage from "../util/timedMessage.js";
 import { percentFormat } from "../util/format.js";
 import { dateFormat, parseTime } from "../util/format.js";
 import { convertToRole } from "../util/roleManagement.js";
-import Question from "../Question.js";
-import VotingOption from "../VotingOption.js";
+import Question from "../structures/Question.js";
+import VotingOption from "../structures/VotingOption.js";
 
 class HoldVote extends Command {
   async execute() {

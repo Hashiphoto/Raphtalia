@@ -8,7 +8,6 @@ import discordConfig from "../config/discord.config.js";
 import tasks from "./scheduledTasks.js";
 import parseCommand, { prefix } from "./util/parseCommand.js";
 import { payoutMessage } from "./util/currencyManagement.js";
-import { parseTime } from "./util/format.js";
 import AutoDelete from "./commands/AutoDelete.js";
 import Balance from "./commands/Balance.js";
 import Buy from "./commands/Buy.js";

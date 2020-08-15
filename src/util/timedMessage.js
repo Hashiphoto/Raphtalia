@@ -1,5 +1,5 @@
 import Discord from "discord.js";
-import Question from "../Question.js";
+import Question from "../structures/Question.js";
 
 /**
  * Send a message and wait for the first matching response. If no responses are recieved within the timeout,
