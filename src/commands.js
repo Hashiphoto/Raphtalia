@@ -61,27 +61,6 @@ function softkick(message, allowedRole, reason = "") {
 }
 
 /**
- * Remove all roles from message.mentionedMembers who have the exile role
- */
-function pardon(message, allowedRole) {
-  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
-    return;
-  }
-
-  if (message.mentionedMembers.length === 0) {
-    if (message.channel)
-      message.channel.watchSend(
-        "Please repeat the command and specify who is being pardoned"
-      );
-    return;
-  }
-
-  message.mentionedMembers.forEach((target) => {
-    pardonMember(target, message.channel);
-  });
-}
-
-/**
  * Remove all hoisted roles from each target and increases their former highest role by one
  */
 function promote(message, allowedRole) {
@@ -352,7 +331,6 @@ async function postServerStatus(message, allowedRole) {
 
 export default {
   softkick,
-  pardon,
   promote,
   arrive,
   unarrive,
