@@ -1,4 +1,5 @@
 import Discord from "discord.js";
+import Question from "../Question.js";
 
 /**
  * Send a message and wait for the first matching response. If no responses are recieved within the timeout,
@@ -6,11 +7,8 @@ import Discord from "discord.js";
  *
  * @param {Discord.TextChannel} channel - The channel to send the message and listen for responses
  * @param {Discord.GuildMember} member - The only guildMember to listen for responses
- * @param {Object} question - The question and answer object
- * @param {String} question.prompt - The question to ask
- * @param {String} question.answer - The accepted answer that will be accepted on a RegEx match (case insensitive)
- * @param {number} question.timeout - The timeout in milliseconds before a 'time' exception is thrown
- * @returns {Promise<Discord.Collection<String, Discord.Message>>} On fulfilled, returns a collection of messages received
+ * @param {Question} question - The question and answer object
+ * @returns {Promise<Discord.Message>} On fulfilled, returns a collection of messages received
  */
 function sendTimedMessage(channel, member, question, showDuration = true) {
   if (!channel) return;
@@ -34,7 +32,7 @@ function sendTimedMessage(channel, member, question, showDuration = true) {
       });
     })
     .then((collected) => {
-      return collected.first().content;
+      return collected.first();
     });
 }
 

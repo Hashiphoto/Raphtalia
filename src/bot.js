@@ -41,7 +41,7 @@ client.once("ready", () => {
   console.log(
     `NODE_ENV: ${process.env.NODE_ENV} | ${dayjs(
       new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" })
-    ).format("MMM D, YYYY - h:mA")}`
+    ).format("MMM D, YYYY - h:mmA")}`
   );
 });
 
