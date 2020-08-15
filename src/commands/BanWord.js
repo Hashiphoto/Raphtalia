@@ -1,6 +1,6 @@
 import db from "./db/db.js";
 import Command from "./Command.js";
-import Censor from "../Censor.js";
+import CensorManager from "../CensorManager.js";
 
 class BanWord extends Command {
   execute() {
@@ -18,7 +18,7 @@ class BanWord extends Command {
       values.push([word, this.message.guild.id]);
     });
     db.bannedWords.insert(values).then(() => {
-      Censor.rebuildCensorshipList(this.message.guild.id);
+      CensorManager.rebuildCensorshipList(this.message.guild.id);
     });
 
     return this.inputChannel.watchSend(

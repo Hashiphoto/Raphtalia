@@ -2,7 +2,7 @@ import Discord from "discord.js";
 
 import Command from "./Command.js";
 import db from "../db/db.js";
-import Censor from "../Censor.js";
+import CensorManager from "../CensorManager.js";
 
 class AllowWord extends Command {
   execute() {
@@ -16,7 +16,7 @@ class AllowWord extends Command {
     }
 
     db.bannedWords.delete(this.message.guild.id, words).then(() => {
-      Censor.rebuildCensorshipList(this.message.guild.id);
+      CensorManager.rebuildCensorshipList(this.message.guild.id);
     });
     return this.inputChannel.watchSend(
       `These words are allowed again: ${words}`

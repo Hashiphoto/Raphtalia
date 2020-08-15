@@ -2,7 +2,7 @@ import Discord from "discord.js";
 import dayjs from "dayjs";
 
 import commands from "./commands.js";
-import censorship from "./Censor.js";
+import censorship from "./CensorManager.js";
 import db from "./db/db.js";
 import secretConfig from "../config/secrets.config.js";
 import discordConfig from "../config/discord.config.js";
@@ -37,6 +37,9 @@ import SoftKick from "./commands/SoftKick.js";
 import UnrecognizedCommand from "./commands/UnrecognizedCommand.js";
 import BanWord from "./commands/BanWord.js";
 import AllowWord from "./commands/AllowWord.js";
+import BanList from "./commands/BanList.js";
+import CensorManager from "./CensorManager.js";
+import Censorship from "./commands/Censorship.js";
 
 const client = new Discord.Client();
 
@@ -155,11 +158,16 @@ function getCommandByName(message) {
     case "balance":
     case "wallet":
       return new Balance(message);
+    case "banlist":
+    case "bannedwords":
+      return new BanList(message);
     case "banword":
     case "banwords":
       return new BanWord(message);
     case "buy":
       return new Buy(message);
+    case "censorship":
+      return new Censorship(message);
     case "comfort":
       return new Comfort(message);
     case "delivercheck":
@@ -202,19 +210,6 @@ function getCommandByName(message) {
       return new SoftKick(message);
 
     // TODO: Move these into commands also
-    case "banword":
-    case "banwords":
-    case "bannedwords":
-      censorship.banWords(message, discordConfig().roles.gov);
-      break;
-
-    case "allowword":
-    case "allowwords":
-    case "unbanword":
-    case "unbanwords":
-      censorship.allowWords(message, discordConfig().roles.gov);
-      break;
-
     case "enablecensorship":
       censorship.enable(message, true, discordConfig().roles.leader);
       break;
