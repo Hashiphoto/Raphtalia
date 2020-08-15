@@ -106,99 +106,6 @@ function unarrive(message, allowedRole) {
 }
 
 /**
- * Play the Soviet Anthem in a voice channel
- */
-function play(message, allowedRole) {
-  let voiceChannel = null;
-  let volume = 0.5;
-  // Remove the command
-  let content = message.content.replace(/!\w+/, "");
-
-  // Check if volume was specified
-  let volRegex = /\b\d+(\.\d*)?v/;
-  let volMatches = content.match(volRegex);
-  if (volMatches != null) {
-    volume = parseFloat(volMatches[0]);
-    // Remove the volume from the string
-    content = content.replace(volRegex, "");
-  }
-
-  // Check if channel was specified
-  let firstMatch = null;
-  let secondMatch = null;
-  let matches = content.match(/\bin [-\w ]+/); // Everything from the "in " until the first slash (/)
-  if (matches != null) {
-    // Parameters are restricted permission
-    if (!verifyPermission(message.sender, message.channel, allowedRole)) {
-      return;
-    }
-
-    firstMatch = matches[0].slice(3).trim(); // remove the "in "
-    matches = content.match(/\/[\w ]+/); // Everything after the first slash (/), if it exists
-
-    // The first match is the category and the second match is the channel name
-    if (matches != null) {
-      // remove the "in "
-      secondMatch = matches[0].slice(1).trim();
-      voiceChannel = message.guild.channels.find(
-        (channel) =>
-          channel.type == "voice" &&
-          channel.name.toLowerCase() === secondMatch.toLowerCase() &&
-          channel.parent &&
-          channel.parent.name.toLowerCase() === firstMatch.toLowerCase()
-      );
-      if (voiceChannel == null) {
-        if (message.channel)
-          message.channel.watchSend(
-            "I couldn't find a voice channel by that name"
-          );
-        return;
-      }
-    }
-
-    // If there is second parameter, then firstMatch is the voice channel name
-    else {
-      voiceChannel = message.guild.channels.find(
-        (channel) =>
-          channel.type == "voice" &&
-          channel.name.toLowerCase() === firstMatch.toLowerCase()
-      );
-      if (voiceChannel == null) {
-        if (message.channel)
-          message.channel.watchSend(
-            "I couldn't find a voice channel by that name"
-          );
-        return;
-      }
-    }
-  }
-
-  // If no voice channel was specified, play the song in the vc the sender is in
-  if (voiceChannel == null) {
-    voiceChannel = message.sender.voiceChannel;
-
-    if (!voiceChannel) {
-      if (message.channel)
-        return message.channel.watchSend(
-          "Join a voice channel first, comrade!"
-        );
-      return;
-    }
-  }
-  const permissions = voiceChannel.permissionsFor(message.sender.client.user);
-  if (
-    !permissions.has("VIEW_CHANNEL") ||
-    !permissions.has("CONNECT") ||
-    !permissions.has("SPEAK")
-  ) {
-    return message.channel.watchSend(
-      "I don't have permission to join that channel"
-    );
-  }
-  return youtube.play(voiceChannel, links.youtube.anthem, volume);
-}
-
-/**
  * Sends the timed message, but also kicks them if they answer incorrectly or include a censored word
  */
 async function askGateQuestion(channel, member, question) {
@@ -334,7 +241,6 @@ export default {
   promote,
   arrive,
   unarrive,
-  play,
   registerVoter,
   setRolePrice,
   postServerStatus,
