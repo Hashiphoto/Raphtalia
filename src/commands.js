@@ -126,46 +126,10 @@ async function askGateQuestion(channel, member, question) {
   }
 }
 
-async function postServerStatus(message, allowedRole) {
-  if (!verifyPermission(message.sender, message.channel, allowedRole)) {
-    return;
-  }
-  const statusEmbed = await generateServerStatus(message.guild);
-
-  db.guilds
-    .get(message.guild.id)
-    .then(async (guild) => {
-      // Delete the existing status message, if it exists
-      if (!guild || !guild.status_message_id) {
-        return;
-      }
-      let textChannels = message.guild.channels
-        .filter((channel) => channel.type === "text" && !channel.deleted)
-        .array();
-      for (let i = 0; i < textChannels.length; i++) {
-        try {
-          let message = await textChannels[i].fetchMessage(
-            guild.status_message_id
-          );
-          message.delete();
-          return;
-        } catch (e) {}
-      }
-    })
-    .then(() => {
-      // Post the new status message
-      return message.channel.send({ embed: statusEmbed });
-    })
-    .then((message) => {
-      // Update the status message in the db
-      message.pin();
-      return db.guilds.setStatusMessage(message.guild.id, message.id);
-    });
-}
+async function postServerStatus(message, allowedRole) {}
 
 export default {
   softkick,
   arrive,
   unarrive,
-  postServerStatus,
 };

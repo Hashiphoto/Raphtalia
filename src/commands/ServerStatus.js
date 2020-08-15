@@ -1,45 +1,44 @@
-import Discord from "discord.js";
-import dayjs from "dayjs";
-
 import Command from "./Command.js";
-import links from "../../resources/links.js";
 import db from "../db/db.js";
-import youtube from "../youtube.js";
-import censorship from "../censorship.js";
-import discordConfig from "../../config/discord.config.js";
-import sendTimedMessage from "../util/timedMessage.js";
-import { percentFormat, extractNumber } from "../util/format.js";
-import { clearChannel } from "../util/guildManagement.js";
-import { dateFormat, parseTime } from "../util/format.js";
-import arrive from "../arrive.js";
-import { softkickMember } from "../util/guildManagement.js";
-import {
-  updateServerStatus,
-  generateServerStatus,
-} from "../util/serverStatus.js";
-import {
-  addInfractions,
-  reportInfractions,
-} from "../util/infractionManagement.js";
-import {
-  addCurrency,
-  getUserIncome,
-  reportCurrency,
-} from "../util/currencyManagement.js";
-import {
-  getNextRole,
-  verifyPermission,
-  pardonMember,
-  exileMember,
-  addRoles,
-  convertToRole,
-  promoteMember,
-  demoteMember,
-} from "../util/roleManagement.js";
+import { generateServerStatus } from "../util/serverStatus.js";
+import { verifyPermission } from "../util/roleManagement.js";
 
 class Template extends Command {
-  execute() {
-    this.inputChannel.watchSend("This command has not been implemented yet");
+  async execute() {
+    const statusEmbed = await generateServerStatus(this.message.guild);
+
+    db.guilds
+      .get(this.message.guild.id)
+      .then(async (guild) => {
+        // Delete the existing status message, if it exists
+        if (!guild || !guild.status_message_id) {
+          return;
+        }
+        let textChannels = this.message.guild.channels
+          .filter((channel) => channel.type === "text" && !channel.deleted)
+          .array();
+        for (let i = 0; i < textChannels.length; i++) {
+          try {
+            let oldStatusMessage = await textChannels[i].fetchMessage(
+              guild.status_message_id
+            );
+            oldStatusMessage.delete();
+            return;
+          } catch (e) {}
+        }
+      })
+      .then(() => {
+        // Post the new status message
+        return this.inputChannel.send({ embed: statusEmbed });
+      })
+      .then((newStatusMessage) => {
+        // Update the status message in the db
+        newStatusMessage.pin();
+        return db.guilds.setStatusMessage(
+          newStatusMessage.guild.id,
+          newStatusMessage.id
+        );
+      });
   }
 }
 
