@@ -1,5 +1,4 @@
 import cron from "cron";
-import db from "./db/Database.js";
 import { getLeaderRole } from "./util/roleManagement.js";
 
 const { CronJob } = cron;

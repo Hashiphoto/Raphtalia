@@ -2,7 +2,6 @@ import Discord from "discord.js";
 import diacritic from "diacritic-regex";
 
 import discordConfig from "../config/discord.config.js";
-import db from "./db/Database.js";
 import {
   verifyPermission,
   hasRole,
@@ -11,8 +10,14 @@ import {
 import { addInfractions } from "./util/infractionManagement.js";
 
 class CensorManager {
-  static async rebuildCensorshipList(guildId) {
-    let bannedWords = await db.bannedWords.getAll(guildId);
+  db;
+
+  constructor(db) {
+    this.db = db;
+  }
+
+  async rebuildCensorshipList(guildId) {
+    let bannedWords = await this.db.bannedWords.getAll(guildId);
     let regexString = "(^|[^a-zA-Z0-9À-ÖØ-öø-ÿ])(";
     for (let i = 0; i < bannedWords.length; i++) {
       // Last word
@@ -24,7 +29,7 @@ class CensorManager {
     }
     regexString += ")(?![a-zA-Z0-9À-ÖØ-öø-ÿ])";
 
-    return db.guilds.updateCensorshipRegex(guildId, regexString);
+    return this.db.guilds.updateCensorshipRegex(guildId, regexString);
   }
 
   /**
@@ -34,7 +39,7 @@ class CensorManager {
    * @returns {Boolean} - True if the message was censored
    */
   censorMessage(message) {
-    return db.guilds.get(message.guild.id).then((guild) => {
+    return this.db.guilds.get(message.guild.id).then((guild) => {
       if (!guild.censorship_enabled) {
         return false;
       }
@@ -86,7 +91,7 @@ export default CensorManager;
 
 // TODO: Fix dependencies on this method
 function containsBannedWords(guildId, text) {
-  return db.guilds.get(guildId).then((guild) => {
+  return this.db.guilds.get(guildId).then((guild) => {
     if (!guild.censorship_enabled) {
       return false;
     }

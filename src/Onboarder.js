@@ -1,5 +1,4 @@
 import Discord from "discord.js";
-import db from "./db/Database.js";
 import sendTimedMessage from "./util/timedMessage.js";
 import welcomeQuestions from "../resources/welcomeQuestions.js";
 import { setHoistedRole } from "./util/roleManagement.js";
@@ -8,6 +7,12 @@ import discordConfig from "../config/discord.config.js";
 import Question from "./structures/Question.js";
 
 class Onboarder {
+  db;
+
+  constructor(db) {
+    this.db = db;
+  }
+
   /**
    * Function called when a new member is added to the guild. First, it checks their papers. If they do not have a papers entry,
    * it creates a new one and sends a greeting. Second, it gives them the immigrant role. Third, it checks if they need a nickname and
@@ -20,7 +25,7 @@ class Onboarder {
   async onBoard(member, channel) {
     await setHoistedRole(member, discordConfig().roles.immigrant);
 
-    let dbUser = await db.users.get(member.id, member.guild.id);
+    let dbUser = await this.db.users.get(member.id, member.guild.id);
 
     // Check if already a citizen
     if (dbUser.citizenship) {
@@ -72,7 +77,7 @@ class Onboarder {
     }
 
     // Creates the user in the DB if they didn't exist
-    db.users.setCitizenship(member.id, member.guild.id, true);
+    this.db.users.setCitizenship(member.id, member.guild.id, true);
     channel
       .watchSend(
         `Thank you! And welcome loyal citizen to ${channel.guild.name}! 🎉🎉🎉`

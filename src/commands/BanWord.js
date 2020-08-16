@@ -17,7 +17,7 @@ class BanWord extends Command {
       values.push([word, this.message.guild.id]);
     });
     this.db.bannedWords.insert(values).then(() => {
-      CensorManager.rebuildCensorshipList(this.message.guild.id);
+      new CensorManager.rebuildCensorshipList(this.message.guild.id);
     });
 
     return this.inputChannel.watchSend(

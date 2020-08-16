@@ -1,3 +1,5 @@
+"use strict";
+
 import Discord from "discord.js";
 import dayjs from "dayjs";
 
@@ -6,7 +8,8 @@ import censorship from "./CensorManager.js";
 import Database from "./db/Database.js";
 import secretConfig from "../config/secrets.config.js";
 import discordConfig from "../config/discord.config.js";
-import tasks from "./scheduledTasks.js";
+// TODO: Fix scheduled tasks
+// import tasks from "./scheduledTasks.js";
 import parseCommand, { prefix } from "./util/parseCommand.js";
 import { payoutMessage } from "./util/currencyManagement.js";
 import Onboarder from "./Onboarder.js";
@@ -56,7 +59,8 @@ client.login(secretConfig().discord.token).then(() => {
   console.log(`Logged in! Listening for events...`);
 });
 
-tasks.init(client);
+// TODO: Fix scheduled tasks
+// tasks.init(client);
 
 client.on("message", (message) => {
   if (message.author.bot) {

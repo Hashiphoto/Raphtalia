@@ -15,7 +15,7 @@ class AllowWord extends Command {
     }
 
     this.db.bannedWords.delete(this.message.guild.id, words).then(() => {
-      CensorManager.rebuildCensorshipList(this.message.guild.id);
+      new CensorManager.rebuildCensorshipList(this.message.guild.id);
     });
     return this.inputChannel.watchSend(
       `These words are allowed again: ${words}`
