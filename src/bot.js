@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 
 import commands from "./commands.js";
 import censorship from "./CensorManager.js";
-import db from "./db/db.js";
+import Database from "./db/Database.js";
 import secretConfig from "../config/secrets.config.js";
 import discordConfig from "../config/discord.config.js";
 import tasks from "./scheduledTasks.js";
@@ -42,9 +42,9 @@ import CensorManager from "./CensorManager.js";
 import Censorship from "./commands/Censorship.js";
 
 const client = new Discord.Client();
+const db = new Database(Database.createPool());
 
 client.once("ready", () => {
-  db.init();
   console.log(
     `NODE_ENV: ${process.env.NODE_ENV} | ${dayjs(
       new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" })
@@ -110,6 +110,7 @@ client.on("guildMemberRemove", (member) => {
 });
 
 client.on("disconnect", function (event) {
+  ``;
   console.log("Bot disconnecting");
   process.exit();
 });

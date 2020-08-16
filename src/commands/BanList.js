@@ -1,4 +1,4 @@
-import db from "../db/db.js";
+import db from "../db/Database.js";
 import Command from "./Command.js";
 
 class BanList extends Command {

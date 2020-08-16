@@ -1,7 +1,7 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import db from "../db/db.js";
+import db from "../db/Database.js";
 import CensorManager from "../CensorManager.js";
 
 class AllowWord extends Command {

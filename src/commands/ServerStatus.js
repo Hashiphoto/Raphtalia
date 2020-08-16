@@ -1,5 +1,5 @@
 import Command from "./Command.js";
-import db from "../db/db.js";
+import db from "../db/Database.js";
 import { generateServerStatus } from "../util/serverStatus.js";
 import { verifyPermission } from "../util/roleManagement.js";
 

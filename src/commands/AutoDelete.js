@@ -1,7 +1,7 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import db from "../db/db.js";
+import db from "../db/Database.js";
 import { clearChannel } from "../util/guildManagement.js";
 
 class AutoDelete extends Command {

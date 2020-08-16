@@ -2,7 +2,7 @@ import Discord from "discord.js";
 import diacritic from "diacritic-regex";
 
 import discordConfig from "../config/discord.config.js";
-import db from "./db/db.js";
+import db from "./db/Database.js";
 import {
   verifyPermission,
   hasRole,
@@ -84,6 +84,7 @@ class CensorManager {
 
 export default CensorManager;
 
+// TODO: Fix dependencies on this method
 function containsBannedWords(guildId, text) {
   return db.guilds.get(guildId).then((guild) => {
     if (!guild.censorship_enabled) {
