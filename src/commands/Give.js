@@ -1,7 +1,6 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import db from "../db/Database.js";
 import { extractNumber } from "../util/format.js";
 import { addInfractions } from "../util/infractionManagement.js";
 import { addCurrency } from "../util/currencyManagement.js";
@@ -31,7 +30,7 @@ class Give extends Command {
       );
     }
     let totalAmount = amount * this.message.mentionedMembers.length;
-    db.users
+    this.db.users
       .get(this.message.sender.id, this.message.sender.guild.id)
       .then((dbUser) => {
         if (dbUser.currency < totalAmount) {

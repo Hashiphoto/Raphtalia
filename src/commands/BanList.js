@@ -1,10 +1,9 @@
-import db from "../db/Database.js";
 import Command from "./Command.js";
 
 class BanList extends Command {
   execute() {
     // TODO: Check if censorship is enabled at all
-    db.bannedWords.getAll(this.message.guild.id).then((rows) => {
+    this.db.bannedWords.getAll(this.message.guild.id).then((rows) => {
       let banList = "";
       for (let i = 0; i < rows.length; i++) {
         if (rows[i].word.includes(" ")) {

@@ -154,71 +154,62 @@ function getCommandByName(message) {
   switch (message.command) {
     case "allowword":
     case "allowwords":
-      return new AllowWord(message);
+      return new AllowWord(message, db);
     case "autodelete":
-      return new AutoDelete(message);
+      return new AutoDelete(message, db);
     case "balance":
     case "wallet":
-      return new Balance(message);
+      return new Balance(message, db);
     case "banlist":
     case "bannedwords":
-      return new BanList(message);
+      return new BanList(message, db);
     case "banword":
     case "banwords":
-      return new BanWord(message);
+      return new BanWord(message, db);
     case "buy":
-      return new Buy(message);
+      return new Buy(message, db);
     case "censorship":
-      return new Censorship(message);
+      return new Censorship(message, db);
     case "comfort":
-      return new Comfort(message);
+      return new Comfort(message, db);
     case "delivercheck":
-      return new DeliverCheck(message);
+      return new DeliverCheck(message, db);
     case "demote":
-      return new Demote(message);
+      return new Demote(message, db);
     case "economy":
-      return new Economy(message);
+      return new Economy(message, db);
     case "exile":
-      return new Exile(message);
+      return new Exile(message, db);
     case "fine":
-      return new Fine(message);
+      return new Fine(message, db);
     case "give":
-      return new Give(message);
+      return new Give(message, db);
     case "help":
-      return new Help(message);
+      return new Help(message, db);
     case "holdvote":
-      return new HoldVote(message);
+      return new HoldVote(message, db);
     case "income":
-      return new Income(message);
+      return new Income(message, db);
     case "infractions":
-      return new Infractions(message);
+      return new Infractions(message, db);
     case "kick":
-      return new Kick(message);
+      return new Kick(message, db);
     case "pardon":
-      return new Pardon(message);
+      return new Pardon(message, db);
     case "play":
-      return new Play(message);
+      return new Play(message, db);
     case "promote":
-      return new Promote(message);
+      return new Promote(message, db);
     case "register":
-      return new Register(message);
+      return new Register(message, db);
     case "report":
-      return new Report(message);
+      return new Report(message, db);
     case "roleprice":
-      return new RolePrice(message);
+      return new RolePrice(message, db);
     case "serverstatus":
-      return new ServerStatus(message);
+      return new ServerStatus(message, db);
     case "softkick":
-      return new SoftKick(message);
-
-    // TODO: Move these into commands also
-    case "enablecensorship":
-      censorship.enable(message, true, discordConfig().roles.leader);
-      break;
-
-    case "disablecensorship":
-      censorship.enable(message, false, discordConfig().roles.leader);
-      break;
+      return new SoftKick(message, db);
 
     // TODO: Move these into commands
     //// DEV ONLY ////

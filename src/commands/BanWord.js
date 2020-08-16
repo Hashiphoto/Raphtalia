@@ -1,4 +1,3 @@
-import db from "../db/Database.js";
 import Command from "./Command.js";
 import CensorManager from "../CensorManager.js";
 
@@ -17,7 +16,7 @@ class BanWord extends Command {
     words.forEach((word) => {
       values.push([word, this.message.guild.id]);
     });
-    db.bannedWords.insert(values).then(() => {
+    this.db.bannedWords.insert(values).then(() => {
       CensorManager.rebuildCensorshipList(this.message.guild.id);
     });
 

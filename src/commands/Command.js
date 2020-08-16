@@ -4,14 +4,16 @@ class Command {
   message;
   sender;
   inputChannel;
+  db;
 
   /**
    * @param {Discord.Message} message - The message sent to issue this command
    */
-  constructor(message) {
+  constructor(message, db) {
     this.message = message;
     this.sender = message.sender;
     this.inputChannel = message.channel;
+    this.db = db;
   }
 
   userCanExecute() {

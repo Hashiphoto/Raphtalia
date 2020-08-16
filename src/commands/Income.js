@@ -1,12 +1,11 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import db from "../db/Database.js";
 import discordConfig from "../../config/discord.config.js";
 import { extractNumber } from "../util/format.js";
 import { updateServerStatus } from "../util/serverStatus.js";
 import { getUserIncome } from "../util/currencyManagement.js";
-import { verifyPermission, convertToRole } from "../util/roleManagement.js";
+import { convertToRole } from "../util/roleManagement.js";
 
 class Income extends Command {
   async execute() {
@@ -35,10 +34,11 @@ class Income extends Command {
           "Please try again and specify the base pay in dollars. e.g. `!Income base $100`"
         );
       }
-      await db.guilds.setBaseIncome(this.message.guild.id, amount.number);
+      await this.db.guilds.setBaseIncome(this.message.guild.id, amount.number);
     }
 
-    let baseIncome = (await db.guilds.get(this.message.guild.id)).base_income;
+    let baseIncome = (await this.db.guilds.get(this.message.guild.id))
+      .base_income;
 
     // Income scale
     for (let i = 0; i < this.message.args.length - 1; i++) {
@@ -83,7 +83,7 @@ class Income extends Command {
     let nextIncome = baseIncome;
     let announcement = "";
     for (let i = 0; i < roles.length; i++) {
-      await db.roles.setRoleIncome(roles[i].id, nextIncome);
+      await this.db.roles.setRoleIncome(roles[i].id, nextIncome);
       announcement += `${roles[i].name} will now earn $${nextIncome.toFixed(
         2
       )}\n`;

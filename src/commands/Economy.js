@@ -1,7 +1,6 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import db from "../db/Database.js";
 import { extractNumber } from "../util/format.js";
 
 class Economy extends Command {
@@ -19,7 +18,7 @@ class Economy extends Command {
 
       switch (this.message.args[i].toLowerCase()) {
         case "minlength":
-          db.guilds.setMinLength(this.message.guild.id, amount);
+          this.db.guilds.setMinLength(this.message.guild.id, amount);
           this.inputChannel.watchSend(
             `The minimum length for a this.message to be a paid is now ${amount.toFixed(
               0
@@ -27,7 +26,7 @@ class Economy extends Command {
           );
           break;
         case "charvalue":
-          db.guilds.setCharacterValue(this.message.guild.id, amount);
+          this.db.guilds.setCharacterValue(this.message.guild.id, amount);
           this.inputChannel.watchSend(
             `Messages over the minimum length earn $${amount.toFixed(
               2
@@ -35,7 +34,7 @@ class Economy extends Command {
           );
           break;
         case "maxpayout":
-          db.guilds.setMaxPayout(this.message.guild.id, amount);
+          this.db.guilds.setMaxPayout(this.message.guild.id, amount);
           this.inputChannel.watchSend(
             `The max value earned from a paid this.message is now $${amount.toFixed(
               2
@@ -43,7 +42,7 @@ class Economy extends Command {
           );
           break;
         case "basepayout":
-          db.guilds.setBasePayout(this.message.guild.id, amount);
+          this.db.guilds.setBasePayout(this.message.guild.id, amount);
           this.inputChannel.watchSend(
             `Messages over the minimum length earn a base pay of $${amount.toFixed(
               2
@@ -51,7 +50,7 @@ class Economy extends Command {
           );
           break;
         case "taxrate":
-          db.guilds.setTaxRate(this.message.guild.id, amount / 100);
+          this.db.guilds.setTaxRate(this.message.guild.id, amount / 100);
           this.inputChannel.watchSend(
             `Members are taxed ${amount.toFixed(
               2

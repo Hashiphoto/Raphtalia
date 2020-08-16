@@ -1,7 +1,6 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import db from "../db/Database.js";
 import discordConfig from "../../config/discord.config.js";
 import { extractNumber } from "../util/format.js";
 import { updateServerStatus } from "../util/serverStatus.js";
@@ -37,9 +36,9 @@ class RolePrice extends Command {
       .array();
 
     for (let i = 0; i < discordRoles.length; i++) {
-      let dbRole = await db.roles.getSingle(discordRoles[i].id);
+      let dbRole = await this.db.roles.getSingle(discordRoles[i].id);
       let newPrice = dbRole.income * multiplier;
-      db.roles.setRolePrice(discordRoles[i].id, newPrice);
+      this.db.roles.setRolePrice(discordRoles[i].id, newPrice);
       announcement += `${discordRoles[i].name} new price: $${newPrice.toFixed(
         2
       )}\n`;

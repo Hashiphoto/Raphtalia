@@ -1,7 +1,6 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import db from "../db/Database.js";
 import { addCurrency } from "../util/currencyManagement.js";
 import { getNextRole, promoteMember } from "../util/roleManagement.js";
 
@@ -20,8 +19,8 @@ class Buy extends Command {
           );
         }
 
-        let dbRole = await db.roles.getSingle(nextRole.id);
-        db.users
+        let dbRole = await this.db.roles.getSingle(nextRole.id);
+        this.db.users
           .get(this.message.sender.id, this.message.guild.id)
           .then((dbUser) => {
             if (dbUser.currency < dbRole.price) {

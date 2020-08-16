@@ -1,7 +1,6 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import db from "../db/Database.js";
 import { clearChannel } from "../util/guildManagement.js";
 
 class AutoDelete extends Command {
@@ -51,22 +50,26 @@ class AutoDelete extends Command {
       deleteDelay = -1;
     }
 
-    db.channels.setAutoDelete(this.inputChannel.id, deleteDelay).then(() => {
-      if (enable) {
-        // clear all msgs
-        if (clearHistory) {
-          clearChannel(this.inputChannel);
-        }
+    this.db.channels
+      .setAutoDelete(this.inputChannel.id, deleteDelay)
+      .then(() => {
+        if (enable) {
+          // clear all msgs
+          if (clearHistory) {
+            clearChannel(this.inputChannel);
+          }
 
-        if (this.inputChannel) {
-          this.inputChannel.send(`Messages are deleted after ${deleteDelay}ms`);
+          if (this.inputChannel) {
+            this.inputChannel.send(
+              `Messages are deleted after ${deleteDelay}ms`
+            );
+          }
+        } else {
+          if (this.inputChannel) {
+            this.inputChannel.send("Messages are no longer deleted");
+          }
         }
-      } else {
-        if (this.inputChannel) {
-          this.inputChannel.send("Messages are no longer deleted");
-        }
-      }
-    });
+      });
   }
 }
 

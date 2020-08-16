@@ -1,13 +1,11 @@
 import Command from "./Command.js";
-import db from "../db/Database.js";
 import { generateServerStatus } from "../util/serverStatus.js";
-import { verifyPermission } from "../util/roleManagement.js";
 
 class Template extends Command {
   async execute() {
     const statusEmbed = await generateServerStatus(this.message.guild);
 
-    db.guilds
+    this.db.guilds
       .get(this.message.guild.id)
       .then(async (guild) => {
         // Delete the existing status message, if it exists
@@ -32,9 +30,9 @@ class Template extends Command {
         return this.inputChannel.send({ embed: statusEmbed });
       })
       .then((newStatusMessage) => {
-        // Update the status message in the db
+        // Update the status message in the this.db
         newStatusMessage.pin();
-        return db.guilds.setStatusMessage(
+        return this.db.guilds.setStatusMessage(
           newStatusMessage.guild.id,
           newStatusMessage.id
         );
