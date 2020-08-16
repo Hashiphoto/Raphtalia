@@ -1,4 +1,4 @@
-import db from "./db/db.js";
+import db from "../db/db.js";
 import Command from "./Command.js";
 import CensorManager from "../CensorManager.js";
 
@@ -10,15 +10,15 @@ class Censorship extends Command {
 
     let isCensoring;
     const text = this.message.args[0].toLowerCase();
-    if (text == "enabled") {
+    if (text == "enable") {
       isCensoring = true;
-    } else if (text == "disabled") {
+    } else if (text == "disable") {
       isCensoring = false;
     } else {
       return this.sendHelpMessage();
     }
 
-    db.guilds.setCensorship(message.guild.id, isCensoring).then(() => {
+    db.guilds.setCensorship(this.message.guild.id, isCensoring).then(() => {
       if (isCensoring) {
         return this.inputChannel.watchSend("Censorship is enabled");
       } else {

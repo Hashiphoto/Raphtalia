@@ -1,4 +1,4 @@
-import db from "./db/db.js";
+import db from "../db/db.js";
 import Command from "./Command.js";
 import CensorManager from "../CensorManager.js";
 

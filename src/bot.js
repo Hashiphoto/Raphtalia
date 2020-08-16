@@ -79,7 +79,8 @@ client.on("message", (message) => {
     if (message.content.startsWith(prefix)) {
       processCommand(parseCommand(message));
     } else {
-      censorship
+      const censorManager = new CensorManager();
+      censorManager
         .censorMessage(message)
         .then((censored) => {
           if (censored || message.channel.autoDelete) {

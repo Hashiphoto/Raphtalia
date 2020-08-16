@@ -1,4 +1,4 @@
-import db from "./db/db.js";
+import db from "../db/db.js";
 import Command from "./Command.js";
 
 class BanList extends Command {
@@ -16,8 +16,9 @@ class BanList extends Command {
           banList += ", ";
         }
       }
-      if (channel)
-        return channel.watchSend(`Here are all the banned words: ${banList}`);
+      return this.inputChannel.watchSend(
+        `Here are all the banned words: ${banList}`
+      );
     });
   }
 }
