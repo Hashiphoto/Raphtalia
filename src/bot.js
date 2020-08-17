@@ -10,8 +10,8 @@ import secretConfig from "../config/secrets.config.js";
 import discordConfig from "../config/discord.config.js";
 // TODO: Fix scheduled tasks
 // import tasks from "./scheduledTasks.js";
-import parseCommand, { prefix } from "./util/parseCommand.js";
-import { payoutMessage } from "./util/currencyManagement.js";
+import parseCommand, { prefix } from "./controllers/parseCommand.js";
+import { payoutMessage } from "./controllers/CurrencyController.js";
 import Onboarder from "./Onboarder.js";
 
 import AutoDelete from "./commands/AutoDelete.js";

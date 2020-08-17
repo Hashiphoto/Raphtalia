@@ -1,8 +1,8 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import { addCurrency } from "../util/currencyManagement.js";
-import { getNextRole, promoteMember } from "../util/roleManagement.js";
+import { addCurrency } from "../controllers/CurrencyController.js";
+import { getNextRole, promoteMember } from "../controllers/RoleController.js";
 
 class Buy extends Command {
   async execute() {

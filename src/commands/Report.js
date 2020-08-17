@@ -1,5 +1,5 @@
 import Command from "./Command.js";
-import { addInfractions } from "../util/infractionManagement.js";
+import { addInfractions } from "../controllers/MemberController.js";
 
 class Report extends Command {
   execute() {

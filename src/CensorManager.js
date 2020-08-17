@@ -6,8 +6,8 @@ import {
   verifyPermission,
   hasRole,
   hasRoleOrHigher,
-} from "./util/roleManagement.js";
-import { addInfractions } from "./util/infractionManagement.js";
+} from "./controllers/RoleController.js";
+import { addInfractions } from "./controllers/MemberController.js";
 
 class CensorManager {
   db;

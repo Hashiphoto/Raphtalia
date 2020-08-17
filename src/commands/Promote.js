@@ -1,7 +1,7 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import { promoteMember } from "../util/roleManagement.js";
+import { promoteMember } from "../controllers/RoleController.js";
 
 class Promote extends Command {
   execute() {

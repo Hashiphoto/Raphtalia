@@ -2,10 +2,10 @@ import Discord from "discord.js";
 
 import Command from "./Command.js";
 import discordConfig from "../../config/discord.config.js";
-import { extractNumber } from "../util/format.js";
-import { updateServerStatus } from "../util/serverStatus.js";
-import { getUserIncome } from "../util/currencyManagement.js";
-import { convertToRole } from "../util/roleManagement.js";
+import { extractNumber } from "../controllers/format.js";
+import { updateServerStatus } from "../controllers/serverStatus.js";
+import { getUserIncome } from "../controllers/CurrencyController.js";
+import { convertToRole } from "../controllers/RoleController.js";
 
 class Income extends Command {
   async execute() {

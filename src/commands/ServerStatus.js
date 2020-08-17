@@ -1,5 +1,5 @@
 import Command from "./Command.js";
-import { generateServerStatus } from "../util/serverStatus.js";
+import { generateServerStatus } from "../controllers/serverStatus.js";
 
 class Template extends Command {
   async execute() {

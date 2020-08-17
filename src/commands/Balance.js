@@ -1,7 +1,7 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import { reportCurrency } from "../util/currencyManagement.js";
+import { reportCurrency } from "../controllers/CurrencyController.js";
 
 class Balance extends Command {
   execute() {

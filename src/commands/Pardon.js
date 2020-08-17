@@ -2,7 +2,7 @@ import Discord from "discord.js";
 import dayjs from "dayjs";
 
 import Command from "./Command.js";
-import { pardonMember } from "../util/roleManagement.js";
+import { pardonMember } from "../controllers/RoleController.js";
 
 class Pardon extends Command {
   execute() {

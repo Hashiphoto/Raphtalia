@@ -1,9 +1,9 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import { extractNumber } from "../util/format.js";
-import { addInfractions } from "../util/infractionManagement.js";
-import { addCurrency } from "../util/currencyManagement.js";
+import { extractNumber } from "../controllers/format.js";
+import { addInfractions } from "../controllers/MemberController.js";
+import { addCurrency } from "../controllers/CurrencyController.js";
 
 class Give extends Command {
   execute() {

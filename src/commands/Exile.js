@@ -1,8 +1,8 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import { parseTime } from "../util/format.js";
-import { exileMember } from "../util/roleManagement.js";
+import { parseTime } from "../controllers/format.js";
+import { exileMember } from "../controllers/RoleController.js";
 
 class Exile extends Command {
   execute() {

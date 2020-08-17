@@ -6,25 +6,25 @@ import db from "./db/Database.js";
 import youtube from "./youtube.js";
 import censorship from "./CensorManager.js";
 import discordConfig from "../config/discord.config.js";
-import sendTimedMessage from "./util/timedMessage.js";
-import { percentFormat, extractNumber } from "./util/format.js";
-import { clearChannel } from "./util/guildManagement.js";
-import { dateFormat, parseTime } from "./util/format.js";
+import sendTimedMessage from "./controllers/timedMessage.js";
+import { percentFormat, extractNumber } from "./controllers/format.js";
+import { clearChannel } from "./controllers/GuildController.js";
+import { dateFormat, parseTime } from "./controllers/format.js";
 import arrive from "./Onboarder.js";
-import { softkickMember } from "./util/guildManagement.js";
+import { softkickMember } from "./controllers/GuildController.js";
 import {
   updateServerStatus,
   generateServerStatus,
-} from "./util/serverStatus.js";
+} from "./controllers/serverStatus.js";
 import {
   addInfractions,
   reportInfractions,
-} from "./util/infractionManagement.js";
+} from "./controllers/MemberController.js";
 import {
   addCurrency,
   getUserIncome,
   reportCurrency,
-} from "./util/currencyManagement.js";
+} from "./controllers/CurrencyController.js";
 import {
   getNextRole,
   verifyPermission,
@@ -34,7 +34,7 @@ import {
   convertToRole,
   promoteMember,
   demoteMember,
-} from "./util/roleManagement.js";
+} from "./controllers/RoleController.js";
 
 /**
  * TESTING ONLY - Removes the papers db entry for the target. If no target is given,

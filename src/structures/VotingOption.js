@@ -1,4 +1,4 @@
-import { percentFormat } from "../util/format.js";
+import { percentFormat } from "../controllers/format.js";
 
 class VotingOption {
   id;

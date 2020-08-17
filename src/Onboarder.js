@@ -1,8 +1,8 @@
 import Discord from "discord.js";
-import sendTimedMessage from "./util/timedMessage.js";
+import sendTimedMessage from "./controllers/timedMessage.js";
 import welcomeQuestions from "../resources/welcomeQuestions.js";
-import { setHoistedRole } from "./util/roleManagement.js";
-import { softkickMember } from "./util/guildManagement.js";
+import { setHoistedRole } from "./controllers/RoleController.js";
+import { softkickMember } from "./controllers/GuildController.js";
 import discordConfig from "../config/discord.config.js";
 import Question from "./structures/Question.js";
 

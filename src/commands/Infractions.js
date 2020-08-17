@@ -1,7 +1,7 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import { reportInfractions } from "../util/infractionManagement.js";
+import { reportInfractions } from "../controllers/MemberController.js";
 
 class Infractions extends Command {
   execute() {

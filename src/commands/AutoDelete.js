@@ -1,7 +1,7 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import { clearChannel } from "../util/guildManagement.js";
+import { clearChannel } from "../controllers/GuildController.js";
 
 class AutoDelete extends Command {
   execute() {

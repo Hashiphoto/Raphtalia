@@ -2,9 +2,9 @@ import Discord from "discord.js";
 
 import Command from "./Command.js";
 import discordConfig from "../../config/discord.config.js";
-import { extractNumber } from "../util/format.js";
-import { updateServerStatus } from "../util/serverStatus.js";
-import { convertToRole } from "../util/roleManagement.js";
+import { extractNumber } from "../controllers/format.js";
+import { updateServerStatus } from "../controllers/serverStatus.js";
+import { convertToRole } from "../controllers/RoleController.js";
 
 class RolePrice extends Command {
   async execute() {

@@ -1,8 +1,8 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import { extractNumber } from "../util/format.js";
-import { addCurrency } from "../util/currencyManagement.js";
+import { extractNumber } from "../controllers/format.js";
+import { addCurrency } from "../controllers/CurrencyController.js";
 
 class Fine extends Command {
   execute() {

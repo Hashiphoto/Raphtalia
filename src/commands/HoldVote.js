@@ -3,10 +3,10 @@ import dayjs from "dayjs";
 
 import Command from "./Command.js";
 import discordConfig from "../../config/discord.config.js";
-import sendTimedMessage from "../util/timedMessage.js";
-import { percentFormat } from "../util/format.js";
-import { dateFormat, parseTime } from "../util/format.js";
-import { convertToRole } from "../util/roleManagement.js";
+import sendTimedMessage from "../controllers/timedMessage.js";
+import { percentFormat } from "../controllers/format.js";
+import { dateFormat, parseTime } from "../controllers/format.js";
+import { convertToRole } from "../controllers/RoleController.js";
 import Question from "../structures/Question.js";
 import VotingOption from "../structures/VotingOption.js";
 

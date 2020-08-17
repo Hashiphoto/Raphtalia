@@ -1,5 +1,5 @@
 import Command from "./Command.js";
-import { softkickMember } from "../util/guildManagement.js";
+import { softkickMember } from "../controllers/GuildController.js";
 
 class SoftKick extends Command {
   execute() {

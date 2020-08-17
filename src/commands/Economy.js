@@ -1,7 +1,7 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import { extractNumber } from "../util/format.js";
+import { extractNumber } from "../controllers/format.js";
 
 class Economy extends Command {
   execute() {

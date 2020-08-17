@@ -1,7 +1,7 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import { demoteMember } from "../util/roleManagement.js";
+import { demoteMember } from "../controllers/RoleController.js";
 
 class Demote extends Command {
   execute() {
