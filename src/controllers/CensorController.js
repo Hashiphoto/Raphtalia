@@ -8,14 +8,9 @@ import {
   hasRoleOrHigher,
 } from "./RoleController.js";
 import { addInfractions } from "./MemberController.js";
+import Controller from "./Controller.js";
 
-class CensorController {
-  db;
-
-  constructor(db) {
-    this.db = db;
-  }
-
+class CensorController extends Controller {
   async rebuildCensorshipList(guildId) {
     let bannedWords = await this.db.bannedWords.getAll(guildId);
     let regexString = "(^|[^a-zA-Z0-9À-ÖØ-öø-ÿ])(";
@@ -92,6 +87,12 @@ class CensorController {
 
   insertWords(guildWordPairs) {
     return this.db.bannedWords.insert(guildWordPairs);
+  }
+
+  getAllBannedWords() {
+    return this.db.bannedWords
+      .getAll(this.guild.id)
+      .then((rows) => rows.map((r) => r.word));
   }
 }
 

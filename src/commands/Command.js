@@ -5,6 +5,7 @@ class Command {
   sender;
   inputChannel;
   db;
+  guild;
 
   /**
    * @param {Discord.Message} message - The message sent to issue this command
@@ -14,6 +15,7 @@ class Command {
     this.sender = message.sender;
     this.inputChannel = message.channel;
     this.db = db;
+    this.guild = message.guild;
   }
 
   userCanExecute() {

@@ -44,6 +44,32 @@ export function moneyFormat(number) {
   return `$${number.toFixed(2)}`;
 }
 
+export function listFormat(itemArray) {
+  if (itemArray.length === 1) {
+    return itemArray[0];
+  }
+
+  if (itemArray.length === 2) {
+    return itemArray[0] + " and " + itemArray[1];
+  }
+
+  let output = "";
+  for (let i = 0; i < itemArray.length; i++) {
+    output += itemArray[i];
+
+    // If it's not the last element
+    if (i < itemArray.length - 1) {
+      output += ", ";
+      // If it's the second-to-last element
+      if (i === itemArray.length - 2) {
+        output += "and ";
+      }
+    }
+  }
+
+  return output;
+}
+
 /**
  * Extract a decimal number from a string. Can be dollar format or percentage with a leading +/- sign
  *
