@@ -1,15 +1,15 @@
 import Discord from "discord.js";
 import diacritic from "diacritic-regex";
 
-import discordConfig from "../config/discord.config.js";
+import discordConfig from "../../config/discord.config.js";
 import {
   verifyPermission,
   hasRole,
   hasRoleOrHigher,
-} from "./controllers/RoleController.js";
-import { addInfractions } from "./controllers/MemberController.js";
+} from "./RoleController.js";
+import { addInfractions } from "./MemberController.js";
 
-class CensorManager {
+class CensorController {
   db;
 
   constructor(db) {
@@ -85,9 +85,17 @@ class CensorManager {
       return true;
     });
   }
+
+  deleteWords(guild, words) {
+    return this.db.bannedWords.delete(guild.id, words);
+  }
+
+  insertWords(guildWordPairs) {
+    return this.db.bannedWords.insert(guildWordPairs);
+  }
 }
 
-export default CensorManager;
+export default CensorController;
 
 // TODO: Fix dependencies on this method
 function containsBannedWords(guildId, text) {

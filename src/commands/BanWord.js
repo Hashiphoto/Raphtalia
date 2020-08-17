@@ -1,5 +1,5 @@
 import Command from "./Command.js";
-import CensorManager from "../CensorManager.js";
+import CensorController from "../controllers/CensorController.js";
 
 class BanWord extends Command {
   execute() {
@@ -12,13 +12,12 @@ class BanWord extends Command {
       );
     }
 
-    let values = [];
-    words.forEach((word) => {
-      values.push([word, this.message.guild.id]);
-    });
-    this.db.bannedWords.insert(values).then(() => {
-      new CensorManager.rebuildCensorshipList(this.message.guild.id);
-    });
+    let values = words.map((word) => [word, this.message.guild.id]);
+
+    const censorshipController = new CensorController(this.db);
+    censorshipController
+      .insertWords(values)
+      .then(censorshipController.rebuildCensorshipList(this.message.guild.id));
 
     return this.inputChannel.watchSend(
       `You won't see these words again: ${words}`

@@ -4,7 +4,7 @@ import Discord from "discord.js";
 import dayjs from "dayjs";
 
 import commands from "./commands.js";
-import censorship from "./CensorManager.js";
+import censorship from "./controllers/CensorController.js";
 import Database from "./db/Database.js";
 import secretConfig from "../config/secrets.config.js";
 import discordConfig from "../config/discord.config.js";
@@ -41,7 +41,7 @@ import UnrecognizedCommand from "./commands/UnrecognizedCommand.js";
 import BanWord from "./commands/BanWord.js";
 import AllowWord from "./commands/AllowWord.js";
 import BanList from "./commands/BanList.js";
-import CensorManager from "./CensorManager.js";
+import CensorController from "./controllers/CensorController.js";
 import Censorship from "./commands/Censorship.js";
 
 const client = new Discord.Client();
@@ -83,7 +83,7 @@ client.on("message", (message) => {
     if (message.content.startsWith(prefix)) {
       processCommand(parseCommand(message));
     } else {
-      const censorManager = new CensorManager();
+      const censorManager = new CensorController();
       censorManager
         .censorMessage(message)
         .then((censored) => {

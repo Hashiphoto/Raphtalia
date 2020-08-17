@@ -4,7 +4,7 @@ import dayjs from "dayjs";
 import links from "../resources/links.js";
 import db from "./db/Database.js";
 import youtube from "./youtube.js";
-import censorship from "./CensorManager.js";
+import censorship from "./controllers/CensorController.js";
 import discordConfig from "../config/discord.config.js";
 import sendTimedMessage from "./controllers/timedMessage.js";
 import { percentFormat, extractNumber } from "./controllers/format.js";
