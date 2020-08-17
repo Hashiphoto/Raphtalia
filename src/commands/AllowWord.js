@@ -14,10 +14,10 @@ class AllowWord extends Command {
       );
     }
 
-    const censorController = new CensorController(this.db);
+    const censorController = new CensorController(this.db, this.guild);
     censorController
-      .deleteWords(this.message.guild, words)
-      .then(censorController.rebuildCensorshipList(this.message.guild.id));
+      .deleteWords(words)
+      .then(censorController.rebuildCensorshipList());
 
     return this.inputChannel.watchSend(
       `These words are allowed again: ${words}`

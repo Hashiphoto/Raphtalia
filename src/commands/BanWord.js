@@ -12,12 +12,10 @@ class BanWord extends Command {
       );
     }
 
-    let values = words.map((word) => [word, this.message.guild.id]);
-
-    const censorshipController = new CensorController(this.db);
+    const censorshipController = new CensorController(this.db, this.guild);
     censorshipController
-      .insertWords(values)
-      .then(censorshipController.rebuildCensorshipList(this.message.guild.id));
+      .insertWords(words)
+      .then(censorshipController.rebuildCensorshipList());
 
     return this.inputChannel.watchSend(
       `You won't see these words again: ${words}`

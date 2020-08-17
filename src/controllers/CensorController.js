@@ -2,17 +2,13 @@ import Discord from "discord.js";
 import diacritic from "diacritic-regex";
 
 import discordConfig from "../../config/discord.config.js";
-import {
-  verifyPermission,
-  hasRole,
-  hasRoleOrHigher,
-} from "./RoleController.js";
+import { hasRole, hasRoleOrHigher } from "./RoleController.js";
 import { addInfractions } from "./MemberController.js";
 import Controller from "./Controller.js";
 
 class CensorController extends Controller {
-  async rebuildCensorshipList(guildId) {
-    let bannedWords = await this.db.bannedWords.getAll(guildId);
+  async rebuildCensorshipList() {
+    let bannedWords = await this.db.bannedWords.getAll(this.guild.id);
     let regexString = "(^|[^a-zA-Z0-9À-ÖØ-öø-ÿ])(";
     for (let i = 0; i < bannedWords.length; i++) {
       // Last word
@@ -24,7 +20,7 @@ class CensorController extends Controller {
     }
     regexString += ")(?![a-zA-Z0-9À-ÖØ-öø-ÿ])";
 
-    return this.db.guilds.updateCensorshipRegex(guildId, regexString);
+    return this.db.guilds.updateCensorshipRegex(this.guild.id, regexString);
   }
 
   /**
@@ -81,11 +77,12 @@ class CensorController extends Controller {
     });
   }
 
-  deleteWords(guild, words) {
-    return this.db.bannedWords.delete(guild.id, words);
+  deleteWords(words) {
+    return this.db.bannedWords.delete(this.guild.id, words);
   }
 
-  insertWords(guildWordPairs) {
+  insertWords(words) {
+    let values = words.map((word) => [word, this.guild.id]);
     return this.db.bannedWords.insert(guildWordPairs);
   }
 
