@@ -1,11 +1,11 @@
 import ChannelsTable from "../db/ChannelsTable";
+import Controller from "./Controller.js";
 
-class ChannelController {
-  db;
+class ChannelController extends Controller {
   channel;
 
   constructor(db, channel) {
-    this.db = db;
+    super(db);
     this.channel = channel;
   }
 

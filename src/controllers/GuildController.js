@@ -1,7 +1,8 @@
 import Discord from "discord.js";
 import links from "../../resources/links.js";
+import GuildBasedController from "./GuildBasedController.js";
 
-class GuildController {
+class GuildController extends GuildBasedController {
   // TODO: Move to a ChannelController class?
   static async clearChannel(channel) {
     let pinnedMessages = await channel.fetchPinnedMessages();

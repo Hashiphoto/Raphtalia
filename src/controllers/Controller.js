@@ -1,10 +1,8 @@
 class Controller {
   db;
-  guild;
 
-  constructor(db, guild) {
+  constructor(db) {
     this.db = db;
-    this.guild = guild;
   }
 }
 

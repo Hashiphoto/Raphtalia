@@ -5,15 +5,10 @@ import { addInfractions, setInfractions } from "./MemberController.js";
 import { dateFormat } from "./format.js";
 import discordConfig from "../../config/discord.config.js";
 import db from "../db/Database.js";
+import GuildBasedController from "./GuildBasedController.js";
 
-class RoleController {
-  exileTimers;
-  db;
-
-  constructor(db) {
-    this.db = db;
-    this.exileTimers = new Map();
-  }
+class RoleController extends GuildBasedController {
+  exileTimers = new Map();
 
   /**
    * Get the next highest hoisted role for a given member

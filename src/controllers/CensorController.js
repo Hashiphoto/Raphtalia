@@ -4,9 +4,9 @@ import diacritic from "diacritic-regex";
 import discordConfig from "../../config/discord.config.js";
 import { hasRole, hasRoleOrHigher } from "./RoleController.js";
 import { addInfractions } from "./MemberController.js";
-import Controller from "./Controller.js";
+import GuildBasedController from "./GuildBasedController.js";
 
-class CensorController extends Controller {
+class CensorController extends GuildBasedController {
   async rebuildCensorshipList() {
     let bannedWords = await this.db.bannedWords.getAll(this.guild.id);
     let regexString = "(^|[^a-zA-Z0-9À-ÖØ-öø-ÿ])(";

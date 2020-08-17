@@ -1,12 +1,7 @@
 import Discord from "discord.js";
+import GuildBasedController from "./GuildBasedController.js";
 
-class CurrencyController {
-  db;
-
-  constructor(db) {
-    this.db = db;
-  }
-
+class CurrencyController extends GuildBasedController {
   payoutMessage(message, dbGuild) {
     var amount = this.calculatePayout(message, dbGuild);
 

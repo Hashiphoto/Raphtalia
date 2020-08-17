@@ -4,8 +4,9 @@ import db from "../db/Database.js";
 import discordConfig from "../../config/discord.config.js";
 import { hasRole, demoteMember } from "./RoleController.js";
 import { softkickMember } from "./GuildController.js";
+import GuildBasedController from "./GuildBasedController.js";
 
-class MemberController {
+class MemberController extends GuildBasedController {
   infractionLimit = 3;
 
   /**
