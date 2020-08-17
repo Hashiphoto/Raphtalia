@@ -37,6 +37,13 @@ export function percentFormat(number) {
   return (number * 100).toFixed(2);
 }
 
+export function moneyFormat(number) {
+  if (isNaN(number)) {
+    number = 0;
+  }
+  return `$${number.toFixed(2)}`;
+}
+
 /**
  * Extract a decimal number from a string. Can be dollar format or percentage with a leading +/- sign
  *

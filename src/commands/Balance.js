@@ -1,12 +1,17 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import { reportCurrency } from "../controllers/CurrencyController.js";
+import CurrencyController from "../controllers/CurrencyController.js";
+import { moneyFormat } from "../controllers/format.js";
 
 class Balance extends Command {
-  execute() {
-    this.sender.createDM().then((dmChannel) => {
-      reportCurrency(this.sender, dmChannel);
+  async execute() {
+    const dmChannel = await this.sender.createDM();
+    const currencyController = new CurrencyController(this.db);
+    currencyController.getCurrency(this.sender).then((balance) => {
+      dmChannel.send(
+        `You have $${moneyFormat(balance)} in ${this.message.guild.name}`
+      );
     });
   }
 }
