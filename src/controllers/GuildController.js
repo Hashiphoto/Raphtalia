@@ -12,6 +12,10 @@ class GuildController extends GuildBasedController {
       await channel.bulkDelete(fetched.filter((message) => !message.pinned));
     } while (fetched.size > pinnedMessages.size);
   }
+
+  setCensorship(enable) {
+    return this.db.guilds.setCensorship(this.guild.id, enable);
+  }
 }
 
 export default GuildController;

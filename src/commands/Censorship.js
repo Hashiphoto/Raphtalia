@@ -1,4 +1,5 @@
 import Command from "./Command.js";
+import GuildController from "../controllers/GuildController.js";
 
 class Censorship extends Command {
   execute() {
@@ -16,15 +17,14 @@ class Censorship extends Command {
       return this.sendHelpMessage();
     }
 
-    this.db.guilds
-      .setCensorship(this.message.guild.id, isCensoring)
-      .then(() => {
-        if (isCensoring) {
-          return this.inputChannel.watchSend("Censorship is enabled");
-        } else {
-          return this.inputChannel.watchSend("All speech is permitted!");
-        }
-      });
+    let guildController = new GuildController(this.db, this.message.guild);
+    guildController.setCensorship(isCensoring).then(() => {
+      if (isCensoring) {
+        return this.inputChannel.watchSend("Censorship is enabled");
+      } else {
+        return this.inputChannel.watchSend("All speech is permitted!");
+      }
+    });
   }
 
   sendHelpMessage() {
