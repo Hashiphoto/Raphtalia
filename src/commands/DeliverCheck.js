@@ -2,7 +2,7 @@ import Discord from "discord.js";
 
 import Command from "./Command.js";
 import { extractNumber } from "../controllers/format.js";
-import { addCurrency } from "../controllers/CurrencyController.js";
+import CurrencyController, { addCurrency } from "../controllers/CurrencyController.js";
 
 class DeliverCheck extends Command {
   execute() {
@@ -11,18 +11,25 @@ class DeliverCheck extends Command {
       !this.message.args ||
       this.message.args.length < 2
     ) {
-      return this.inputChannel.watchSend("Usage: `!DeliverCheck @target $1`");
+      return this.sendHelpMessage();
     }
 
-    let amount = extractNumber(this.message.args[this.message.args.length - 1]);
-    if (amount.number == null) {
-      return this.inputChannel.watchSend("Usage: `!DeliverCheck @target $1`");
+    let rNumber = new RNumber().parse(this.message.args[this.message.args.length - 1]);
+    if (rNumber.amount == null) {
+      return this.sendHelpMessage();
     }
+
+    let currencyController = new CurrencyController(this.db, this.guild);
 
     this.message.mentionedMembers.forEach((target) => {
-      addCurrency(target, amount.number);
+      currencyController.addCurrency(target, rNumber.amount);
     });
-    this.inputChannel.watchSend("Money has been distributed!");
+
+    return this.inputChannel.watchSend("Money has been distributed!");
+  }
+
+  sendHelpMessage() {
+    return this.inputChannel.watchSend("Usage: `DeliverCheck @target $1`");
   }
 }
 
