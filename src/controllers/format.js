@@ -1,6 +1,8 @@
 import dayjs from "dayjs";
 
-export const dateFormat = "h:mm A on MMM D, YYYY";
+export function formatDate(date) {
+  return date.format("h:mm A on MMM D, YYYY");
+}
 
 /**
  * Add a specified amount of time to the current time and return a dayjs date that equals

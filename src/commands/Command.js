@@ -27,6 +27,10 @@ class Command {
   execute() {
     throw new Error("Implement this function");
   }
+
+  sendHelpMessage() {
+    // TODO: Make this required to implement
+  }
 }
 
 export default Command;

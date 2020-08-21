@@ -11,11 +11,20 @@ class MemberController extends GuildBasedController {
   infractionLimit = 3;
 
   /**
+   * @param {Discord.GuildMember} sender
+   * @param {Discord.GuildMember} target
+   */
+  hasAuthorityOver(sender, target) {
+    return sender.id != target.id && sender.highestRole.comparePositionTo(target.highestRole) > 0;
+  }
+
+  /**
    * Increases the infraction count for a given member. If they exceed the infractionLimit, the member
    * is exiled
    *
    * @param {Discord.GuildMember} member - The member to infract
    * @param {Number} amount - The amount of infractions to increase by (default is 1)
+   * @returns {String}
    */
   addInfractions(member, amount = 1) {
     this.db.users
@@ -171,12 +180,11 @@ class MemberController extends GuildBasedController {
    * Remove all hoisted roles and give the member the exile role
    *
    * @param {Discord.GuildMember} member - The guildMember to exile
-   * @param {Discord.TextChannel} channel - The channel to send messages in
    * @param {dayjs} releaseDate - The dayjs object representing when the exile will end
    */
-  exileMember(member, channel, releaseDate = null) {
+  exileMember(member, releaseDate = null) {
     setHoistedRole(member, discordConfig().roles.exile);
-    let message = "";
+
     if (releaseDate != null) {
       let duration = releaseDate.diff(dayjs());
       if (duration > 0x7fffffff) {
@@ -188,14 +196,7 @@ class MemberController extends GuildBasedController {
       }, duration);
       clearExileTimer(member);
       exileTimers.set(member.id, timerId);
-      message = `\nYou will be released at ${releaseDate.format(dateFormat)}`;
-    } else {
-      message = `\nYou will be held indefinitely! May the Supreme Dictator have mercy on you.`;
     }
-    if (channel)
-      channel.watchSend(
-        `Uh oh, gulag for you ${member}${message}\n\nAny infractions while in exile will result in expulsion`
-      );
   }
 
   /**

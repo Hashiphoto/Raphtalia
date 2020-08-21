@@ -13,22 +13,26 @@ class Demote extends Command {
 
     const memberController = new MemberController(this.db, this.guild);
 
+    let response = "";
+
     for (let i = 0; i < this.message.mentionedMembers.length; i++) {
       let target = this.message.mentionedMembers[i];
-      asdf = a;
-      if (
-        this.sender.id !== target.id &&
-        this.sender.highestRole.comparePositionTo(target.highestRole) <= 0
-      ) {
-        return memberController.addInfractions(sender).then((response) => {
-          this.inputChannel.watchSend(
-            `You must hold a rank higher than ${target} to demote them\n${response}`
+      if (!memberController.hasAuthorityOver(this.sender, target)) {
+        memberController
+          .addInfractions(this.sender)
+          .then(
+            (feedback) =>
+              (response += `You must hold a rank higher than ${target} to demote them\n${feedback}\n`)
           );
-        });
+        break;
       }
 
-      memberController.demoteMember(this.inputChannel, this.sender, target);
+      memberController
+        .demoteMember(this.inputChannel, this.sender, target)
+        .then((feedback) => (response += feedback));
     }
+
+    return this.inputChannel.watchSend(response);
   }
 }
 
