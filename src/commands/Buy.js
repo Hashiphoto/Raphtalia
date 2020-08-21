@@ -10,7 +10,7 @@ class Buy extends Command {
       return this.message.channel.watchSend(`Usage: !Buy (Item Name)`);
     }
     // Get store items
-    // TODO: Move logic into BuyController
+    // TODO: Move logic into CurrencyController
     switch (this.message.args[0]) {
       case "promotion":
         let nextRole = getNextRole(this.message.sender, this.message.guild);

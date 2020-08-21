@@ -1,8 +1,7 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import { extractNumber } from "../controllers/format.js";
-import CurrencyController, { addCurrency } from "../controllers/CurrencyController.js";
+import CurrencyController from "../controllers/CurrencyController.js";
 
 class DeliverCheck extends Command {
   execute() {

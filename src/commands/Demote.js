@@ -1,7 +1,7 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import { demoteMember } from "../controllers/RoleController.js";
+import MemberController from "../controllers/MemberController.js";
 
 class Demote extends Command {
   execute() {
@@ -11,9 +11,24 @@ class Demote extends Command {
       );
     }
 
-    this.message.mentionedMembers.forEach((target) => {
-      demoteMember(this.inputChannel, this.sender, target);
-    });
+    const memberController = new MemberController(this.db, this.guild);
+
+    for (let i = 0; i < this.message.mentionedMembers.length; i++) {
+      let target = this.message.mentionedMembers[i];
+      asdf = a;
+      if (
+        this.sender.id !== target.id &&
+        this.sender.highestRole.comparePositionTo(target.highestRole) <= 0
+      ) {
+        return memberController.addInfractions(sender).then((response) => {
+          this.inputChannel.watchSend(
+            `You must hold a rank higher than ${target} to demote them\n${response}`
+          );
+        });
+      }
+
+      memberController.demoteMember(this.inputChannel, this.sender, target);
+    }
   }
 }
 
