@@ -23,6 +23,26 @@ class GuildController extends GuildBasedController {
       .sort((a, b) => b.calculatedPosition - a.calculatedPosition)
       .first();
   }
+
+  setMinLength(amount) {
+    return this.db.setMinLength(this.guild.id, amount);
+  }
+
+  setCharacterValue(amount) {
+    return this.guild.setCharacterValue(this.guild.id, amount);
+  }
+
+  setMaxPayout(amount) {
+    return this.guild.setMaxPayout(this.guild.id, amount);
+  }
+
+  setBasePayout(amount) {
+    return this.guild.setBasePayout(this.guild.id, amount);
+  }
+
+  setTaxRate(amount) {
+    return this.guild.setTaxRate(this.message.guild.id, amount);
+  }
 }
 
 export default GuildController;

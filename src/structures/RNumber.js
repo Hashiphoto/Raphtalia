@@ -2,7 +2,7 @@ class RNumber {
   amount;
   type;
 
-  types = {
+  static types = {
     DOLLAR: "dollar",
     PERCENT: "percent",
     INT: "int",
@@ -11,7 +11,6 @@ class RNumber {
 
   parse(text) {
     let amount = null;
-    let type = this.types.INT;
     let matches = text.match(/^(\+|-)?(\$)?(\d*\.?\d+)(%|X)?$/i);
     /**
      * Index    Contains            Example
@@ -29,18 +28,37 @@ class RNumber {
       amount *= -1;
     }
     if (matches[4] === "%") {
-      type = this.types.PERCENT;
-      amount /= 100;
+      this.setType(this.types.PERCENT);
     } else if (matches[2] === "$") {
-      type = this.types.DOLLAR;
+      this.setType(this.types.DOLLAR);
+    } else {
+      this.setType(this.types.INT);
     }
 
-    amount = Math.floor(amount * 100) / 100;
-
-    this.amount = amount;
-    this.type = type;
+    // Round to 2 decimal places
+    this.amount = Math.floor(amount * 100) / 100;
 
     return this;
+  }
+
+  setType(type) {
+    this.type = type;
+    if (type === this.types.PERCENT) {
+      amount /= 100;
+    }
+  }
+
+  toString() {
+    switch (this.type) {
+      case this.types.INT:
+        return this.amount.toFixed(0);
+      case this.types.DOLLAR:
+        return "$" + this.amount.toFixed(2);
+      case this.types.PERCENT:
+        return this.amount.toFixed(2) + "%";
+      default:
+        return this.amount.toFixed(0);
+    }
   }
 }
 
