@@ -7,10 +7,8 @@ class BanList extends Command {
     const censorController = new CensorController(this.db, this.guild);
     censorController
       .getAllBannedWords()
-      .then(listFormat(words))
-      .then(
-        this.inputChannel.watchSend(`Here are all the banned words: ${banList}`)
-      );
+      .then((words) => listFormat(words))
+      .then((banList) => this.inputChannel.watchSend(`Here are all the banned words: ${banList}`));
   }
 }
 
