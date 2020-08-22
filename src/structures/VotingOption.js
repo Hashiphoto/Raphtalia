@@ -1,4 +1,4 @@
-import { percentFormat } from "../controllers/format.js";
+import RNumber from "./RNumber.js";
 
 class VotingOption {
   id;
@@ -18,9 +18,9 @@ class VotingOption {
 
   getPercentage() {
     if (this.totalVotes === 0) {
-      return percentFormat(0) + "%";
+      return RNumber.formatPercent(0);
     }
-    return `${percentFormat(this.votes / this.totalVotes)}%`;
+    return `${RNumber.formatPercent(this.votes / this.totalVotes)}`;
   }
 }
 

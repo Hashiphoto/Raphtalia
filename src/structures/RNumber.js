@@ -51,14 +51,26 @@ class RNumber {
   toString() {
     switch (this.type) {
       case this.types.INT:
-        return this.amount.toFixed(0);
+        return this.formatInt(this.amount);
       case this.types.DOLLAR:
-        return "$" + this.amount.toFixed(2);
+        return this.formatDollar(this.amount);
       case this.types.PERCENT:
-        return this.amount.toFixed(2) + "%";
+        return this.formatPercent(this.amount);
       default:
         return this.amount.toFixed(0);
     }
+  }
+
+  static formatInt(amount) {
+    return amount.toFixed(0);
+  }
+
+  static formatDollar(amount) {
+    return "$" + amount.toFixed(2);
+  }
+
+  static formatPercent(amount) {
+    return amount.toFixed(2) + "%";
   }
 }
 

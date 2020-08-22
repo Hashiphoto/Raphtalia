@@ -4,10 +4,10 @@ import dayjs from "dayjs";
 import Command from "./Command.js";
 import discordConfig from "../../config/discord.config.js";
 import sendTimedMessage from "../controllers/timedMessage.js";
-import { percentFormat } from "../controllers/format.js";
-import { formatDate, parseTime } from "../controllers/format.js";
+import { parseTime } from "../controllers/format.js";
 import Question from "../structures/Question.js";
 import VotingOption from "../structures/VotingOption.js";
+import RNumber from "../structures/RNumber.js";
 
 class HoldVote extends Command {
   async execute() {
@@ -117,7 +117,7 @@ class HoldVote extends Command {
       } else {
         finalResults += `**The winner is ${votingOptions[0].body.toUpperCase()}** `;
       }
-      finalResults += `with ${percentFormat(
+      finalResults += `with ${RNumber.formatPercent(
         winners[0].votes / totalVotes
       )}% of the vote \n${resultsTable}`;
 

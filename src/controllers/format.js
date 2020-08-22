@@ -32,20 +32,6 @@ export function parseTime(duration) {
   return endDate;
 }
 
-export function percentFormat(number) {
-  if (isNaN(number)) {
-    number = 0;
-  }
-  return (number * 100).toFixed(2);
-}
-
-export function moneyFormat(number) {
-  if (isNaN(number)) {
-    number = 0;
-  }
-  return `$${number.toFixed(2)}`;
-}
-
 export function listFormat(itemArray) {
   if (itemArray.length === 1) {
     return itemArray[0];
