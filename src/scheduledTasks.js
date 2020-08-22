@@ -1,5 +1,4 @@
 import cron from "cron";
-import { getLeaderRole } from "./controllers/RoleController.js";
 
 const { CronJob } = cron;
 
@@ -94,11 +93,7 @@ function tax(guild) {
             let tax = weeklyIncome * taxRate;
             db.users.incrementCurrency(member.id, member.guild.id, -tax);
             leaderRole.members.forEach((member) => {
-              db.users.incrementCurrency(
-                member.id,
-                member.guild.id,
-                tax / leaderRole.members.size
-              );
+              db.users.incrementCurrency(member.id, member.guild.id, tax / leaderRole.members.size);
             });
           });
       });

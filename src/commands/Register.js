@@ -2,7 +2,6 @@ import Discord from "discord.js";
 
 import Command from "./Command.js";
 import discordConfig from "../../config/discord.config.js";
-import { addRoles } from "../controllers/RoleController.js";
 
 class Register extends Command {
   execute() {

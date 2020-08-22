@@ -1,8 +1,6 @@
 import Discord from "discord.js";
 import sendTimedMessage from "./controllers/timedMessage.js";
 import welcomeQuestions from "../resources/welcomeQuestions.js";
-import { setHoistedRole } from "./controllers/RoleController.js";
-import { softkickMember } from "./controllers/GuildController.js";
 import discordConfig from "../config/discord.config.js";
 import Question from "./structures/Question.js";
 
@@ -41,9 +39,7 @@ class Onboarder {
 
     // Set nickname
     try {
-      let nickname = (
-        await sendTimedMessage(channel, member, welcomeQuestions.nickname)
-      ).content;
+      let nickname = (await sendTimedMessage(channel, member, welcomeQuestions.nickname)).content;
       // TODO: Disallow banned words from being in nickname
       // if (await censorship.containsBannedWords(channel.guild.id, nickname)) {
       //   softkickMember(
@@ -56,9 +52,7 @@ class Onboarder {
       channel.watchSend(`${member.displayName} will be known as ${nickname}!`);
       member.setNickname(nickname).catch((e) => {
         console.error(e);
-        channel.watchSend(
-          `Sorry. I don't have permissions to set your nickname...`
-        );
+        channel.watchSend(`Sorry. I don't have permissions to set your nickname...`);
       });
     } catch (e) {
       console.error(e);
@@ -79,9 +73,7 @@ class Onboarder {
     // Creates the user in the DB if they didn't exist
     this.db.users.setCitizenship(member.id, member.guild.id, true);
     channel
-      .watchSend(
-        `Thank you! And welcome loyal citizen to ${channel.guild.name}! 🎉🎉🎉`
-      )
+      .watchSend(`Thank you! And welcome loyal citizen to ${channel.guild.name}! 🎉🎉🎉`)
       .then(() => {
         setHoistedRole(member, discordConfig().roles.neutral);
       });
@@ -104,8 +96,7 @@ class Onboarder {
       }
 
       // Wait until they supply an answer matching the question.answer regex
-      let response = (await sendTimedMessage(channel, member, questionCopy))
-        .content;
+      let response = (await sendTimedMessage(channel, member, questionCopy)).content;
 
       // if (await censorship.containsBannedWords(member.guild.id, response)) {
       //   softkickMember(channel, member, "We don't allow those words here");
@@ -122,11 +113,7 @@ class Onboarder {
 
       return true;
     } catch (e) {
-      softkickMember(
-        channel,
-        member,
-        "Come join the Gulag when you're feeling more agreeable."
-      );
+      softkickMember(channel, member, "Come join the Gulag when you're feeling more agreeable.");
       return false;
     }
   }

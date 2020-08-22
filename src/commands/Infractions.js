@@ -1,20 +1,13 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import { reportInfractions } from "../controllers/MemberController.js";
 
 class Infractions extends Command {
   execute() {
-    if (
-      this.message.mentionedMembers == null ||
-      this.message.mentionedMembers.length === 0
-    ) {
+    if (this.message.mentionedMembers == null || this.message.mentionedMembers.length === 0) {
       return reportInfractions(this.message.sender, this.inputChannel);
     } else {
-      return reportInfractions(
-        this.message.mentionedMembers[0],
-        this.inputChannel
-      );
+      return reportInfractions(this.message.mentionedMembers[0], this.inputChannel);
     }
   }
 }

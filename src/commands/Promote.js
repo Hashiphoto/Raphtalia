@@ -1,14 +1,11 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import { promoteMember } from "../controllers/RoleController.js";
 
 class Promote extends Command {
   execute() {
     if (this.message.mentionedMembers.length === 0) {
-      return this.inputChannel.watchSend(
-        "Try again and specify who is being promoted"
-      );
+      return this.inputChannel.watchSend("Try again and specify who is being promoted");
     }
 
     this.message.mentionedMembers.forEach((target) => {

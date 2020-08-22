@@ -1,12 +1,6 @@
 import Discord from "discord.js";
 
 class Command {
-  message;
-  sender;
-  inputChannel;
-  db;
-  guild;
-
   /**
    * @param {Discord.Message} message - The message sent to issue this command
    */

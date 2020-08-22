@@ -1,4 +1,3 @@
-import ChannelsTable from "../db/ChannelsTable";
 import Controller from "./Controller.js";
 
 class ChannelController extends Controller {

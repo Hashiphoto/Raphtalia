@@ -1,16 +1,11 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import { extractNumber } from "../controllers/format.js";
-import { addInfractions } from "../controllers/MemberController.js";
-import { addCurrency } from "../controllers/CurrencyController.js";
 
 class Give extends Command {
   execute() {
     if (!this.message.args || this.message.args.length === 0) {
-      return this.inputChannel.watchSend(
-        "Please try again and specify the amount of money"
-      );
+      return this.inputChannel.watchSend("Please try again and specify the amount of money");
     }
 
     let amount = 1;
@@ -30,20 +25,16 @@ class Give extends Command {
       );
     }
     let totalAmount = amount * this.message.mentionedMembers.length;
-    this.db.users
-      .get(this.message.sender.id, this.message.sender.guild.id)
-      .then((dbUser) => {
-        if (dbUser.currency < totalAmount) {
-          return this.inputChannel.watchSend(
-            "You don't have enough money for that"
-          );
-        }
-        addCurrency(this.message.sender, -totalAmount);
-        this.message.mentionedMembers.forEach((target) => {
-          addCurrency(target, amount);
-        });
-        this.inputChannel.watchSend("Money transferred!");
+    this.db.users.get(this.message.sender.id, this.message.sender.guild.id).then((dbUser) => {
+      if (dbUser.currency < totalAmount) {
+        return this.inputChannel.watchSend("You don't have enough money for that");
+      }
+      addCurrency(this.message.sender, -totalAmount);
+      this.message.mentionedMembers.forEach((target) => {
+        addCurrency(target, amount);
       });
+      this.inputChannel.watchSend("Money transferred!");
+    });
   }
 }
 

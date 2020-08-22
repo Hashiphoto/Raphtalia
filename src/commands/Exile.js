@@ -17,7 +17,7 @@ class Exile extends Command {
 
     for (let i = 0; i < this.message.mentionedMembers.length; i++) {
       let target = this.message.mentionedMembers[i];
-      if (!memberController.hasAuthorityOver(this.sender, target)) {
+      if (!MemberController.hasAuthorityOver(this.sender, target)) {
         memberController
           .addInfractions(this.sender)
           .then(

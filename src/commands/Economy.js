@@ -1,7 +1,6 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import { extractNumber } from "../controllers/format.js";
 import GuildController from "../controllers/GuildController.js";
 import RNumber from "../structures/RNumber.js";
 

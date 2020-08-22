@@ -3,7 +3,6 @@
 import Discord from "discord.js";
 import dayjs from "dayjs";
 
-import commands from "./commands.js";
 import censorship from "./controllers/CensorController.js";
 import Database from "./db/Database.js";
 import secretConfig from "../config/secrets.config.js";
@@ -11,7 +10,6 @@ import discordConfig from "../config/discord.config.js";
 // TODO: Fix scheduled tasks
 // import tasks from "./scheduledTasks.js";
 import parseCommand, { prefix } from "./controllers/parseCommand.js";
-import { payoutMessage } from "./controllers/CurrencyController.js";
 import Onboarder from "./Onboarder.js";
 
 import AutoDelete from "./commands/AutoDelete.js";
@@ -101,9 +99,7 @@ client.on("message", (message) => {
 });
 
 client.on("guildMemberAdd", (member) => {
-  const welcomeChannel = client.channels.get(
-    discordConfig().channels.welcomeChannelId
-  );
+  const welcomeChannel = client.channels.get(discordConfig().channels.welcomeChannelId);
   attachWatchCommand(welcomeChannel).then(() => {
     new Onboarder().onBoard(member, welcomeChannel);
   });

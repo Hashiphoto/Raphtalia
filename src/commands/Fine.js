@@ -1,39 +1,47 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import { extractNumber } from "../controllers/format.js";
-import { addCurrency } from "../controllers/CurrencyController.js";
+import CurrencyController from "../controllers/CurrencyController.js";
+import RNumber from "../structures/RNumber.js";
+import MemberController from "../controllers/MemberController.js";
 
 class Fine extends Command {
   execute() {
-    if (
-      !this.message.mentionedMembers ||
-      this.message.mentionedMembers.length === 0
-    ) {
-      return this.inputChannel.watchSend(
-        "Please try again and specify who is being fined"
-      );
+    if (!this.message.mentionedMembers || this.message.mentionedMembers.length === 0) {
+      return this.sendHelpMessage();
     }
 
-    let amount = 1;
-    this.message.args.forEach((arg) => {
-      let temp = extractNumber(arg).number;
-      if (temp) {
-        amount = temp;
-        return;
-      }
-    });
-    addCurrency(
-      this.message.sender,
-      amount * this.message.mentionedMembers.length
-    );
-    for (let i = 0; i < this.message.mentionedMembers.length; i++) {
-      addCurrency(this.message.mentionedMembers[i], -amount);
+    let rNumber = new RNumber().parse(this.message.content);
+    if (!rNumber.amount) {
+      return this.sendHelpMessage();
     }
-    let reply =
-      `Fined $${amount.toFixed(2)}` +
-      (this.message.mentionedMembers.length > 1 ? ` each!` : `!`);
-    this.inputChannel.watchSend(reply);
+
+    const currencyController = new CurrencyController(this.db, this.guild);
+    const memberController = new MemberController(this.db, this.guild);
+
+    let response = "";
+
+    // TODO: Create a money account for the guild that most of it goes into
+    for (let i = 0; i < this.message.mentionedMembers.length; i++) {
+      let target = this.message.mentionedMembers[i];
+      if (MemberController.hasAuthorityOver(this.sender, target)) {
+        memberController
+          .addInfractions(this.sender)
+          .then(
+            (feedback) =>
+              (response += `You must hold a higher rank than ${target} to fine them\n${feedback}\n`)
+          );
+        break;
+      }
+      currencyController.transferCurrency(target, this.sender, rNumber.amount);
+      response += `Fined ${target} ${rNumber.toString()}\n`;
+    }
+
+    return this.inputChannel.watchSend(response);
+  }
+
+  sendHelpMessage() {
+    return this.inputChannel.watchSend("Usage: `Fine @target $1`");
   }
 }
 

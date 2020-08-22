@@ -5,8 +5,7 @@ import Command from "./Command.js";
 import discordConfig from "../../config/discord.config.js";
 import sendTimedMessage from "../controllers/timedMessage.js";
 import { percentFormat } from "../controllers/format.js";
-import { dateFormat, parseTime } from "../controllers/format.js";
-import { convertToRole } from "../controllers/RoleController.js";
+import { formatDate, parseTime } from "../controllers/format.js";
 import Question from "../structures/Question.js";
 import VotingOption from "../structures/VotingOption.js";
 
@@ -34,12 +33,7 @@ class HoldVote extends Command {
       60000
     );
     let optionsContent = (
-      await sendTimedMessage(
-        this.inputChannel,
-        this.sender,
-        optionsQuestion,
-        true
-      )
+      await sendTimedMessage(this.inputChannel, this.sender, optionsQuestion, true)
     ).content;
 
     let options = this.removeMentions(optionsContent).split(",");
@@ -57,14 +51,9 @@ class HoldVote extends Command {
     }
 
     // Get the time
-    const timeQuestion = new Question(
-      "How long will voting be open? (e.g. `1h 30m`)",
-      ".*",
-      60000
-    );
-    let timeContent = (
-      await sendTimedMessage(this.inputChannel, this.sender, timeQuestion, true)
-    ).content;
+    const timeQuestion = new Question("How long will voting be open? (e.g. `1h 30m`)", ".*", 60000);
+    let timeContent = (await sendTimedMessage(this.inputChannel, this.sender, timeQuestion, true))
+      .content;
     let endDate = parseTime(timeContent);
     let duration = endDate.diff(dayjs());
     if (duration > 0x7fffffff) {
@@ -72,16 +61,9 @@ class HoldVote extends Command {
     }
 
     // Send out the voting ballots
-    this.inputChannel.watchSend(
-      `Voting begins now and ends at ${endDate.format(dateFormat)}`
-    );
+    this.inputChannel.watchSend(`Voting begins now and ends at ${endDate.format(dateFormat)}`);
 
-    const ballot = this.constructBallot(
-      votePrompt,
-      votingOptions,
-      endDate,
-      duration
-    );
+    const ballot = this.constructBallot(votePrompt, votingOptions, endDate, duration);
 
     voters.forEach((voter) => {
       let dmChannel;
@@ -96,9 +78,7 @@ class HoldVote extends Command {
           if (dmChannel)
             msg += `\nResults will be announced in **${this.message.guild.name}/#${this.inputChannel.name}** when voting is closed`;
           dmChannel.send(msg);
-          const selected = votingOptions.find(
-            (v) => v.id === parseInt(choice.content)
-          );
+          const selected = votingOptions.find((v) => v.id === parseInt(choice.content));
           selected.votes++;
           console.log(`${voter.displayName} voted for ${selected.body}`);
         })
@@ -195,8 +175,7 @@ class HoldVote extends Command {
    * @returns {Discord.GuildMember[]}
    */
   getVoters() {
-    return convertToRole(this.message.guild, discordConfig().roles.voter)
-      .members;
+    return convertToRole(this.message.guild, discordConfig().roles.voter).members;
   }
 
   /**
@@ -215,18 +194,14 @@ class HoldVote extends Command {
 
   buildTable(votingOptions) {
     const longestName = this.findLongest(votingOptions.map((v) => v.body));
-    const longestPercent = this.findLongest(
-      votingOptions.map((v) => v.getPercentage())
-    );
+    const longestPercent = this.findLongest(votingOptions.map((v) => v.getPercentage()));
 
     let resultsMsg = "```";
     votingOptions.forEach((option) => {
-      resultsMsg += `${this.fillString(
-        option.body,
-        longestName
-      )} | ${this.fillString(option.getPercentage(), longestPercent)} | ${
-        option.votes
-      } votes\n`;
+      resultsMsg += `${this.fillString(option.body, longestName)} | ${this.fillString(
+        option.getPercentage(),
+        longestPercent
+      )} | ${option.votes} votes\n`;
     });
     resultsMsg += "```";
 

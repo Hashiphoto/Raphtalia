@@ -2,8 +2,6 @@ import Discord from "discord.js";
 import diacritic from "diacritic-regex";
 
 import discordConfig from "../../config/discord.config.js";
-import { hasRole, hasRoleOrHigher } from "./RoleController.js";
-import { addInfractions } from "./MemberController.js";
 import GuildBasedController from "./GuildBasedController.js";
 
 class CensorController extends GuildBasedController {
@@ -57,22 +55,14 @@ class CensorController extends GuildBasedController {
             title: "Censorship Report",
             description: `What ${
               sender.displayName
-            } ***meant*** to say is \n> ${message.content.replace(
-              bannedRegex,
-              "██████"
-            )}`,
+            } ***meant*** to say is \n> ${message.content.replace(bannedRegex, "██████")}`,
             color: 13057084,
             timestamp: new Date(),
           },
         });
       }
 
-      addInfractions(
-        sender,
-        message.channel,
-        1,
-        `This infraction has been recorded`
-      );
+      addInfractions(sender, message.channel, 1, `This infraction has been recorded`);
       return true;
     });
   }
@@ -87,9 +77,7 @@ class CensorController extends GuildBasedController {
   }
 
   getAllBannedWords() {
-    return this.db.bannedWords
-      .getAll(this.guild.id)
-      .then((rows) => rows.map((r) => r.word));
+    return this.db.bannedWords.getAll(this.guild.id).then((rows) => rows.map((r) => r.word));
   }
 }
 

@@ -2,8 +2,7 @@ import Discord from "discord.js";
 
 import db from "../db/Database.js";
 import discordConfig from "../../config/discord.config.js";
-import RoleUtil, { hasRole, demoteMember } from "./RoleUtil.js";
-import { softkickMember } from "./GuildController.js";
+import RoleUtil from "./RoleUtil.js";
 import GuildBasedController from "./GuildBasedController.js";
 import MemberLimitError from "../structures/MemberLimitError.js";
 
@@ -14,7 +13,7 @@ class MemberController extends GuildBasedController {
    * @param {Discord.GuildMember} sender
    * @param {Discord.GuildMember} target
    */
-  hasAuthorityOver(sender, target) {
+  static hasAuthorityOver(sender, target) {
     return sender.id != target.id && sender.highestRole.comparePositionTo(target.highestRole) > 0;
   }
 

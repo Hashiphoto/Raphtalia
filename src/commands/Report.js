@@ -1,12 +1,9 @@
 import Command from "./Command.js";
-import { addInfractions } from "../controllers/MemberController.js";
 
 class Report extends Command {
   execute() {
     if (this.message.mentionedMembers.length === 0) {
-      this.message.channel.watchSend(
-        "Please repeat the command and specify who is being reported"
-      );
+      this.message.channel.watchSend("Please repeat the command and specify who is being reported");
       return;
     }
 

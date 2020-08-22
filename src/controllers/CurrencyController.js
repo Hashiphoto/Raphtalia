@@ -29,6 +29,12 @@ class CurrencyController extends GuildBasedController {
     return this.db.users.incrementCurrency(member.id, member.guild.id, amount);
   }
 
+  transferCurrency(fromMember, toMember, amount) {
+    return this.db.users
+      .incrementCurrency(fromMember.id, this.guild.id, amount)
+      .then(this.db.users.incrementCurrency(toMember.id, this.guild.id, -amount));
+  }
+
   getUserIncome(member) {
     return this.db.users.get(member.id, member.guild.id).then((dbUser) => {
       // Check for personally-set income
