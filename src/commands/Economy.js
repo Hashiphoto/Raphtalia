@@ -19,7 +19,7 @@ class Economy extends Command {
 
     // Every other argument will be a flag and number, alternating
     for (let i = 0; i < this.message.args.length - 1; i += 2) {
-      let rNumber = new RNumber().parse(this.message.args[i + 1]);
+      let rNumber = RNumber.parse(this.message.args[i + 1]);
       let flag = this.message.args[i];
       if (rNumber.amount == null) {
         response += `Please specify what amount you want ${flag} to be set to. ` + this.helpText;

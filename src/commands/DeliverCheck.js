@@ -13,7 +13,7 @@ class DeliverCheck extends Command {
       return this.sendHelpMessage();
     }
 
-    let rNumber = new RNumber().parse(this.message.args[this.message.args.length - 1]);
+    let rNumber = RNumber.parse(this.message.args[this.message.args.length - 1]);
     if (rNumber.amount == null) {
       return this.sendHelpMessage();
     }

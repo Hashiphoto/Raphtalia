@@ -11,7 +11,7 @@ class Fine extends Command {
       return this.sendHelpMessage();
     }
 
-    let rNumber = new RNumber().parse(this.message.content);
+    let rNumber = RNumber.parse(this.message.content);
     if (!rNumber.amount) {
       return this.sendHelpMessage();
     }
