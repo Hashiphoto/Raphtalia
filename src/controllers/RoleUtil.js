@@ -62,6 +62,16 @@ class RoleUtil {
 
     return lowerRoles[0];
   }
+
+  /**
+   * @param {Discord.Guild} guild
+   * @returns {Discord.Collection<Discord.Role>} The hoisted roles, sorted lowest to highest
+   */
+  static getHoistedRoles(guild) {
+    return guild.roles
+      .filter((role) => role.hoist)
+      .sort((a, b) => a.calculatedPosition - b.calculatedPosition);
+  }
 }
 
 export default RoleUtil;

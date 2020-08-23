@@ -18,11 +18,10 @@ class HoldVote extends Command {
       );
     }
 
-    // Remove the command
     const votePrompt = this.message.content.trim();
     if (votePrompt.length === 0) {
       return this.inputChannel.watchSend(
-        "Vote canceled. Example usage: `HoldVote What is your favorite color?`"
+        "Vote canceled. Usage: `HoldVote What is your favorite color?`"
       );
     }
 

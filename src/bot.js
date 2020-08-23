@@ -81,7 +81,7 @@ client.on("message", (message) => {
     if (message.content.startsWith(prefix)) {
       processCommand(parseCommand(message));
     } else {
-      const censorManager = new CensorController();
+      const censorManager = new CensorController(db, message.guild);
       censorManager
         .censorMessage(message)
         .then((censored) => {

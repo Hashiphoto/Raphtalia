@@ -12,9 +12,7 @@ function parseCommand(message) {
   message.sender = message.guild.members.get(message.author.id);
   message.mentionedMembers = getMemberMentions(message.guild, message.args);
   message.mentionedRoles = getRoleMentions(message.guild, message.args);
-  message.content = message.content.slice(
-    prefix.length + message.command.length
-  );
+  message.content = message.content.slice(prefix.length + message.command.length).trim();
 
   return message;
 }
