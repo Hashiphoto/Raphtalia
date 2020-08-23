@@ -1,6 +1,7 @@
 import Discord from "discord.js";
 import links from "../../resources/links.js";
 import GuildBasedController from "./GuildBasedController.js";
+import RNumber from "../structures/RNumber.js";
 
 class GuildController extends GuildBasedController {
   // TODO: Move to a ChannelController class?

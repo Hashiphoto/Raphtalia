@@ -2,7 +2,7 @@ import Discord from "discord.js";
 
 import Command from "./Command.js";
 import discordConfig from "../../config/discord.config.js";
-import { updateServerStatus } from "../controllers/serverStatus.js";
+import ServerStatusUpdater from "../controllers/ServerStatusUpdater.js";
 import CurrencyController from "../controllers/CurrencyController.js";
 import RNumber from "../structures/RNumber.js";
 import GuildController from "../controllers/GuildController.js";
@@ -20,7 +20,7 @@ class Income extends Command {
     }
 
     if (this.message.args.length < 2) {
-      return this.inputChannel.watchSend("Usage: `Income [base $1] [scale ($1|1%)]`");
+      return this.sendHelpMessage();
     }
 
     // Get base income
@@ -51,7 +51,8 @@ class Income extends Command {
 
     return this.inputChannel
       .watchSend(await guildController.setIncomeScale(baseIncome, roles, scaleNumber))
-      .then(updateServerStatus(this.inputChannel));
+      .then(new ServerStatusUpdater(this.db).updateServerStatus(this.inputChannel));
+    //TODO: Fix this so that the server status is not sending in the channel
   }
 
   getBaseIncome() {
@@ -74,12 +75,10 @@ class Income extends Command {
     }
     const scaleNumber = RNumber.parse(this.message.args[scaleIndex + 1]);
     if (
-      scaleNumber.amount == null ||
-      (scaleNumber.type != RNumber.types.DOLLAR && scaleNumber.type != RNumber.types.PERCENT)
+      scaleNumber == null ||
+      (scaleNumber.type != RNumber.types.DOLLAR && scaleNumber.type != RNumber.types.PERCENT) ||
+      (scaleNumber.type === RNumber.types.PERCENT && scaleNumber.amount < 1)
     ) {
-      return null;
-    }
-    if (scaleNumber.type === RNumber.types.PERCENT && scaleNumber.amount < 1) {
       return null;
     }
     return scaleNumber;

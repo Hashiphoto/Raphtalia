@@ -1,5 +1,4 @@
 import Command from "./Command.js";
-import { generateServerStatus } from "../controllers/serverStatus.js";
 
 class Template extends Command {
   async execute() {
@@ -17,9 +16,7 @@ class Template extends Command {
           .array();
         for (let i = 0; i < textChannels.length; i++) {
           try {
-            let oldStatusMessage = await textChannels[i].fetchMessage(
-              guild.status_message_id
-            );
+            let oldStatusMessage = await textChannels[i].fetchMessage(guild.status_message_id);
             oldStatusMessage.delete();
             return;
           } catch (e) {}
@@ -32,10 +29,7 @@ class Template extends Command {
       .then((newStatusMessage) => {
         // Update the status message in the this.db
         newStatusMessage.pin();
-        return this.db.guilds.setStatusMessage(
-          newStatusMessage.guild.id,
-          newStatusMessage.id
-        );
+        return this.db.guilds.setStatusMessage(newStatusMessage.guild.id, newStatusMessage.id);
       });
   }
 }
