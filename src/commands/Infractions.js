@@ -5,21 +5,21 @@ import MemberController from "../controllers/MemberController.js";
 
 class Infractions extends Command {
   async execute() {
-    const memberController = new MemberController(this.db, this.guild);
-
     if (this.message.mentionedMembers == null || this.message.mentionedMembers.length === 0) {
-      return memberController
-        .getInfractions(this.sender)
-        .then((infractions) => this.reportInfractions(this.sender, infractions));
+      return this.reportInfractions(this.sender);
     } else {
-      return memberController
-        .getInfractions(this.message.mentionedMembers[0])
-        .then((infractions) => this.reportInfractions(this.sender, infractions));
+      return this.reportInfractions(this.message.mentionedMembers[0]);
     }
   }
 
-  reportInfractions(member, infractCount) {
-    return this.inputChannel.watchSend(`${member} has incurred ${infractCount} infractions\n`);
+  reportInfractions(member) {
+    const memberController = new MemberController(this.db, this.guild);
+
+    return memberController
+      .getInfractions(member)
+      .then((infractCount) =>
+        this.inputChannel.watchSend(`${member} has incurred ${infractCount} infractions\n`)
+      );
   }
 }
 
