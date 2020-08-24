@@ -58,7 +58,7 @@ class MemberController extends GuildBasedController {
    * @returns {Number}
    */
   getInfractions(member) {
-    return db.users.get(member.id, this.guild.id).then((user) => {
+    return this.db.users.get(member.id, this.guild.id).then((user) => {
       return user.infractions;
     });
   }

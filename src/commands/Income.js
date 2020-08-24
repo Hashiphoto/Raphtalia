@@ -52,7 +52,6 @@ class Income extends Command {
     return this.inputChannel
       .watchSend(await guildController.setIncomeScale(baseIncome, roles, scaleNumber))
       .then(new ServerStatusUpdater(this.db).updateServerStatus(this.inputChannel));
-    //TODO: Fix this so that the server status is not sending in the channel
   }
 
   getBaseIncome() {
