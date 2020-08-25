@@ -18,7 +18,7 @@ class MemberController extends GuildBasedController {
   }
 
   /**
-   * Increases the infraction count for a given member. If they exceed the infractionLimit, the member
+   * Increases the infraction count for a given member. If they exceed the this.infractionLimit, the member
    * is exiled
    *
    * @param {Discord.GuildMember} member - The member to infract
@@ -26,9 +26,9 @@ class MemberController extends GuildBasedController {
    * @returns {String}
    */
   addInfractions(member, amount = 1) {
-    this.db.users
+    return this.db.users
       .incrementInfractions(member.id, member.guild.id, amount)
-      .then(this.getInfractions(member))
+      .then((result) => this.getInfractions(member))
       .then((count) => {
         return this.checkInfractionCount(member, count);
       });
@@ -41,7 +41,7 @@ class MemberController extends GuildBasedController {
    * @param {number} amount - The number of infractions they will have
    */
   setInfractions(member, amount) {
-    this.db.users
+    return this.db.users
       .setInfractions(member.id, member.guild.id, amount)
       .then(this.getInfractions(member))
       .then((count) => {
@@ -76,18 +76,20 @@ class MemberController extends GuildBasedController {
       let user = await db.users.get(member.id, member.guild.id);
       count = user.infractions;
     }
-    if (count >= infractionLimit) {
+    let response = `${member} has incurred ${count} infractions\n`;
+    if (count >= this.infractionLimit) {
       // TODO: Change to dead role
-      if (hasRole(member, discordConfig().roles.exile)) {
+      if (this.hasRole(member, discordConfig().roles.exile)) {
         return this.softKick(
           member,
           `Doing something illegal while under exile?` +
             ` Come back when you're feeling more agreeable.`
         );
       } else {
-        return this.demoteMember(member);
+        return this.demoteMember(member, response);
       }
     }
+    return Promise.resolve(response);
   }
 
   /**
@@ -216,7 +218,7 @@ class MemberController extends GuildBasedController {
    * @returns {Boolean} - True if the member has that role
    */
   hasRole(member, role) {
-    role = convertToRole(member.guild, role);
+    role = RoleUtil.convertToRole(member.guild, role);
     return member.roles.get(role.id);
   }
 
@@ -227,7 +229,7 @@ class MemberController extends GuildBasedController {
    * @param {*} role
    */
   hasRoleOrHigher(member, role) {
-    role = convertToRole(member.guild, role);
+    role = RoleUtil.convertToRole(member.guild, role);
     return member.highestRole.comparePositionTo(role) >= 0;
   }
 
@@ -238,9 +240,9 @@ class MemberController extends GuildBasedController {
    * @param {RoleResolvable[]} role - An array of roles representing the names of the roles to give the members
    */
   async setHoistedRole(member, role) {
-    let discordRole = convertToRole(member.guild, role);
+    let discordRole = RoleUtil.convertToRole(member.guild, role);
 
-    let dbRole = await db.roles.getSingle(discordRole.id);
+    let dbRole = await this.db.roles.getSingle(discordRole.id);
     if (dbRole.member_limit >= 0 && discordRole.members.size >= dbRole.member_limit) {
       throw new MemberLimitError(
         dbRole.member_limit,
@@ -318,8 +320,8 @@ class MemberController extends GuildBasedController {
     });
   }
 
-  demoteMember(target) {
-    if (hasRole(target, discordConfig().roles.exile)) {
+  async demoteMember(target, response = "") {
+    if (this.hasRole(target, discordConfig().roles.exile)) {
       clearExileTimer(target);
     }
 
@@ -338,12 +340,11 @@ class MemberController extends GuildBasedController {
     // }
 
     let changed = false;
-    let response = "";
     while (!changed) {
-      this.setHoistedRole(target, nextLowest)
+      await this.setHoistedRole(target, nextLowest)
         .then(() => {
           changed = true;
-          response += `${target} has been demoted to ${nextLowest}`;
+          response += `${target} has been demoted to **${nextLowest.name}**!`;
         })
         .catch((error) => {
           if (error instanceof MemberLimitError) {

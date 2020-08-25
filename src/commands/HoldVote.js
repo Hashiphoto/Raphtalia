@@ -174,7 +174,7 @@ class HoldVote extends Command {
    * @returns {Discord.GuildMember[]}
    */
   getVoters() {
-    return convertToRole(this.message.guild, discordConfig().roles.voter).members;
+    return RoleUtil.convertToRole(this.message.guild, discordConfig().roles.voter).members;
   }
 
   /**

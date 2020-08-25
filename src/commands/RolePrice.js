@@ -16,7 +16,7 @@ class RolePrice extends Command {
     let announcement = `Every role's purchase price is now ${multiplier.toFixed(
       2
     )}x its daily income!\n`;
-    let neutralRole = convertToRole(this.message.guild, discordConfig().roles.neutral);
+    let neutralRole = RoleUtil.convertToRole(this.message.guild, discordConfig().roles.neutral);
     if (!neutralRole) {
       return this.inputChannel.watchSend("There is no neutral role");
     }
