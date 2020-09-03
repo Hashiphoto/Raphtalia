@@ -1,5 +1,6 @@
 import Discord from "discord.js";
 import dayjs from "dayjs";
+import MemberController from "../controllers/MemberController.js";
 
 import Command from "./Command.js";
 
@@ -11,8 +12,12 @@ class Pardon extends Command {
       return;
     }
 
+    const memberController = new MemberController(this.db, this.guild);
+
     this.message.mentionedMembers.forEach((target) => {
-      pardonMember(target, this.inputChannel);
+      memberController.pardonMember(target, this.inputChannel).then((feedback) => {
+        this.inputChannel.watchSend(feedback);
+      });
     });
   }
 }

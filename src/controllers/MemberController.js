@@ -163,17 +163,16 @@ class MemberController extends GuildBasedController {
    * If the member is an exile, remove all hoisted roles from them. If they are not an exile, nothing happens
    *
    * @param {Discord.GuildMember} member - The guildMember to pardon
-   * @param {Discord.TextChannel} channel - The channel to send messages in
    */
-  pardonMember(member, channel) {
+  pardonMember(member) {
     db.users.setInfractions(member.id, member.guild.id, 0);
 
-    if (hasRole(member, discordConfig().roles.exile)) {
-      clearExileTimer(member);
-      setHoistedRole(member, discordConfig().roles.neutral);
-      if (channel) channel.watchSend(`${member} has been released from exile`);
+    if (RoleUtil.hasRole(member, discordConfig().roles.exile)) {
+      this.clearExileTimer(member);
+      this.setHoistedRole(member, discordConfig().roles.neutral);
+      return Promise.resolve(`${member} has been released from exile`);
     } else {
-      if (channel) channel.watchSend(`${member} has been cleared of all charges`);
+      return Promise.resolve(`${member} has been cleared of all charges`);
     }
   }
 
