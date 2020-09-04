@@ -1,6 +1,7 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
+import MemberController from "../controllers/MemberController.js";
 
 class Promote extends Command {
   execute() {
@@ -8,8 +9,12 @@ class Promote extends Command {
       return this.inputChannel.watchSend("Try again and specify who is being promoted");
     }
 
+    const memberController = new MemberController(this.db, this.guild);
+
     this.message.mentionedMembers.forEach((target) => {
-      promoteMember(this.inputChannel, this.message.sender, target);
+      memberController
+        .promoteMember(this.message.sender, target)
+        .then((feedback) => this.inputChannel.watchSend(feedback));
     });
   }
 }

@@ -167,7 +167,7 @@ class MemberController extends GuildBasedController {
   pardonMember(member) {
     db.users.setInfractions(member.id, member.guild.id, 0);
 
-    if (RoleUtil.hasRole(member, discordConfig().roles.exile)) {
+    if (this.hasRole(member, discordConfig().roles.exile)) {
       this.clearExileTimer(member);
       this.setHoistedRole(member, discordConfig().roles.neutral);
       return Promise.resolve(`${member} has been released from exile`);
@@ -255,11 +255,11 @@ class MemberController extends GuildBasedController {
       .removeRoles(hoistedRoles)
       .then(() => {
         member.addRoles(discordRole);
-        return [true, dbRole.member_limit];
+        return true;
       })
       .catch(() => {
         console.error("Could not change roles for " + member.displayName);
-        return [false, dbRole.member_limit];
+        return false;
       });
   }
 
@@ -280,43 +280,44 @@ class MemberController extends GuildBasedController {
    * @param {Discord.GuildMember} sender - The GuildMember doing the promotion
    * @param {Discord.GuildMember} target - The GuildMember being promoted
    */
-  promoteMember(channel, sender, target) {
-    let nextHighest = getNextRole(target, target.guild);
+  promoteMember(sender, target) {
+    let nextHighest = this.getNextRole(target, target.guild);
+    if (nextHighest == null) {
+      return `${target} holds the highest office already`;
+    }
 
     // Disallow self-promotion
-    if (sender != null) {
-      if (sender.id === target.id) {
-        addInfractions(sender, channel, 1, links.gifs.bernieNo);
-        return;
-      }
-      // Ensure the target's next highest role is not higher than the sender's
-      if (sender.highestRole.comparePositionTo(nextHighest) < 0) {
-        addInfractions(sender, channel, 1, "You can't promote above your own role");
-        return;
-      }
+    if (sender.id === target.id) {
+      return this.addInfractions(sender, 1).then((feedback) => {
+        return `You cannot promote yourself!\n${feedback}`;
+      });
+    }
+    // Ensure the target's next highest role is not higher than the sender's
+    if (sender.highestRole.comparePositionTo(nextHighest) < 0) {
+      return this.addInfractions(sender, 1).then((feedback) => {
+        return `You cannot promote someone to a role higher than your own!\n${feedback}`;
+      });
     }
 
-    if (hasRole(target, discordConfig().roles.exile)) {
-      clearExileTimer(target);
+    if (this.hasRole(target, discordConfig().roles.exile)) {
+      this.clearExileTimer(target);
     }
-
-    if (nextHighest == null) {
-      if (channel) channel.watchSend(`${target} holds the highest office already`);
-      return;
-    }
-
-    setInfractions(target, null, 0, null);
 
     // promote the target
-    setHoistedRole(target, nextHighest).then(([roleChanged, memberLimit]) => {
-      if (roleChanged) {
-        channel.watchSend(`${target} has been promoted to ${nextHighest.name}!`);
-      } else {
-        channel.watchSend(
-          `Cannot promote because ${nextHighest.name} already has ${nextHighest.members.size}/${memberLimit} members!`
-        );
-      }
-    });
+    return this.setHoistedRole(target, nextHighest)
+      .then((roleChanged) => {
+        if (roleChanged) {
+          this.setInfractions(target, 0);
+          return `${target} has been promoted to ${nextHighest.name}!\nInfractions have been reset to 0`;
+        } else {
+          return `Could not promote ${target} to ${nextHighest.name}`;
+        }
+      })
+      .catch((error) => {
+        if (error instanceof MemberLimitError) {
+          response += error.message;
+        }
+      });
   }
 
   async demoteMember(target, response = "") {

@@ -4,7 +4,7 @@ import Command from "./Command.js";
 import MemberController from "../controllers/MemberController.js";
 
 class Demote extends Command {
-  execute() {
+  async execute() {
     if (this.message.mentionedMembers.length === 0) {
       return this.inputChannel.watchSend(
         "Please repeat the command and specify who is being demoted"
@@ -15,10 +15,9 @@ class Demote extends Command {
 
     let response = "";
 
-    for (let i = 0; i < this.message.mentionedMembers.length; i++) {
-      let target = this.message.mentionedMembers[i];
+    for (const target of this.message.mentionedMembers) {
       if (!MemberController.hasAuthorityOver(this.sender, target)) {
-        memberController
+        await memberController
           .addInfractions(this.sender)
           .then(
             (feedback) =>
@@ -27,7 +26,7 @@ class Demote extends Command {
         break;
       }
 
-      memberController
+      await memberController
         .demoteMember(this.inputChannel, this.sender, target)
         .then((feedback) => (response += feedback));
     }
