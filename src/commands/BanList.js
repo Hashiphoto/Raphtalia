@@ -1,13 +1,13 @@
 import Command from "./Command.js";
 import CensorController from "../controllers/CensorController.js";
-import { listFormat } from "../format.js";
+import Format from "../Format.js";
 
 class BanList extends Command {
   execute() {
     const censorController = new CensorController(this.db, this.guild);
     censorController
       .getAllBannedWords()
-      .then((words) => listFormat(words))
+      .then((words) => Format.listFormat(words))
       .then((banList) => this.inputChannel.watchSend(`Here are all the banned words: ${banList}`));
   }
 }

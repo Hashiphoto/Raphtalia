@@ -1,6 +1,6 @@
 import assert from "assert";
 import { calculatePayout } from "../../util/currencyManagement.js";
-import { percentFormat } from "../../util/format.js";
+import RNumber from "../../src/structures/RNumber.js";
 
 describe("Calculations", () => {
   describe("Message payout", () => {
@@ -53,17 +53,17 @@ describe("Calculations", () => {
   describe("Percent format", () => {
     it("truncates long decimals", () => {
       const num = 123.123123;
-      const result = percentFormat(num);
+      const result = RNumber.formatPercent(num);
       assert.equal(result, "12312.31");
     });
     it("rounds up", () => {
       const num = 123.12349;
-      const result = percentFormat(num);
+      const result = RNumber.formatPercent(num);
       assert.equal(result, "12312.35");
     });
     it("returns 0 for non-numbers", () => {
       const notNumber = null;
-      const result = percentFormat(notNumber);
+      const result = RNumber.formatPercent(notNumber);
       assert.equal(result, "0.00");
     });
   });

@@ -1,7 +1,7 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import { parseTime, formatDate } from "../format.js";
+import Format from "../Format.js";
 import MemberController from "../controllers/MemberController.js";
 
 class Exile extends Command {
@@ -10,7 +10,7 @@ class Exile extends Command {
       return this.sendHelpMessage();
     }
 
-    const releaseDate = parseTime(this.message.content);
+    const releaseDate = Format.parseTime(this.message.content);
     const memberController = new MemberController(this.db, this.guild);
 
     let response = "";
@@ -26,9 +26,13 @@ class Exile extends Command {
           );
         break;
       }
-      memberController.exileMember(target, releaseDate);
+      memberController.exileMember(target, releaseDate).then((released) => {
+        if (released) {
+          this.inputChannel.watchSend(`${target} has been released from exile!`);
+        }
+      });
       response += `${target} has been exiled ${
-        releaseDate ? `until ${formatDate(releaseDate)}` : `indefinitely`
+        releaseDate ? `until ${Format.formatDate(releaseDate)}` : `indefinitely`
       }\n`;
     }
 

@@ -6,6 +6,8 @@ import RoleUtil from "../RoleUtil.js";
 import GuildBasedController from "./GuildBasedController.js";
 import MemberLimitError from "../structures/MemberLimitError.js";
 import links from "../../resources/links.js";
+import dayjs from "dayjs";
+import delay from "delay";
 
 class MemberController extends GuildBasedController {
   infractionLimit = 3;
@@ -119,8 +121,6 @@ class MemberController extends GuildBasedController {
       });
   }
 
-  exileTimers = new Map();
-
   /**
    * Get the next highest hoisted role for a given member
    *
@@ -167,15 +167,24 @@ class MemberController extends GuildBasedController {
    * @param {Discord.GuildMember} member - The guildMember to pardon
    */
   pardonMember(member) {
-    db.users.setInfractions(member.id, member.guild.id, 0);
+    return this.db.users.setInfractions(member.id, member.guild.id, 0).then(() => {
+      const released = this.releaseFromExile(member);
 
+      if (released) {
+        return `${member} has been released from exile`;
+      }
+
+      return `${member} has been cleared of all charges`;
+    });
+  }
+
+  releaseFromExile(member) {
     if (this.hasRole(member, discordConfig().roles.exile)) {
-      this.clearExileTimer(member);
       this.setHoistedRole(member, discordConfig().roles.neutral);
-      return Promise.resolve(`${member} has been released from exile`);
-    } else {
-      return Promise.resolve(`${member} has been cleared of all charges`);
+      return true;
     }
+
+    return false;
   }
 
   /**
@@ -185,7 +194,7 @@ class MemberController extends GuildBasedController {
    * @param {dayjs} releaseDate - The dayjs object representing when the exile will end
    */
   exileMember(member, releaseDate = null) {
-    setHoistedRole(member, discordConfig().roles.exile);
+    this.setHoistedRole(member, discordConfig().roles.exile);
 
     if (releaseDate != null) {
       let duration = releaseDate.diff(dayjs());
@@ -193,24 +202,11 @@ class MemberController extends GuildBasedController {
         duration = 0x7fffffff;
         releaseDate = dayjs().add(duration, "ms");
       }
-      let timerId = setTimeout(() => {
-        pardonMember(member, channel);
-      }, duration);
-      clearExileTimer(member);
-      exileTimers.set(member.id, timerId);
+
+      return delay(duration).then(() => this.releaseFromExile(member));
     }
   }
 
-  /**
-   *
-   * @param {Discord.GuildMember} member - The member to clear exile timer for, if it exists
-   */
-  clearExileTimer(member) {
-    if (exileTimers.has(member.id)) {
-      clearTimeout(exileTimers.get(member.id));
-      exileTimers.delete(member.id);
-    }
-  }
   /**
    * Check if a member has a given role specified by role id
    *
@@ -301,10 +297,6 @@ class MemberController extends GuildBasedController {
       });
     }
 
-    if (this.hasRole(target, discordConfig().roles.exile)) {
-      this.clearExileTimer(target);
-    }
-
     // promote the target
     return this.setHoistedRole(target, nextHighest)
       .then((roleChanged) => {
@@ -323,10 +315,6 @@ class MemberController extends GuildBasedController {
   }
 
   async demoteMember(target, response = "") {
-    if (this.hasRole(target, discordConfig().roles.exile)) {
-      clearExileTimer(target);
-    }
-
     let nextLowest = this.getPreviousRole(target, target.guild);
 
     if (nextLowest == null) {
@@ -358,64 +346,6 @@ class MemberController extends GuildBasedController {
 
     return Promise.resolve(response);
   }
-
-  /**
-   * Remove all hoisted roles from one target and decrease their former highest role by one
-   *
-   * @param {Discord.TextChannel} channel - The channel to send messages in
-   * @param {Discord.GuildMember} sender - The GuildMember doing the promotion
-   * @param {Discord.GuildMember} target - The GuildMember being promoted
-   */
-  // oldDemoteMember(channel, sender, target) {
-  //   // Ensure the sender has a higher rank than the target
-  //   if (sender != null) {
-  //     if (sender.highestRole.comparePositionTo(target.highestRole) < 0) {
-  //       addInfractions(sender, channel, 1, `${target} holds a higher rank than you!`);
-  //       return;
-  //     }
-  //     if (
-  //       sender.id !== target.id &&
-  //       sender.highestRole.comparePositionTo(target.highestRole) == 0
-  //     ) {
-  //       addInfractions(sender, channel, 1, `${target} holds an equal rank with you`);
-  //       return;
-  //     }
-  //   }
-
-  //   if (hasRole(target, discordConfig().roles.exile)) {
-  //     clearExileTimer(target);
-  //   }
-
-  //   let nextLowest = getPreviousRole(target, target.guild);
-
-  //   if (nextLowest == null) {
-  //     if (channel) channel.watchSend(`${target} can't get any lower`);
-  //     return;
-  //   }
-
-  //   setInfractions(target, null, 0, null);
-
-  //   if (nextLowest.id == discordConfig().roles.exile) {
-  //     exileMember(target, channel, dayjs().add(1, "day"));
-  //     return;
-  //   }
-
-  //   // demote the target
-  //   setHoistedRole(target, nextLowest);
-  //   let roleName = nextLowest.name;
-  //   if (roleName === "@everyone") {
-  //     roleName = "commoner";
-  //   }
-  //   setHoistedRole(target, nextLowest).then(([roleChanged, memberLimit]) => {
-  //     if (roleChanged) {
-  //       channel.watchSend(`${target} has been demoted to ${roleName}!`);
-  //     } else {
-  //       channel.watchSend(
-  //         `Cannot demote because ${roleName} already has ${nextLowest.members.size}/${memberLimit} members!`
-  //       );
-  //     }
-  //   });
-  // }
 }
 
 export default MemberController;

@@ -7,7 +7,7 @@ import secretConfig from "../config/secrets.config.js";
 import discordConfig from "../config/discord.config.js";
 // TODO: Fix scheduled tasks
 // import tasks from "./scheduledTasks.js";
-import parseCommand, { prefix } from "./parseCommand.js";
+import CommandParser from "./CommandParser.js";
 import OnBoarder from "./OnBoarder.js";
 
 import AutoDelete from "./commands/AutoDelete.js";
@@ -76,8 +76,8 @@ client.on("message", (message) => {
         });
       }, deleteTime);
     }
-    if (message.content.startsWith(prefix)) {
-      processCommand(parseCommand(message));
+    if (message.content.startsWith(CommandParser.prefix)) {
+      processCommand(CommandParser.parse(message));
     } else {
       const censorManager = new CensorController(db, message.guild);
       censorManager
