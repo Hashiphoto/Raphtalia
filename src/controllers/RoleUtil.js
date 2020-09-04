@@ -4,7 +4,7 @@ class RoleUtil {
   static parseRoles(guild, roles) {
     var discordRoles = [];
     for (var i = 0; i < roles.length; i++) {
-      var roleObject = convertToRole(guild, roles[i]);
+      var roleObject = RoleUtil.convertToRole(guild, roles[i]);
       if (!roleObject) {
         console.error("Could not find role: " + roles[i]);
         continue;

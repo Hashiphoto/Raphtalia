@@ -268,7 +268,7 @@ class MemberController extends GuildBasedController {
    * @param {RoleResolvable[]} roles
    */
   addRoles(member, roles) {
-    var discordRoles = parseRoles(member.guild, roles);
+    var discordRoles = RoleUtil.parseRoles(member.guild, roles);
 
     return member.addRoles(discordRoles);
   }
