@@ -2,7 +2,7 @@ import Discord from "discord.js";
 
 import db from "../db/Database.js";
 import discordConfig from "../../config/discord.config.js";
-import RoleUtil from "./RoleUtil.js";
+import RoleUtil from "../RoleUtil.js";
 import GuildBasedController from "./GuildBasedController.js";
 import MemberLimitError from "../structures/MemberLimitError.js";
 import links from "../../resources/links.js";

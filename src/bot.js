@@ -7,7 +7,7 @@ import secretConfig from "../config/secrets.config.js";
 import discordConfig from "../config/discord.config.js";
 // TODO: Fix scheduled tasks
 // import tasks from "./scheduledTasks.js";
-import parseCommand, { prefix } from "./controllers/parseCommand.js";
+import parseCommand, { prefix } from "./parseCommand.js";
 import OnBoarder from "./OnBoarder.js";
 
 import AutoDelete from "./commands/AutoDelete.js";

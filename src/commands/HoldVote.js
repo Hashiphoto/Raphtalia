@@ -3,8 +3,8 @@ import dayjs from "dayjs";
 
 import Command from "./Command.js";
 import discordConfig from "../../config/discord.config.js";
-import sendTimedMessage from "../controllers/timedMessage.js";
-import { parseTime } from "../controllers/format.js";
+import sendTimedMessage from "../timedMessage.js";
+import { parseTime } from "../format.js";
 import Question from "../structures/Question.js";
 import VotingOption from "../structures/VotingOption.js";
 import RNumber from "../structures/RNumber.js";

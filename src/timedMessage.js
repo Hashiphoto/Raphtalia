@@ -1,5 +1,5 @@
 import Discord from "discord.js";
-import Question from "../structures/Question.js";
+import Question from "./structures/Question.js";
 
 /**
  * Send a message and wait for the first matching response. If no responses are recieved within the timeout,
@@ -16,7 +16,7 @@ function sendTimedMessage(channel, member, question, showDuration = true) {
     var re = new RegExp(question.answer, "gi");
     return message.content.match(re) != null && message.author.id === member.id;
   };
-  let text = `${member}`;
+  let text = `${member} `;
   if (showDuration) {
     text += `\`(${question.timeout / 1000}s)\`\n`;
   }

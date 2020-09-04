@@ -1,5 +1,4 @@
-import db from "../db/Database.js";
-import GuildBasedController from "./GuildBasedController.js";
+import GuildBasedController from "./controllers/GuildBasedController.js";
 
 class ServerStatusUpdater extends GuildBasedController {
   async updateServerStatus() {

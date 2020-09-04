@@ -2,11 +2,11 @@ import Discord from "discord.js";
 
 import Command from "./Command.js";
 import discordConfig from "../../config/discord.config.js";
-import ServerStatusUpdater from "../controllers/ServerStatusUpdater.js";
+import ServerStatusUpdater from "../ServerStatusUpdater.js";
 import CurrencyController from "../controllers/CurrencyController.js";
 import RNumber from "../structures/RNumber.js";
 import GuildController from "../controllers/GuildController.js";
-import RoleUtil from "../controllers/RoleUtil.js";
+import RoleUtil from "../RoleUtil.js";
 
 class Income extends Command {
   async execute() {

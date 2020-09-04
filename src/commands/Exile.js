@@ -1,7 +1,7 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import { parseTime, formatDate } from "../controllers/format.js";
+import { parseTime, formatDate } from "../format.js";
 import MemberController from "../controllers/MemberController.js";
 
 class Exile extends Command {

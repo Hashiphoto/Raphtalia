@@ -1,6 +1,6 @@
 import Command from "./Command.js";
 import CensorController from "../controllers/CensorController.js";
-import { listFormat } from "../controllers/format.js";
+import { listFormat } from "../format.js";
 
 class BanList extends Command {
   execute() {

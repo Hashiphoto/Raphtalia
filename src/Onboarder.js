@@ -1,5 +1,5 @@
 import Discord from "discord.js";
-import sendTimedMessage from "./controllers/timedMessage.js";
+import sendTimedMessage from "./timedMessage.js";
 import welcomeQuestions from "../resources/welcomeQuestions.js";
 import discordConfig from "../config/discord.config.js";
 import Question from "./structures/Question.js";

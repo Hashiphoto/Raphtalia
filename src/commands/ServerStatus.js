@@ -1,6 +1,6 @@
 import Command from "./Command.js";
 import GuildController from "../controllers/GuildController.js";
-import ServerStatusUpdater from "../controllers/ServerStatusUpdater.js";
+import ServerStatusUpdater from "../ServerStatusUpdater.js";
 
 class ServerStatus extends Command {
   async execute() {
