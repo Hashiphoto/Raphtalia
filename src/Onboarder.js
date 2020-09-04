@@ -3,12 +3,12 @@ import sendTimedMessage from "./controllers/timedMessage.js";
 import welcomeQuestions from "../resources/welcomeQuestions.js";
 import discordConfig from "../config/discord.config.js";
 import Question from "./structures/Question.js";
+import MemberController from "./controllers/MemberController.js";
 
-class Onboarder {
-  db;
-
-  constructor(db) {
+class OnBoarder {
+  constructor(db, guild) {
     this.db = db;
+    this.guild = guild;
   }
 
   /**
@@ -21,19 +21,20 @@ class Onboarder {
    * @param {Discord.GuildMember} member - The guildMember that is being onboarded
    */
   async onBoard(member, channel) {
-    await setHoistedRole(member, discordConfig().roles.immigrant);
+    const memberController = new MemberController(this.db, this.guild);
+    await memberController.setHoistedRole(member, discordConfig().roles.immigrant);
 
     let dbUser = await this.db.users.get(member.id, member.guild.id);
 
     // Check if already a citizen
     if (dbUser.citizenship) {
       channel.watchSend(`Welcome back ${member}!`);
-      setHoistedRole(member, discordConfig().roles.neutral);
+      memberController.setHoistedRole(member, discordConfig().roles.neutral);
       return;
     }
 
     channel.watchSend(
-      `Welcome ${member} to ${channel.guild.name}!\n` +
+      `Welcome ${member} to ${this.guild.name}!\n` +
         `I have a few questions for you. If you answer correctly, you will be granted citizenship.`
     );
 
@@ -75,7 +76,7 @@ class Onboarder {
     channel
       .watchSend(`Thank you! And welcome loyal citizen to ${channel.guild.name}! 🎉🎉🎉`)
       .then(() => {
-        setHoistedRole(member, discordConfig().roles.neutral);
+        memberController.setHoistedRole(member, discordConfig().roles.neutral);
       });
   }
 
@@ -119,4 +120,4 @@ class Onboarder {
   }
 }
 
-export default Onboarder;
+export default OnBoarder;

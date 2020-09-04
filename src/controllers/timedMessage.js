@@ -16,7 +16,7 @@ function sendTimedMessage(channel, member, question, showDuration = true) {
     var re = new RegExp(question.answer, "gi");
     return message.content.match(re) != null && message.author.id === member.id;
   };
-  let text = "";
+  let text = `${member}`;
   if (showDuration) {
     text += `\`(${question.timeout / 1000}s)\`\n`;
   }

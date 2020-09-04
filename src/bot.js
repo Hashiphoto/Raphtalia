@@ -8,7 +8,7 @@ import discordConfig from "../config/discord.config.js";
 // TODO: Fix scheduled tasks
 // import tasks from "./scheduledTasks.js";
 import parseCommand, { prefix } from "./controllers/parseCommand.js";
-import Onboarder from "./Onboarder.js";
+import OnBoarder from "./OnBoarder.js";
 
 import AutoDelete from "./commands/AutoDelete.js";
 import Balance from "./commands/Balance.js";
@@ -99,7 +99,7 @@ client.on("message", (message) => {
 client.on("guildMemberAdd", (member) => {
   const welcomeChannel = client.channels.get(discordConfig().channels.welcomeChannelId);
   attachWatchCommand(welcomeChannel).then(() => {
-    new Onboarder().onBoard(member, welcomeChannel);
+    new OnBoarder(db, member.guild).onBoard(member, welcomeChannel);
   });
 });
 
