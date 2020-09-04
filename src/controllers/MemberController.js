@@ -5,6 +5,7 @@ import discordConfig from "../../config/discord.config.js";
 import RoleUtil from "./RoleUtil.js";
 import GuildBasedController from "./GuildBasedController.js";
 import MemberLimitError from "../structures/MemberLimitError.js";
+import links from "../../resources/links.js";
 
 class MemberController extends GuildBasedController {
   infractionLimit = 3;
@@ -80,11 +81,7 @@ class MemberController extends GuildBasedController {
     if (count >= this.infractionLimit) {
       // TODO: Change to dead role
       if (this.hasRole(member, discordConfig().roles.exile)) {
-        return this.softKick(
-          member,
-          `Doing something illegal while under exile?` +
-            ` Come back when you're feeling more agreeable.`
-        );
+        return this.softKick(member, `for breaking the rules while in exile`);
       } else {
         return this.demoteMember(member, response);
       }
@@ -96,21 +93,26 @@ class MemberController extends GuildBasedController {
    * @param {Discord.GuildMember} member - The member to softkick
    * @param {String} reason - The message to send to the kicked member
    */
-  softKick(member, reason = "") {
+  softKick(member, reason = null, kicker = null) {
     let inviteChannel = member.guild.systemChannel;
-    inviteChannel
+    return inviteChannel
       .createInvite({ temporary: true, maxAge: 0, maxUses: 1, unique: true })
-      .then((invite) => {
-        return member.send(reason + "\n" + invite.toString());
-      })
-      .then(member.kick())
+      .then((invite) =>
+        member
+          .send(
+            `You were kicked from ${this.guild.name} ${kicker ? `by ${kicker.username}` : ``} ${
+              `"${reason}"` ?? ""
+            }` +
+              "\n" +
+              invite.toString()
+          )
+          .then(() => member.kick())
+      )
       .then(() => {
         let randInt = Math.floor(Math.random() * links.gifs.kicks.length);
         let kickGif = links.gifs.kicks[randInt];
-        if (channel)
-          return channel.watchSend(
-            `:wave: ${member.displayName} has been kicked and invited back\n${kickGif}`
-          );
+
+        return `:wave: ${member.displayName} has been kicked and invited back\n${kickGif}`;
       })
       .catch((e) => {
         console.error(e);
