@@ -86,6 +86,29 @@ class GuildController extends GuildBasedController {
 
     return response;
   }
+
+  removeStatusMessage() {
+    return this.db.guilds.get(this.guild.id).then(async (guild) => {
+      // Delete the existing status message, if it exists
+      if (!guild || !guild.status_message_id) {
+        return;
+      }
+      let textChannels = this.guild.channels
+        .filter((channel) => channel.type === "text" && !channel.deleted)
+        .array();
+      for (const channel of textChannels) {
+        try {
+          let oldStatusMessage = await channel.fetchMessage(guild.status_message_id);
+          oldStatusMessage.delete();
+          return;
+        } catch (e) {}
+      }
+    });
+  }
+
+  setStatusMessageId(messageId) {
+    return this.db.guilds.setStatusMessage(this.guild.id, messageId);
+  }
 }
 
 export default GuildController;
