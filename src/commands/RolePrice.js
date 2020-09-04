@@ -2,36 +2,39 @@ import Discord from "discord.js";
 
 import Command from "./Command.js";
 import discordConfig from "../../config/discord.config.js";
+import RNumber from "../structures/RNumber.js";
+import GuildController from "../controllers/GuildController.js";
+import ServerStatusUpdater from "../controllers/ServerStatusUpdater.js";
+import RoleUtil from "../controllers/RoleUtil.js";
 
 class RolePrice extends Command {
   async execute() {
     if (!this.message.args || this.message.args.length === 0) {
-      return this.inputChannel.watchSend(`Usage: !RolePrice 1`);
-    }
-    let multiplier = extractNumber(this.message.args[0]).number;
-    if (multiplier == null) {
-      return this.inputChannel.watchSend(`Usage: !RolePrice 1`);
+      return this.sendHelpMessage();
     }
 
-    let announcement = `Every role's purchase price is now ${multiplier.toFixed(
-      2
-    )}x its daily income!\n`;
+    let multiplier = RNumber.parse(this.message.args[0]);
+    if (multiplier.amount == null) {
+      return this.sendHelpMessage();
+    }
+
+    let response = `Every role's purchase price is now ${multiplier.toString()} its daily income!\n`;
     let neutralRole = RoleUtil.convertToRole(this.message.guild, discordConfig().roles.neutral);
     if (!neutralRole) {
       return this.inputChannel.watchSend("There is no neutral role");
     }
-    let discordRoles = this.message.guild.roles
-      .filter((role) => role.hoist && role.calculatedPosition >= neutralRole.calculatedPosition)
-      .sort((a, b) => b.calculatedPosition - a.calculatedPosition)
-      .array();
 
-    for (let i = 0; i < discordRoles.length; i++) {
-      let dbRole = await this.db.roles.getSingle(discordRoles[i].id);
-      let newPrice = dbRole.income * multiplier;
-      this.db.roles.setRolePrice(discordRoles[i].id, newPrice);
-      announcement += `${discordRoles[i].name} new price: $${newPrice.toFixed(2)}\n`;
-    }
-    this.inputChannel.watchSend(announcement).then(updateServerStatus(this.inputChannel));
+    const guildController = new GuildController(this.db, this.guild);
+    const serverStatusUpdater = new ServerStatusUpdater(this.db, this.guild);
+
+    return guildController
+      .setRolePriceMultiplier(multiplier.amount, neutralRole)
+      .then((feedback) => this.inputChannel.watchSend(`${response}\n${feedback}`))
+      .then(serverStatusUpdater.updateServerStatus());
+  }
+
+  sendHelpMessage() {
+    return this.inputChannel.watchSend("Usage: `RolePrice 1x`");
   }
 }
 

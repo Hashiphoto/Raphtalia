@@ -1,25 +1,22 @@
 import db from "../db/Database.js";
+import GuildBasedController from "./GuildBasedController.js";
 
-class ServerStatusUpdater {
-  constructor(db) {
-    this.db = db;
-  }
+class ServerStatusUpdater extends GuildBasedController {
+  async updateServerStatus() {
+    const statusEmbed = await this.generateServerStatus(this.guild);
 
-  async updateServerStatus(channel) {
-    const statusEmbed = await this.generateServerStatus(channel.guild);
-
-    return this.db.guilds.get(channel.guild.id).then(async (guild) => {
+    return this.db.guilds.get(this.guild.id).then(async (dbGuild) => {
       // Exit if no message to update
-      if (!guild || !guild.status_message_id) {
+      if (!dbGuild || !dbGuild.status_message_id) {
         return;
       }
       // Find the existing message and update it
-      let textChannels = channel.guild.channels
+      let textChannels = this.guild.channels
         .filter((channel) => channel.type === "text" && !channel.deleted)
         .array();
       for (let i = 0; i < textChannels.length; i++) {
         try {
-          let message = await textChannels[i].fetchMessage(guild.status_message_id);
+          let message = await textChannels[i].fetchMessage(dbGuild.status_message_id);
           message.edit({ embed: statusEmbed });
           break;
         } catch (e) {}
@@ -27,9 +24,9 @@ class ServerStatusUpdater {
     });
   }
 
-  async generateServerStatus(guild) {
+  async generateServerStatus() {
     let embedFields = [];
-    let discordRoles = guild.roles
+    let discordRoles = this.guild.roles
       .filter((role) => role.hoist)
       .sort((a, b) => b.calculatedPosition - a.calculatedPosition)
       .array();

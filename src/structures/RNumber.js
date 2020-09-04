@@ -7,6 +7,7 @@ class RNumber {
     PERCENT: "percent",
     INT: "int",
     FLOAT: "float",
+    MULTIPLIER: "multiplier",
   };
 
   constructor(amount, type) {
@@ -34,8 +35,12 @@ class RNumber {
     if (matches[1] === "-") {
       amount *= -1;
     }
-    if (matches[4] === "%") {
-      type = RNumber.types.PERCENT;
+    if (matches[4]) {
+      if (matches[4] === "%") {
+        type = RNumber.types.PERCENT;
+      } else if (matches[4].toLowerCase() === "x") {
+        type = RNumber.types.MULTIPLIER;
+      }
     } else if (matches[2] === "$") {
       type = RNumber.types.DOLLAR;
     }
@@ -56,11 +61,13 @@ class RNumber {
   toString() {
     switch (this.type) {
       case RNumber.types.INT:
-        return this.formatInt(this.amount);
+        return RNumber.formatInt(this.amount);
       case RNumber.types.DOLLAR:
-        return this.formatDollar(this.amount);
+        return RNumber.formatDollar(this.amount);
       case RNumber.types.PERCENT:
-        return this.formatPercent(this.amount);
+        return RNumber.formatPercent(this.amount);
+      case RNumber.types.MULTIPLIER:
+        return RNumber.formatMultiplier(this.amount);
       default:
         return this.amount.toFixed(0);
     }
@@ -76,6 +83,10 @@ class RNumber {
 
   static formatPercent(amount) {
     return amount.toFixed(2) + "%";
+  }
+
+  static formatMultiplier(amount) {
+    return amount.toFixed(2) + "x";
   }
 }
 
