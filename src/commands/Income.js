@@ -59,7 +59,7 @@ class Income extends Command {
     const baseIndex = this.message.args.indexOf("base");
     if (baseIndex >= 0) {
       let baseIncomeNumber = RNumber.parse(this.message.args[baseIndex + 1]);
-      if (baseIncomeNumber.amount == null) {
+      if (!baseIncomeNumber) {
         return null;
       }
       baseIncome = baseIncomeNumber.amount;

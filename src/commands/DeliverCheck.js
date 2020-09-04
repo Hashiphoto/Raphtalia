@@ -14,7 +14,7 @@ class DeliverCheck extends Command {
     }
 
     let rNumber = RNumber.parse(this.message.args[this.message.args.length - 1]);
-    if (rNumber.amount == null) {
+    if (!rNumber) {
       return this.sendHelpMessage();
     }
 

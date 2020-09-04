@@ -32,6 +32,9 @@ class RNumber {
       return null;
     }
     amount = parseFloat(matches[3]);
+    if (!amount) {
+      return null;
+    }
     if (matches[1] === "-") {
       amount *= -1;
     }

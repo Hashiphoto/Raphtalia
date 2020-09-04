@@ -14,7 +14,7 @@ class RolePrice extends Command {
     }
 
     let multiplier = RNumber.parse(this.message.args[0]);
-    if (multiplier.amount == null) {
+    if (!multiplier) {
       return this.sendHelpMessage();
     }
 
