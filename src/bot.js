@@ -39,6 +39,11 @@ import AllowWord from "./commands/AllowWord.js";
 import BanList from "./commands/BanList.js";
 import CensorController from "./controllers/CensorController.js";
 import Censorship from "./commands/Censorship.js";
+import ChannelController from "./controllers/ChannelController.js";
+import CurrencyController from "./controllers/CurrencyController.js";
+import GuildController from "./controllers/GuildController.js";
+import MemberController from "./controllers/MemberController.js";
+import ServerStatusUpdater from "./ServerStatusUpdater.js";
 
 const client = new Discord.Client();
 const db = new Database(Database.createPool());
@@ -149,65 +154,76 @@ function processCommand(message) {
 function getCommandByName(message) {
   // Keep alphabetical by primary command word
   // The primary command keyword should be listed first
+  const guild = message.guild;
+  const channel = message.channel;
+
   switch (message.command) {
     case "allowword":
     case "allowwords":
-      return new AllowWord(message, db);
+      return new AllowWord(message, new CensorController(db, guild));
     case "autodelete":
-      return new AutoDelete(message, db);
+      return new AutoDelete(message, new ChannelController(db, channel));
     case "balance":
     case "wallet":
-      return new Balance(message, db);
+      return new Balance(message, new CurrencyController(db, guild));
     case "banlist":
     case "bannedwords":
-      return new BanList(message, db);
+      return new BanList(message, new CensorController(db, guild));
     case "banword":
     case "banwords":
-      return new BanWord(message, db);
+      return new BanWord(message, new CensorController(db, guild));
     case "buy":
-      return new Buy(message, db);
+      return new Buy(message);
     case "censorship":
-      return new Censorship(message, db);
+      return new Censorship(message, new GuildController(db, guild));
     case "comfort":
-      return new Comfort(message, db);
+      return new Comfort(message);
     case "delivercheck":
-      return new DeliverCheck(message, db);
+      return new DeliverCheck(message, new CurrencyController(db, guild));
     case "demote":
-      return new Demote(message, db);
+      return new Demote(message, new MemberController(db, guild));
     case "economy":
-      return new Economy(message, db);
+      return new Economy(message, new GuildController(db, guild));
     case "exile":
-      return new Exile(message, db);
+      return new Exile(message, new MemberController(db, guild));
     case "fine":
-      return new Fine(message, db);
+      return new Fine(message, new CurrencyController(db, guild), new MemberController(db, guild));
     case "give":
-      return new Give(message, db);
+      return new Give(message, new CurrencyController(db, guild), new MemberController(db, guild));
     case "help":
-      return new Help(message, db);
+      return new Help(message);
     case "holdvote":
-      return new HoldVote(message, db);
+      return new HoldVote(message);
     case "income":
-      return new Income(message, db);
+      return new Income(message, new CurrencyController(db, guild), new GuildController(db, guild));
     case "infractions":
-      return new Infractions(message, db);
+      return new Infractions(message, new MemberController(db, guild));
     case "kick":
-      return new Kick(message, db);
+      return new Kick(message, new MemberController(db, guild));
     case "pardon":
-      return new Pardon(message, db);
+      return new Pardon(message, new MemberController(db, guild));
     case "play":
-      return new Play(message, db);
+      return new Play(message);
     case "promote":
-      return new Promote(message, db);
+      return new Promote(message, new MemberController(db, guild));
     case "register":
-      return new Register(message, db);
+      return new Register(message, new MemberController(db, guild));
     case "report":
-      return new Report(message, db);
+      return new Report(message, new MemberController(db, guild));
     case "roleprice":
-      return new RolePrice(message, db);
+      return new RolePrice(
+        message,
+        new GuildController(db, guild),
+        new ServerStatusUpdater((db, guild))
+      );
     case "serverstatus":
-      return new ServerStatus(message, db);
+      return new ServerStatus(
+        message,
+        new GuildController(db, guild),
+        new ServerStatusUpdater(db, guild)
+      );
     case "softkick":
-      return new SoftKick(message, db);
+      return new SoftKick(message, new MemberController(db, guild));
 
     // TODO: Move these into commands
     //// DEV ONLY ////
