@@ -1,6 +1,5 @@
 import assert from "assert";
 import CurrencyController from "../../src/controllers/CurrencyController.js";
-import RNumber from "../../src/structures/RNumber.js";
 
 describe("Calculations", () => {
   describe("Message payout", () => {
@@ -12,7 +11,8 @@ describe("Calculations", () => {
         max_payout: 999,
         min_length: 0,
       };
-      var result = CurrencyController.calculatePayout(message, dbGuild);
+      const currencyController = new CurrencyController(null, null);
+      var result = currencyController.calculatePayout(message, dbGuild);
       assert.equal(result, 10);
     });
     it("limits money by max_payout", () => {
@@ -23,7 +23,8 @@ describe("Calculations", () => {
         max_payout: 10,
         min_length: 0,
       };
-      var result = CurrencyController.calculatePayout(message, dbGuild);
+      const currencyController = new CurrencyController(null, null);
+      var result = currencyController.calculatePayout(message, dbGuild);
       assert.equal(result, 10);
     });
     it("adds base_payout to total", () => {
@@ -34,7 +35,8 @@ describe("Calculations", () => {
         max_payout: 999,
         min_length: 0,
       };
-      var result = CurrencyController.calculatePayout(message, dbGuild);
+      const currencyController = new CurrencyController(null, null);
+      var result = currencyController.calculatePayout(message, dbGuild);
       assert.equal(result, 15);
     });
     it("does not pay for messages below the minimum length", () => {
@@ -45,26 +47,9 @@ describe("Calculations", () => {
         max_payout: 999,
         min_length: 11,
       };
-      var result = CurrencyController.calculatePayout(message, dbGuild);
+      const currencyController = new CurrencyController(null, null);
+      var result = currencyController.calculatePayout(message, dbGuild);
       assert.equal(result, 0);
-    });
-  });
-
-  describe("Percent format", () => {
-    it("truncates long decimals", () => {
-      const num = 123.123123;
-      const result = RNumber.formatPercent(num);
-      assert.equal(result, "12312.31");
-    });
-    it("rounds up", () => {
-      const num = 123.12349;
-      const result = RNumber.formatPercent(num);
-      assert.equal(result, "12312.35");
-    });
-    it("returns 0 for non-numbers", () => {
-      const notNumber = null;
-      const result = RNumber.formatPercent(notNumber);
-      assert.equal(result, "0.00");
     });
   });
 });

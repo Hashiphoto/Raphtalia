@@ -72,7 +72,7 @@ class CensorController extends GuildBasedController {
   }
 
   insertWords(words) {
-    let values = words.map((word) => [word, this.guild.id]);
+    let guildWordPairs = words.map((word) => [word, this.guild.id]);
     return this.db.bannedWords.insert(guildWordPairs);
   }
 
@@ -82,14 +82,3 @@ class CensorController extends GuildBasedController {
 }
 
 export default CensorController;
-
-// TODO: Fix dependencies on this method
-function containsBannedWords(guildId, text) {
-  return this.db.guilds.get(guildId).then((guild) => {
-    if (!guild.censorship_enabled) {
-      return false;
-    }
-
-    return text.match(guild.censor_regex) != null;
-  });
-}

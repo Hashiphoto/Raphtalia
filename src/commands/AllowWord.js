@@ -18,14 +18,17 @@ class AllowWord extends Command {
 
     let words = this.message.args;
     if (words.length === 0) {
-      return this.inputChannel.watchSend(
-        "Try again and specify what words will be allowed. E.g. `AllowWord cat dog apple`"
-      );
+      return this.sendHelpMessage();
     }
 
-    this.censorController.deleteWords(words).then(censorController.rebuildCensorshipList());
+    return this.censorController
+      .deleteWords(words)
+      .then(this.censorController.rebuildCensorshipList())
+      .then(this.inputChannel.watchSend(`These words are allowed again: ${words}`));
+  }
 
-    return this.inputChannel.watchSend(`These words are allowed again: ${words}`);
+  sendHelpMessage() {
+    return this.inputChannel.watchSend("Usage: `AllowWord word1 word2 etc`");
   }
 }
 
