@@ -2,6 +2,15 @@ import Command from "./Command.js";
 import MemberController from "../controllers/MemberController.js";
 
 class Report extends Command {
+  /**
+   * @param {Discord.Message} message
+   * @param {MemberController} memberController
+   */
+  constructor(message, memberController) {
+    super(message);
+    this.memberController = memberController;
+  }
+
   async execute() {
     if (this.message.mentionedMembers.length === 0) {
       return this.sendHelpMessage();
@@ -17,13 +26,11 @@ class Report extends Command {
       }
     }
 
-    const memberController = new MemberController(this.db, this.guild);
-
     let response = "";
 
     for (const target of this.message.mentionedMembers) {
-      if (!MemberController.hasAuthorityOver(this.sender, target)) {
-        await memberController
+      if (!this.memberController.hasAuthorityOver(this.sender, target)) {
+        await this.memberController
           .addInfractions(this.sender)
           .then(
             (feedback) =>
@@ -32,7 +39,7 @@ class Report extends Command {
         break;
       }
 
-      await memberController
+      await this.memberController
         .addInfractions(target, amount)
         .then((feedback) => (response += feedback));
     }

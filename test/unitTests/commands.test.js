@@ -1,6 +1,6 @@
 import assert from "assert";
-import commands from "../../commands.js";
 import Message from "../structures/Message.js";
+import Help from "../../src/commands/Help.js";
 
 describe("Commands", () => {
   describe("Help", () => {

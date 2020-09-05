@@ -5,6 +5,15 @@ import Format from "../Format.js";
 import MemberController from "../controllers/MemberController.js";
 
 class Exile extends Command {
+  /**
+   * @param {Discord.Message} message
+   * @param {MemberController} memberController
+   */
+  constructor(message, memberController) {
+    super(message);
+    this.memberController = memberController;
+  }
+
   execute() {
     if (this.message.mentionedMembers.length === 0) {
       return this.sendHelpMessage();
@@ -17,8 +26,8 @@ class Exile extends Command {
 
     for (let i = 0; i < this.message.mentionedMembers.length; i++) {
       let target = this.message.mentionedMembers[i];
-      if (!MemberController.hasAuthorityOver(this.sender, target)) {
-        memberController
+      if (!this.memberController.hasAuthorityOver(this.sender, target)) {
+        this.memberController
           .addInfractions(this.sender)
           .then(
             (feedback) =>
@@ -26,7 +35,7 @@ class Exile extends Command {
           );
         break;
       }
-      memberController.exileMember(target, releaseDate).then((released) => {
+      this.memberController.exileMember(target, releaseDate).then((released) => {
         if (released) {
           this.inputChannel.watchSend(`${target} has been released from exile!`);
         }

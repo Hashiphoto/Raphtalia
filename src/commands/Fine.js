@@ -6,6 +6,17 @@ import RNumber from "../structures/RNumber.js";
 import MemberController from "../controllers/MemberController.js";
 
 class Fine extends Command {
+  /**
+   * @param {Discord.Message} message
+   * @param {CurrencyController} currencyController
+   * @param {MemberController} memberController
+   */
+  constructor(message, currencyController, memberController) {
+    super(message);
+    this.currencyController = currencyController;
+    this.memberController = memberController;
+  }
+
   execute() {
     if (!this.message.mentionedMembers || this.message.mentionedMembers.length === 0) {
       return this.sendHelpMessage();
@@ -16,16 +27,13 @@ class Fine extends Command {
       return this.sendHelpMessage();
     }
 
-    const currencyController = new CurrencyController(this.db, this.guild);
-    const memberController = new MemberController(this.db, this.guild);
-
     let response = "";
 
     // TODO: Create a money account for the guild that most of it goes into
     for (let i = 0; i < this.message.mentionedMembers.length; i++) {
       let target = this.message.mentionedMembers[i];
-      if (MemberController.hasAuthorityOver(this.sender, target)) {
-        memberController
+      if (!this.memberController.hasAuthorityOver(this.sender, target)) {
+        this.memberController
           .addInfractions(this.sender)
           .then(
             (feedback) =>
@@ -33,7 +41,7 @@ class Fine extends Command {
           );
         break;
       }
-      currencyController.transferCurrency(target, this.sender, rNumber.amount);
+      this.currencyController.transferCurrency(target, this.sender, rNumber.amount);
       response += `Fined ${target} ${rNumber.toString()}\n`;
     }
 

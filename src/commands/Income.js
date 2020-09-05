@@ -9,12 +9,20 @@ import GuildController from "../controllers/GuildController.js";
 import RoleUtil from "../RoleUtil.js";
 
 class Income extends Command {
-  async execute() {
-    const currencyController = new CurrencyController(this.db, this.guild);
-    const guildController = new GuildController(this.db, this.guild);
+  /**
+   * @param {Discord.Message} message
+   * @param {CurrencyController} currencyController
+   * @param {GuildController} guildController
+   */
+  constructor(message, currencyController, guildController) {
+    super(message);
+    this.currencyController = currencyController;
+    this.guildController = guildController;
+  }
 
+  async execute() {
     if (!this.message.args || this.message.args.length === 0) {
-      return currencyController.getUserIncome(this.message.sender).then((income) => {
+      return this.currencyController.getUserIncome(this.message.sender).then((income) => {
         return this.inputChannel.watchSend(`Your daily income is ${RNumber.formatDollar(income)}`);
       });
     }
@@ -39,7 +47,7 @@ class Income extends Command {
       );
     }
 
-    await guildController.setBaseIncome(baseIncome);
+    await this.guildController.setBaseIncome(baseIncome);
 
     const neutralRole = RoleUtil.convertToRole(this.message.guild, discordConfig().roles.neutral);
     if (!neutralRole) {
@@ -50,7 +58,7 @@ class Income extends Command {
       .array();
 
     return this.inputChannel
-      .watchSend(await guildController.setIncomeScale(baseIncome, roles, scaleNumber))
+      .watchSend(await this.guildController.setIncomeScale(baseIncome, roles, scaleNumber))
       .then(new ServerStatusUpdater(this.db, this.guild).updateServerStatus(this.inputChannel));
   }
 

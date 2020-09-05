@@ -4,6 +4,15 @@ import Command from "./Command.js";
 import CensorController from "../controllers/CensorController.js";
 
 class AllowWord extends Command {
+  /**
+   * @param {Discord.Message} message
+   * @param {CensorController} censorController
+   */
+  constructor(message, censorController) {
+    super(message);
+    this.censorController = censorController;
+  }
+
   execute() {
     // TODO: Check if censorship is enabled at all
 
@@ -14,14 +23,9 @@ class AllowWord extends Command {
       );
     }
 
-    const censorController = new CensorController(this.db, this.guild);
-    censorController
-      .deleteWords(words)
-      .then(censorController.rebuildCensorshipList());
+    this.censorController.deleteWords(words).then(censorController.rebuildCensorshipList());
 
-    return this.inputChannel.watchSend(
-      `These words are allowed again: ${words}`
-    );
+    return this.inputChannel.watchSend(`These words are allowed again: ${words}`);
   }
 }
 

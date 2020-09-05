@@ -2,17 +2,24 @@ import Command from "./Command.js";
 import MemberController from "../controllers/MemberController.js";
 
 class SoftKick extends Command {
+  /**
+   * @param {Discord.Message} message
+   * @param {MemberController} memberController
+   */
+  constructor(message, memberController) {
+    super(message);
+    this.memberController = memberController;
+  }
+
   async execute() {
     if (this.message.mentionedMembers.length === 0) {
       return this.sendHelpMessage();
     }
 
-    const memberController = new MemberController(this.db, this.guild);
-
     let response = "";
     for (const target of this.message.mentionedMembers) {
-      if (!MemberController.hasAuthorityOver(this.sender, target)) {
-        await memberController
+      if (!this.memberController.hasAuthorityOver(this.sender, target)) {
+        await this.memberController
           .addInfractions(this.sender)
           .then(
             (feedback) =>
@@ -27,7 +34,7 @@ class SoftKick extends Command {
         reason = found[0];
       }
 
-      await memberController
+      await this.memberController
         .softKick(target, reason, this.message.author)
         .then((feedback) => (response += feedback));
     }

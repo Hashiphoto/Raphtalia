@@ -4,11 +4,10 @@ class Command {
   /**
    * @param {Discord.Message} message - The message sent to issue this command
    */
-  constructor(message, db) {
+  constructor(message) {
     this.message = message;
     this.sender = message.sender;
     this.inputChannel = message.channel;
-    this.db = db;
     this.guild = message.guild;
   }
 

@@ -3,12 +3,22 @@ import GuildController from "../controllers/GuildController.js";
 import ServerStatusUpdater from "../ServerStatusUpdater.js";
 
 class ServerStatus extends Command {
-  async execute() {
-    const serverStatusUpdater = new ServerStatusUpdater(this.db, this.guild);
-    const statusEmbed = await serverStatusUpdater.generateServerStatus(this.message.guild);
+  /**
+   *
+   * @param {Discord.Message} message
+   * @param {GuildController} guildController
+   * @param {ServerStatusUpdater} serverStatusUpdater
+   */
+  constructor(message, guildController, serverStatusUpdater) {
+    super(message);
+    this.guildController = guildController;
+    this.serverStatusUpdater = serverStatusUpdater;
+  }
 
-    const guildController = new GuildController(this.db, this.guild);
-    guildController
+  async execute() {
+    const statusEmbed = await this.serverStatusUpdater.generateServerStatus(this.message.guild);
+
+    this.guildController
       .removeStatusMessage()
       .then(() => {
         // Post the new status message
@@ -17,7 +27,7 @@ class ServerStatus extends Command {
       .then((message) => {
         // Update the status message in the this.db
         message.pin();
-        return guildController.setStatusMessageId(message.id);
+        return this.guildController.setStatusMessageId(message.id);
       });
   }
 }

@@ -124,6 +124,8 @@ class HoldVote extends Command {
     }, duration);
   }
 
+  //TODO: Move logic into controller
+
   /**
    * @param {String} prompt
    * @param {VotingOption[]} votingOptions

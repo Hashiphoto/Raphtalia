@@ -2,6 +2,16 @@ import Command from "./Command.js";
 import GuildController from "../controllers/GuildController.js";
 
 class Censorship extends Command {
+  /**
+   *
+   * @param {Discord.Message} message
+   * @param {GuildController} guildController
+   */
+  constructor(message, guildController) {
+    super(message);
+    this.guildController = guildController;
+  }
+
   execute() {
     if (this.message.args.length == 0) {
       return this.sendHelpMessage();
@@ -17,8 +27,7 @@ class Censorship extends Command {
       return this.sendHelpMessage();
     }
 
-    let guildController = new GuildController(this.db, this.message.guild);
-    guildController.setCensorship(isCensoring).then(() => {
+    this.guildController.setCensorship(isCensoring).then(() => {
       if (isCensoring) {
         return this.inputChannel.watchSend("Censorship is enabled");
       } else {

@@ -5,14 +5,21 @@ import discordConfig from "../../config/discord.config.js";
 import MemberController from "../controllers/MemberController.js";
 
 class Register extends Command {
-  execute() {
-    const memberController = new MemberController(this.db, this.guild);
+  /**
+   * @param {Discord.Message} message
+   * @param {MemberController} memberController
+   */
+  constructor(message, memberController) {
+    super(message);
+    this.memberController = memberController;
+  }
 
-    if (memberController.hasRole(this.message.sender, discordConfig().roles.voter)) {
+  execute() {
+    if (this.memberController.hasRole(this.message.sender, discordConfig().roles.voter)) {
       return this.inputChannel.watchSend(`You are already a registered voter`);
     }
 
-    return memberController.addRoles(this.message.sender, []).then(() => {
+    return this.memberController.addRoles(this.message.sender, []).then(() => {
       this.inputChannel.watchSend(`You are now a registered voter!`);
     });
   }

@@ -16,7 +16,7 @@ class MemberController extends GuildBasedController {
    * @param {Discord.GuildMember} sender
    * @param {Discord.GuildMember} target
    */
-  static hasAuthorityOver(sender, target) {
+  hasAuthorityOver(sender, target) {
     return sender.id != target.id && sender.highestRole.comparePositionTo(target.highestRole) > 0;
   }
 

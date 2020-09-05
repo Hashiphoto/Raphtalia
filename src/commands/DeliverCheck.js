@@ -4,6 +4,15 @@ import Command from "./Command.js";
 import CurrencyController from "../controllers/CurrencyController.js";
 
 class DeliverCheck extends Command {
+  /**
+   * @param {Discord.Message} message
+   * @param {CurrencyController} currencyController
+   */
+  constructor(message, currencyController) {
+    super(message);
+    this.currencyController = currencyController;
+  }
+
   execute() {
     if (
       this.message.mentionedMembers.length === 0 ||
@@ -18,10 +27,8 @@ class DeliverCheck extends Command {
       return this.sendHelpMessage();
     }
 
-    let currencyController = new CurrencyController(this.db, this.guild);
-
     this.message.mentionedMembers.forEach((target) => {
-      currencyController.addCurrency(target, rNumber.amount);
+      this.currencyController.addCurrency(target, rNumber.amount);
     });
 
     return this.inputChannel.watchSend("Money has been distributed!");

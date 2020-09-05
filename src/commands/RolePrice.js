@@ -8,6 +8,18 @@ import ServerStatusUpdater from "../ServerStatusUpdater.js";
 import RoleUtil from "../RoleUtil.js";
 
 class RolePrice extends Command {
+  /**
+   *
+   * @param {Discord.Message} message
+   * @param {GuildController} guildController
+   * @param {ServerStatusUpdater} serverStatusUpdater
+   */
+  constructor(message, guildController, serverStatusUpdater) {
+    super(message);
+    this.guildController = guildController;
+    this.serverStatusUpdater = serverStatusUpdater;
+  }
+
   async execute() {
     if (!this.message.args || this.message.args.length === 0) {
       return this.sendHelpMessage();
@@ -24,13 +36,10 @@ class RolePrice extends Command {
       return this.inputChannel.watchSend("There is no neutral role");
     }
 
-    const guildController = new GuildController(this.db, this.guild);
-    const serverStatusUpdater = new ServerStatusUpdater(this.db, this.guild);
-
-    return guildController
+    return this.guildController
       .setRolePriceMultiplier(multiplier.amount, neutralRole)
       .then((feedback) => this.inputChannel.watchSend(`${response}\n${feedback}`))
-      .then(serverStatusUpdater.updateServerStatus());
+      .then(this.serverStatusUpdater.updateServerStatus());
   }
 
   sendHelpMessage() {

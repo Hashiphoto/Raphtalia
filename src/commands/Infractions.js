@@ -4,6 +4,15 @@ import Command from "./Command.js";
 import MemberController from "../controllers/MemberController.js";
 
 class Infractions extends Command {
+  /**
+   * @param {Discord.Message} message
+   * @param {MemberController} memberController
+   */
+  constructor(message, memberController) {
+    super(message);
+    this.memberController = memberController;
+  }
+
   async execute() {
     if (this.message.mentionedMembers == null || this.message.mentionedMembers.length === 0) {
       return this.reportInfractions(this.sender);
@@ -13,9 +22,7 @@ class Infractions extends Command {
   }
 
   reportInfractions(member) {
-    const memberController = new MemberController(this.db, this.guild);
-
-    return memberController
+    return this.memberController
       .getInfractions(member)
       .then((infractCount) =>
         this.inputChannel.watchSend(`${member} has incurred ${infractCount} infractions\n`)

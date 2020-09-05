@@ -4,6 +4,15 @@ import Command from "./Command.js";
 import ChannelController from "../controllers/ChannelController.js";
 
 class AutoDelete extends Command {
+  /**
+   * @param {Discord.Message} message
+   * @param {ChannelController} channelController
+   */
+  constructor(message, channelController) {
+    super(message);
+    this.channelController = channelController;
+  }
+
   execute() {
     if (!this.message.args || this.message.args.length === 0) {
       return this.inputChannel.watchSend(
@@ -31,13 +40,10 @@ class AutoDelete extends Command {
     }
 
     if (enable === null) {
-      return this.inputChannel.watchSend(
-        "Usage: `AutoDelete (start|stop) [delete delay ms]`"
-      );
+      return this.inputChannel.watchSend("Usage: `AutoDelete (start|stop) [delete delay ms]`");
     }
 
-    const channelController = new ChannelController(db, this.inputChannel);
-    channelController.setAutoDelete(enable, deleteDelay).then(() => {
+    this.channelController.setAutoDelete(enable, deleteDelay).then(() => {
       var response = enable
         ? `Messages are deleted after ${deleteDelay}ms`
         : "Messages are no longer deleted";

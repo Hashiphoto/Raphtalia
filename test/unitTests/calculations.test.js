@@ -1,5 +1,5 @@
 import assert from "assert";
-import { calculatePayout } from "../../util/currencyManagement.js";
+import CurrencyController from "../../src/controllers/CurrencyController.js";
 import RNumber from "../../src/structures/RNumber.js";
 
 describe("Calculations", () => {
@@ -12,7 +12,7 @@ describe("Calculations", () => {
         max_payout: 999,
         min_length: 0,
       };
-      var result = calculatePayout(message, dbGuild);
+      var result = CurrencyController.calculatePayout(message, dbGuild);
       assert.equal(result, 10);
     });
     it("limits money by max_payout", () => {
@@ -23,7 +23,7 @@ describe("Calculations", () => {
         max_payout: 10,
         min_length: 0,
       };
-      var result = calculatePayout(message, dbGuild);
+      var result = CurrencyController.calculatePayout(message, dbGuild);
       assert.equal(result, 10);
     });
     it("adds base_payout to total", () => {
@@ -34,7 +34,7 @@ describe("Calculations", () => {
         max_payout: 999,
         min_length: 0,
       };
-      var result = calculatePayout(message, dbGuild);
+      var result = CurrencyController.calculatePayout(message, dbGuild);
       assert.equal(result, 15);
     });
     it("does not pay for messages below the minimum length", () => {
@@ -45,7 +45,7 @@ describe("Calculations", () => {
         max_payout: 999,
         min_length: 11,
       };
-      var result = calculatePayout(message, dbGuild);
+      var result = CurrencyController.calculatePayout(message, dbGuild);
       assert.equal(result, 0);
     });
   });

@@ -8,12 +8,20 @@ class Economy extends Command {
   helpText =
     "Usage: `Economy [MinLength 1] [CharValue $1] [BasePayout $1] [MaxPayout $1] [TaxRate 1%]`";
 
+  /**
+   *
+   * @param {Discord.Message} message
+   * @param {GuildController} guildController
+   */
+  constructor(message, guildController) {
+    super(message);
+    this.guildController = guildController;
+  }
+
   execute() {
     if (!this.message.args || this.message.args.length <= 1) {
       return this.sendHelpMessage();
     }
-
-    const guildController = new GuildController(this.db, this.guild);
 
     let response = "";
 
@@ -28,24 +36,24 @@ class Economy extends Command {
 
       switch (flag.toLowerCase()) {
         case "minlength":
-          guildController.setMinLength(rNumber.amount);
+          this.guildController.setMinLength(rNumber.amount);
           response += `The minimum length for a message to be a paid is now ${rNumber.toString()} characters\n`;
           break;
         case "charvalue":
-          guildController.setCharacterValue(rNumber.amount);
+          this.guildController.setCharacterValue(rNumber.amount);
           response += `Messages over the minimum length earn ${rNumber.toString()} per character\n`;
           break;
         case "maxpayout":
-          guildController.setMaxPayout(rNumber.amount);
+          this.guildController.setMaxPayout(rNumber.amount);
           response += `The max value earned from a paid message is now ${rNumber.toString()}\n`;
           break;
         case "basepayout":
-          guildController.setBasePayout(rNumber.amount);
+          this.guildController.setBasePayout(rNumber.amount);
           response += `Messages over the minimum length earn a base pay of ${rNumber.toString()}\n`;
           break;
         case "taxrate":
           rNumber.setType(RNumber.types.PERCENT);
-          guildController.setTaxRate(rNumber.amount);
+          this.guildController.setTaxRate(rNumber.amount);
           response += `Members are taxed ${rNumber.toString()} of their role income on a weekly basis\n`;
           break;
         default:
