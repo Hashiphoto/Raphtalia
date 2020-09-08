@@ -1,9 +1,9 @@
 import assert from "assert";
-import TestMessage from "../structures/TestMessage.js";
+import TestMessage from "../structures/Message.test.js";
 import Help from "../../src/commands/Help.js";
 import AllowWord from "../../src/commands/AllowWord.js";
 import sinon from "sinon";
-import TestCensorController from "../structures/TestCensorController.js";
+import TestCensorController from "../structures/CensorController.test.js";
 import AutoDelete from "../../src/commands/AutoDelete.js";
 import TestChannelController from "../structures/ChannelController.test.js";
 
