@@ -15,11 +15,21 @@ class AutoDelete extends Command {
 
   execute() {
     if (!this.message.args || this.message.args.length === 0) {
-      return this.inputChannel.watchSend(
-        "Usage: `AutoDelete (start|stop) [delete delay ms]`\nIf delete delay is not specified, default 2000ms will be used"
-      );
+      return this.sendHelpMessage();
     }
 
+    const start = this.message.args.includes("start");
+    const stop = this.message.args.includes("stop");
+
+    // Ensure start or stop is specified but not both
+    if (start && stop) {
+      return this.sendHelpMessage("Please specify only one of `start` or `stop`");
+    }
+    if (!start && !stop) {
+      return this.sendHelpMessage("Please specify `start` or `stop`");
+    }
+
+    // Get the time from the message
     let enable = null;
     let deleteDelay = 2000;
     for (let i = 0; i < this.message.args.length; i++) {
@@ -40,7 +50,7 @@ class AutoDelete extends Command {
     }
 
     if (enable === null) {
-      return this.inputChannel.watchSend("Usage: `AutoDelete (start|stop) [delete delay ms]`");
+      return this.sendHelpMessage();
     }
 
     this.channelController.setAutoDelete(enable, deleteDelay).then(() => {
@@ -49,6 +59,13 @@ class AutoDelete extends Command {
         : "Messages are no longer deleted";
       return this.inputChannel.watchSend(response);
     });
+  }
+
+  sendHelpMessage(pretext = "") {
+    return this.inputChannel.watchSend(
+      `${pretext}\n` +
+        "Usage: `AutoDelete (start|stop) [delete delay ms]`\nIf delete delay is not specified, default 2000ms will be used"
+    );
   }
 }
 

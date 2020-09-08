@@ -1,4 +1,7 @@
 import dayjs from "dayjs";
+import duration from "dayjs/plugin/duration.js";
+
+dayjs.extend(duration);
 
 class Format {
   static formatDate(date) {
@@ -9,28 +12,31 @@ class Format {
    * Add a specified amount of time to the current time and return a dayjs date that equals
    * the sum of the current time and the parameter "duration"
    *
-   * @param {String} duration - A string representation of a time span. Ex. "5d 4h 3s" or "30m"
-   * @returns {dayjs} The current time + the duration passed in
+   * @param {String} inputText - A string representation of a time span. Ex. "5d 4h 3s" or "30m"
+   * @returns {Number} - The duration in milliseconds
    */
-  static parseTime(duration) {
-    let matches = duration.match(/\d+[dhms]/g);
+  static parseTime(inputText) {
+    let matches = inputText.matchAll(/\b(\d+)(d|h|m|s|(?:ms))\b/gi);
     if (!matches) {
       return null;
     }
-    let timePairs = [];
-    let endDate = dayjs();
-    matches.forEach((m) => {
-      // Get the last character as the type (h, m, d, s)
-      let timeType = m.slice(-1);
-      // The length is every character before the type
-      let timeLength = m.slice(0, -1);
-      timePairs.push({ type: timeType, length: timeLength });
-    });
-    timePairs.forEach((pair) => {
-      endDate = endDate.add(pair.length, pair.type);
-    });
 
-    return endDate;
+    let duration = dayjs.duration(0);
+    for (const match of matches) {
+      // The duration is in capturing group 1
+      const timeSpan = parseInt(match[1]);
+      // The type is in capturing group 2
+      const timeType = match[2];
+
+      // For some reason, specifying "ms" breaks dayjs?
+      if (timeType === "ms") {
+        duration = duration.add(timeSpan);
+        continue;
+      }
+      duration = duration.add(timeSpan, timeType);
+    }
+
+    return duration.asMilliseconds();
   }
 
   static listFormat(itemArray) {
