@@ -76,14 +76,32 @@ describe("Commands", () => {
       assert(autoDelete.sendHelpMessage.calledOnce);
     });
 
+    it("does not allow start AND stop to be specified", () => {
+      const autoDelete = new AutoDelete(new TestMessage("start stop 100"));
+      sandbox.spy(autoDelete, "sendHelpMessage");
+
+      autoDelete.execute();
+
+      assert(autoDelete.sendHelpMessage.calledOnce);
+    });
+
     it("parses start message", () => {
       const channelController = new TestChannelController();
-      const autoDelete = new AutoDelete(new TestMessage("start 1234"), channelController);
+      const autoDelete = new AutoDelete(new TestMessage("start 1234ms"), channelController);
 
       autoDelete.execute();
 
       assert.equal(channelController.channel.enable, true);
       assert.equal(channelController.channel.deleteDelay, 1234);
+    });
+
+    it("parses stop message", () => {
+      const channelController = new TestChannelController();
+      const autoDelete = new AutoDelete(new TestMessage("stop"), channelController);
+
+      autoDelete.execute();
+
+      assert.equal(channelController.channel.enable, false);
     });
   });
 

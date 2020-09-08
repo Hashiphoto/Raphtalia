@@ -1,4 +1,5 @@
 import Discord from "discord.js";
+import dayjs from "dayjs";
 
 import Command from "./Command.js";
 import Format from "../Format.js";
@@ -19,8 +20,8 @@ class Exile extends Command {
       return this.sendHelpMessage();
     }
 
-    const releaseDate = Format.parseTime(this.message.content);
-    const memberController = new MemberController(this.db, this.guild);
+    // Current time + exile duration
+    const releaseDate = dayjs().add(Format.parseTime(this.message.content));
 
     let response = "";
 

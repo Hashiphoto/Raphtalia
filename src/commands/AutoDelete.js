@@ -2,6 +2,7 @@ import Discord from "discord.js";
 
 import Command from "./Command.js";
 import ChannelController from "../controllers/ChannelController.js";
+import Format from "../Format.js";
 
 class AutoDelete extends Command {
   /**
@@ -20,6 +21,7 @@ class AutoDelete extends Command {
 
     const start = this.message.args.includes("start");
     const stop = this.message.args.includes("stop");
+    const durationMs = Format.parseTime(this.message.content);
 
     // Ensure start or stop is specified but not both
     if (start && stop) {
@@ -28,34 +30,15 @@ class AutoDelete extends Command {
     if (!start && !stop) {
       return this.sendHelpMessage("Please specify `start` or `stop`");
     }
-
-    // Get the time from the message
-    let enable = null;
-    let deleteDelay = 2000;
-    for (let i = 0; i < this.message.args.length; i++) {
-      switch (this.message.args[i].toLowerCase()) {
-        case "start":
-          enable = true;
-          break;
-        case "stop":
-          enable = false;
-          break;
-        default:
-          let num = parseInt(this.message.args[i]);
-          if (isNaN(num)) {
-            continue;
-          }
-          deleteDelay = num;
-      }
+    if (durationMs == null) {
+      return this.sendHelpMessage(
+        "Please use a time format to specify how long to wait before deleting messages in this channel. E.g.: `3s` or `1500ms`"
+      );
     }
 
-    if (enable === null) {
-      return this.sendHelpMessage();
-    }
-
-    this.channelController.setAutoDelete(enable, deleteDelay).then(() => {
-      var response = enable
-        ? `Messages are deleted after ${deleteDelay}ms`
+    return this.channelController.setAutoDelete(start, durationMs).then(() => {
+      var response = start
+        ? `Messages are deleted after ${durationMs}ms`
         : "Messages are no longer deleted";
       return this.inputChannel.watchSend(response);
     });
@@ -64,7 +47,7 @@ class AutoDelete extends Command {
   sendHelpMessage(pretext = "") {
     return this.inputChannel.watchSend(
       `${pretext}\n` +
-        "Usage: `AutoDelete (start|stop) [delete delay ms]`\nIf delete delay is not specified, default 2000ms will be used"
+        "Usage: `AutoDelete (start|stop) [1ms]`\nIf deletion delay is not specified, default 2000ms will be used"
     );
   }
 }

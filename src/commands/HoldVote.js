@@ -53,8 +53,10 @@ class HoldVote extends Command {
     const timeQuestion = new Question("How long will voting be open? (e.g. `1h 30m`)", ".*", 60000);
     let timeContent = (await sendTimedMessage(this.inputChannel, this.sender, timeQuestion, true))
       .content;
-    let endDate = Format.parseTime(timeContent);
-    let duration = endDate.diff(dayjs());
+
+    let duration = Format.parseTime(timeContent);
+    let endDate = dayjs().add(duration);
+    // Don't allow the time (in ms) to exceed Integer max value (a little more than 24 days)
     if (duration > 0x7fffffff) {
       duration = 0x7fffffff;
     }
