@@ -45,21 +45,19 @@ describe("Commands", () => {
       const allowWord = new AllowWord(new TestMessage());
       sandbox.spy(allowWord, "sendHelpMessage");
 
-      allowWord.execute();
-
-      assert(allowWord.sendHelpMessage.calledOnce);
+      return allowWord.execute().then((text) => assert(allowWord.sendHelpMessage.calledOnce));
     });
 
-    it("deletes the words given and rebuilds the censor list", () => {
+    it("deletes the words given", () => {
       const message = new TestMessage("apple banana 34%^");
       const censorController = new TestCensorController();
       const allowWord = new AllowWord(message, censorController);
       sandbox.spy(censorController, "rebuildCensorshipList");
 
-      allowWord.execute();
-
-      assert(censorController.deletedWords.equals(["apple", "banana", "34%^"]));
-      assert(censorController.rebuildCensorshipList.calledOnce);
+      return allowWord.execute().then((text) => {
+        assert(censorController.deletedWords.equals(["apple", "banana", "34%^"]));
+        assert(censorController.rebuildCensorshipList.calledOnce);
+      });
     });
   });
 
@@ -68,46 +66,46 @@ describe("Commands", () => {
       const autoDelete = new AutoDelete(new TestMessage());
       sandbox.spy(autoDelete, "sendHelpMessage");
 
-      autoDelete.execute();
-
-      assert(autoDelete.sendHelpMessage.calledOnce);
+      return autoDelete.execute().then(() => {
+        assert(autoDelete.sendHelpMessage.calledOnce);
+      });
     });
 
     it("fails if start or stop is not specified", () => {
       const autoDelete = new AutoDelete(new TestMessage("foo"));
       sandbox.spy(autoDelete, "sendHelpMessage");
 
-      autoDelete.execute();
-
-      assert(autoDelete.sendHelpMessage.calledOnce);
+      return autoDelete.execute().then(() => {
+        assert(autoDelete.sendHelpMessage.calledOnce);
+      });
     });
 
     it("does not allow start AND stop to be specified", () => {
       const autoDelete = new AutoDelete(new TestMessage("start stop 100"));
       sandbox.spy(autoDelete, "sendHelpMessage");
 
-      autoDelete.execute();
-
-      assert(autoDelete.sendHelpMessage.calledOnce);
+      return autoDelete.execute().then(() => {
+        assert(autoDelete.sendHelpMessage.calledOnce);
+      });
     });
 
     it("parses start message", () => {
       const channelController = new TestChannelController();
       const autoDelete = new AutoDelete(new TestMessage("start 1234ms"), channelController);
 
-      autoDelete.execute();
-
-      assert.equal(channelController.channel.enable, true);
-      assert.equal(channelController.channel.deleteDelay, 1234);
+      return autoDelete.execute().then(() => {
+        assert.equal(channelController.channel.enable, true);
+        assert.equal(channelController.channel.deleteDelay, 1234);
+      });
     });
 
     it("parses stop message", () => {
       const channelController = new TestChannelController();
       const autoDelete = new AutoDelete(new TestMessage("stop"), channelController);
 
-      autoDelete.execute();
-
-      assert.equal(channelController.channel.enable, false);
+      return autoDelete.execute().then(() => {
+        assert.equal(channelController.channel.enable, false);
+      });
     });
   });
 
@@ -120,7 +118,7 @@ describe("Commands", () => {
       const message = new TestMessage();
       const balance = new Balance(message, currencyController);
 
-      balance
+      return balance
         .execute()
         .then((text) => assert.equal(text, `You have ${RNumber.formatDollar(54)} in TEST_GUILD`));
     });
@@ -146,7 +144,7 @@ describe("Commands", () => {
       const message = new TestMessage();
       const help = new Help(message);
 
-      help.execute().then((text) => assert.equal(text, "Help yourself, TEST_MEMBER"));
+      return help.execute().then((text) => assert.equal(text, "Help yourself, TEST_MEMBER"));
     });
   });
 });
