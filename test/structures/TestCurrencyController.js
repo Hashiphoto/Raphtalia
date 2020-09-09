@@ -1,4 +1,8 @@
 class TestCurrencyController {
+  constructor() {
+    this.db = new Map();
+  }
+
   payoutMessage() {
     return Promise.resolve();
   }
@@ -7,7 +11,8 @@ class TestCurrencyController {
     return Promise.resolve();
   }
 
-  addCurrency() {
+  async addCurrency(target, amount) {
+    this.db.set(target, (await this.getCurrency(target)) + amount);
     return Promise.resolve();
   }
 
@@ -19,8 +24,8 @@ class TestCurrencyController {
     return Promise.resolve();
   }
 
-  getCurrency() {
-    return Promise.resolve();
+  getCurrency(target) {
+    return Promise.resolve(this.db.get(target) ?? 0);
   }
 }
 

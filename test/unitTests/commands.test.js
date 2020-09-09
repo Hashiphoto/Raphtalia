@@ -17,6 +17,7 @@ import CensorController from "../../src/controllers/CensorController.js";
 import Censorship from "../../src/commands/Censorship.js";
 import TestGuildController from "../structures/TestGuildController.js";
 import Comfort from "../../src/commands/Comfort.js";
+import DeliverCheck from "../../src/commands/DeliverCheck.js";
 
 /**
  * Allows arrays to be compared to other arrays for equality
@@ -223,6 +224,47 @@ describe("Commands", () => {
         assert(text.includes("TEST2"));
         assert(text.includes("TEST3"));
       });
+    });
+  });
+
+  describe("DeliverCheck", () => {
+    it("fails if no members are mentioned", () => {
+      const deliverCheck = new DeliverCheck(new TestMessage("plenty of args foo bar"));
+      sandbox.spy(deliverCheck, "sendHelpMessage");
+
+      return deliverCheck.execute().then(() => {
+        assert(deliverCheck.sendHelpMessage.calledOnce);
+      });
+    });
+
+    it("fails if no number is given", () => {
+      const message = new TestMessage("foo bar").setMentionedMembers(["TEST1", "TEST2"]);
+      const deliverCheck = new DeliverCheck(message);
+      sandbox.spy(deliverCheck, "sendHelpMessage");
+
+      return deliverCheck.execute().then(() => {
+        assert(deliverCheck.sendHelpMessage.calledOnce);
+      });
+    });
+
+    it("adds currency to the mentioned members", () => {
+      const message = new TestMessage("$450").setMentionedMembers(["TEST1", "TEST2"]);
+      const currencyController = new TestCurrencyController();
+      const deliverCheck = new DeliverCheck(message, currencyController);
+
+      return deliverCheck
+        .execute()
+        .then((text) => {
+          assert(text && text != "");
+          return currencyController.getCurrency("TEST1");
+        })
+        .then((currency1) => {
+          assert(currency1 === 450);
+          return currencyController.getCurrency("TEST2");
+        })
+        .then((currency2) => {
+          assert(currency2 === 450);
+        });
     });
   });
 

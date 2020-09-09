@@ -2,6 +2,7 @@ import Discord from "discord.js";
 
 import Command from "./Command.js";
 import CurrencyController from "../controllers/CurrencyController.js";
+import RNumber from "../structures/RNumber.js";
 
 class DeliverCheck extends Command {
   /**
@@ -14,24 +15,23 @@ class DeliverCheck extends Command {
   }
 
   execute() {
-    if (
-      this.message.mentionedMembers.length === 0 ||
-      !this.message.args ||
-      this.message.args.length < 2
-    ) {
+    if (this.message.mentionedMembers.length === 0) {
       return this.sendHelpMessage();
     }
 
-    let rNumber = RNumber.parse(this.message.args[this.message.args.length - 1]);
+    let rNumber = RNumber.parse(this.message.content);
     if (!rNumber) {
       return this.sendHelpMessage();
     }
 
-    this.message.mentionedMembers.forEach((target) => {
-      this.currencyController.addCurrency(target, rNumber.amount);
-    });
+    let promises = [];
+    for (const target of this.message.mentionedMembers) {
+      promises.push(this.currencyController.addCurrency(target, rNumber.amount));
+    }
 
-    return this.inputChannel.watchSend("Money has been distributed!");
+    return Promise.all(promises).then(() =>
+      this.inputChannel.watchSend("Money has been distributed!")
+    );
   }
 
   sendHelpMessage() {

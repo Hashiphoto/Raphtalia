@@ -18,7 +18,9 @@ class RNumber {
   static parse(text) {
     let amount = null;
     let type = RNumber.types.INT;
+    // Remove mentions
     text = text.replace(/<.{2}\d+>/i, "").trim();
+    // Get the first number in the text
     let matches = text.match(/^(\+|-)?(\$)?(\d*\.?\d+)(%|X)?$/i);
     /**
      * Index    Contains            Example
