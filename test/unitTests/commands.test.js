@@ -16,6 +16,7 @@ import BanWord from "../../src/commands/BanWord.js";
 import CensorController from "../../src/controllers/CensorController.js";
 import Censorship from "../../src/commands/Censorship.js";
 import TestGuildController from "../structures/GuildController.test.js";
+import Comfort from "../../src/commands/Comfort.js";
 
 /**
  * Allows arrays to be compared to other arrays for equality
@@ -199,6 +200,28 @@ describe("Commands", () => {
 
       return censorship.execute().then(() => {
         assert(guildController.isCensoring === false);
+      });
+    });
+  });
+
+  describe("Comfort", () => {
+    it("fails if no one is mentioned", () => {
+      const comfort = new Comfort(new TestMessage("foo bar"));
+      sandbox.spy(comfort, "sendHelpMessage");
+
+      return comfort.execute().then(() => {
+        assert(comfort.sendHelpMessage.calledOnce);
+      });
+    });
+
+    it("comforts everyone mentioned", () => {
+      const message = new TestMessage("foo bar").setMentionedMembers(["TEST1", "TEST2", "TEST3"]);
+      const comfort = new Comfort(message);
+
+      return comfort.execute().then((text) => {
+        assert(text.includes("TEST1"));
+        assert(text.includes("TEST2"));
+        assert(text.includes("TEST3"));
       });
     });
   });

@@ -9,6 +9,12 @@ class TestMessage {
     this.sender = new TestMember();
     this.content = content;
     this.args = content.length ? content.split(" ") : [];
+    this.mentionedMembers = [];
+  }
+
+  setMentionedMembers(memberList) {
+    this.mentionedMembers = memberList;
+    return this;
   }
 }
 

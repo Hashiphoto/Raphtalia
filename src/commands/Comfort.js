@@ -5,15 +5,19 @@ import Command from "./Command.js";
 class Comfort extends Command {
   execute() {
     if (this.message.mentionedMembers.length === 0) {
-      this.inputChannel.watchSend(
-        "Please repeat the command and specify who I'm headpatting"
-      );
-      return;
+      return this.sendHelpMessage();
     }
 
-    this.message.mentionedMembers.forEach((member) => {
-      this.inputChannel.watchSend(member.toString() + " headpat");
-    });
+    let response = "";
+    for (const member of this.message.mentionedMembers) {
+      response += `${member} headpat\n`;
+    }
+
+    return this.inputChannel.watchSend(response);
+  }
+
+  sendHelpMessage() {
+    return this.inputChannel.watchSend("Usage: `Comfort @member`");
   }
 }
 
