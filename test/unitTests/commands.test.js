@@ -6,6 +6,10 @@ import sinon from "sinon";
 import TestCensorController from "../structures/CensorController.test.js";
 import AutoDelete from "../../src/commands/AutoDelete.js";
 import TestChannelController from "../structures/ChannelController.test.js";
+import TestCurrencyController from "../structures/CurrencyController.test.js";
+import Balance from "../../src/commands/Balance.js";
+import TestChannel from "../structures/Channel.test.js";
+import RNumber from "../../src/structures/RNumber.js";
 
 /**
  * Allows arrays to be compared to other arrays for equality
@@ -105,9 +109,20 @@ describe("Commands", () => {
     });
   });
 
-  // Simple enough to justify lack of testing. Left here in case it becomes more
-  // complex in the future and needs unit testing
-  describe("Balance", () => {});
+  describe("Balance", () => {
+    it("makes the correct calls to CurrencyController", () => {
+      const currencyController = new TestCurrencyController();
+      currencyController.getCurrency = () => {
+        return Promise.resolve(54);
+      };
+      const message = new TestMessage();
+      const balance = new Balance(message, currencyController);
+
+      balance
+        .execute()
+        .then((text) => assert.equal(text, `You have ${RNumber.formatDollar(54)} in TEST_GUILD`));
+    });
+  });
 
   describe("BanList", () => {});
 
@@ -116,9 +131,7 @@ describe("Commands", () => {
       const message = new TestMessage();
       const help = new Help(message);
 
-      help.execute().then((message) => {
-        assert.equal(message, "Help yourself, TEST");
-      });
+      help.execute().then((text) => assert.equal(text, "Help yourself, TEST_MEMBER"));
     });
   });
 });

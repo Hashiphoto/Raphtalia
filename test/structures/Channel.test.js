@@ -7,6 +7,11 @@ class TestChannel {
     this.output += text;
     return Promise.resolve(text);
   }
+
+  send(text) {
+    this.output += text;
+    return Promise.resolve(text);
+  }
 }
 
 export default TestChannel;
