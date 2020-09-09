@@ -1,21 +1,21 @@
 import assert from "assert";
-import TestMessage from "../structures/Message.test.js";
+import TestMessage from "../structures/TestMessage.js";
 import Help from "../../src/commands/Help.js";
 import AllowWord from "../../src/commands/AllowWord.js";
 import sinon from "sinon";
-import TestCensorController from "../structures/CensorController.test.js";
+import TestCensorController from "../structures/TestCensorController.js";
 import AutoDelete from "../../src/commands/AutoDelete.js";
-import TestChannelController from "../structures/ChannelController.test.js";
-import TestCurrencyController from "../structures/CurrencyController.test.js";
+import TestChannelController from "../structures/TestChannelController.js";
+import TestCurrencyController from "../structures/TestCurrencyController.js";
 import Balance from "../../src/commands/Balance.js";
-import TestChannel from "../structures/Channel.test.js";
+import TestChannel from "../structures/TestChannel.js";
 import RNumber from "../../src/structures/RNumber.js";
 import BanList from "../../src/commands/BanList.js";
 import Format from "../../src/Format.js";
 import BanWord from "../../src/commands/BanWord.js";
 import CensorController from "../../src/controllers/CensorController.js";
 import Censorship from "../../src/commands/Censorship.js";
-import TestGuildController from "../structures/GuildController.test.js";
+import TestGuildController from "../structures/TestGuildController.js";
 import Comfort from "../../src/commands/Comfort.js";
 
 /**

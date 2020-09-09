@@ -1,6 +1,6 @@
-import TestChannel from "./Channel.test.js";
-import TestGuild from "./Guild.test.js";
-import TestMember from "./Member.test.js";
+import TestChannel from "./TestChannel.js";
+import TestGuild from "./TestGuild.js";
+import TestMember from "./TestMember.js";
 
 class TestMessage {
   constructor(content = "") {
