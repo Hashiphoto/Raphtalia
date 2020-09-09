@@ -16,9 +16,11 @@ class Balance extends Command {
 
   async execute() {
     const dmChannel = await this.sender.createDM();
-    this.currencyController.getCurrency(this.sender).then((balance) => {
-      dmChannel.send(`You have ${RNumber.formatDollar(balance)} in ${this.message.guild.name}`);
-    });
+    return this.currencyController
+      .getCurrency(this.sender)
+      .then((balance) =>
+        dmChannel.send(`You have ${RNumber.formatDollar(balance)} in ${this.message.guild.name}`)
+      );
   }
 }
 

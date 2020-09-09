@@ -5,7 +5,7 @@ class TestChannel {
 
   watchSend(text) {
     this.output += text;
-    return text;
+    return Promise.resolve(text);
   }
 }
 

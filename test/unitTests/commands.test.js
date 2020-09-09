@@ -105,14 +105,20 @@ describe("Commands", () => {
     });
   });
 
+  // Simple enough to justify lack of testing. Left here in case it becomes more
+  // complex in the future and needs unit testing
+  describe("Balance", () => {});
+
+  describe("BanList", () => {});
+
   describe("Help", () => {
     it("sends the help message", async () => {
       const message = new TestMessage();
       const help = new Help(message);
 
-      help.execute();
-
-      assert.equal(help.inputChannel.output, "Help yourself, TEST");
+      help.execute().then((message) => {
+        assert.equal(message, "Help yourself, TEST");
+      });
     });
   });
 });
