@@ -14,6 +14,8 @@ import BanList from "../../src/commands/BanList.js";
 import Format from "../../src/Format.js";
 import BanWord from "../../src/commands/BanWord.js";
 import CensorController from "../../src/controllers/CensorController.js";
+import Censorship from "../../src/commands/Censorship.js";
+import TestGuildController from "../structures/GuildController.test.js";
 
 /**
  * Allows arrays to be compared to other arrays for equality
@@ -150,6 +152,7 @@ describe("Commands", () => {
         assert(banWord.sendHelpMessage.calledOnce);
       });
     });
+
     it("makes the correct calls to the CensorController", () => {
       const censorController = new TestCensorController();
       const banWord = new BanWord(new TestMessage("cat dog apple"), censorController);
@@ -158,6 +161,44 @@ describe("Commands", () => {
       return banWord.execute().then((text) => {
         assert(censorController.rebuildCensorshipList.calledOnce);
         assert(censorController.insertedWords.equals(["cat", "dog", "apple"]));
+      });
+    });
+  });
+
+  describe("Censorship", () => {
+    it("fails if start or stop is not specified", () => {
+      const censorship = new Censorship(new TestMessage("text foo bar lasagna"));
+      sandbox.spy(censorship, "sendHelpMessage");
+
+      return censorship.execute().then(() => {
+        assert(censorship.sendHelpMessage.calledOnce);
+      });
+    });
+
+    it("fails if both start and stop are specified", () => {
+      const censorship = new Censorship(new TestMessage("start stop"));
+      sandbox.spy(censorship, "sendHelpMessage");
+
+      return censorship.execute().then(() => {
+        assert(censorship.sendHelpMessage.calledOnce);
+      });
+    });
+
+    it("starts censoring", () => {
+      const guildController = new TestGuildController();
+      const censorship = new Censorship(new TestMessage("foo start bar"), guildController);
+
+      return censorship.execute().then(() => {
+        assert(guildController.isCensoring === true);
+      });
+    });
+
+    it("stops censoring", () => {
+      const guildController = new TestGuildController();
+      const censorship = new Censorship(new TestMessage("foo stop bar"), guildController);
+
+      return censorship.execute().then(() => {
+        assert(guildController.isCensoring === false);
       });
     });
   });

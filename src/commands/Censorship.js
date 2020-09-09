@@ -13,22 +13,15 @@ class Censorship extends Command {
   }
 
   execute() {
-    if (this.message.args.length == 0) {
-      return this.sendHelpMessage();
+    const start = this.message.args.includes("start");
+    const stop = this.message.args.includes("stop");
+
+    if ((start && stop) || (!start && !stop)) {
+      return this.sendHelpMessage("Please specify either `start` or `stop`");
     }
 
-    let isCensoring;
-    const text = this.message.args[0].toLowerCase();
-    if (text == "enable") {
-      isCensoring = true;
-    } else if (text == "disable") {
-      isCensoring = false;
-    } else {
-      return this.sendHelpMessage();
-    }
-
-    this.guildController.setCensorship(isCensoring).then(() => {
-      if (isCensoring) {
+    return this.guildController.setCensorship(start).then(() => {
+      if (start) {
         return this.inputChannel.watchSend("Censorship is enabled");
       } else {
         return this.inputChannel.watchSend("All speech is permitted!");
@@ -36,10 +29,8 @@ class Censorship extends Command {
     });
   }
 
-  sendHelpMessage() {
-    return this.inputChannel.watchSend(
-      "Try again and specify if censorship is enabled or disabled.\nE.g. `Censorship enable`"
-    );
+  sendHelpMessage(pretext = "") {
+    return this.inputChannel.watchSend(`${pretext}\n` + "Usage: `Censorship (start|stop)`");
   }
 }
 
