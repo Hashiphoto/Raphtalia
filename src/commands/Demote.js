@@ -2,6 +2,7 @@ import Discord from "discord.js";
 
 import Command from "./Command.js";
 import MemberController from "../controllers/MemberController.js";
+import AuthorityError from "../structures/AuthorityError.js";
 
 class Demote extends Command {
   /**
@@ -15,30 +16,30 @@ class Demote extends Command {
 
   async execute() {
     if (this.message.mentionedMembers.length === 0) {
-      return this.inputChannel.watchSend(
-        "Please repeat the command and specify who is being demoted"
+      return this.sendHelpMessage();
+    }
+
+    const promises = [];
+    for (const target of this.message.mentionedMembers) {
+      promises.push(
+        this.hasAuthorityOver(target)
+          .then(() => this.memberController.demoteMember(target))
+          .catch((error) => {
+            if (error instanceof AuthorityError) {
+              return `You must hold a rank higher than ${target} to demote them\n`;
+            }
+            throw error;
+          })
       );
     }
 
-    let response = "";
+    return Promise.all(promises)
+      .then((responses) => responses.reduce((sum, value) => sum + value))
+      .then((response) => this.inputChannel.watchSend(response));
+  }
 
-    for (const target of this.message.mentionedMembers) {
-      if (!this.memberController.hasAuthorityOver(this.sender, target)) {
-        await this.memberController
-          .addInfractions(this.sender)
-          .then(
-            (feedback) =>
-              (response += `You must hold a rank higher than ${target} to demote them\n${feedback}\n`)
-          );
-        break;
-      }
-
-      await this.memberController
-        .demoteMember(this.inputChannel, this.sender, target)
-        .then((feedback) => (response += feedback));
-    }
-
-    return this.inputChannel.watchSend(response);
+  sendHelpMessage() {
+    return this.inputChannel.watchSend("Usage: `Demote @member`");
   }
 }
 

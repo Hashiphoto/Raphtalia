@@ -1,4 +1,5 @@
 import Discord from "discord.js";
+import AuthorityError from "../structures/AuthorityError.js";
 
 class Command {
   /**
@@ -23,6 +24,16 @@ class Command {
 
   sendHelpMessage() {
     // TODO: Make this required to implement
+  }
+
+  hasAuthorityOver(target) {
+    if (
+      this.sender.id != target.id &&
+      this.sender.highestRole.comparePositionTo(target.highestRole) > 0
+    ) {
+      return Promise.resolve();
+    }
+    return Promise.reject(new AuthorityError());
   }
 }
 

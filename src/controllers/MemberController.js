@@ -334,7 +334,7 @@ class MemberController extends GuildBasedController {
       await this.setHoistedRole(target, nextLowest)
         .then(() => {
           changed = true;
-          response += `${target} has been demoted to **${nextLowest.name}**!`;
+          response += `${target} has been demoted to **${nextLowest.name}**!\n`;
         })
         .catch((error) => {
           if (error instanceof MemberLimitError) {

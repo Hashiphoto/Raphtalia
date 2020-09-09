@@ -268,6 +268,8 @@ describe("Commands", () => {
     });
   });
 
+  describe("Demote", () => {});
+
   describe("Help", () => {
     it("sends the help message", async () => {
       const message = new TestMessage();
