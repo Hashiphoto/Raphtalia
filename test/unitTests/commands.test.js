@@ -10,6 +10,8 @@ import TestCurrencyController from "../structures/CurrencyController.test.js";
 import Balance from "../../src/commands/Balance.js";
 import TestChannel from "../structures/Channel.test.js";
 import RNumber from "../../src/structures/RNumber.js";
+import BanList from "../../src/commands/BanList.js";
+import Format from "../../src/Format.js";
 
 /**
  * Allows arrays to be compared to other arrays for equality
@@ -124,7 +126,20 @@ describe("Commands", () => {
     });
   });
 
-  describe("BanList", () => {});
+  describe("BanList", () => {
+    it("makes the correct calls to the CensorController", () => {
+      const censorController = new TestCensorController();
+      const fakeBanList = ["foo", "bar", "lemon"];
+      censorController.setBanList(fakeBanList);
+      const banList = new BanList(new TestMessage(), censorController);
+
+      return banList
+        .execute()
+        .then((text) =>
+          assert(text === `Here are all the banned words: ${Format.listFormat(fakeBanList)}`)
+        );
+    });
+  });
 
   describe("Help", () => {
     it("sends the help message", async () => {
