@@ -12,6 +12,8 @@ import TestChannel from "../structures/Channel.test.js";
 import RNumber from "../../src/structures/RNumber.js";
 import BanList from "../../src/commands/BanList.js";
 import Format from "../../src/Format.js";
+import BanWord from "../../src/commands/BanWord.js";
+import CensorController from "../../src/controllers/CensorController.js";
 
 /**
  * Allows arrays to be compared to other arrays for equality
@@ -136,6 +138,27 @@ describe("Commands", () => {
         .then((text) =>
           assert(text === `Here are all the banned words: ${Format.listFormat(fakeBanList)}`)
         );
+    });
+  });
+
+  describe("BanWord", () => {
+    it("fails if no args are given", () => {
+      const banWord = new BanWord(new TestMessage());
+      sandbox.spy(banWord, "sendHelpMessage");
+
+      return banWord.execute().then((text) => {
+        assert(banWord.sendHelpMessage.calledOnce);
+      });
+    });
+    it("makes the correct calls to the CensorController", () => {
+      const censorController = new TestCensorController();
+      const banWord = new BanWord(new TestMessage("cat dog apple"), censorController);
+      sandbox.spy(censorController, "rebuildCensorshipList");
+
+      return banWord.execute().then((text) => {
+        assert(censorController.rebuildCensorshipList.calledOnce);
+        assert(censorController.insertedWords.equals(["cat", "dog", "apple"]));
+      });
     });
   });
 

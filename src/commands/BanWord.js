@@ -16,14 +16,17 @@ class BanWord extends Command {
 
     const words = this.message.args;
     if (words.length === 0) {
-      return this.inputChannel.watchSend(
-        "Try again and specify what words will be banned. E.g. `BanWord cat dog apple`"
-      );
+      return this.sendHelpMessage();
     }
 
-    this.censorshipController.insertWords(words).then(censorshipController.rebuildCensorshipList());
+    return this.censorController
+      .insertWords(words)
+      .then(() => this.censorController.rebuildCensorshipList())
+      .then(this.inputChannel.watchSend(`You won't see these words again: ${words}`));
+  }
 
-    return this.inputChannel.watchSend(`You won't see these words again: ${words}`);
+  sendHelpMessage() {
+    return this.inputChannel.watchSend("Usage: `BanWord cat dog apple`");
   }
 }
 
