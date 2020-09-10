@@ -1,8 +1,9 @@
 class AuthorityError extends Error {
-  constructor(...params) {
+  constructor(higherMemberName, ...params) {
     super(...params);
 
     this.name = "AuthorityError";
+    this.higherMemberName = higherMemberName;
   }
 }
 

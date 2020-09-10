@@ -10,6 +10,18 @@ class Command {
     this.sender = message.sender;
     this.inputChannel = message.channel;
     this.guild = message.guild;
+    this.sender.hasAuthorityOver = (input) => {
+      const isHigher = (member, otherMember) => {
+        return (
+          member.id != otherMember.id &&
+          member.highestRole.comparePositionTo(otherMember.highestRole) > 0
+        );
+      };
+      if (Array.isArray(input)) {
+        return input.every((target) => isHigher(this.sender, target));
+      }
+      return isHigher(this.sender, input);
+    };
   }
 
   userCanExecute() {
@@ -24,16 +36,6 @@ class Command {
 
   sendHelpMessage() {
     // TODO: Make this required to implement
-  }
-
-  hasAuthorityOver(target) {
-    if (
-      this.sender.id != target.id &&
-      this.sender.highestRole.comparePositionTo(target.highestRole) > 0
-    ) {
-      return Promise.resolve();
-    }
-    return Promise.reject(new AuthorityError());
   }
 }
 
