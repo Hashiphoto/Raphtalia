@@ -13,6 +13,8 @@ class MemberController extends GuildBasedController {
   infractionLimit = 3;
 
   /**
+   * TODO: Remove this function and use the authority-checking like
+   * Demote has
    * @param {Discord.GuildMember} sender
    * @param {Discord.GuildMember} target
    */

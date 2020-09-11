@@ -56,13 +56,6 @@ class RNumber {
     return new RNumber(amount, type);
   }
 
-  setType(type) {
-    this.type = type;
-    if (type === RNumber.types.PERCENT) {
-      amount /= 100;
-    }
-  }
-
   toString() {
     switch (this.type) {
       case RNumber.types.INT:

@@ -37,6 +37,10 @@ class Command {
   sendHelpMessage() {
     // TODO: Make this required to implement
   }
+
+  reduceStringArray(array) {
+    return array.reduce((sum, value) => sum + value);
+  }
 }
 
 export default Command;

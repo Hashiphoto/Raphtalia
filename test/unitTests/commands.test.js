@@ -18,6 +18,11 @@ import Censorship from "../../src/commands/Censorship.js";
 import TestGuildController from "../structures/TestGuildController.js";
 import Comfort from "../../src/commands/Comfort.js";
 import DeliverCheck from "../../src/commands/DeliverCheck.js";
+import Demote from "../../src/commands/Demote.js";
+import TestMemberController from "../structures/TestMemberController.js";
+import Economy from "../../src/commands/Economy.js";
+import GuildController from "../../src/controllers/GuildController.js";
+import TestGuild from "../structures/TestGuild.js";
 
 /**
  * Allows arrays to be compared to other arrays for equality
@@ -268,7 +273,102 @@ describe("Commands", () => {
     });
   });
 
-  describe("Demote", () => {});
+  describe("Demote", () => {
+    it("fails if no one is mentioned", () => {
+      const demote = new Demote(new TestMessage("text that isn't mentions"));
+      sandbox.spy(demote, "sendHelpMessage");
+
+      return demote.execute().then(() => {
+        assert(demote.sendHelpMessage.calledOnce);
+      });
+    });
+
+    it("infracts users attempting to report superior members", () => {
+      const memberController = new TestMemberController();
+      const demote = new Demote(new TestMessage(), memberController);
+      demote.message.setMentionedMembers(["TEST1", "TEST2"]);
+      demote.sender.hasAuthorityOver = () => false;
+      sandbox.spy(memberController, "addInfractions");
+
+      return demote.execute().then((feedback) => {
+        assert(feedback.length > 0);
+        assert(memberController.addInfractions.calledOnce);
+      });
+    });
+
+    it("calls demote on all mentioned members", () => {
+      const memberController = new TestMemberController();
+      const demote = new Demote(new TestMessage(), memberController);
+      demote.message.setMentionedMembers(["TEST1", "TEST2"]);
+      demote.sender.hasAuthorityOver = () => true;
+      sandbox.spy(memberController, "demoteMember");
+
+      return demote.execute().then((feedback) => {
+        assert(feedback.length > 0);
+        assert(memberController.demoteMember.calledTwice);
+      });
+    });
+  });
+
+  describe("Economy", () => {
+    it("fails if fewer than 2 arguments are given", () => {
+      const economy = new Economy(new TestMessage("foo"));
+      sandbox.spy(economy, "sendHelpMessage");
+
+      economy.execute().then((feedback) => {
+        assert(feedback.length > 0);
+        assert(economy.sendHelpMessage.calledOnce);
+      });
+    });
+
+    it("fails if an argument is not recognized", () => {
+      const guildController = new TestGuildController();
+      const economy = new Economy(
+        new TestMessage(
+          "MinLength 100 charValue $10 maxpayout $100 basepayout $13 tAxRaTe 45% foo"
+        ),
+        guildController
+      );
+      sandbox.spy(economy, "sendHelpMessage");
+
+      return economy.execute().then((feedback) => {
+        assert(feedback.length > 0);
+        assert(economy.sendHelpMessage.calledOnce);
+      });
+    });
+
+    it("fails if a value is not supplied for an argument", () => {
+      const guildController = new TestGuildController();
+      const economy = new Economy(
+        new TestMessage("MinLength 100 charValue $10 maxpayout basepayout $13 tAxRaTe 45%"),
+        guildController
+      );
+      sandbox.spy(economy, "sendHelpMessage");
+
+      return economy.execute().then((feedback) => {
+        assert(feedback.length > 0);
+        assert(economy.sendHelpMessage.calledOnce);
+      });
+    });
+
+    it("correctly parses all parameters", () => {
+      const guildController = new TestGuildController();
+      const economy = new Economy(
+        new TestMessage("MinLength 100 charValue $10 maxpayout $100 basepayout $13 tAxRaTe 45%"),
+        guildController
+      );
+      sandbox.spy(guildController);
+
+      return economy.execute().then((feedback) => {
+        assert(feedback.length > 0);
+        assert(guildController.setMinLength.calledOnce);
+        assert(guildController.setCharacterValue.calledOnce);
+        assert(guildController.setMaxPayout.calledOnce);
+        assert(guildController.setBasePayout.calledOnce);
+        assert(guildController.setTaxRate.calledOnce);
+      });
+    });
+  });
 
   describe("Help", () => {
     it("sends the help message", async () => {

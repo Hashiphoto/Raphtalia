@@ -19,52 +19,72 @@ class Economy extends Command {
   }
 
   execute() {
-    if (!this.message.args || this.message.args.length <= 1) {
+    if (this.message.args.length < 2) {
       return this.sendHelpMessage();
     }
 
-    let response = "";
+    const promises = [];
 
     // Every other argument will be a flag and number, alternating
-    for (let i = 0; i < this.message.args.length - 1; i += 2) {
-      let rNumber = RNumber.parse(this.message.args[i + 1]);
-      let flag = this.message.args[i];
+    for (let i = 0; i < this.message.args.length; i += 2) {
+      const flag = this.message.args[i];
+      const rNumber =
+        i + 1 < this.message.args.length ? RNumber.parse(this.message.args[i + 1]) : null;
+
+      // If no value is supplied for a flag, abort the operation
       if (!rNumber) {
-        response += `Please specify what amount you want ${flag} to be set to. ` + this.helpText;
-        continue;
+        return this.sendHelpMessage(`Please specify what amount you want "${flag}" to be set to.`);
       }
 
-      switch (flag.toLowerCase()) {
-        case "minlength":
-          this.guildController.setMinLength(rNumber.amount);
-          response += `The minimum length for a message to be a paid is now ${rNumber.toString()} characters\n`;
-          break;
-        case "charvalue":
-          this.guildController.setCharacterValue(rNumber.amount);
-          response += `Messages over the minimum length earn ${rNumber.toString()} per character\n`;
-          break;
-        case "maxpayout":
-          this.guildController.setMaxPayout(rNumber.amount);
-          response += `The max value earned from a paid message is now ${rNumber.toString()}\n`;
-          break;
-        case "basepayout":
-          this.guildController.setBasePayout(rNumber.amount);
-          response += `Messages over the minimum length earn a base pay of ${rNumber.toString()}\n`;
-          break;
-        case "taxrate":
-          rNumber.setType(RNumber.types.PERCENT);
-          this.guildController.setTaxRate(rNumber.amount);
-          response += `Members are taxed ${rNumber.toString()} of their role income on a weekly basis\n`;
-          break;
-        default:
-          response += `Unknown parameter "${flag}"\n`;
+      const subCommand = this.parseArg(flag, rNumber);
+
+      // If any args fail to parse, abort the operation
+      if (!subCommand) {
+        return this.sendHelpMessage(`Unknown parameter "${flag}"`);
       }
+
+      promises.push(subCommand);
     }
-    return this.inputChannel.watchSend(response);
+
+    return Promise.all(promises)
+      .then((messages) => this.reduceStringArray(messages))
+      .then((response) => this.inputChannel.watchSend(response));
   }
 
-  sendHelpMessage() {
-    return this.inputChannel.watchSend(this.helpText);
+  sendHelpMessage(pretext = "") {
+    return this.inputChannel.watchSend(`${pretext}\n` + this.helpText);
+  }
+
+  parseArg(arg, rNumber) {
+    switch (arg.toLowerCase()) {
+      case "minlength":
+        rNumber.type = RNumber.types.INT;
+        return this.guildController.setMinLength(rNumber.amount).then(() => {
+          return `The minimum length for a message to be a paid is now ${rNumber.toString()} characters\n`;
+        });
+      case "charvalue":
+        rNumber.type = RNumber.types.DOLLAR;
+        return this.guildController.setCharacterValue(rNumber.amount).then(() => {
+          return `Messages over the minimum length earn ${rNumber.toString()} per character\n`;
+        });
+      case "maxpayout":
+        rNumber.type = RNumber.types.DOLLAR;
+        return this.guildController.setMaxPayout(rNumber.amount).then(() => {
+          return `The max value earned from a paid message is now ${rNumber.toString()}\n`;
+        });
+      case "basepayout":
+        rNumber.type = RNumber.types.DOLLAR;
+        return this.guildController.setBasePayout(rNumber.amount).then(() => {
+          return `Messages over the minimum length earn a base pay of ${rNumber.toString()}\n`;
+        });
+      case "taxrate":
+        rNumber.type = RNumber.types.PERCENT;
+        return this.guildController.setTaxRate(rNumber.amount).then(() => {
+          return `Members are taxed ${rNumber.toString()} of their role income on a weekly basis\n`;
+        });
+      default:
+        return null;
+    }
   }
 }
 
