@@ -23,6 +23,7 @@ import TestMemberController from "../structures/TestMemberController.js";
 import Economy from "../../src/commands/Economy.js";
 import GuildController from "../../src/controllers/GuildController.js";
 import TestGuild from "../structures/TestGuild.js";
+import Exile from "../../src/commands/Exile.js";
 
 /**
  * Allows arrays to be compared to other arrays for equality
@@ -366,6 +367,17 @@ describe("Commands", () => {
         assert(guildController.setMaxPayout.calledOnce);
         assert(guildController.setBasePayout.calledOnce);
         assert(guildController.setTaxRate.calledOnce);
+      });
+    });
+  });
+
+  describe("Exile", () => {
+    it("fails if no one is mentioned", () => {
+      const exile = new Exile(new TestMessage());
+      sandbox.spy(exile, "sendHelpMessage");
+
+      return exile.execute().then(() => {
+        assert(exile.sendHelpMessage.calledOnce);
       });
     });
   });

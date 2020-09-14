@@ -41,6 +41,10 @@ class Command {
   reduceStringArray(array) {
     return array.reduce((sum, value) => sum + value);
   }
+
+  sum(total, value) {
+    return total + value;
+  }
 }
 
 export default Command;

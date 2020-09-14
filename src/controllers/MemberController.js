@@ -194,19 +194,22 @@ class MemberController extends GuildBasedController {
    *
    * @param {Discord.GuildMember} member - The guildMember to exile
    * @param {dayjs} releaseDate - The dayjs object representing when the exile will end
+   * @returns {Promise<boolean>} - Whether the member was released from exile or not
    */
   exileMember(member, releaseDate = null) {
-    this.setHoistedRole(member, discordConfig().roles.exile);
+    return this.setHoistedRole(member, discordConfig().roles.exile).then((result) => {
+      if (releaseDate != null) {
+        let duration = releaseDate.diff(dayjs());
+        if (duration > 0x7fffffff) {
+          duration = 0x7fffffff;
+          releaseDate = dayjs().add(duration, "ms");
+        }
 
-    if (releaseDate != null) {
-      let duration = releaseDate.diff(dayjs());
-      if (duration > 0x7fffffff) {
-        duration = 0x7fffffff;
-        releaseDate = dayjs().add(duration, "ms");
+        return delay(duration).then(() => this.releaseFromExile(member));
       }
 
-      return delay(duration).then(() => this.releaseFromExile(member));
-    }
+      return false;
+    });
   }
 
   /**

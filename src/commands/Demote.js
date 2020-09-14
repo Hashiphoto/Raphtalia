@@ -35,7 +35,7 @@ class Demote extends Command {
     return (
       Promise.all(demotePromises)
         // .then((demotionMessages) => demotionMessages.reduce((sum, value) => sum + value))
-        .then((messages) => this.reduceStringArray(messages))
+        .then((messages) => messages.reduce(this.sum))
         .then((response) => this.inputChannel.watchSend(response))
     );
   }

@@ -16,37 +16,44 @@ class Exile extends Command {
   }
 
   execute() {
-    if (this.message.mentionedMembers.length === 0) {
+    const targets = this.message.mentionedMembers;
+
+    if (targets.length === 0) {
       return this.sendHelpMessage();
     }
 
     // Current time + exile duration
-    const releaseDate = dayjs().add(Format.parseTime(this.message.content));
+    const duration = Format.parseTime(this.message.content);
+    const releaseDate = duration ? dayjs().add(duration) : null;
 
-    let response = "";
+    if (!this.sender.hasAuthorityOver(targets)) {
+      return this.memberController
+        .addInfractions(this.sender)
+        .then((feedback) =>
+          this.inputChannel.watchSend(
+            `You must hold a higher rank than the members you are exiling\n` + feedback
+          )
+        );
+    }
 
-    for (let i = 0; i < this.message.mentionedMembers.length; i++) {
-      let target = this.message.mentionedMembers[i];
-      if (!this.memberController.hasAuthorityOver(this.sender, target)) {
-        this.memberController
-          .addInfractions(this.sender)
-          .then(
-            (feedback) =>
-              (response += `You must hold a rank higher than ${target} to exile them\n${feedback}\n`)
-          );
-        break;
-      }
+    const exilePromises = targets.map((target) =>
       this.memberController.exileMember(target, releaseDate).then((released) => {
         if (released) {
           this.inputChannel.watchSend(`${target} has been released from exile!`);
         }
-      });
-      response += `${target} has been exiled ${
-        releaseDate ? `until ${Format.formatDate(releaseDate)}` : `indefinitely`
-      }\n`;
-    }
+      })
+    );
 
-    return this.inputChannel.watchSend(response);
+    const response = targets.reduce(
+      (sum, target) =>
+        sum +
+        `${target} has been exiled ${
+          releaseDate ? `until ${Format.formatDate(releaseDate)}` : `indefinitely`
+        }\n`,
+      ""
+    );
+
+    return this.inputChannel.watchSend(response).then(() => Promise.all(exilePromises));
   }
 
   sendHelpMessage() {
