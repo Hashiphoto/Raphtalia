@@ -106,8 +106,8 @@ describe("Commands", () => {
       const autoDelete = new AutoDelete(new TestMessage("start 1234ms"), channelController);
 
       return autoDelete.execute().then(() => {
-        assert.equal(channelController.channel.enable, true);
-        assert.equal(channelController.channel.deleteDelay, 1234);
+        assert(channelController.channel.enable === true);
+        assert(channelController.channel.deleteDelay === 1234);
       });
     });
 
@@ -132,7 +132,7 @@ describe("Commands", () => {
 
       return balance
         .execute()
-        .then((text) => assert.equal(text, `You have ${RNumber.formatDollar(54)} in TEST_GUILD`));
+        .then((text) => assert(text === `You have ${RNumber.formatDollar(54)} in TEST_GUILD`));
     });
   });
 
@@ -432,7 +432,7 @@ describe("Commands", () => {
       const message = new TestMessage();
       const help = new Help(message);
 
-      return help.execute().then((text) => assert.equal(text, "Help yourself, TEST_MEMBER"));
+      return help.execute().then((text) => assert(text === "Help yourself, TEST_MEMBER"));
     });
   });
 });
