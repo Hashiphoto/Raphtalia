@@ -35,8 +35,10 @@ class TestMemberController {
     return Promise.resolve();
   }
 
-  exileMember() {
-    return Promise.resolve();
+  exileMember(member, exileTime) {
+    this.exileDuration = exileTime;
+
+    return Promise.resolve(exileTime != null);
   }
 
   hasRole() {

@@ -30,7 +30,7 @@ class AutoDelete extends Command {
     if (!start && !stop) {
       return this.sendHelpMessage("Please specify `start` or `stop`");
     }
-    if (durationMs == null) {
+    if (start && durationMs == null) {
       return this.sendHelpMessage(
         "Please use a time format to specify how long to wait before deleting messages in this channel. E.g.: `3s` or `1500ms`"
       );

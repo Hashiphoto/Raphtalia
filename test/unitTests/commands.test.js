@@ -116,7 +116,7 @@ describe("Commands", () => {
       const autoDelete = new AutoDelete(new TestMessage("stop"), channelController);
 
       return autoDelete.execute().then(() => {
-        assert.equal(channelController.channel.enable, false);
+        assert(channelController.channel.enable === false);
       });
     });
   });
@@ -411,7 +411,7 @@ describe("Commands", () => {
 
     it("exiles the target members with a timer", () => {
       const memberController = new TestMemberController();
-      const exile = new Exile(new TestMessage("0s"), memberController);
+      const exile = new Exile(new TestMessage("5s"), memberController);
       exile.message.setMentionedMembers(["TEST1", "TEST2"]);
       exile.sender.hasAuthorityOver = () => true;
       sandbox.spy(exile.inputChannel, "watchSend");
@@ -420,6 +420,7 @@ describe("Commands", () => {
       return exile.execute().then((feedback) => {
         assert(feedback.length > 0);
         assert(memberController.exileMember.calledTwice);
+        // assert(memberController.exileDuration === 0);
         console.log(exile.inputChannel.watchSend.callCount);
         assert(exile.inputChannel.watchSend.calledThrice);
       });

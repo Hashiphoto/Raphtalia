@@ -17,12 +17,12 @@ class Format {
    */
   static parseTime(inputText) {
     let matches = inputText.matchAll(/\b(\d+)(d|h|m|s|(?:ms))\b/gi);
-    if (!matches) {
-      return null;
-    }
+
+    let length = 0;
 
     let duration = dayjs.duration(0);
     for (const match of matches) {
+      length++;
       // The duration is in capturing group 1
       const timeSpan = parseInt(match[1]);
       // The type is in capturing group 2
@@ -36,7 +36,7 @@ class Format {
       duration = duration.add(timeSpan, timeType);
     }
 
-    return duration.asMilliseconds();
+    return length ? duration.asMilliseconds() : null;
   }
 
   static listFormat(itemArray) {

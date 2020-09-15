@@ -39,7 +39,7 @@ class Exile extends Command {
     const exilePromises = targets.map((target) =>
       this.memberController.exileMember(target, duration).then((released) => {
         if (released) {
-          this.inputChannel.watchSend(`${target} has been released from exile!`);
+          return this.inputChannel.watchSend(`${target} has been released from exile!`);
         }
       })
     );
