@@ -3,33 +3,61 @@ class TestMemberController {
     return Promise.resolve();
   }
 
-  setInfractions() {}
+  setInfractions() {
+    return Promise.resolve();
+  }
 
-  getInfractions() {}
+  getInfractions() {
+    return Promise.resolve();
+  }
 
-  checkInfractionCount() {}
+  checkInfractionCount() {
+    return Promise.resolve();
+  }
 
-  softKick() {}
+  softKick() {
+    return Promise.resolve();
+  }
 
-  getNextRole() {}
+  getNextRole() {
+    return Promise.resolve();
+  }
 
-  getPreviousRole() {}
+  getPreviousRole() {
+    return Promise.resolve();
+  }
 
-  pardonMember() {}
+  pardonMember() {
+    return Promise.resolve();
+  }
 
-  releaseFromExile() {}
+  releaseFromExile() {
+    return Promise.resolve();
+  }
 
-  exileMember() {}
+  exileMember() {
+    return Promise.resolve();
+  }
 
-  hasRole() {}
+  hasRole() {
+    return Promise.resolve();
+  }
 
-  hasRoleOrHigher() {}
+  hasRoleOrHigher() {
+    return Promise.resolve();
+  }
 
-  setHoistedRole() {}
+  setHoistedRole() {
+    return Promise.resolve();
+  }
 
-  addRoles() {}
+  addRoles() {
+    return Promise.resolve();
+  }
 
-  promoteMember() {}
+  promoteMember() {
+    return Promise.resolve();
+  }
 
   demoteMember(member) {
     return Promise.resolve(`testing text: ${member} has been demoted\n`);

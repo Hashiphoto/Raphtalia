@@ -193,22 +193,16 @@ class MemberController extends GuildBasedController {
    * Remove all hoisted roles and give the member the exile role
    *
    * @param {Discord.GuildMember} member - The guildMember to exile
-   * @param {dayjs} releaseDate - The dayjs object representing when the exile will end
+   * @param {Number} duration - The duration of the exile in milliseconds
    * @returns {Promise<boolean>} - Whether the member was released from exile or not
    */
-  exileMember(member, releaseDate = null) {
+  exileMember(member, duration = null) {
     return this.setHoistedRole(member, discordConfig().roles.exile).then((result) => {
-      if (releaseDate != null) {
-        let duration = releaseDate.diff(dayjs());
-        if (duration > 0x7fffffff) {
-          duration = 0x7fffffff;
-          releaseDate = dayjs().add(duration, "ms");
-        }
-
-        return delay(duration).then(() => this.releaseFromExile(member));
+      if (duration == null) {
+        return false;
       }
 
-      return false;
+      return delay(duration).then(() => this.releaseFromExile(member));
     });
   }
 
@@ -256,10 +250,7 @@ class MemberController extends GuildBasedController {
     let hoistedRoles = member.roles.filter((role) => role.hoist);
     return member
       .removeRoles(hoistedRoles)
-      .then(() => {
-        member.addRoles(discordRole);
-        return true;
-      })
+      .then(() => member.addRoles(discordRole).then(() => true))
       .catch(() => {
         console.error("Could not change roles for " + member.displayName);
         return false;

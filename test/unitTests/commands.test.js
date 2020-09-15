@@ -284,7 +284,7 @@ describe("Commands", () => {
       });
     });
 
-    it("infracts users attempting to report superior members", () => {
+    it("infracts users attempting to demote superior members", () => {
       const memberController = new TestMemberController();
       const demote = new Demote(new TestMessage(), memberController);
       demote.message.setMentionedMembers(["TEST1", "TEST2"]);
@@ -378,6 +378,50 @@ describe("Commands", () => {
 
       return exile.execute().then(() => {
         assert(exile.sendHelpMessage.calledOnce);
+      });
+    });
+
+    it("infracts users attempting to exile superior members", () => {
+      const memberController = new TestMemberController();
+      const exile = new Exile(new TestMessage(), memberController);
+      exile.message.setMentionedMembers(["TEST1", "TEST2"]);
+      exile.sender.hasAuthorityOver = () => false;
+      sandbox.spy(memberController, "addInfractions");
+
+      return exile.execute().then((feedback) => {
+        assert(feedback.length > 0);
+        assert(memberController.addInfractions.calledOnce);
+      });
+    });
+
+    it("exiles the target members without a timer", () => {
+      const memberController = new TestMemberController();
+      const exile = new Exile(new TestMessage(), memberController);
+      exile.message.setMentionedMembers(["TEST1", "TEST2"]);
+      exile.sender.hasAuthorityOver = () => true;
+      sandbox.spy(exile.inputChannel, "watchSend");
+      sandbox.spy(memberController, "exileMember");
+
+      return exile.execute().then((feedback) => {
+        assert(feedback.length > 0);
+        assert(memberController.exileMember.calledTwice);
+        assert(exile.inputChannel.watchSend.calledOnce);
+      });
+    });
+
+    it("exiles the target members with a timer", () => {
+      const memberController = new TestMemberController();
+      const exile = new Exile(new TestMessage("0s"), memberController);
+      exile.message.setMentionedMembers(["TEST1", "TEST2"]);
+      exile.sender.hasAuthorityOver = () => true;
+      sandbox.spy(exile.inputChannel, "watchSend");
+      sandbox.spy(memberController, "exileMember");
+
+      return exile.execute().then((feedback) => {
+        assert(feedback.length > 0);
+        assert(memberController.exileMember.calledTwice);
+        console.log(exile.inputChannel.watchSend.callCount);
+        assert(exile.inputChannel.watchSend.calledThrice);
       });
     });
   });

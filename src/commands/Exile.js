@@ -24,7 +24,7 @@ class Exile extends Command {
 
     // Current time + exile duration
     const duration = Format.parseTime(this.message.content);
-    const releaseDate = duration ? dayjs().add(duration) : null;
+    const releaseDate = duration != null ? dayjs().add(duration) : null;
 
     if (!this.sender.hasAuthorityOver(targets)) {
       return this.memberController
@@ -37,7 +37,7 @@ class Exile extends Command {
     }
 
     const exilePromises = targets.map((target) =>
-      this.memberController.exileMember(target, releaseDate).then((released) => {
+      this.memberController.exileMember(target, duration).then((released) => {
         if (released) {
           this.inputChannel.watchSend(`${target} has been released from exile!`);
         }
