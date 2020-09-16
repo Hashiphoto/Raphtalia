@@ -18,38 +18,40 @@ class Fine extends Command {
   }
 
   execute() {
-    if (!this.message.mentionedMembers || this.message.mentionedMembers.length === 0) {
+    const targets = this.message.mentionedMembers;
+
+    if (!targets || targets.length === 0) {
       return this.sendHelpMessage();
+    }
+
+    if (!this.sender.hasAuthorityOver(targets)) {
+      return this.memberController
+        .addInfractions(this.sender)
+        .then((feedback) =>
+          this.inputChannel.watchSend(
+            `You must hold a higher rank than the members you are fining\n` + feedback
+          )
+        );
     }
 
     let rNumber = RNumber.parse(this.message.content);
-    if (!rNumber.amount) {
-      return this.sendHelpMessage();
+    if (!rNumber || (rNumber.type !== RNumber.types.DOLLAR && rNumber.type !== RNumber.types.INT)) {
+      return this.sendHelpMessage("Please specify the amount to fine in dollar format");
     }
 
-    let response = "";
+    const finePromises = targets.map((target) =>
+      this.currencyController.transferCurrency(target, this.sender, rNumber.amount).then(() => {
+        return `Fined ${target} ${rNumber.toString()}!\n`;
+      })
+    );
 
-    // TODO: Create a money account for the guild that most of it goes into
-    for (let i = 0; i < this.message.mentionedMembers.length; i++) {
-      let target = this.message.mentionedMembers[i];
-      if (!this.memberController.hasAuthorityOver(this.sender, target)) {
-        this.memberController
-          .addInfractions(this.sender)
-          .then(
-            (feedback) =>
-              (response += `You must hold a higher rank than ${target} to fine them\n${feedback}\n`)
-          );
-        break;
-      }
-      this.currencyController.transferCurrency(target, this.sender, rNumber.amount);
-      response += `Fined ${target} ${rNumber.toString()}\n`;
-    }
-
-    return this.inputChannel.watchSend(response);
+    return Promise.all(finePromises)
+      .then((messages) => messages.reduce(this.sum))
+      .then((response) => this.inputChannel.watchSend(response));
   }
 
-  sendHelpMessage() {
-    return this.inputChannel.watchSend("Usage: `Fine @target $1`");
+  sendHelpMessage(pretext = "") {
+    return this.inputChannel.watchSend(`${pretext}\n` + "Usage: `Fine @target $1`");
   }
 }
 

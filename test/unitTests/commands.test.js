@@ -24,6 +24,7 @@ import Economy from "../../src/commands/Economy.js";
 import GuildController from "../../src/controllers/GuildController.js";
 import TestGuild from "../structures/TestGuild.js";
 import Exile from "../../src/commands/Exile.js";
+import Fine from "../../src/commands/Fine.js";
 
 /**
  * Allows arrays to be compared to other arrays for equality
@@ -411,7 +412,7 @@ describe("Commands", () => {
 
     it("exiles the target members with a timer", () => {
       const memberController = new TestMemberController();
-      const exile = new Exile(new TestMessage("5s"), memberController);
+      const exile = new Exile(new TestMessage("0s"), memberController);
       exile.message.setMentionedMembers(["TEST1", "TEST2"]);
       exile.sender.hasAuthorityOver = () => true;
       sandbox.spy(exile.inputChannel, "watchSend");
@@ -420,9 +421,59 @@ describe("Commands", () => {
       return exile.execute().then((feedback) => {
         assert(feedback.length > 0);
         assert(memberController.exileMember.calledTwice);
-        // assert(memberController.exileDuration === 0);
-        console.log(exile.inputChannel.watchSend.callCount);
+        assert(memberController.exileDuration === 0);
         assert(exile.inputChannel.watchSend.calledThrice);
+      });
+    });
+  });
+
+  describe("Fine", () => {
+    it("fails if no members are mentioned", () => {
+      const fine = new Fine(new TestMessage());
+      sandbox.spy(fine, "sendHelpMessage");
+
+      return fine.execute().then(() => {
+        assert(fine.sendHelpMessage.calledOnce);
+      });
+    });
+
+    it("infracts users attempting to fine superior members", () => {
+      const memberController = new TestMemberController();
+      const fine = new Fine(new TestMessage(), null, memberController);
+      fine.message.setMentionedMembers(["TEST1", "TEST2"]);
+      fine.sender.hasAuthorityOver = () => false;
+      sandbox.spy(memberController, "addInfractions");
+
+      return fine.execute().then((feedback) => {
+        assert(feedback.length > 0);
+        assert(memberController.addInfractions.calledOnce);
+      });
+    });
+
+    it("fails if no number is given", () => {
+      const fine = new Fine(new TestMessage("words that aren't numbers"));
+      fine.message.setMentionedMembers(["TEST1", "TEST2"]);
+      fine.sender.hasAuthorityOver = () => true;
+      sandbox.spy(fine, "sendHelpMessage");
+
+      fine.execute().then((feedback) => {
+        assert(feedback.length > 0);
+      });
+    });
+
+    it("correctly fines all mentioned members", () => {
+      const memberController = new TestMemberController();
+      const currencyController = new TestCurrencyController();
+      const fine = new Fine(new TestMessage("$41.01"), currencyController, memberController);
+      fine.message.setMentionedMembers(["TEST1", "TEST2"]);
+      fine.sender.hasAuthorityOver = () => true;
+      sandbox.spy(currencyController, "transferCurrency");
+      sandbox.spy(fine.inputChannel, "watchSend");
+
+      fine.execute().then((feedback) => {
+        assert(feedback.length > 0);
+        assert(currencyController.transferCurrency.calledTwice);
+        assert(fine.inputChannel.watchSend.calledOnce);
       });
     });
   });
