@@ -18,11 +18,15 @@ class Give extends Command {
   }
 
   execute() {
-    if (!this.message.args || this.message.args.length === 0) {
+    const targets = this.message.mentionedMembers;
+    if (this.message.args.length === 0 || targets.length === 0) {
       return this.sendHelpMessage();
     }
 
     let rNumber = RNumber.parse(this.message.content);
+    if (!rNumber) {
+      return this.sendHelpMessage("Enter the amount you want to give in dollar format");
+    }
     if (rNumber.amount < 0) {
       return this.memberController
         .addInfractions(this.message.sender)
@@ -31,21 +35,29 @@ class Give extends Command {
         );
     }
 
-    let totalAmount = rNumber.amount * this.message.mentionedMembers.length;
-    this.currencyController.getCurrency(this.sender).then((balance) => {
+    let totalAmount = rNumber.amount * targets.length;
+    return this.currencyController.getCurrency(this.sender).then((balance) => {
       if (balance < totalAmount) {
-        return this.inputChannel.watchSend("You do not have enough money for that");
+        return this.inputChannel.watchSend(
+          `You do not have enough money for that. ` +
+            `Funds needed: ${RNumber.formatDollar(totalAmount)}`
+        );
       }
 
-      this.message.mentionedMembers.forEach((target) => {
-        this.currencyController.transferCurrency(this.sender, target, rNumber.amount);
+      const givePromises = targets.map((target) => {
+        return this.currencyController
+          .transferCurrency(this.sender, target, rNumber.amount)
+          .then(() => `Transfered ${rNumber.toString()} to ${target}!`);
       });
-      this.inputChannel.watchSend("Money transferred!");
+
+      return Promise.all(givePromises)
+        .then((messages) => messages.reduce(this.sum))
+        .then((response) => this.inputChannel.watchSend(response));
     });
   }
 
-  sendHelpMessage() {
-    return this.inputChannel.watchSend("Usage: `Give @taget $1`");
+  sendHelpMessage(pretext = "") {
+    return this.inputChannel.watchSend(`${pretext}\n` + "Usage: `Give @taget $1`");
   }
 }
 

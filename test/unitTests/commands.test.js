@@ -25,6 +25,7 @@ import GuildController from "../../src/controllers/GuildController.js";
 import TestGuild from "../structures/TestGuild.js";
 import Exile from "../../src/commands/Exile.js";
 import Fine from "../../src/commands/Fine.js";
+import Give from "../../src/commands/Give.js";
 
 /**
  * Allows arrays to be compared to other arrays for equality
@@ -474,6 +475,82 @@ describe("Commands", () => {
         assert(feedback.length > 0);
         assert(currencyController.transferCurrency.calledTwice);
         assert(fine.inputChannel.watchSend.calledOnce);
+      });
+    });
+  });
+
+  describe("Give", () => {
+    it("fails if there are no args", () => {
+      const give = new Give(new TestMessage(""));
+      sandbox.spy(give, "sendHelpMessage");
+
+      return give.execute().then(() => {
+        assert(give.sendHelpMessage.calledOnce);
+      });
+    });
+
+    it("fails if there are no mentioned members", () => {
+      const give = new Give(new TestMessage("foo bar"));
+      sandbox.spy(give, "sendHelpMessage");
+
+      return give.execute().then(() => {
+        assert(give.sendHelpMessage.calledOnce);
+      });
+    });
+
+    it("fails if a money amount is not specified", () => {
+      const give = new Give(new TestMessage("foo bar"));
+      give.message.setMentionedMembers(["TEST1", "TEST2"]);
+      sandbox.spy(give, "sendHelpMessage");
+
+      return give.execute().then(() => {
+        assert(give.sendHelpMessage.calledOnce);
+      });
+    });
+
+    it("infracts user sending negative money", () => {
+      const memberController = new TestMemberController();
+      const give = new Give(new TestMessage("-$50.00"), null, memberController);
+      give.message.setMentionedMembers(["TEST1", "TEST2"]);
+      sandbox.spy(give, "sendHelpMessage");
+      sandbox.spy(memberController, "addInfractions");
+
+      return give.execute().then((feedback) => {
+        assert(feedback.length > 0);
+        assert(memberController.addInfractions.calledOnce);
+        assert(give.sendHelpMessage.notCalled);
+      });
+    });
+
+    it("fails if the sender does not have enough money", () => {
+      const memberController = new TestMemberController();
+      const currencyController = new TestCurrencyController();
+      currencyController.getCurrency = () => Promise.resolve(49.99);
+      const give = new Give(new TestMessage("$25.00"), currencyController, memberController);
+      give.message.setMentionedMembers(["TEST1", "TEST2"]);
+      sandbox.spy(give, "sendHelpMessage");
+      sandbox.spy(currencyController, "transferCurrency");
+
+      return give.execute().then((feedback) => {
+        assert(feedback.length > 0);
+        assert(give.sendHelpMessage.notCalled);
+        assert(currencyController.transferCurrency.notCalled);
+      });
+    });
+
+    it("transfers currency to each member", () => {
+      const memberController = new TestMemberController();
+      const currencyController = new TestCurrencyController();
+      currencyController.getCurrency = () => Promise.resolve(50.0);
+      const give = new Give(new TestMessage("$25.00"), currencyController, memberController);
+      give.message.setMentionedMembers(["TEST1", "TEST2"]);
+      sandbox.spy(give, "sendHelpMessage");
+      sandbox.spy(currencyController, "transferCurrency");
+
+      return give.execute().then((feedback) => {
+        assert(feedback.length > 0);
+        assert(give.sendHelpMessage.notCalled);
+        assert(currencyController.transferCurrency.calledTwice);
       });
     });
   });
