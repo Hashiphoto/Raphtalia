@@ -1,13 +1,13 @@
 import Command from "./Command.js";
 import GuildController from "../controllers/GuildController.js";
-import ServerStatusUpdater from "../ServerStatusUpdater.js";
+import ServerStatusController from "../controllers/ServerStatusController.js";
 
 class ServerStatus extends Command {
   /**
    *
    * @param {Discord.Message} message
    * @param {GuildController} guildController
-   * @param {ServerStatusUpdater} serverStatusUpdater
+   * @param {ServerStatusController} serverStatusUpdater
    */
   constructor(message, guildController, serverStatusUpdater) {
     super(message);

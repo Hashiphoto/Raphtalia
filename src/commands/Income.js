@@ -2,7 +2,7 @@ import Discord from "discord.js";
 
 import Command from "./Command.js";
 import discordConfig from "../../config/discord.config.js";
-import ServerStatusUpdater from "../ServerStatusUpdater.js";
+import ServerStatusController from "../controllers/ServerStatusController.js";
 import CurrencyController from "../controllers/CurrencyController.js";
 import RNumber from "../structures/RNumber.js";
 import GuildController from "../controllers/GuildController.js";
@@ -59,7 +59,7 @@ class Income extends Command {
 
     return this.inputChannel
       .watchSend(await this.guildController.setIncomeScale(baseIncome, roles, scaleNumber))
-      .then(new ServerStatusUpdater(this.db, this.guild).updateServerStatus(this.inputChannel));
+      .then(new ServerStatusController(this.db, this.guild).updateServerStatus(this.inputChannel));
   }
 
   getBaseIncome() {

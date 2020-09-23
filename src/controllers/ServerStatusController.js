@@ -1,6 +1,6 @@
-import GuildBasedController from "./controllers/GuildBasedController.js";
+import GuildBasedController from "./GuildBasedController.js";
 
-class ServerStatusUpdater extends GuildBasedController {
+class ServerStatusController extends GuildBasedController {
   async updateServerStatus() {
     const statusEmbed = await this.generateServerStatus(this.guild);
 
@@ -24,7 +24,27 @@ class ServerStatusUpdater extends GuildBasedController {
   }
 
   async generateServerStatus() {
-    let embedFields = [];
+    const roleFields = await this.getRoleFields();
+    const storeFields = await this.getStoreFields();
+    const allFields = roleFields.concat(storeFields);
+    const statusEmbed = {
+      color: 0x73f094,
+      title: this.guild.name.toUpperCase(),
+      timestamp: new Date(),
+      fields: allFields,
+      thumbnail: { url: this.guild.iconURL },
+    };
+
+    return statusEmbed;
+  }
+
+  async getRoleFields() {
+    let fields = [
+      {
+        name: "----------\nRoles",
+        value: "----------",
+      },
+    ];
     let discordRoles = this.guild.roles
       .filter((role) => role.hoist)
       .sort((a, b) => b.calculatedPosition - a.calculatedPosition)
@@ -37,21 +57,36 @@ class ServerStatusUpdater extends GuildBasedController {
       if (dbRole.member_limit >= 0) {
         roleInfo += `/${dbRole.member_limit}`;
       }
-      embedFields.push({
+      fields.push({
         name: discordRoles[i].name,
         value: roleInfo,
         inline: true,
       });
     }
-    const statusEmbed = {
-      color: 0x73f094,
-      title: `SERVER STATUS`,
-      timestamp: new Date(),
-      fields: embedFields,
-    };
 
-    return statusEmbed;
+    return fields;
+  }
+
+  async getStoreFields() {
+    const fields = [
+      {
+        name: "----------\nStore",
+        value: "----------",
+      },
+    ];
+
+    const items = await this.db.guildInventory.get(this.guild.id);
+
+    const itemFields = items.map((item) => {
+      return {
+        name: item.name,
+        value: item.toString(),
+        inline: true,
+      };
+    });
+
+    return fields.concat(itemFields);
   }
 }
 
-export default ServerStatusUpdater;
+export default ServerStatusController;

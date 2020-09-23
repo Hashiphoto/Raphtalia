@@ -26,8 +26,10 @@ class Command {
 
   userCanExecute() {
     return true;
-    // TODO: Check if the user has a role that would allow
-    // them to use this command
+
+    // Move logic into an InventoryController
+    // Get the user's inventory
+    //
   }
 
   execute() {
@@ -36,10 +38,6 @@ class Command {
 
   sendHelpMessage() {
     // TODO: Make this required to implement
-  }
-
-  reduceStringArray(array) {
-    return array.reduce((sum, value) => sum + value);
   }
 
   sum(total, value) {

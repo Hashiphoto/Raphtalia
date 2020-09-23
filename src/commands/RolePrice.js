@@ -4,7 +4,7 @@ import Command from "./Command.js";
 import discordConfig from "../../config/discord.config.js";
 import RNumber from "../structures/RNumber.js";
 import GuildController from "../controllers/GuildController.js";
-import ServerStatusUpdater from "../ServerStatusUpdater.js";
+import ServerStatusController from "../controllers/ServerStatusController.js";
 import RoleUtil from "../RoleUtil.js";
 
 class RolePrice extends Command {
@@ -12,7 +12,7 @@ class RolePrice extends Command {
    *
    * @param {Discord.Message} message
    * @param {GuildController} guildController
-   * @param {ServerStatusUpdater} serverStatusUpdater
+   * @param {ServerStatusController} serverStatusUpdater
    */
   constructor(message, guildController, serverStatusUpdater) {
     super(message);
