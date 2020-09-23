@@ -2,7 +2,7 @@ import Discord from "discord.js";
 
 import Command from "./Command.js";
 
-class Comfort extends Command {
+class Revolt extends Command {
   execute() {
     if (this.message.mentionedMembers.length === 0) {
       return this.sendHelpMessage();
@@ -21,4 +21,4 @@ class Comfort extends Command {
   }
 }
 
-export default Comfort;
+export default Revolt;
