@@ -10,7 +10,7 @@ class CommandParser {
   static parse(message) {
     message.args = message.content.slice(CommandParser.prefix.length).split(/\s+/);
     message.command = message.args.shift().toLowerCase();
-    message.sender = message.guild.members.get(message.author.id);
+    message.sender = message.guild.members.fetch(message.author.id);
     message.mentionedMembers = CommandParser.getMemberMentions(message.guild, message.args);
     message.mentionedRoles = CommandParser.getRoleMentions(message.guild, message.args);
     message.content = message.content

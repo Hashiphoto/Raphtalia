@@ -39,13 +39,13 @@ class Format {
     return length ? duration.asMilliseconds() : null;
   }
 
-  static listFormat(itemArray) {
+  static listFormat(itemArray, conjunction = "and") {
     if (itemArray.length === 1) {
       return itemArray[0];
     }
 
     if (itemArray.length === 2) {
-      return itemArray[0] + " and " + itemArray[1];
+      return itemArray[0] + ` ${conjunction} ` + itemArray[1];
     }
 
     let output = "";
@@ -57,7 +57,7 @@ class Format {
         output += ", ";
         // If it's the second-to-last element
         if (i === itemArray.length - 2) {
-          output += "and ";
+          output += `${conjunction} `;
         }
       }
     }

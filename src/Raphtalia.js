@@ -44,6 +44,7 @@ import CurrencyController from "./controllers/CurrencyController.js";
 import GuildController from "./controllers/GuildController.js";
 import MemberController from "./controllers/MemberController.js";
 import ServerStatusController from "./controllers/ServerStatusController.js";
+import InventoryController from "./controllers/InventoryController.js";
 
 class Raphtalia {
   constructor() {
@@ -88,7 +89,7 @@ class Raphtalia {
         if (message.content.startsWith(CommandParser.prefix)) {
           this.processCommand(CommandParser.parse(message));
         } else {
-          const censorManager = new CensorController(db, message.guild);
+          const censorManager = new CensorController(this.db, message.guild);
           censorManager
             .censorMessage(message)
             .then((censored) => {
@@ -108,7 +109,7 @@ class Raphtalia {
     this.client.on("guildMemberAdd", (member) => {
       const welcomeChannel = this.client.channels.get(discordConfig().channels.welcomeChannelId);
       attachWatchCommand(welcomeChannel).then(() => {
-        new OnBoarder(db, member.guild).onBoard(member, welcomeChannel);
+        new OnBoarder(this.db, member.guild).onBoard(member, welcomeChannel);
       });
     });
 
@@ -153,6 +154,10 @@ class Raphtalia {
     let command = this.getCommandByName(message);
     if (command.userCanExecute()) {
       command.execute();
+      // message.channel
+      //   .startTyping()
+      //   .then(() => command.execute())
+      //   .then(() => message.channel.stopTyping());
     }
   }
 
@@ -178,7 +183,12 @@ class Raphtalia {
       case "banwords":
         return new BanWord(message, new CensorController(this.db, guild));
       case "buy":
-        return new Buy(message);
+        return new Buy(
+          message,
+          new CurrencyController(this.db, guild),
+          new InventoryController(this.db, guild),
+          new ServerStatusController(this.db, guild)
+        );
       case "censorship":
         return new Censorship(message, new GuildController(this.db, guild));
       case "comfort":

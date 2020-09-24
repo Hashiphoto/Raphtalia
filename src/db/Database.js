@@ -6,7 +6,7 @@ import BannedWordsTable from "./BannedWordsTable.js";
 import GuildsTable from "./GuildsTable.js";
 import ChannelsTable from "./ChannelsTable.js";
 import RolesTable from "./RolesTable.js";
-import GuildInventory from "./GuildInventory.js";
+import Inventory from "./Inventory.js";
 
 class Database {
   constructor(pool) {
@@ -15,7 +15,7 @@ class Database {
     this.guilds = new GuildsTable(pool);
     this.channels = new ChannelsTable(pool);
     this.roles = new RolesTable(pool);
-    this.guildInventory = new GuildInventory(pool);
+    this.inventory = new Inventory(pool);
   }
 
   static createPool() {

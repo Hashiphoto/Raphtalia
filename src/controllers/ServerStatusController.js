@@ -75,7 +75,7 @@ class ServerStatusController extends GuildBasedController {
       },
     ];
 
-    const items = await this.db.guildInventory.get(this.guild.id);
+    const items = await this.db.inventory.getGuildStock(this.guild.id);
 
     const itemFields = items.map((item) => {
       return {

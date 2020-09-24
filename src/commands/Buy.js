@@ -1,37 +1,64 @@
 import Discord from "discord.js";
+import CurrencyController from "../controllers/CurrencyController.js";
+import InventoryController from "../controllers/InventoryController.js";
+import ServerStatusController from "../controllers/ServerStatusController.js";
+import AmbiguousInputError from "../structures/AmbiguousInputError.js";
 
 import Command from "./Command.js";
 
 class Buy extends Command {
-  async execute() {
+  /**
+   *
+   * @param {Discord.Message} message
+   * @param {CurrencyController} currencyController
+   * @param {InventoryController} inventoryController
+   * @param {ServerStatusController} serverStatusController
+   */
+  constructor(message, currencyController, inventoryController, serverStatusController) {
+    super(message);
+    this.currencyController = currencyController;
+    this.inventoryController = inventoryController;
+    this.serverStatusController = serverStatusController;
+  }
+
+  execute() {
     if (!this.message.args || this.message.args.length === 0) {
       return this.message.channel.watchSend(`Usage: !Buy (Item Name)`);
     }
-    // Get store items
-    // TODO: Move logic into CurrencyController
-    switch (this.message.args[0]) {
-      case "promotion":
-        let nextRole = getNextRole(this.message.sender, this.message.guild);
-        if (!nextRole) {
-          return this.message.channel.watchSend(`You cannot be promoted any higher!`);
+
+    // Match the closest item
+
+    return this.inventoryController
+      .getItem(this.message.content)
+      .then(async (item) => {
+        if (!item) {
+          return this.inputChannel.watchSend(`There are no items named "${this.message.content}"`);
+        }
+        this.inputChannel.watchSend(">>> " + item.name + " " + item.toString());
+
+        if (!item.unlimitedQuantity && item.quantity === 0) {
+          return this.inputChannel.watchSend(`This item is currently out of stock`);
         }
 
-        let dbRole = await this.db.roles.getSingle(nextRole.id);
-        this.db.users.get(this.message.sender.id, this.message.guild.id).then((dbUser) => {
-          if (dbUser.currency < dbRole.price) {
-            return this.message.channel.watchSend(
-              `You cannot afford a promotion. Promotion to ${
-                nextRole.name
-              } costs $${dbRole.price.toFixed(2)}`
-            );
-          }
-          addCurrency(this.message.sender, -dbRole.price);
-          promoteMember(this.message.channel, null, this.message.sender);
-        });
-        break;
-      default:
-        return this.message.channel.watchSend(`Unknown item`);
-    }
+        const userCurrency = await this.currencyController.getCurrency(this.message.sender);
+
+        if (userCurrency < item.price) {
+          return this.inputChannel.watchSend(`You do not have enough money to buy this item`);
+        }
+
+        return this.inventoryController
+          .userPurchase(item, this.message.sender)
+          .then(() => this.inputChannel.watchSend("`Purchase complete`"))
+          .then(() => this.serverStatusController.updateServerStatus());
+      })
+      .catch((error) => {
+        if (error instanceof AmbiguousInputError) {
+          return this.inputChannel.watchSend(
+            `There is more than one item with that name. Did you mean ${error.message}?`
+          );
+        }
+        throw error;
+      });
   }
 }
 
