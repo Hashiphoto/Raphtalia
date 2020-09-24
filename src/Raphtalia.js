@@ -153,11 +153,8 @@ class Raphtalia {
   processCommand(message) {
     let command = this.getCommandByName(message);
     if (command.userCanExecute()) {
-      command.execute();
-      // message.channel
-      //   .startTyping()
-      //   .then(() => command.execute())
-      //   .then(() => message.channel.stopTyping());
+      message.channel.startTyping();
+      command.execute().then(() => message.channel.stopTyping());
     }
   }
 
