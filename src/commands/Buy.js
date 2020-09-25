@@ -46,8 +46,9 @@ class Buy extends Command {
           return this.inputChannel.watchSend(`You do not have enough money to buy this item`);
         }
 
-        return this.inventoryController
-          .userPurchase(item, this.message.sender)
+        return this.currencyController
+          .addCurrency(this.message.sender, -item.price)
+          .then(() => this.inventoryController.userPurchase(item, this.message.sender))
           .then(() => this.inputChannel.watchSend("`Purchase complete`"))
           .then(() => this.serverStatusController.updateServerStatus());
       })

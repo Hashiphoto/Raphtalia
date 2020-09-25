@@ -26,16 +26,9 @@ class UserInventory {
       .setTitle(`${this.user.displayName}'s Inventory`)
       .setTimestamp(new Date());
 
-    fields.forEach((field) => embed.addField(field));
+    fields.forEach((field) => embed.addField(field.name, field.value, field.inline));
 
     return embed;
-
-    return {
-      color: this.user.displayColor,
-      title: `${this.user.displayName}'s Inventory`,
-      timestamp: new Date(),
-      fields: fields,
-    };
   }
 }
 
