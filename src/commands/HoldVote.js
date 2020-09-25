@@ -8,6 +8,7 @@ import Format from "../Format.js";
 import Question from "../structures/Question.js";
 import VotingOption from "../structures/VotingOption.js";
 import RNumber from "../structures/RNumber.js";
+import RoleUtil from "../RoleUtil.js";
 
 class HoldVote extends Command {
   async execute() {

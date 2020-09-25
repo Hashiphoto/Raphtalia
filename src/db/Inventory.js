@@ -64,7 +64,7 @@ class Inventory {
       });
   }
 
-  getGuildItem(guildId, itemName) {
+  findGuildItem(guildId, itemName) {
     // TODO: Sanitize itemName
     return this.pool
       .query(this.guildSelect + `WHERE guild_id = ? AND name LIKE '${itemName}%'`, [guildId])
@@ -115,6 +115,20 @@ class Inventory {
         }
 
         return items;
+      });
+  }
+
+  userCanUseCommand(guildId, userId, commandName) {
+    return this.pool
+      .query(
+        "SELECT * FROM user_inventory ui " +
+          "JOIN items i ON ui.item_id = i.id " +
+          "JOIN commands c ON c.item_id = i.id " +
+          "WHERE ui.guild_id=? AND ui.user_id=? AND c.name LIKE ?",
+        [guildId, userId, commandName]
+      )
+      .then(([rows, fields]) => {
+        return rows && rows.length > 0;
       });
   }
 }

@@ -9,7 +9,7 @@ class InventoryController extends GuildBasedController {
    * @returns {Promise<GuildItem>}
    */
   getGuildItem(name) {
-    return this.db.inventory.getGuildItem(this.guild.id, name);
+    return this.db.inventory.findGuildItem(this.guild.id, name);
   }
 
   /**
@@ -37,6 +37,10 @@ class InventoryController extends GuildBasedController {
     return this.db.inventory
       .getUserInventory(user.guild.id, user.id)
       .then((items) => new UserInventory(user, items));
+  }
+
+  userCanUseCommand(user, commandName) {
+    return this.db.inventory.userCanUseCommand(this.guild.id, user.id, commandName);
   }
 }
 

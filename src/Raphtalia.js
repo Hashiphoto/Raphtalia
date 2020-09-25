@@ -33,7 +33,7 @@ import Report from "./commands/Report.js";
 import RolePrice from "./commands/RolePrice.js";
 import ServerStatus from "./commands/ServerStatus.js";
 import SoftKick from "./commands/SoftKick.js";
-import UnrecognizedCommand from "./commands/UnrecognizedCommand.js";
+import NullCommand from "./commands/NullCommand.js";
 import BanWord from "./commands/BanWord.js";
 import AllowWord from "./commands/AllowWord.js";
 import BanList from "./commands/BanList.js";
@@ -46,6 +46,7 @@ import MemberController from "./controllers/MemberController.js";
 import ServerStatusController from "./controllers/ServerStatusController.js";
 import InventoryController from "./controllers/InventoryController.js";
 import Status from "./commands/Status.js";
+import Command from "./commands/Command.js";
 
 class Raphtalia {
   constructor() {
@@ -87,8 +88,12 @@ class Raphtalia {
             });
           }, deleteTime);
         }
+
         if (message.content.startsWith(CommandParser.prefix)) {
-          this.processCommand(CommandParser.parse(message));
+          const parsedMessage = CommandParser.parse(message);
+          return this.selectCommand(parsedMessage).then((command) =>
+            this.executeCommand(command, parsedMessage)
+          );
         } else {
           const censorManager = new CensorController(this.db, message.guild);
           censorManager
@@ -152,22 +157,36 @@ class Raphtalia {
   }
 
   /**
-   *
    * @param {Discord.Message} message
+   * @returns {Promise<Command>}
    */
-  processCommand(message) {
+  selectCommand(message) {
     let command = this.getCommandByName(message);
-    if (command && command.userCanExecute()) {
-      message.channel.startTyping();
-      command
-        .execute()
-        .catch((error) => {
-          console.log(error);
-
-          return message.react("🛑");
-        })
-        .then(() => message.channel.stopTyping());
+    if (!command) {
+      return Promise.resolve(new NullCommand(message, `Unknown command "${message.command}"`));
     }
+
+    const inventoryController = new InventoryController(this.db, message.guild);
+
+    return inventoryController
+      .userCanUseCommand(message.member, command.constructor.name)
+      .then((allowed) =>
+        allowed
+          ? command
+          : new NullCommand(message, `You do not have the correct item to use this command`)
+      );
+  }
+
+  executeCommand(command, message) {
+    message.channel.startTyping();
+    return command
+      .execute()
+      .catch((error) => {
+        console.log(error);
+
+        return message.react("🛑");
+      })
+      .then(() => message.channel.stopTyping(true));
   }
 
   getCommandByName(message) {
@@ -294,7 +313,7 @@ class Raphtalia {
       /////////////////
 
       default:
-        return new UnrecognizedCommand(message);
+        return new NullCommand(message, `Unknown command "${message.command}"`);
     }
   }
 }
