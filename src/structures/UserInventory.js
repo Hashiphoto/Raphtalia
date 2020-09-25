@@ -3,15 +3,17 @@ import Item from "../structures/Item.js";
 
 class UserInventory {
   /**
-   *
-   * @param {Discord.GuildMember} user
+   * @param {Discord.GuildMember} member
    * @param {Item[]} items
    */
-  constructor(user, items) {
-    this.user = user;
+  constructor(member, items) {
+    this.user = member;
     this.items = items;
   }
 
+  /**
+   * @returns {Discord.RichEmbed}
+   */
   toEmbed() {
     const fields = this.items.map((item) => {
       return {

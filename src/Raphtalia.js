@@ -177,6 +177,10 @@ class Raphtalia {
       );
   }
 
+  /**
+   * @param {Command} command
+   * @param {Discord.Message} message
+   */
   executeCommand(command, message) {
     message.channel.startTyping();
     return command
@@ -189,6 +193,10 @@ class Raphtalia {
       .then(() => message.channel.stopTyping(true));
   }
 
+  /**
+   * @param {Discord.Message} message
+   * @returns {Command}
+   */
   getCommandByName(message) {
     // Keep alphabetical by primary command word
     // The primary command keyword should be listed first
@@ -285,33 +293,6 @@ class Raphtalia {
           new CurrencyController(this.db, guild),
           new InventoryController(this.db, guild)
         );
-
-      // TODO: Move these into commands
-      //// DEV ONLY ////
-      case "unarrive":
-        if (process.env.NODE_ENV !== "dev") {
-          break;
-        }
-        commands.unarrive(message, discordConfig().roles.gov);
-        break;
-
-      case "doincome":
-        if (process.env.NODE_ENV !== "dev") {
-          break;
-        }
-        tasks.dailyIncome(message.guild);
-        message.channel.send("`Debug only` | Income has been distributed");
-        break;
-
-      case "dotaxes":
-        if (process.env.NODE_ENV !== "dev") {
-          break;
-        }
-        tasks.tax(message.guild);
-        message.channel.send("`Debug only` | Members have been taxed");
-        break;
-      /////////////////
-
       default:
         return new NullCommand(message, `Unknown command "${message.command}"`);
     }

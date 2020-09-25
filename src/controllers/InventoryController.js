@@ -39,8 +39,12 @@ class InventoryController extends GuildBasedController {
       .then((items) => new UserInventory(user, items));
   }
 
-  userCanUseCommand(user, commandName) {
-    return this.db.inventory.userCanUseCommand(this.guild.id, user.id, commandName);
+  /**
+   * @param {Discord.GuildMember} member
+   * @param {String} commandName
+   */
+  userCanUseCommand(member, commandName) {
+    return this.db.inventory.userCanUseCommand(this.guild.id, member.id, commandName);
   }
 }
 

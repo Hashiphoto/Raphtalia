@@ -1,3 +1,5 @@
+import Discord from "discord.js";
+
 import GuildBasedController from "./GuildBasedController.js";
 
 class ServerStatusController extends GuildBasedController {
@@ -23,6 +25,9 @@ class ServerStatusController extends GuildBasedController {
     });
   }
 
+  /**
+   * @returns {Promise<Discord.RichEmbed>}
+   */
   async generateServerStatus() {
     const roleFields = await this.getRoleFields();
     const storeFields = await this.getStoreFields();
@@ -38,6 +43,9 @@ class ServerStatusController extends GuildBasedController {
     return statusEmbed;
   }
 
+  /**
+   * @returns {Promise<EmbedField[]>}
+   */
   async getRoleFields() {
     let fields = [
       {
@@ -67,6 +75,9 @@ class ServerStatusController extends GuildBasedController {
     return fields;
   }
 
+  /**
+   * @returns {Promise<EmbedField[]>}
+   */
   async getStoreFields() {
     const fields = [
       {
