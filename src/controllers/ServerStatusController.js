@@ -80,7 +80,7 @@ class ServerStatusController extends GuildBasedController {
     const itemFields = items.map((item) => {
       return {
         name: item.name,
-        value: item.toString(),
+        value: item.getDetails(),
         inline: true,
       };
     });

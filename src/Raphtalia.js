@@ -45,6 +45,7 @@ import GuildController from "./controllers/GuildController.js";
 import MemberController from "./controllers/MemberController.js";
 import ServerStatusController from "./controllers/ServerStatusController.js";
 import InventoryController from "./controllers/InventoryController.js";
+import Status from "./commands/Status.js";
 
 class Raphtalia {
   constructor() {
@@ -152,9 +153,15 @@ class Raphtalia {
 
   processCommand(message) {
     let command = this.getCommandByName(message);
-    if (command.userCanExecute()) {
+    if (command && command.userCanExecute()) {
       message.channel.startTyping();
-      command.execute().then(() => message.channel.stopTyping());
+      command
+        .execute()
+        .catch((error) => {
+          console.log(error);
+          message.inputChannel.watchSend("Something went wrong");
+        })
+        .then(() => message.channel.stopTyping());
     }
   }
 
@@ -248,6 +255,12 @@ class Raphtalia {
         );
       case "softkick":
         return new SoftKick(message, new MemberController(this.db, guild));
+      case "status":
+        return new Status(
+          message,
+          new CurrencyController(this.db, guild),
+          new InventoryController(this.db, guild)
+        );
 
       // TODO: Move these into commands
       //// DEV ONLY ////

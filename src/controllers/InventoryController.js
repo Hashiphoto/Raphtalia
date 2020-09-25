@@ -1,6 +1,7 @@
 import GuildBasedController from "./GuildBasedController.js";
 import Discord from "discord.js";
 import Item from "../structures/Item.js";
+import UserInventory from "../structures/UserInventory.js";
 
 class InventoryController extends GuildBasedController {
   getItem(name) {
@@ -22,6 +23,16 @@ class InventoryController extends GuildBasedController {
       item.quantity = quantity;
       return this.db.inventory.insertUserItem(this.guild.id, user.id, item);
     });
+  }
+
+  /**
+   * @param {Discord.GuildMember} user
+   * @returns {Promise<UserInventory>}
+   */
+  getUserInventory(user) {
+    return this.db.inventory
+      .getUserInventory(user.guild.id, user.id)
+      .then((items) => new UserInventory(user, items));
   }
 }
 
