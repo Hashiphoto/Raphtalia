@@ -4,6 +4,10 @@ import UserInventory from "../structures/UserInventory.js";
 import GuildItem from "../structures/GuildItem.js";
 
 class InventoryController extends GuildBasedController {
+  /**
+   * @param {String} name
+   * @returns {Promise<GuildItem>}
+   */
   getGuildItem(name) {
     return this.db.inventory.getGuildItem(this.guild.id, name);
   }

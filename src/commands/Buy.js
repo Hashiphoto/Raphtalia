@@ -34,7 +34,7 @@ class Buy extends Command {
         if (!item) {
           return this.inputChannel.watchSend(`There are no items named "${this.message.content}"`);
         }
-        this.inputChannel.watchSend(">>> " + item.name + " " + item.toString());
+        this.inputChannel.watchSend(">>> " + item.name + " " + item.getDetails());
 
         if (!item.unlimitedQuantity && item.quantity === 0) {
           return this.inputChannel.watchSend(`This item is currently out of stock`);
