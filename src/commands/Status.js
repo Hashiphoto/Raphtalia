@@ -30,7 +30,7 @@ class Status extends Command {
         return userInventory.toEmbed();
       });
 
-    return this.inputChannel.watchSend({ embed: inventoryEmbed });
+    return this.inputChannel.watchSend(balanceMessage, inventoryEmbed);
   }
 }
 

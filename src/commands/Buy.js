@@ -29,7 +29,7 @@ class Buy extends Command {
     // Match the closest item
 
     return this.inventoryController
-      .getItem(this.message.content)
+      .getGuildItem(this.message.content)
       .then(async (item) => {
         if (!item) {
           return this.inputChannel.watchSend(`There are no items named "${this.message.content}"`);

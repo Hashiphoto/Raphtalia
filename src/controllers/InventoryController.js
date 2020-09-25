@@ -1,15 +1,15 @@
 import GuildBasedController from "./GuildBasedController.js";
 import Discord from "discord.js";
-import Item from "../structures/Item.js";
 import UserInventory from "../structures/UserInventory.js";
+import GuildItem from "../structures/GuildItem.js";
 
 class InventoryController extends GuildBasedController {
-  getItem(name) {
-    return this.db.inventory.getItem(this.guild.id, name);
+  getGuildItem(name) {
+    return this.db.inventory.getGuildItem(this.guild.id, name);
   }
 
   /**
-   * @param {Item} item
+   * @param {GuildItem} item
    * @param {Discord.GuildMember} user
    * @param {Number} quantity How many of the item is being purchased
    */

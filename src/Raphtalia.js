@@ -138,8 +138,8 @@ class Raphtalia {
         deleteTime = dbChannel.delete_ms;
       }
       channel.autoDelete = deleteTime >= 0;
-      channel.watchSend = function (content) {
-        return this.send(content).then((message) => {
+      channel.watchSend = function (...content) {
+        return this.send(...content).then((message) => {
           if (deleteTime >= 0) {
             message.delete(deleteTime);
           }
@@ -151,6 +151,10 @@ class Raphtalia {
     });
   }
 
+  /**
+   *
+   * @param {Discord.Message} message
+   */
   processCommand(message) {
     let command = this.getCommandByName(message);
     if (command && command.userCanExecute()) {
@@ -159,7 +163,12 @@ class Raphtalia {
         .execute()
         .catch((error) => {
           console.log(error);
-          message.inputChannel.watchSend("Something went wrong");
+
+          message
+            .react("🛑")
+            .then(() => message.react("🇧"))
+            .then(() => message.react("🇦"))
+            .then(() => message.react("🇩"));
         })
         .then(() => message.channel.stopTyping());
     }

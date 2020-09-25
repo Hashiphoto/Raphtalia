@@ -1,6 +1,7 @@
 import mysqlPromise from "mysql2/promise.js";
 import AmbiguousInputError from "../structures/AmbiguousInputError.js";
 import GuildItem from "../structures/GuildItem.js";
+import Item from "../structures/Item.js";
 import UserItem from "../structures/UserItem.js";
 
 class Inventory {
@@ -63,7 +64,7 @@ class Inventory {
       });
   }
 
-  getItem(guildId, itemName) {
+  getGuildItem(guildId, itemName) {
     // TODO: Sanitize itemName
     return this.pool
       .query(this.guildSelect + `WHERE guild_id = ? AND name LIKE '${itemName}%'`, [guildId])

@@ -21,6 +21,15 @@ class UserInventory {
       };
     });
 
+    const embed = new Discord.RichEmbed()
+      .setColor(this.user.displayColor)
+      .setTitle(`${this.user.displayName}'s Inventory`)
+      .setTimestamp(new Date());
+
+    fields.forEach((field) => embed.addField(field));
+
+    return embed;
+
     return {
       color: this.user.displayColor,
       title: `${this.user.displayName}'s Inventory`,
