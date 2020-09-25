@@ -164,11 +164,7 @@ class Raphtalia {
         .catch((error) => {
           console.log(error);
 
-          message
-            .react("🛑")
-            .then(() => message.react("🇧"))
-            .then(() => message.react("🇦"))
-            .then(() => message.react("🇩"));
+          return message.react("🛑");
         })
         .then(() => message.channel.stopTyping());
     }

@@ -26,8 +26,6 @@ class Buy extends Command {
       return this.message.channel.watchSend(`Usage: !Buy (Item Name)`);
     }
 
-    // Match the closest item
-
     return this.inventoryController
       .getGuildItem(this.message.content)
       .then(async (item) => {
