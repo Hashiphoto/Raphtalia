@@ -49,6 +49,7 @@ class Command {
    */
   setInventoryController(ic) {
     this.inventoryController = ic;
+    return this;
   }
 
   useItem() {
