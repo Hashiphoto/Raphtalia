@@ -167,12 +167,13 @@ class Raphtalia {
     }
 
     const inventoryController = new InventoryController(this.db, message.guild);
+    command.setInventoryController(inventoryController);
 
     return inventoryController
-      .userCanUseCommand(message.member, command.constructor.name)
-      .then((allowed) =>
-        allowed
-          ? command
+      .getItemForCommand(message.member, command.constructor.name)
+      .then((item) =>
+        item
+          ? command.setItem(item)
           : new NullCommand(message, `You do not have the correct item to use this command`)
       );
   }
@@ -190,7 +191,8 @@ class Raphtalia {
 
         return message.react("🛑");
       })
-      .then(() => message.channel.stopTyping(true));
+      .then(() => message.channel.stopTyping(true))
+      .then(() => new ServerStatusController(this.db, message.guild).updateServerStatus());
   }
 
   /**
@@ -222,7 +224,6 @@ class Raphtalia {
         return new Buy(
           message,
           new CurrencyController(this.db, guild),
-          new InventoryController(this.db, guild),
           new ServerStatusController(this.db, guild)
         );
       case "censorship":
@@ -288,11 +289,7 @@ class Raphtalia {
       case "softkick":
         return new SoftKick(message, new MemberController(this.db, guild));
       case "status":
-        return new Status(
-          message,
-          new CurrencyController(this.db, guild),
-          new InventoryController(this.db, guild)
-        );
+        return new Status(message, new CurrencyController(this.db, guild));
       default:
         return new NullCommand(message, `Unknown command "${message.command}"`);
     }

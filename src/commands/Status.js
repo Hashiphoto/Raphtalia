@@ -9,12 +9,10 @@ class Status extends Command {
   /**
    * @param {Discord.Message} message
    * @param {CurrencyController} currencyController
-   * @param {InventoryController} inventoryController
    */
-  constructor(message, currencyController, inventoryController) {
+  constructor(message, currencyController) {
     super(message);
     this.currencyController = currencyController;
-    this.inventoryController = inventoryController;
   }
 
   async execute() {

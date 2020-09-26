@@ -20,7 +20,8 @@ class Balance extends Command {
       .getCurrency(this.sender)
       .then((balance) =>
         dmChannel.send(`You have ${RNumber.formatDollar(balance)} in ${this.message.guild.name}`)
-      );
+      )
+      .then(() => this.useItem());
   }
 }
 

@@ -11,13 +11,11 @@ class Buy extends Command {
    *
    * @param {Discord.Message} message
    * @param {CurrencyController} currencyController
-   * @param {InventoryController} inventoryController
    * @param {ServerStatusController} serverStatusController
    */
-  constructor(message, currencyController, inventoryController, serverStatusController) {
+  constructor(message, currencyController, serverStatusController) {
     super(message);
     this.currencyController = currencyController;
-    this.inventoryController = inventoryController;
     this.serverStatusController = serverStatusController;
   }
 

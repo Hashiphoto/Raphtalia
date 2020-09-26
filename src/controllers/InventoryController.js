@@ -17,16 +17,15 @@ class InventoryController extends GuildBasedController {
    * @param {Discord.GuildMember} user
    * @param {Number} quantity How many of the item is being purchased
    */
-  userPurchase(item, user, quantity = 1) {
+  async userPurchase(item, user, quantity = 1) {
     // Subtract from guild stock
     if (!item.unlimitedQuantity) {
-      item.quantity -= quantity;
+      await this.db.inventory.updateGuildItemQuantity(this.guild.id, item, -1);
     }
-    return this.db.inventory.updateGuildItem(this.guild.id, item).then(() => {
-      // Add it to player stock
-      item.quantity = quantity;
-      return this.db.inventory.insertUserItem(this.guild.id, user.id, item);
-    });
+
+    // Add it to player stock
+    item.quantity = quantity;
+    return this.db.inventory.insertUserItem(this.guild.id, user.id, item);
   }
 
   /**
@@ -43,8 +42,30 @@ class InventoryController extends GuildBasedController {
    * @param {Discord.GuildMember} member
    * @param {String} commandName
    */
-  userCanUseCommand(member, commandName) {
-    return this.db.inventory.userCanUseCommand(this.guild.id, member.id, commandName);
+  getItemForCommand(member, commandName) {
+    return this.db.inventory.getUserItemByCommand(this.guild.id, member.id, commandName);
+  }
+
+  useItem(item, member) {
+    if (item.unlimitedUses) {
+      return;
+    }
+
+    item.remainingUses -= 1;
+
+    // Check if quantity needs to be reduced
+    const maxPossibleUses = item.quantity * item.maxUses;
+    if (maxPossibleUses - item.remainingUses >= item.maxUses) {
+      // Increase guild quantity
+      item.quantity -= 1;
+      this.db.inventory.updateGuildItemQuantity(this.guild.id, item, 1);
+    }
+
+    if (item.quantity === 0) {
+      return this.db.inventory.deleteUserItem(this.guild.id, member.id, item);
+    }
+
+    return this.db.inventory.updateUserItem(this.guild.id, member.id, item);
   }
 }
 

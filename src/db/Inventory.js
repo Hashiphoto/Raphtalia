@@ -67,7 +67,7 @@ class Inventory {
   findGuildItem(guildId, itemName) {
     // TODO: Sanitize itemName
     return this.pool
-      .query(this.guildSelect + `WHERE guild_id = ? AND name LIKE '${itemName}%'`, [guildId])
+      .query(this.guildSelect + `WHERE guild_id = ? AND name LIKE '%${itemName}%'`, [guildId])
       .then(([rows, fields]) => {
         if (rows.length === 0) {
           return null;
@@ -80,10 +80,14 @@ class Inventory {
       });
   }
 
-  updateGuildItem(guildId, item) {
+  /**
+   * @param {String} guildId
+   * @param {Item} item
+   */
+  updateGuildItemQuantity(guildId, item, quantityChange) {
     return this.pool.query(
-      "UPDATE guild_inventory SET price=?, quantity=?, max_quantity=? WHERE guild_id=? AND item_id=?",
-      [item.price, item.quantity, item.maxQuantity, guildId, item.id]
+      "UPDATE guild_inventory SET quantity=quantity+? WHERE guild_id=? AND item_id=?",
+      [quantityChange, guildId, item.id]
     );
   }
 
@@ -96,8 +100,8 @@ class Inventory {
     return this.pool.query(
       "INSERT INTO user_inventory " +
         "VALUES (?,?,?,?,?) " +
-        "ON DUPLICATE KEY UPDATE quantity=quantity+?",
-      [userId, guildId, item.id, item.quantity, item.maxUses, item.quantity]
+        "ON DUPLICATE KEY UPDATE quantity=quantity+?, remaining_uses=remaining_uses+?",
+      [userId, guildId, item.id, item.quantity, item.maxUses, item.quantity, item.maxUses]
     );
   }
 
@@ -118,18 +122,47 @@ class Inventory {
       });
   }
 
-  userCanUseCommand(guildId, userId, commandName) {
+  getUserItem(guildId, userId, itemId) {
+    return this.pool
+      .query(this.userSelect + "WHERE ui.guild_id=? AND ui.user_id=? AND i.id=?", [
+        guildId,
+        userId,
+        itemId,
+      ])
+      .then(([rows, fields]) => this.toUserItem(rows[0]));
+  }
+
+  getUserItemByCommand(guildId, userId, commandName) {
     return this.pool
       .query(
-        "SELECT * FROM user_inventory ui " +
+        "SELECT i.id FROM user_inventory ui " +
           "JOIN items i ON ui.item_id = i.id " +
           "JOIN commands c ON c.item_id = i.id " +
           "WHERE ui.guild_id=? AND ui.user_id=? AND c.name LIKE ?",
         [guildId, userId, commandName]
       )
       .then(([rows, fields]) => {
-        return rows && rows.length > 0;
-      });
+        if (rows.length == 0) {
+          return null;
+        }
+        return rows[0].id;
+      })
+      .then((itemId) => (itemId == null ? null : this.getUserItem(guildId, userId, itemId)));
+  }
+
+  updateUserItem(guildId, userId, item) {
+    return this.pool.query(
+      "UPDATE user_inventory SET quantity=?, remaining_uses=? " +
+        "WHERE guild_id=? AND user_id=? AND item_id=?",
+      [item.quantity, item.remainingUses, guildId, userId, item.id]
+    );
+  }
+
+  deleteUserItem(guildId, userId, item) {
+    return this.pool.query(
+      "DELETE FROM user_inventory WHERE guild_id=? AND user_id=? AND item_id=?",
+      [guildId, userId, item.id]
+    );
   }
 }
 

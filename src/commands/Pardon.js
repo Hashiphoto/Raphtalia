@@ -21,11 +21,14 @@ class Pardon extends Command {
       );
     }
 
-    this.message.mentionedMembers.forEach((target) => {
-      this.memberController.pardonMember(target, this.inputChannel).then((feedback) => {
-        this.inputChannel.watchSend(feedback);
-      });
+    const pardonPromises = this.message.mentionedMembers.map((target) => {
+      return this.memberController.pardonMember(target, this.inputChannel);
     });
+
+    return Promise.all(pardonPromises)
+      .then((messages) => messages.reduce(this.sum))
+      .then((response) => this.inputChannel.watchSend(response))
+      .then(() => this.useItem());
   }
 }
 

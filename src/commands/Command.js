@@ -1,5 +1,8 @@
 import Discord from "discord.js";
+import UserItem from "../structures/UserItem.js";
 import AuthorityError from "../structures/AuthorityError.js";
+import InventoryController from "../controllers/InventoryController.js";
+import ServerStatusController from "../controllers/ServerStatusController.js";
 
 class Command {
   /**
@@ -10,6 +13,7 @@ class Command {
     this.sender = message.sender;
     this.inputChannel = message.channel;
     this.guild = message.guild;
+    this.item;
     this.sender.hasAuthorityOver = (input) => {
       const isHigher = (member, otherMember) => {
         return (
@@ -38,6 +42,25 @@ class Command {
 
   sendHelpMessage() {
     // TODO: Make this required to implement
+  }
+
+  /**
+   * @param {InventoryController} ic
+   */
+  setInventoryController(ic) {
+    this.inventoryController = ic;
+  }
+
+  useItem() {
+    return this.inventoryController.useItem(this.item, this.message.sender);
+  }
+
+  /**
+   * @param {UserItem} item
+   */
+  setItem(item) {
+    this.item = item;
+    return this;
   }
 
   sum(total, value) {

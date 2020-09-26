@@ -13,7 +13,7 @@ class Comfort extends Command {
       response += `${member} headpat\n`;
     }
 
-    return this.inputChannel.watchSend(response);
+    return this.inputChannel.watchSend(response).then(() => this.useItem());
   }
 
   sendHelpMessage() {

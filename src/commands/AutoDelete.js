@@ -36,12 +36,15 @@ class AutoDelete extends Command {
       );
     }
 
-    return this.channelController.setAutoDelete(start, durationMs).then(() => {
-      var response = start
-        ? `Messages are deleted after ${durationMs}ms`
-        : "Messages are no longer deleted";
-      return this.inputChannel.watchSend(response);
-    });
+    return this.channelController
+      .setAutoDelete(start, durationMs)
+      .then(() => {
+        var response = start
+          ? `Messages are deleted after ${durationMs}ms`
+          : "Messages are no longer deleted";
+        return this.inputChannel.watchSend(response);
+      })
+      .then(() => this.useItem());
   }
 
   sendHelpMessage(pretext = "") {

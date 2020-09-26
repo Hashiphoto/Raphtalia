@@ -24,7 +24,8 @@ class AllowWord extends Command {
     return this.censorController
       .deleteWords(words)
       .then(this.censorController.rebuildCensorshipList())
-      .then(this.inputChannel.watchSend(`These words are allowed again: ${words}`));
+      .then(this.inputChannel.watchSend(`These words are allowed again: ${words}`))
+      .then(() => this.useItem());
   }
 
   sendHelpMessage() {

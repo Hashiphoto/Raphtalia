@@ -173,10 +173,10 @@ class MemberController extends GuildBasedController {
       const released = this.releaseFromExile(member);
 
       if (released) {
-        return `${member} has been released from exile`;
+        return `${member} has been released from exile\n`;
       }
 
-      return `${member} has been cleared of all charges`;
+      return `${member} has been cleared of all charges\n`;
     });
   }
 
