@@ -18,11 +18,14 @@ class Promote extends Command {
       return this.inputChannel.watchSend("Try again and specify who is being promoted");
     }
 
-    this.message.mentionedMembers.forEach((target) => {
-      this.memberController
-        .promoteMember(this.message.sender, target)
-        .then((feedback) => this.inputChannel.watchSend(feedback));
+    const promotePromises = this.message.mentionedMembers.map((target) => {
+      return this.memberController.promoteMember(this.message.sender, target);
     });
+
+    return Promise.all(promotePromises)
+      .then((messages) => messages.reduce(this.sum))
+      .then((response) => this.inputChannel.watchSend(response))
+      .then(() => this.useItem());
   }
 }
 

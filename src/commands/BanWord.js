@@ -22,7 +22,8 @@ class BanWord extends Command {
     return this.censorController
       .insertWords(words)
       .then(() => this.censorController.rebuildCensorshipList())
-      .then(this.inputChannel.watchSend(`You won't see these words again: ${words}`));
+      .then(this.inputChannel.watchSend(`You won't see these words again: ${words}`))
+      .then(() => this.useItem());
   }
 
   sendHelpMessage() {

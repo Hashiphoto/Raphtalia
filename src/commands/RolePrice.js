@@ -39,7 +39,8 @@ class RolePrice extends Command {
     return this.guildController
       .setRolePriceMultiplier(multiplier.amount, neutralRole)
       .then((feedback) => this.inputChannel.watchSend(`${response}\n${feedback}`))
-      .then(this.serverStatusUpdater.updateServerStatus());
+      .then(this.serverStatusUpdater.updateServerStatus())
+      .then(() => this.useItem());
   }
 
   sendHelpMessage() {

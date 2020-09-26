@@ -33,7 +33,7 @@ class Play extends Command {
       return this.inputChannel.watchSend("I don't have permission to join that channel");
     }
 
-    return this.play(voiceChannel, links.youtube.anthem, volume);
+    return this.play(voiceChannel, links.youtube.anthem, volume).then(() => this.useItem());
   }
 
   /**

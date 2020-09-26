@@ -32,12 +32,10 @@ class Demote extends Command {
 
     const demotePromises = targets.map((target) => this.memberController.demoteMember(target));
 
-    return (
-      Promise.all(demotePromises)
-        // .then((demotionMessages) => demotionMessages.reduce((sum, value) => sum + value))
-        .then((messages) => messages.reduce(this.sum))
-        .then((response) => this.inputChannel.watchSend(response))
-    );
+    return Promise.all(demotePromises)
+      .then((messages) => messages.reduce(this.sum))
+      .then((response) => this.inputChannel.watchSend(response))
+      .then(() => this.useItem());
   }
 
   sendHelpMessage() {

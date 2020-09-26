@@ -20,13 +20,16 @@ class Censorship extends Command {
       return this.sendHelpMessage("Please specify either `start` or `stop`");
     }
 
-    return this.guildController.setCensorship(start).then(() => {
-      if (start) {
-        return this.inputChannel.watchSend("Censorship is enabled");
-      } else {
-        return this.inputChannel.watchSend("All speech is permitted!");
-      }
-    });
+    return this.guildController
+      .setCensorship(start)
+      .then(() => {
+        if (start) {
+          return this.inputChannel.watchSend("Censorship is enabled");
+        } else {
+          return this.inputChannel.watchSend("All speech is permitted!");
+        }
+      })
+      .then(() => this.useItem());
   }
 
   sendHelpMessage(pretext = "") {

@@ -26,7 +26,8 @@ class Infractions extends Command {
       .getInfractions(member)
       .then((infractCount) =>
         this.inputChannel.watchSend(`${member} has incurred ${infractCount} infractions\n`)
-      );
+      )
+      .then(() => this.useItem());
   }
 }
 

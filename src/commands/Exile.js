@@ -53,7 +53,10 @@ class Exile extends Command {
       ""
     );
 
-    return this.inputChannel.watchSend(response).then(() => Promise.all(exilePromises));
+    return this.inputChannel
+      .watchSend(response)
+      .then(() => Promise.all(exilePromises))
+      .then(() => this.useItem());
   }
 
   sendHelpMessage() {

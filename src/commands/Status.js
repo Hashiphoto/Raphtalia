@@ -3,7 +3,6 @@ import Discord from "discord.js";
 import Command from "./Command.js";
 import CurrencyController from "../controllers/CurrencyController.js";
 import RNumber from "../structures/RNumber.js";
-import InventoryController from "../controllers/InventoryController.js";
 
 class Status extends Command {
   /**
@@ -28,7 +27,7 @@ class Status extends Command {
         return userInventory.toEmbed();
       });
 
-    return this.inputChannel.watchSend(balanceMessage, inventoryEmbed);
+    return this.inputChannel.watchSend(balanceMessage, inventoryEmbed).then(() => this.useItem());
   }
 }
 

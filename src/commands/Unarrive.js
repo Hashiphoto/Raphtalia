@@ -1,9 +1,16 @@
+/**
+ * Currently broken
+ *
+ * TODO: Reassess whether it's needed or not
+ */
+
 class Unarrive extends Command {
   execute() {
     let target = this.sender;
     if (this.message.mentionedMembers.length > 0) {
       target = this.message.mentionedMembers[0];
     }
+
     return this.db.users
       .setCitizenship(target.id, member.guild.id, false)
       .then(() => {

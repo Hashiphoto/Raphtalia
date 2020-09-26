@@ -47,7 +47,8 @@ class Fine extends Command {
 
     return Promise.all(finePromises)
       .then((messages) => messages.reduce(this.sum))
-      .then((response) => this.inputChannel.watchSend(response));
+      .then((response) => this.inputChannel.watchSend(response))
+      .then(() => this.useItem());
   }
 
   sendHelpMessage(pretext = "") {

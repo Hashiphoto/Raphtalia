@@ -29,9 +29,9 @@ class DeliverCheck extends Command {
       promises.push(this.currencyController.addCurrency(target, rNumber.amount));
     }
 
-    return Promise.all(promises).then(() =>
-      this.inputChannel.watchSend("Money has been distributed!")
-    );
+    return Promise.all(promises)
+      .then(() => this.inputChannel.watchSend("Money has been distributed!"))
+      .then(() => this.useItem());
   }
 
   sendHelpMessage() {

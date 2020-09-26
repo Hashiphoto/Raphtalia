@@ -16,39 +16,28 @@ class Report extends Command {
       return this.sendHelpMessage();
     }
 
-    let amount = 1;
-
-    for (const arg of this.message.args) {
-      let relMatches = arg.match(/^\+?\d+$/g);
-      if (relMatches) {
-        amount = parseInt(relMatches[0]);
-        break;
-      }
+    if (!this.sender.hasAuthorityOver(targets)) {
+      return this.memberController
+        .addInfractions(this.sender)
+        .then((feedback) =>
+          this.inputChannel.watchSend(
+            `You must hold a higher rank than the members you are reporting\n` + feedback
+          )
+        );
     }
 
-    let response = "";
+    const reportPromises = this.message.mentionedMembers.map((target) => {
+      return this.memberController.addInfractions(target);
+    });
 
-    for (const target of this.message.mentionedMembers) {
-      if (!this.memberController.hasAuthorityOver(this.sender, target)) {
-        await this.memberController
-          .addInfractions(this.sender)
-          .then(
-            (feedback) =>
-              (response += `You must hold a rank higher than ${target} to report them\n${feedback}\n`)
-          );
-        break;
-      }
-
-      await this.memberController
-        .addInfractions(target, amount)
-        .then((feedback) => (response += feedback));
-    }
-
-    return this.inputChannel.watchSend(response);
+    return Promise.all(reportPromises)
+      .then((messages) => messages.reduce(this.sum))
+      .then((response) => this.inputChannel.watchSend(response))
+      .then(() => this.useItem());
   }
 
   sendHelpMessage() {
-    return this.inputChannel.watchSend("Usage: `Report @member [+1]");
+    return this.inputChannel.watchSend("Usage: `Report @member");
   }
 }
 

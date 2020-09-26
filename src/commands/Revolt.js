@@ -4,20 +4,11 @@ import Command from "./Command.js";
 
 class Revolt extends Command {
   execute() {
-    if (this.message.mentionedMembers.length === 0) {
-      return this.sendHelpMessage();
-    }
-
-    let response = "";
-    for (const member of this.message.mentionedMembers) {
-      response += `${member} headpat\n`;
-    }
-
-    return this.inputChannel.watchSend(response);
+    return this.inputChannel.watchSend("This feature hasn't been developed yet");
   }
 
   sendHelpMessage() {
-    return this.inputChannel.watchSend("Usage: `Comfort @member`");
+    return this.inputChannel.watchSend("Usage: `Revolt`");
   }
 }
 

@@ -57,9 +57,11 @@ class Income extends Command {
       .filter((role) => role.calculatedPosition >= neutralRole.calculatedPosition)
       .array();
 
+    // TODO: SSC should be passed in
     return this.inputChannel
       .watchSend(await this.guildController.setIncomeScale(baseIncome, roles, scaleNumber))
-      .then(new ServerStatusController(this.db, this.guild).updateServerStatus(this.inputChannel));
+      .then(new ServerStatusController(this.db, this.guild).updateServerStatus(this.inputChannel))
+      .then(() => this.useItem());
   }
 
   getBaseIncome() {

@@ -46,7 +46,8 @@ class Buy extends Command {
           .addCurrency(this.message.sender, -item.price)
           .then(() => this.inventoryController.userPurchase(item, this.message.sender))
           .then(() => this.inputChannel.watchSend("`Purchase complete`"))
-          .then(() => this.serverStatusController.updateServerStatus());
+          .then(() => this.serverStatusController.updateServerStatus())
+          .then(() => this.useItem());
       })
       .catch((error) => {
         if (error instanceof AmbiguousInputError) {

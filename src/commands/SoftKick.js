@@ -16,30 +16,32 @@ class SoftKick extends Command {
       return this.sendHelpMessage();
     }
 
-    let response = "";
-    for (const target of this.message.mentionedMembers) {
-      if (!this.memberController.hasAuthorityOver(this.sender, target)) {
-        await this.memberController
-          .addInfractions(this.sender)
-          .then(
-            (feedback) =>
-              (response += `You must hold a rank higher than ${target} to soft kick them\n${feedback}\n`)
-          );
-        break;
-      }
-
-      let reason = null;
-      const found = this.message.content.match(/for\s.*/i);
-      if (found) {
-        reason = found[0];
-      }
-
-      await this.memberController
-        .softKick(target, reason, this.message.author)
-        .then((feedback) => (response += feedback));
+    if (!this.sender.hasAuthorityOver(targets)) {
+      return this.memberController
+        .addInfractions(this.sender)
+        .then((feedback) =>
+          this.inputChannel.watchSend(
+            `You must hold a higher rank than the members you are demoting\n` + feedback
+          )
+        );
     }
 
-    return this.inputChannel.watchSend(response);
+    const softPromises = this.message.mentionedMembers.map((target) => {
+      let reason = null;
+      const matches = this.message.content.match(/for\s+.*/i);
+      if (matches) {
+        reason = matches[0];
+      }
+
+      return this.memberController
+        .softKick(target, reason, this.message.author)
+        .then((feedback) => (response += feedback));
+    });
+
+    return Promise.all(softPromises)
+      .then((messages) => messages.reduce(this.sum))
+      .then((response) => this.inputChannel.watchSend(response))
+      .then(() => this.useItem());
   }
 
   sendHelpMessage() {

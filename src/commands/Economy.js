@@ -48,7 +48,8 @@ class Economy extends Command {
 
     return Promise.all(promises)
       .then((messages) => messages.reduce(this.sum))
-      .then((response) => this.inputChannel.watchSend(response));
+      .then((response) => this.inputChannel.watchSend(response))
+      .then(() => this.useItem());
   }
 
   sendHelpMessage(pretext = "") {

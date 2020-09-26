@@ -19,9 +19,12 @@ class Register extends Command {
       return this.inputChannel.watchSend(`You are already a registered voter`);
     }
 
-    return this.memberController.addRoles(this.message.sender, []).then(() => {
-      this.inputChannel.watchSend(`You are now a registered voter!`);
-    });
+    return this.memberController
+      .addRoles(this.message.sender, [])
+      .then(() => {
+        this.inputChannel.watchSend(`You are now a registered voter!`);
+      })
+      .then(() => this.useItem());
   }
 }
 

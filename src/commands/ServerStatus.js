@@ -18,7 +18,7 @@ class ServerStatus extends Command {
   async execute() {
     const statusEmbed = await this.serverStatusUpdater.generateServerStatus(this.message.guild);
 
-    this.guildController
+    return this.guildController
       .removeStatusMessage()
       .then(() => {
         // Post the new status message
@@ -28,7 +28,8 @@ class ServerStatus extends Command {
         // Update the status message in the this.db
         message.pin();
         return this.guildController.setStatusMessageId(message.id);
-      });
+      })
+      .then(() => this.useItem());
   }
 }
 

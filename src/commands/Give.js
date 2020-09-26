@@ -52,7 +52,8 @@ class Give extends Command {
 
       return Promise.all(givePromises)
         .then((messages) => messages.reduce(this.sum))
-        .then((response) => this.inputChannel.watchSend(response));
+        .then((response) => this.inputChannel.watchSend(response))
+        .then(() => this.useItem());
     });
   }
 

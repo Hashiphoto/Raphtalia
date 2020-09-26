@@ -17,27 +17,33 @@ class Kick extends Command {
       return this.sendHelpMessage();
     }
 
-    for (let i = 0; i < this.message.mentionedMembers.length; i++) {
-      const target = this.message.mentionedMembers[i];
-      if (!this.memberController.hasAuthorityOver(this.sender, target)) {
-        this.memberController.addInfractions(this.sender).then((feedback) => {
-          return this.inputChannel.watchSend(
-            `You must hold a higher rank than ${target} to kick them\n${feedback ?? ""}\n`
-          );
-        });
-      } else {
-        target
-          .kick()
-          .then((member) => {
-            let kickGif = this.getRandomKickGif();
-            this.inputChannel.watchSend(`:wave: ${member.displayName} has been kicked\n${kickGif}`);
-          })
-          .catch((e) => {
-            this.inputChannel.watchSend("Something went wrong...");
-            console.error(e);
-          });
-      }
+    if (!this.sender.hasAuthorityOver(targets)) {
+      return this.memberController
+        .addInfractions(this.sender)
+        .then((feedback) =>
+          this.inputChannel.watchSend(
+            `You must hold a higher rank than the members you are kicking\n` + feedback
+          )
+        );
     }
+
+    const kickPromises = this.message.mentionedMembers.map((target) => {
+      return target
+        .kick()
+        .then((member) => {
+          let kickGif = this.getRandomKickGif();
+          return `:wave: ${member.displayName} has been kicked\n${kickGif}`;
+        })
+        .catch((e) => {
+          console.error(e);
+          return `Could not kick ${target.displayName}`;
+        });
+    });
+
+    return Promise.all(kickPromises)
+      .then((messages) => messages.reduce(this.sum))
+      .then((response) => this.inputChannel.watchSend(response))
+      .then(() => this.useItem());
   }
 
   getRandomKickGif() {
