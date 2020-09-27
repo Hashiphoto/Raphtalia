@@ -73,11 +73,11 @@ class Raphtalia {
 
   configureDiscordClient() {
     this.client.on("message", (message) => {
-      if (message.author.bot) {
-        return;
+      if (message.author.id === this.client.user.id && message.type === "PINS_ADD") {
+        return message.delete();
       }
 
-      if (message.channel.type === "dm" || message.type !== "DEFAULT") {
+      if (message.author.bot || message.channel.type === "dm" || message.type !== "DEFAULT") {
         return;
       }
 
