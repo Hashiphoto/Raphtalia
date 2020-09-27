@@ -15,8 +15,16 @@ class DeliverCheck extends Command {
   }
 
   execute() {
-    if (this.message.mentionedMembers.length === 0) {
+    const targets = this.message.mentionedMembers;
+    if (targets.length === 0) {
       return this.sendHelpMessage();
+    }
+
+    if (targets.length > this.item.remainingUses) {
+      return this.inputChannel.watchSend(
+        `Your ${this.item.name} does not have enough charges. ` +
+          `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
+      );
     }
 
     let rNumber = RNumber.parse(this.message.content);
@@ -25,13 +33,13 @@ class DeliverCheck extends Command {
     }
 
     let promises = [];
-    for (const target of this.message.mentionedMembers) {
+    for (const target of targets) {
       promises.push(this.currencyController.addCurrency(target, rNumber.amount));
     }
 
     return Promise.all(promises)
       .then(() => this.inputChannel.watchSend("Money has been distributed!"))
-      .then(() => this.useItem());
+      .then(() => this.useItem(promises.length));
   }
 
   sendHelpMessage() {

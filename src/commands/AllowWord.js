@@ -21,15 +21,22 @@ class AllowWord extends Command {
       return this.sendHelpMessage();
     }
 
+    if (words.length > this.item.remainingUses) {
+      return this.inputChannel.watchSend(
+        `Your ${this.item.name} does not have enough charges. ` +
+          `Attempting to use ${words.length}/${this.item.remainingUses} remaining uses`
+      );
+    }
+
     return this.censorController
       .deleteWords(words)
       .then(this.censorController.rebuildCensorshipList())
       .then(this.inputChannel.watchSend(`These words are allowed again: ${words}`))
-      .then(() => this.useItem());
+      .then(() => this.useItem(words.length));
   }
 
-  sendHelpMessage() {
-    return this.inputChannel.watchSend("Usage: `AllowWord word1 word2 etc`");
+  sendHelpMessage(pretext = "") {
+    return this.inputChannel.watchSend(`${pretext}\n` + "Usage: `AllowWord word1 word2 etc`");
   }
 }
 

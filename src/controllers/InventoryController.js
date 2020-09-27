@@ -50,19 +50,18 @@ class InventoryController extends GuildBasedController {
    * @param {UserItem} item
    * @param {Discord.GuildMember} member
    */
-  useItem(item, member) {
+  useItem(item, member, uses) {
     if (item.unlimitedUses) {
       return;
     }
 
-    item.remainingUses -= 1;
+    item.remainingUses -= uses;
 
     // Check if quantity needs to be reduced
-    const maxPossibleUses = item.quantity * item.maxUses;
-    if (maxPossibleUses - item.remainingUses >= item.maxUses) {
-      // Increase guild quantity
-      item.quantity -= 1;
-      this.db.inventory.updateGuildItemQuantity(this.guild.id, item, 1);
+    const newQuantity = Math.ceil(item.remainingUses / item.maxUses);
+    if (item.quantity !== newQuantity) {
+      item.quantity = newQuantity;
+      this.db.inventory.updateGuildItemQuantity(this.guild.id, item, uses);
     }
 
     if (item.quantity === 0) {

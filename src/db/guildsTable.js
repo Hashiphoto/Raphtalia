@@ -103,6 +103,15 @@ class GuildsTable {
       )
       .catch((error) => console.error(error));
   }
+
+  setStoreMessage(guildId, messageId) {
+    return this.pool
+      .query(
+        "INSERT INTO guilds (id, store_message_id) VALUES (?,?) ON DUPLICATE KEY UPDATE store_message_id = VALUES(store_message_id)",
+        [guildId, messageId]
+      )
+      .catch((error) => console.error(error));
+  }
 }
 
 export default GuildsTable;

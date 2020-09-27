@@ -14,18 +14,26 @@ class Promote extends Command {
   }
 
   execute() {
-    if (this.message.mentionedMembers.length === 0) {
+    const targets = this.message.mentionedMembers;
+    if (targets.length === 0) {
       return this.inputChannel.watchSend("Try again and specify who is being promoted");
     }
 
-    const promotePromises = this.message.mentionedMembers.map((target) => {
+    if (targets.length > this.item.remainingUses) {
+      return this.inputChannel.watchSend(
+        `Your ${this.item.name} does not have enough charges. ` +
+          `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
+      );
+    }
+
+    const promotePromises = targets.map((target) => {
       return this.memberController.promoteMember(this.message.sender, target);
     });
 
     return Promise.all(promotePromises)
       .then((messages) => messages.reduce(this.sum))
       .then((response) => this.inputChannel.watchSend(response))
-      .then(() => this.useItem());
+      .then(() => this.useItem(targets.length));
   }
 }
 

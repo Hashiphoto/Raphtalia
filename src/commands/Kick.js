@@ -13,8 +13,16 @@ class Kick extends Command {
   }
 
   execute() {
-    if (this.message.mentionedMembers.length === 0) {
+    const targets = this.message.mentionedMembers;
+    if (targets.length === 0) {
       return this.sendHelpMessage();
+    }
+
+    if (targets.length > this.item.remainingUses) {
+      return this.inputChannel.watchSend(
+        `Your ${this.item.name} does not have enough charges. ` +
+          `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
+      );
     }
 
     if (!this.sender.hasAuthorityOver(targets)) {
@@ -27,7 +35,7 @@ class Kick extends Command {
         );
     }
 
-    const kickPromises = this.message.mentionedMembers.map((target) => {
+    const kickPromises = targets.map((target) => {
       return target
         .kick()
         .then((member) => {
@@ -43,7 +51,7 @@ class Kick extends Command {
     return Promise.all(kickPromises)
       .then((messages) => messages.reduce(this.sum))
       .then((response) => this.inputChannel.watchSend(response))
-      .then(() => this.useItem());
+      .then(() => this.useItem(targets.length));
   }
 
   getRandomKickGif() {

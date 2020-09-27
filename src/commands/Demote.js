@@ -20,6 +20,13 @@ class Demote extends Command {
       return this.sendHelpMessage();
     }
 
+    if (targets.length > this.item.remainingUses) {
+      return this.inputChannel.watchSend(
+        `Your ${this.item.name} does not have enough charges. ` +
+          `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
+      );
+    }
+
     if (!this.sender.hasAuthorityOver(targets)) {
       return this.memberController
         .addInfractions(this.sender)
@@ -35,7 +42,7 @@ class Demote extends Command {
     return Promise.all(demotePromises)
       .then((messages) => messages.reduce(this.sum))
       .then((response) => this.inputChannel.watchSend(response))
-      .then(() => this.useItem());
+      .then(() => this.useItem(targets.length));
   }
 
   sendHelpMessage() {

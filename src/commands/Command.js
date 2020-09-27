@@ -52,8 +52,8 @@ class Command {
     return this;
   }
 
-  useItem() {
-    return this.inventoryController.useItem(this.item, this.message.sender);
+  useItem(uses = 1) {
+    return this.inventoryController.useItem(this.item, this.message.sender, uses);
   }
 
   /**

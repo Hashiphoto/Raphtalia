@@ -19,11 +19,18 @@ class BanWord extends Command {
       return this.sendHelpMessage();
     }
 
+    if (words.length > this.item.remainingUses) {
+      return this.inputChannel.watchSend(
+        `Your ${this.item.name} does not have enough charges. ` +
+          `Attempting to use ${words.length}/${this.item.remainingUses} remaining uses`
+      );
+    }
+
     return this.censorController
       .insertWords(words)
       .then(() => this.censorController.rebuildCensorshipList())
       .then(this.inputChannel.watchSend(`You won't see these words again: ${words}`))
-      .then(() => this.useItem());
+      .then(() => this.useItem(words.length));
   }
 
   sendHelpMessage() {

@@ -22,6 +22,13 @@ class Exile extends Command {
       return this.sendHelpMessage();
     }
 
+    if (targets.length > this.item.remainingUses) {
+      return this.inputChannel.watchSend(
+        `Your ${this.item.name} does not have enough charges. ` +
+          `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
+      );
+    }
+
     // Current time + exile duration
     const duration = Format.parseTime(this.message.content);
     const releaseDate = duration != null ? dayjs().add(duration) : null;
@@ -56,7 +63,7 @@ class Exile extends Command {
     return this.inputChannel
       .watchSend(response)
       .then(() => Promise.all(exilePromises))
-      .then(() => this.useItem());
+      .then(() => this.useItem(targets.length));
   }
 
   sendHelpMessage() {

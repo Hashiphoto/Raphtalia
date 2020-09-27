@@ -23,6 +23,13 @@ class Give extends Command {
       return this.sendHelpMessage();
     }
 
+    if (targets.length > this.item.remainingUses) {
+      return this.inputChannel.watchSend(
+        `Your ${this.item.name} does not have enough charges. ` +
+          `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
+      );
+    }
+
     let rNumber = RNumber.parse(this.message.content);
     if (!rNumber) {
       return this.sendHelpMessage("Enter the amount you want to give in dollar format");
@@ -53,7 +60,7 @@ class Give extends Command {
       return Promise.all(givePromises)
         .then((messages) => messages.reduce(this.sum))
         .then((response) => this.inputChannel.watchSend(response))
-        .then(() => this.useItem());
+        .then(() => this.useItem(targets.length));
     });
   }
 

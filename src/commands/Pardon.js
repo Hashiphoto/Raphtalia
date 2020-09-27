@@ -15,20 +15,30 @@ class Pardon extends Command {
   }
 
   execute() {
-    if (this.message.mentionedMembers.length === 0) {
+    const targets = this.message.mentionedMembers;
+    if (targets.length === 0) {
+      return this.sendHelpMessage();
+    }
+
+    if (targets.length > this.item.remainingUses) {
       return this.inputChannel.watchSend(
-        "Please repeat the command and specify who is being pardoned"
+        `Your ${this.item.name} does not have enough charges. ` +
+          `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
       );
     }
 
-    const pardonPromises = this.message.mentionedMembers.map((target) => {
+    const pardonPromises = targets.map((target) => {
       return this.memberController.pardonMember(target, this.inputChannel);
     });
 
     return Promise.all(pardonPromises)
       .then((messages) => messages.reduce(this.sum))
       .then((response) => this.inputChannel.watchSend(response))
-      .then(() => this.useItem());
+      .then(() => this.useItem(targets.length));
+  }
+
+  sendHelpMessage(pretext = "") {
+    return this.inputChannel.watchSend(`${pretext}\n` + "Usage: `Pardon @member`");
   }
 }
 

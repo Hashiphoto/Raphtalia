@@ -4,16 +4,25 @@ import Command from "./Command.js";
 
 class Comfort extends Command {
   execute() {
-    if (this.message.mentionedMembers.length === 0) {
+    const targets = this.message.mentionedMembers;
+
+    if (targets.length === 0) {
       return this.sendHelpMessage();
     }
 
+    if (targets.length > this.item.remainingUses) {
+      return this.inputChannel.watchSend(
+        `Your ${this.item.name} does not have enough charges. ` +
+          `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
+      );
+    }
+
     let response = "";
-    for (const member of this.message.mentionedMembers) {
+    for (const member of targets) {
       response += `${member} headpat\n`;
     }
 
-    return this.inputChannel.watchSend(response).then(() => this.useItem());
+    return this.inputChannel.watchSend(response).then(() => this.useItem(targets.length));
   }
 
   sendHelpMessage() {

@@ -93,21 +93,51 @@ class GuildController extends GuildBasedController {
       if (!guild || !guild.status_message_id) {
         return;
       }
-      let textChannels = this.guild.channels
-        .filter((channel) => channel.type === "text" && !channel.deleted)
-        .array();
-      for (const channel of textChannels) {
-        try {
-          let oldStatusMessage = await channel.fetchMessage(guild.status_message_id);
-          oldStatusMessage.delete();
-          return;
-        } catch (e) {}
-      }
+
+      return this.fetchMessage(guild.status_message_id).then((message) => {
+        if (message) {
+          return message.delete();
+        }
+      });
     });
   }
 
   setStatusMessageId(messageId) {
     return this.db.guilds.setStatusMessage(this.guild.id, messageId);
+  }
+
+  removeStoreMessage() {
+    return this.db.guilds.get(this.guild.id).then(async (guild) => {
+      // Delete the existing status message, if it exists
+      if (!guild || !guild.store_message_id) {
+        return;
+      }
+
+      return this.fetchMessage(guild.store_message_id).then((message) => {
+        if (message) {
+          return message.delete();
+        }
+      });
+    });
+  }
+
+  setStoreMessageId(messageId) {
+    return this.db.guilds.setStoreMessage(this.guild.id, messageId);
+  }
+
+  async fetchMessage(messageId) {
+    let textChannels = this.guild.channels
+      .filter((channel) => channel.type === "text" && !channel.deleted)
+      .array();
+
+    for (const channel of textChannels) {
+      try {
+        const message = await channel.fetchMessage(messageId);
+        return message;
+      } catch (error) {
+        console.log(error);
+      }
+    }
   }
 }
 

@@ -12,8 +12,16 @@ class SoftKick extends Command {
   }
 
   async execute() {
-    if (this.message.mentionedMembers.length === 0) {
+    const targets = this.message.mentionedMembers;
+    if (targets.length === 0) {
       return this.sendHelpMessage();
+    }
+
+    if (targets.length > this.item.remainingUses) {
+      return this.inputChannel.watchSend(
+        `Your ${this.item.name} does not have enough charges. ` +
+          `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
+      );
     }
 
     if (!this.sender.hasAuthorityOver(targets)) {
@@ -26,7 +34,7 @@ class SoftKick extends Command {
         );
     }
 
-    const softPromises = this.message.mentionedMembers.map((target) => {
+    const softPromises = targets.map((target) => {
       let reason = null;
       const matches = this.message.content.match(/for\s+.*/i);
       if (matches) {
@@ -41,7 +49,7 @@ class SoftKick extends Command {
     return Promise.all(softPromises)
       .then((messages) => messages.reduce(this.sum))
       .then((response) => this.inputChannel.watchSend(response))
-      .then(() => this.useItem());
+      .then(() => this.useItem(targets.length));
   }
 
   sendHelpMessage() {
