@@ -1,6 +1,7 @@
 import Discord from "discord.js";
 import UserItem from "../structures/UserItem.js";
 import InventoryController from "../controllers/InventoryController.js";
+import CommandParser from "../CommandParser.js";
 
 class Command {
   /**
@@ -10,6 +11,7 @@ class Command {
     this.message = message;
     this.sender = message.sender;
     this.inputChannel = message.channel;
+    this.reply = this.inputChannel.watchSend;
     this.guild = message.guild;
     this.item;
     this.sender.hasAuthorityOver = (input) => {
@@ -24,6 +26,8 @@ class Command {
       }
       return isHigher(this.sender, input);
     };
+    this.instructions = "";
+    this.usage = "";
   }
 
   userCanExecute() {
@@ -38,8 +42,8 @@ class Command {
     throw new Error("Implement this function");
   }
 
-  sendHelpMessage() {
-    // TODO: Make this required to implement
+  sendHelpMessage(pretext = "") {
+    return this.inputChannel.watchSend(pretext + "\n" + this.usage);
   }
 
   /**

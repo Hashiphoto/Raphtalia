@@ -1,8 +1,14 @@
 import Command from "./Command.js";
 
 class Help extends Command {
+  constructor(message) {
+    super(message);
+    this.instructions = "**Help**\nGet detailed information about how to use any other command";
+    this.usage = "Usage: `Help (command name)`";
+  }
+
   execute() {
-    return this.inputChannel.watchSend(`Help yourself, ${this.sender}`).then(() => this.useItem());
+    return this.sendHelpMessage(this.instructions);
   }
 }
 
