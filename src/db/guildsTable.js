@@ -95,10 +95,10 @@ class GuildsTable {
       .catch((error) => console.error(error));
   }
 
-  setStatusMessage(guildId, messageId) {
+  setRoleMessage(guildId, messageId) {
     return this.pool
       .query(
-        "INSERT INTO guilds (id, status_message_id) VALUES (?,?) ON DUPLICATE KEY UPDATE status_message_id = VALUES(status_message_id)",
+        "INSERT INTO guilds (id, role_message_id) VALUES (?,?) ON DUPLICATE KEY UPDATE role_message_id = VALUES(role_message_id)",
         [guildId, messageId]
       )
       .catch((error) => console.error(error));

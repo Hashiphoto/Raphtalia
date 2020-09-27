@@ -1,35 +1,32 @@
 import Command from "./Command.js";
-import GuildController from "../controllers/GuildController.js";
-import ServerStatusController from "../controllers/ServerStatusController.js";
+import Discord from "discord.js";
+import RoleStatusController from "../controllers/RoleStatusController.js";
+import StoreStatusController from "../controllers/StoreStatusController.js";
+import Store from "./Store.js";
+import Roles from "./Roles.js";
 
 class ServerStatus extends Command {
   /**
    *
    * @param {Discord.Message} message
-   * @param {GuildController} guildController
-   * @param {ServerStatusController} serverStatusUpdater
+   * @param {RoleStatusController} roleStatusCtlr
+   * @param {StoreStatusController} storeStatusCtlr
    */
-  constructor(message, guildController, serverStatusUpdater) {
+  constructor(message, roleStatusCtlr, storeStatusCtlr) {
     super(message);
-    this.guildController = guildController;
-    this.serverStatusUpdater = serverStatusUpdater;
+    this.roleStatusCtlr = roleStatusCtlr;
+    this.storeStatusCtlr = storeStatusCtlr;
   }
 
   async execute() {
-    const statusEmbed = await this.serverStatusUpdater.generateServerStatus(this.message.guild);
+    const store = new Store(this.message, this.storeStatusCtlr)
+      .setItem(this.item)
+      .setInventoryController(this.inventoryController);
+    const roles = new Roles(this.message, this.roleStatusCtlr)
+      .setItem(this.item)
+      .setInventoryController(this.inventoryController);
 
-    return this.guildController
-      .removeStatusMessage()
-      .then(() => {
-        // Post the new status message
-        return this.inputChannel.send({ embed: statusEmbed });
-      })
-      .then((message) => {
-        // Update the status message in the this.db
-        message.pin();
-        return this.guildController.setStatusMessageId(message.id);
-      })
-      .then(() => this.useItem());
+    return roles.execute().then(() => store.execute());
   }
 }
 

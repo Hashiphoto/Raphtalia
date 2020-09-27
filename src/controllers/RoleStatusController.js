@@ -1,14 +1,14 @@
 import Discord from "discord.js";
 
-import GuildBasedController from "./GuildBasedController.js";
+import SingletonMessageController from "./SingletonMessageController.js";
 
-class ServerStatusController extends GuildBasedController {
-  async updateServerStatus() {
-    const statusEmbed = await this.generateServerStatus(this.guild);
+class RoleStatusController extends SingletonMessageController {
+  async update() {
+    const statusEmbed = await this.generateEmbed(this.guild);
 
     return this.db.guilds.get(this.guild.id).then(async (dbGuild) => {
       // Exit if no message to update
-      if (!dbGuild || !dbGuild.status_message_id) {
+      if (!dbGuild || !dbGuild.role_message_id) {
         return;
       }
       // Find the existing message and update it
@@ -17,7 +17,7 @@ class ServerStatusController extends GuildBasedController {
         .array();
       for (let i = 0; i < textChannels.length; i++) {
         try {
-          let message = await textChannels[i].fetchMessage(dbGuild.status_message_id);
+          let message = await textChannels[i].fetchMessage(dbGuild.role_message_id);
           message.edit({ embed: statusEmbed });
           break;
         } catch (e) {}
@@ -28,15 +28,13 @@ class ServerStatusController extends GuildBasedController {
   /**
    * @returns {Promise<Discord.RichEmbed>}
    */
-  async generateServerStatus() {
-    const roleFields = await this.getRoleFields();
-    const storeFields = await this.getStoreFields();
-    const allFields = roleFields.concat(storeFields);
+  async generateEmbed() {
+    const roleFields = await this.getFields();
     const statusEmbed = {
       color: 0x73f094,
-      title: this.guild.name.toUpperCase(),
+      title: "Roles",
       timestamp: new Date(),
-      fields: allFields,
+      fields: roleFields,
       thumbnail: { url: this.guild.iconURL },
     };
 
@@ -46,13 +44,8 @@ class ServerStatusController extends GuildBasedController {
   /**
    * @returns {Promise<EmbedField[]>}
    */
-  async getRoleFields() {
-    let fields = [
-      {
-        name: "----------\nRoles",
-        value: "----------",
-      },
-    ];
+  async getFields() {
+    let fields = [];
     let discordRoles = this.guild.roles
       .filter((role) => role.hoist)
       .sort((a, b) => b.calculatedPosition - a.calculatedPosition)
@@ -75,29 +68,24 @@ class ServerStatusController extends GuildBasedController {
     return fields;
   }
 
-  /**
-   * @returns {Promise<EmbedField[]>}
-   */
-  async getStoreFields() {
-    const fields = [
-      {
-        name: "----------\nStore",
-        value: "----------",
-      },
-    ];
+  removeMessage() {
+    return this.db.guilds.get(this.guild.id).then(async (guild) => {
+      // Delete the existing status message, if it exists
+      if (!guild || !guild.role_message_id) {
+        return;
+      }
 
-    const items = await this.db.inventory.getGuildStock(this.guild.id);
-
-    const itemFields = items.map((item) => {
-      return {
-        name: item.name,
-        value: item.getDetails(),
-        inline: true,
-      };
+      return this.fetchMessage(guild.role_message_id).then((message) => {
+        if (message) {
+          return message.delete();
+        }
+      });
     });
+  }
 
-    return fields.concat(itemFields);
+  setMessage(messageId) {
+    return this.db.guilds.setRoleMessage(this.guild.id, messageId);
   }
 }
 
-export default ServerStatusController;
+export default RoleStatusController;

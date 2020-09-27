@@ -2,22 +2,24 @@ import Discord from "discord.js";
 
 import Command from "./Command.js";
 import discordConfig from "../../config/discord.config.js";
-import ServerStatusController from "../controllers/ServerStatusController.js";
 import CurrencyController from "../controllers/CurrencyController.js";
 import RNumber from "../structures/RNumber.js";
 import GuildController from "../controllers/GuildController.js";
 import RoleUtil from "../RoleUtil.js";
+import RoleStatusController from "../controllers/RoleStatusController.js";
 
 class Income extends Command {
   /**
    * @param {Discord.Message} message
    * @param {CurrencyController} currencyController
    * @param {GuildController} guildController
+   * @param {RoleStatusController} roleStatusCtlr
    */
-  constructor(message, currencyController, guildController) {
+  constructor(message, currencyController, guildController, roleStatusCtlr) {
     super(message);
     this.currencyController = currencyController;
     this.guildController = guildController;
+    this.roleStatusCtlr = roleStatusCtlr;
   }
 
   async execute() {
@@ -60,7 +62,7 @@ class Income extends Command {
     // TODO: SSC should be passed in
     return this.inputChannel
       .watchSend(await this.guildController.setIncomeScale(baseIncome, roles, scaleNumber))
-      .then(new ServerStatusController(this.db, this.guild).updateServerStatus(this.inputChannel))
+      .then(() => this.roleStatusCtlr.update())
       .then(() => this.useItem());
   }
 

@@ -4,20 +4,20 @@ import Command from "./Command.js";
 import discordConfig from "../../config/discord.config.js";
 import RNumber from "../structures/RNumber.js";
 import GuildController from "../controllers/GuildController.js";
-import ServerStatusController from "../controllers/ServerStatusController.js";
 import RoleUtil from "../RoleUtil.js";
+import RoleStatusController from "../controllers/RoleStatusController.js";
 
 class RolePrice extends Command {
   /**
    *
    * @param {Discord.Message} message
    * @param {GuildController} guildController
-   * @param {ServerStatusController} serverStatusUpdater
+   * @param {RoleStatusController} roleStatusCtlr
    */
-  constructor(message, guildController, serverStatusUpdater) {
+  constructor(message, guildController, roleStatusCtlr) {
     super(message);
     this.guildController = guildController;
-    this.serverStatusUpdater = serverStatusUpdater;
+    this.roleStatusCtlr = roleStatusCtlr;
   }
 
   async execute() {
@@ -39,7 +39,7 @@ class RolePrice extends Command {
     return this.guildController
       .setRolePriceMultiplier(multiplier.amount, neutralRole)
       .then((feedback) => this.inputChannel.watchSend(`${response}\n${feedback}`))
-      .then(this.serverStatusUpdater.updateServerStatus())
+      .then(this.roleStatusCtlr.update())
       .then(() => this.useItem());
   }
 

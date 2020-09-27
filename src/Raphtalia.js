@@ -1,7 +1,6 @@
 import Discord from "discord.js";
 import dayjs from "dayjs";
 
-import censorship from "./controllers/CensorController.js";
 import Database from "./db/Database.js";
 import secretConfig from "../config/secrets.config.js";
 import discordConfig from "../config/discord.config.js";
@@ -43,10 +42,13 @@ import ChannelController from "./controllers/ChannelController.js";
 import CurrencyController from "./controllers/CurrencyController.js";
 import GuildController from "./controllers/GuildController.js";
 import MemberController from "./controllers/MemberController.js";
-import ServerStatusController from "./controllers/ServerStatusController.js";
 import InventoryController from "./controllers/InventoryController.js";
 import Status from "./commands/Status.js";
 import Command from "./commands/Command.js";
+import Store from "./commands/Store.js";
+import Roles from "./commands/Roles.js";
+import RoleStatusController from "./controllers/RoleStatusController.js";
+import StoreStatusController from "./controllers/StoreStatusController.js";
 
 class Raphtalia {
   constructor() {
@@ -187,12 +189,11 @@ class Raphtalia {
     return command
       .execute()
       .catch((error) => {
-        console.log(error);
-
+        console.error(error);
         return message.react("🛑");
       })
       .then(() => message.channel.stopTyping(true))
-      .then(() => new ServerStatusController(this.db, message.guild).updateServerStatus());
+      .then(() => new StoreStatusController(this.db, message.guild).update());
   }
 
   /**
@@ -224,7 +225,7 @@ class Raphtalia {
         return new Buy(
           message,
           new CurrencyController(this.db, guild),
-          new ServerStatusController(this.db, guild)
+          new StoreStatusController(this.db, guild)
         );
       case "censorship":
         return new Censorship(message, new GuildController(this.db, guild));
@@ -278,18 +279,22 @@ class Raphtalia {
         return new RolePrice(
           message,
           new GuildController(this.db, guild),
-          new ServerStatusController((this.db, guild))
+          new StoreStatusController((this.db, guild))
         );
+      case "roles":
+        return new Roles(message, new RoleStatusController(this.db, guild));
       case "serverstatus":
         return new ServerStatus(
           message,
-          new GuildController(this.db, guild),
-          new ServerStatusController(this.db, guild)
+          new RoleStatusController(this.db, guild),
+          new StoreStatusController(this.db, guild)
         );
       case "softkick":
         return new SoftKick(message, new MemberController(this.db, guild));
       case "status":
         return new Status(message, new CurrencyController(this.db, guild));
+      case "store":
+        return new Store(message, new StoreStatusController(this.db, guild));
       default:
         return new NullCommand(message, `Unknown command "${message.command}"`);
     }

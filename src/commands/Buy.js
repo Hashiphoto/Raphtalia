@@ -1,9 +1,7 @@
 import Discord from "discord.js";
 import CurrencyController from "../controllers/CurrencyController.js";
-import InventoryController from "../controllers/InventoryController.js";
-import ServerStatusController from "../controllers/ServerStatusController.js";
+import StoreStatusController from "../controllers/StoreStatusController.js";
 import AmbiguousInputError from "../structures/AmbiguousInputError.js";
-
 import Command from "./Command.js";
 
 class Buy extends Command {
@@ -11,12 +9,12 @@ class Buy extends Command {
    *
    * @param {Discord.Message} message
    * @param {CurrencyController} currencyController
-   * @param {ServerStatusController} serverStatusController
+   * @param {StoreStatusController} storeStatusCtlr
    */
-  constructor(message, currencyController, serverStatusController) {
+  constructor(message, currencyController, storeStatusCtlr) {
     super(message);
     this.currencyController = currencyController;
-    this.serverStatusController = serverStatusController;
+    this.storeStatusCtlr = storeStatusCtlr;
   }
 
   execute() {
@@ -46,7 +44,7 @@ class Buy extends Command {
           .addCurrency(this.message.sender, -item.price)
           .then(() => this.inventoryController.userPurchase(item, this.message.sender))
           .then(() => this.inputChannel.watchSend("`Purchase complete`"))
-          .then(() => this.serverStatusController.updateServerStatus())
+          .then(() => this.storeStatusCtlr.update())
           .then(() => this.useItem());
       })
       .catch((error) => {

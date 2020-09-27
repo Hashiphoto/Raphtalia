@@ -1,8 +1,6 @@
 import Discord from "discord.js";
 import UserItem from "../structures/UserItem.js";
-import AuthorityError from "../structures/AuthorityError.js";
 import InventoryController from "../controllers/InventoryController.js";
-import ServerStatusController from "../controllers/ServerStatusController.js";
 
 class Command {
   /**
