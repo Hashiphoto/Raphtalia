@@ -10,6 +10,8 @@ class Kick extends Command {
   constructor(message, memberController) {
     super(message);
     this.memberController = memberController;
+    this.instructions = "**Kick**\nKick the specified member(s) from the server";
+    this.usage = "Usage: `Kick @member`";
   }
 
   execute() {
@@ -57,10 +59,6 @@ class Kick extends Command {
   getRandomKickGif() {
     let randInt = Math.floor(Math.random() * links.gifs.kicks.length);
     return links.gifs.kicks[randInt];
-  }
-
-  sendHelpMessage() {
-    return this.inputChannel.watchSend("Usage: `Kick @target`");
   }
 }
 

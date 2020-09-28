@@ -9,6 +9,8 @@ class Report extends Command {
   constructor(message, memberController) {
     super(message);
     this.memberController = memberController;
+    this.instructions = "**Report**\nGive an infraction to the specified member";
+    this.usage = "Usage: `Report @member`";
   }
 
   async execute() {
@@ -42,10 +44,6 @@ class Report extends Command {
       .then((messages) => messages.reduce(this.sum))
       .then((response) => this.inputChannel.watchSend(response))
       .then(() => this.useItem(targets.length));
-  }
-
-  sendHelpMessage() {
-    return this.inputChannel.watchSend("Usage: `Report @member");
   }
 }
 

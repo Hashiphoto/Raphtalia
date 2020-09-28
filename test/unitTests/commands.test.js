@@ -629,17 +629,4 @@ describe("Commands", () => {
       });
     });
   });
-
-  describe("Help", () => {
-    it("sends the help message", async () => {
-      const message = new TestMessage();
-      const help = new Help(message)
-        .setItem(new UserItem())
-        .setInventoryController(new TestInventoryController());
-
-      return help
-        .execute()
-        .then(() => assert(help.inputChannel.output === "Help yourself, TEST_MEMBER"));
-    });
-  });
 });

@@ -9,6 +9,9 @@ class SoftKick extends Command {
   constructor(message, memberController) {
     super(message);
     this.memberController = memberController;
+    this.instructions =
+      "**SoftKick**\nKick the specified member(s) and also send them an invite back to the server";
+    this.usage = "Usage: `SoftKick @member [for reason]`";
   }
 
   async execute() {
@@ -50,10 +53,6 @@ class SoftKick extends Command {
       .then((messages) => messages.reduce(this.sum))
       .then((response) => this.inputChannel.watchSend(response))
       .then(() => this.useItem(targets.length));
-  }
-
-  sendHelpMessage() {
-    return this.inputChannel.watchSend("Usage: `SoftKick @member [reason]`");
   }
 }
 

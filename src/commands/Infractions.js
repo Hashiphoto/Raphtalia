@@ -11,6 +11,9 @@ class Infractions extends Command {
   constructor(message, memberController) {
     super(message);
     this.memberController = memberController;
+    this.instructions =
+      "**Infractions**\nGet the number of infractions commited by a member. To get your own infraction count, use the command without arguments (`Infractions`)";
+    this.usage = "Usage: `Infractions [@member]`";
   }
 
   async execute() {

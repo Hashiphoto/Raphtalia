@@ -12,6 +12,9 @@ class AutoDelete extends Command {
   constructor(message, channelController) {
     super(message);
     this.channelController = channelController;
+    this.instructions =
+      "**AutoDelete**\nEnable or disable automatic message deletion in this channel. If deletion delay is not specified, default 2000ms will be used";
+    this.usage = "Usage: `AutoDelete (start|stop) [1ms]`";
   }
 
   execute() {
@@ -45,13 +48,6 @@ class AutoDelete extends Command {
         return this.inputChannel.watchSend(response);
       })
       .then(() => this.useItem());
-  }
-
-  sendHelpMessage(pretext = "") {
-    return this.inputChannel.watchSend(
-      `${pretext}\n` +
-        "Usage: `AutoDelete (start|stop) [1ms]`\nIf deletion delay is not specified, default 2000ms will be used"
-    );
   }
 }
 

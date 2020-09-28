@@ -13,6 +13,10 @@ class Exile extends Command {
   constructor(message, memberController) {
     super(message);
     this.memberController = memberController;
+    this.instructions =
+      "**Exile**\nPut a specified member in exile for a period of time. " +
+      "Exiled members cannot use any commands";
+    this.usage = "Usage: `Exile @member [1d 1h 1m 1s]`";
   }
 
   execute() {
@@ -64,10 +68,6 @@ class Exile extends Command {
       .watchSend(response)
       .then(() => Promise.all(exilePromises))
       .then(() => this.useItem(targets.length));
-  }
-
-  sendHelpMessage() {
-    return this.inputChannel.watchSend("Usage: `Exile @target [1d 1h 1m 1s]`");
   }
 }
 

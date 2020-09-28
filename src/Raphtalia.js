@@ -163,7 +163,7 @@ class Raphtalia {
    * @returns {Promise<Command>}
    */
   selectCommand(message) {
-    let command = this.getCommandByName(message);
+    let command = Raphtalia.getCommandByName(message.command, message, this.db);
     if (!command) {
       return Promise.resolve(new NullCommand(message, `Unknown command "${message.command}"`));
     }
@@ -198,58 +198,59 @@ class Raphtalia {
 
   /**
    * @param {Discord.Message} message
+   * @param {Database} db
    * @returns {Command}
    */
-  getCommandByName(message) {
+  static getCommandByName(name, message, db) {
     // Keep alphabetical by primary command word
     // The primary command keyword should be listed first
     const guild = message.guild;
     const channel = message.channel;
 
-    switch (message.command) {
+    switch (name) {
       case "allowword":
       case "allowwords":
-        return new AllowWord(message, new CensorController(this.db, guild));
+        return new AllowWord(message, new CensorController(db, guild));
       case "autodelete":
-        return new AutoDelete(message, new ChannelController(this.db, channel));
+        return new AutoDelete(message, new ChannelController(db, channel));
       case "balance":
       case "wallet":
-        return new Balance(message, new CurrencyController(this.db, guild));
+        return new Balance(message, new CurrencyController(db, guild));
       case "banlist":
       case "bannedwords":
-        return new BanList(message, new CensorController(this.db, guild));
+        return new BanList(message, new CensorController(db, guild));
       case "banword":
       case "banwords":
-        return new BanWord(message, new CensorController(this.db, guild));
+        return new BanWord(message, new CensorController(db, guild));
       case "buy":
         return new Buy(
           message,
-          new CurrencyController(this.db, guild),
-          new StoreStatusController(this.db, guild)
+          new CurrencyController(db, guild),
+          new StoreStatusController(db, guild)
         );
       case "censorship":
-        return new Censorship(message, new GuildController(this.db, guild));
+        return new Censorship(message, new GuildController(db, guild));
       case "comfort":
         return new Comfort(message);
       case "delivercheck":
-        return new DeliverCheck(message, new CurrencyController(this.db, guild));
+        return new DeliverCheck(message, new CurrencyController(db, guild));
       case "demote":
-        return new Demote(message, new MemberController(this.db, guild));
+        return new Demote(message, new MemberController(db, guild));
       case "economy":
-        return new Economy(message, new GuildController(this.db, guild));
+        return new Economy(message, new GuildController(db, guild));
       case "exile":
-        return new Exile(message, new MemberController(this.db, guild));
+        return new Exile(message, new MemberController(db, guild));
       case "fine":
         return new Fine(
           message,
-          new CurrencyController(this.db, guild),
-          new MemberController(this.db, guild)
+          new CurrencyController(db, guild),
+          new MemberController(db, guild)
         );
       case "give":
         return new Give(
           message,
-          new CurrencyController(this.db, guild),
-          new MemberController(this.db, guild)
+          new CurrencyController(db, guild),
+          new MemberController(db, guild)
         );
       case "help":
         return new Help(message);
@@ -258,43 +259,43 @@ class Raphtalia {
       case "income":
         return new Income(
           message,
-          new CurrencyController(this.db, guild),
-          new GuildController(this.db, guild)
+          new CurrencyController(db, guild),
+          new GuildController(db, guild)
         );
       case "infractions":
-        return new Infractions(message, new MemberController(this.db, guild));
+        return new Infractions(message, new MemberController(db, guild));
       case "kick":
-        return new Kick(message, new MemberController(this.db, guild));
+        return new Kick(message, new MemberController(db, guild));
       case "pardon":
-        return new Pardon(message, new MemberController(this.db, guild));
+        return new Pardon(message, new MemberController(db, guild));
       case "play":
         return new Play(message);
       case "promote":
-        return new Promote(message, new MemberController(this.db, guild));
+        return new Promote(message, new MemberController(db, guild));
       case "register":
-        return new Register(message, new MemberController(this.db, guild));
+        return new Register(message, new MemberController(db, guild));
       case "report":
-        return new Report(message, new MemberController(this.db, guild));
+        return new Report(message, new MemberController(db, guild));
       case "roleprice":
         return new RolePrice(
           message,
-          new GuildController(this.db, guild),
-          new StoreStatusController((this.db, guild))
+          new GuildController(db, guild),
+          new StoreStatusController((db, guild))
         );
       case "roles":
-        return new Roles(message, new RoleStatusController(this.db, guild));
+        return new Roles(message, new RoleStatusController(db, guild));
       case "serverstatus":
         return new ServerStatus(
           message,
-          new RoleStatusController(this.db, guild),
-          new StoreStatusController(this.db, guild)
+          new RoleStatusController(db, guild),
+          new StoreStatusController(db, guild)
         );
       case "softkick":
-        return new SoftKick(message, new MemberController(this.db, guild));
+        return new SoftKick(message, new MemberController(db, guild));
       case "status":
-        return new Status(message, new CurrencyController(this.db, guild));
+        return new Status(message, new CurrencyController(db, guild));
       case "store":
-        return new Store(message, new StoreStatusController(this.db, guild));
+        return new Store(message, new StoreStatusController(db, guild));
       default:
         return new NullCommand(message, `Unknown command "${message.command}"`);
     }

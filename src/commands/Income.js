@@ -20,6 +20,14 @@ class Income extends Command {
     this.currencyController = currencyController;
     this.guildController = guildController;
     this.roleStatusCtlr = roleStatusCtlr;
+    this.instructions =
+      "**Income**\nTo get your current income, use this command with no arguments (`Income`) " +
+      "To set the income scale for all roles, specify both the `base` and `scale` parameters\n" +
+      "`base` sets the income for the normal role and is what the income scale is based on.\n" +
+      "`scale` sets either a linear or exponential scale. " +
+      "If a dollar amount x is used, each role will be given x more dollars than the previous role. " +
+      "If a percentage y is used, each role will be y% of the previous role, where y is greater than 100%.";
+    this.usage = "Usage: `Income [base $1] [scale ($1|1%)]`";
   }
 
   async execute() {
@@ -36,16 +44,16 @@ class Income extends Command {
     // Get base income
     let baseIncome = this.getBaseIncome();
     if (baseIncome == null) {
-      return this.inputChannel.watchSend(
-        "Please try again and specify the base pay in dollars. e.g. `Income base $100`"
+      return this.sendHelpMessage(
+        "Please try again and specify the base pay in dollars. e.g. `Income base $100 scale $1`"
       );
     }
 
     // Get scale
     const scaleNumber = this.getScale();
     if (scaleNumber == null) {
-      return this.inputChannel.watchSend(
-        "Please try again and specify the scale as a percent (greater than 100%) or dollar amount. e.g. `Income scale $100` or `Income scale 125%`"
+      return this.sendHelpMessage(
+        "Please try again and specify the scale as a percent (greater than 100%) or dollar amount. e.g. `Income base $0 scale $100` or `Income base $0 scale 125%`"
       );
     }
 
@@ -93,10 +101,6 @@ class Income extends Command {
       return null;
     }
     return scaleNumber;
-  }
-
-  sendHelpMessage() {
-    return this.inputChannel.watchSend("Usage: `Income [base $1] [scale ($1|1%)]`");
   }
 }
 

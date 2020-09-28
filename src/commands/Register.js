@@ -12,6 +12,10 @@ class Register extends Command {
   constructor(message, memberController) {
     super(message);
     this.memberController = memberController;
+    this.instructions =
+      "**Register**\nGive the voter role to yourself. " +
+      "This will allow you to vote when anyone uses the HoldVote command";
+    this.usage = "Usage: `Register`";
   }
 
   execute() {
@@ -20,7 +24,7 @@ class Register extends Command {
     }
 
     return this.memberController
-      .addRoles(this.message.sender, [])
+      .addRoles(this.message.sender, [discordConfig().roles.voter])
       .then(() => {
         this.inputChannel.watchSend(`You are now a registered voter!`);
       })

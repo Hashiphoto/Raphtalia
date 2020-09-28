@@ -10,6 +10,11 @@ class Censorship extends Command {
   constructor(message, guildController) {
     super(message);
     this.guildController = guildController;
+    this.instructions =
+      "**Censorship**\nEnable or disable censorship for the whole server. " +
+      "When censorship is enabled, anyone who uses a word from the banned " +
+      "list will be given an infraction";
+    this.usage = "Usage: `Censorship (start|stop)`";
   }
 
   execute() {
@@ -30,10 +35,6 @@ class Censorship extends Command {
         }
       })
       .then(() => this.useItem());
-  }
-
-  sendHelpMessage(pretext = "") {
-    return this.inputChannel.watchSend(`${pretext}\n` + "Usage: `Censorship (start|stop)`");
   }
 }
 

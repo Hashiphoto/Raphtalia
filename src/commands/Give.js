@@ -15,6 +15,8 @@ class Give extends Command {
     super(message);
     this.currencyController = currencyController;
     this.memberController = memberController;
+    this.instructions = "**Give**\nGive the specified member either an amount of money or an item";
+    this.usage = "Usage: `Give @member ($1|item name)`";
   }
 
   execute() {
@@ -62,10 +64,6 @@ class Give extends Command {
         .then((response) => this.inputChannel.watchSend(response))
         .then(() => this.useItem(targets.length));
     });
-  }
-
-  sendHelpMessage(pretext = "") {
-    return this.inputChannel.watchSend(`${pretext}\n` + "Usage: `Give @taget $1`");
   }
 }
 

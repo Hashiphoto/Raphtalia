@@ -5,9 +5,6 @@ import GuildController from "../controllers/GuildController.js";
 import RNumber from "../structures/RNumber.js";
 
 class Economy extends Command {
-  helpText =
-    "Usage: `Economy [MinLength 1] [CharValue $1] [BasePayout $1] [MaxPayout $1] [TaxRate 1%]`";
-
   /**
    *
    * @param {Discord.Message} message
@@ -16,6 +13,15 @@ class Economy extends Command {
   constructor(message, guildController) {
     super(message);
     this.guildController = guildController;
+    this.instructions =
+      "**Economy**\nSet the parameters for message payment and tax rate\n" +
+      "`MinLength` specifies the minimum character count for a message to be awarded money\n" +
+      "`CharValue` specifies how much money is earned for each character in the message\n" +
+      "`BasePayout` adds a flat value to each paid message\n" +
+      "`MaxPayout` limits the amount earned for an individual message\n" +
+      "`TaxRate` specifies how much money will be taken from each member on a weekly basis";
+    this.usage =
+      "Usage: `Economy [MinLength 1] [CharValue $1] [BasePayout $1] [MaxPayout $1] [TaxRate 1%]`";
   }
 
   execute() {
@@ -50,10 +56,6 @@ class Economy extends Command {
       .then((messages) => messages.reduce(this.sum))
       .then((response) => this.inputChannel.watchSend(response))
       .then(() => this.useItem());
-  }
-
-  sendHelpMessage(pretext = "") {
-    return this.inputChannel.watchSend(`${pretext}\n` + this.helpText);
   }
 
   parseArg(arg, rNumber) {

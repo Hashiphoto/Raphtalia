@@ -12,6 +12,8 @@ class Status extends Command {
   constructor(message, currencyController) {
     super(message);
     this.currencyController = currencyController;
+    this.instructions = "**Status**\nPost your current balance and inventory in this channel";
+    this.usage = "Usage: `Status`";
   }
 
   async execute() {

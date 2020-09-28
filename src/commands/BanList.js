@@ -10,6 +10,8 @@ class BanList extends Command {
   constructor(message, censorController) {
     super(message);
     this.censorController = censorController;
+    this.instructions = "**BanList**\nPrint every banned word";
+    this.usage = "Usage: `BanList`";
   }
 
   execute() {

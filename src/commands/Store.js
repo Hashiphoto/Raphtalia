@@ -9,6 +9,8 @@ class Store extends Command {
   constructor(message, storeStatusCtlr) {
     super(message);
     this.storeStatusCtlr = storeStatusCtlr;
+    this.instructions = "**Store**\nPost the server store in this channel";
+    this.usage = "Usage: `Store`";
   }
 
   execute() {

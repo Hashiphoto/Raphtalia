@@ -18,6 +18,8 @@ class RolePrice extends Command {
     super(message);
     this.guildController = guildController;
     this.roleStatusCtlr = roleStatusCtlr;
+    this.instructions = "**RolePrice**\nSet the price of a role proportional to its daily income";
+    this.usage = "Usage: `RolePrice 1x`";
   }
 
   async execute() {
@@ -27,7 +29,7 @@ class RolePrice extends Command {
 
     let multiplier = RNumber.parse(this.message.args[0]);
     if (!multiplier) {
-      return this.sendHelpMessage();
+      return this.sendHelpMessage("Please try again and specify a multiplier");
     }
 
     let response = `Every role's purchase price is now ${multiplier.toString()} its daily income!\n`;
@@ -41,10 +43,6 @@ class RolePrice extends Command {
       .then((feedback) => this.inputChannel.watchSend(`${response}\n${feedback}`))
       .then(this.roleStatusCtlr.update())
       .then(() => this.useItem());
-  }
-
-  sendHelpMessage() {
-    return this.inputChannel.watchSend("Usage: `RolePrice 1x`");
   }
 }
 

@@ -3,6 +3,12 @@ import Discord from "discord.js";
 import Command from "./Command.js";
 
 class Comfort extends Command {
+  constructor(message) {
+    super(message);
+    this.instructions = "**Comfort**\nI will give a headpat to the member(s) is specified";
+    this.usage = "Usage: `Comfort @member`";
+  }
+
   execute() {
     const targets = this.message.mentionedMembers;
 
@@ -23,10 +29,6 @@ class Comfort extends Command {
     }
 
     return this.inputChannel.watchSend(response).then(() => this.useItem(targets.length));
-  }
-
-  sendHelpMessage() {
-    return this.inputChannel.watchSend("Usage: `Comfort @member`");
   }
 }
 

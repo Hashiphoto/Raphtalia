@@ -6,11 +6,19 @@ import RNumber from "../structures/RNumber.js";
 import ytdl from "ytdl-core";
 
 class Play extends Command {
+  constructor(message) {
+    super(message);
+    this.instructions =
+      "**Play**\nPlay the server theme in the voice channel you are in. " +
+      "You can specify which voice channel to play in by voice channel name or channel group and voice channel name. " +
+      "You can change the volume by specifying a percentage.";
+    this.usage = "Usage: `Play [in (Group/VoiceChannel | VoiceChannel)] [100%]`";
+  }
   execute() {
     let content = this.message.content;
     let volume = this.getVolume(content);
     if (volume == null) {
-      return this.inputChannel.watchSend("Please specify volume as a percentage. `Play 70%`");
+      return this.sendHelpMessage("Please specify volume as a percentage. `Play 70%`");
     }
 
     let voiceChannel = this.getVoiceChannel(content);
@@ -20,7 +28,7 @@ class Play extends Command {
       voiceChannel = this.message.sender.voiceChannel;
 
       if (!voiceChannel) {
-        return this.inputChannel.watchSend("Join a voice channel or specify which one to play in");
+        return this.sendHelpMessage("Join a voice channel or specify which one to play in");
       }
     }
 
@@ -30,7 +38,7 @@ class Play extends Command {
       !permissions.has("CONNECT") ||
       !permissions.has("SPEAK")
     ) {
-      return this.inputChannel.watchSend("I don't have permission to join that channel");
+      return this.sendHelpMessage(`I don't have permission to join ${voiceChannel.name}`);
     }
 
     return this.play(voiceChannel, links.youtube.anthem, volume).then(() => this.useItem());

@@ -12,6 +12,9 @@ class DeliverCheck extends Command {
   constructor(message, currencyController) {
     super(message);
     this.currencyController = currencyController;
+    this.instructions =
+      "**DeliverCheck**\nGenerate money out of thin air and give it to the member(s) specified";
+    this.usage = "Usage: `DeliverCheck @member $1`";
   }
 
   execute() {
@@ -40,10 +43,6 @@ class DeliverCheck extends Command {
     return Promise.all(promises)
       .then(() => this.inputChannel.watchSend("Money has been distributed!"))
       .then(() => this.useItem(promises.length));
-  }
-
-  sendHelpMessage() {
-    return this.inputChannel.watchSend("Usage: `DeliverCheck @target $1`");
   }
 }
 

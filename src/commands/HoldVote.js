@@ -11,6 +11,14 @@ import RNumber from "../structures/RNumber.js";
 import RoleUtil from "../RoleUtil.js";
 
 class HoldVote extends Command {
+  constructor(message) {
+    super(message);
+    this.instructions =
+      "**HoldVote**\nSet up a vote for all registered voters. " +
+      'Ballots will be sent to anyone with the "voter" role when the voting period starts. ' +
+      "After using the initial command, you will be asked several additional questions to specify the parameters of the vote";
+    this.usage = "Usage: `HoldVote (Ask your question here)`";
+  }
   async execute() {
     let voters = this.getVoters();
     if (voters.size === 0) {
@@ -21,9 +29,7 @@ class HoldVote extends Command {
 
     const votePrompt = this.message.content.trim();
     if (votePrompt.length === 0) {
-      return this.inputChannel.watchSend(
-        "Vote canceled. Usage: `HoldVote What is your favorite color?`"
-      );
+      return this.sendHelpMessage("Vote canceled. No question was specified");
     }
 
     // Get the voting options
@@ -47,7 +53,7 @@ class HoldVote extends Command {
       votingOptions.push(new VotingOption(i + 1, options[i]));
     }
     if (votingOptions.size === 0) {
-      return this.inputChannel.watchSend(`No options entered. Vote canceled.`);
+      return this.sendHelpMessage("Vote canceled. No voting options were specified");
     }
 
     // Get the time

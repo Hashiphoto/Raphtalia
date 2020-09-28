@@ -11,6 +11,8 @@ class AllowWord extends Command {
   constructor(message, censorController) {
     super(message);
     this.censorController = censorController;
+    this.instructions = "**AllowWord**\nRemove a word from the ban list";
+    this.usage = "Usage: `AllowWord word1 word2 etc`";
   }
 
   execute() {
@@ -33,10 +35,6 @@ class AllowWord extends Command {
       .then(this.censorController.rebuildCensorshipList())
       .then(this.inputChannel.watchSend(`These words are allowed again: ${words}`))
       .then(() => this.useItem(words.length));
-  }
-
-  sendHelpMessage(pretext = "") {
-    return this.inputChannel.watchSend(`${pretext}\n` + "Usage: `AllowWord word1 word2 etc`");
   }
 }
 

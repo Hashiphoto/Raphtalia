@@ -11,6 +11,8 @@ class Demote extends Command {
   constructor(message, memberController) {
     super(message);
     this.memberController = memberController;
+    this.instructions = "**Demote**\nReduce the rank of the specified member(s) by one";
+    this.usage = "Usage: `Demote @member`";
   }
 
   execute() {
@@ -43,10 +45,6 @@ class Demote extends Command {
       .then((messages) => messages.reduce(this.sum))
       .then((response) => this.inputChannel.watchSend(response))
       .then(() => this.useItem(targets.length));
-  }
-
-  sendHelpMessage() {
-    return this.inputChannel.watchSend("Usage: `Demote @member`");
   }
 }
 

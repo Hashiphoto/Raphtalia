@@ -12,6 +12,10 @@ class Pardon extends Command {
   constructor(message, memberController) {
     super(message);
     this.memberController = memberController;
+    this.instructions =
+      "**Pardon**\nRemoves all infractions from the specified member(s). " +
+      "If the members are exiled, they are also freed from exile";
+    this.usage = "Usage: `Pardon @member`";
   }
 
   execute() {
@@ -35,10 +39,6 @@ class Pardon extends Command {
       .then((messages) => messages.reduce(this.sum))
       .then((response) => this.inputChannel.watchSend(response))
       .then(() => this.useItem(targets.length));
-  }
-
-  sendHelpMessage(pretext = "") {
-    return this.inputChannel.watchSend(`${pretext}\n` + "Usage: `Pardon @member`");
   }
 }
 

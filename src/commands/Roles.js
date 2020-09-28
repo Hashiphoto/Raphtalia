@@ -9,6 +9,8 @@ class Roles extends Command {
   constructor(message, roleStatusCtlr) {
     super(message);
     this.roleStatusCtlr = roleStatusCtlr;
+    this.instructions = "**Roles**\nPost the roles list for this server in this channel";
+    this.usage = "Usage: `Roles`";
   }
 
   execute() {

@@ -15,6 +15,9 @@ class Fine extends Command {
     super(message);
     this.currencyController = currencyController;
     this.memberController = memberController;
+    this.instructions =
+      "**Fine**\nSubtract an amount of money from the member(s) specified and give it to yourself";
+    this.usage = "Usage: `Fine @member $1`";
   }
 
   execute() {
@@ -56,10 +59,6 @@ class Fine extends Command {
       .then((messages) => messages.reduce(this.sum))
       .then((response) => this.inputChannel.watchSend(response))
       .then(() => this.useItem(targets.length));
-  }
-
-  sendHelpMessage(pretext = "") {
-    return this.inputChannel.watchSend(`${pretext}\n` + "Usage: `Fine @target $1`");
   }
 }
 

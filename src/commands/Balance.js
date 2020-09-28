@@ -12,6 +12,8 @@ class Balance extends Command {
   constructor(message, currencyController) {
     super(message);
     this.currencyController = currencyController;
+    this.instructions = "**Balance**\nGet your current balance sent to you in a direct message";
+    this.usage = "Usage: `Balance`";
   }
 
   async execute() {

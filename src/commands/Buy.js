@@ -15,6 +15,9 @@ class Buy extends Command {
     super(message);
     this.currencyController = currencyController;
     this.storeStatusCtlr = storeStatusCtlr;
+    this.instructions =
+      "**Buy**\nPurchase an item from the server store. The item will be added to your inventory, if there is adequate quantity in the store";
+    this.usage = "Usage: `Buy (item name)`";
   }
 
   execute() {

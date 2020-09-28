@@ -16,6 +16,10 @@ class ServerStatus extends Command {
     super(message);
     this.roleStatusCtlr = roleStatusCtlr;
     this.storeStatusCtlr = storeStatusCtlr;
+    this.instructions =
+      "**ServerStatus**\nPosts the role list and store in this channel. " +
+      "Equivalent to using Roles and Store commands consecutively.";
+    this.usage = "Usage: `ServerStatus`";
   }
 
   async execute() {

@@ -9,6 +9,8 @@ class BanWord extends Command {
   constructor(message, censorController) {
     super(message);
     this.censorController = censorController;
+    this.instructions = "**BanWord**\nAdd a word to the ban list";
+    this.usage = "Usage: `BanWord word1 word2 etc1`";
   }
 
   execute() {
@@ -31,10 +33,6 @@ class BanWord extends Command {
       .then(() => this.censorController.rebuildCensorshipList())
       .then(this.inputChannel.watchSend(`You won't see these words again: ${words}`))
       .then(() => this.useItem(words.length));
-  }
-
-  sendHelpMessage() {
-    return this.inputChannel.watchSend("Usage: `BanWord cat dog apple`");
   }
 }
 
