@@ -13,7 +13,7 @@ class ChannelController extends Controller {
       deleteDelay = -1;
     }
 
-    return this.db.channels.setAutoDelete(this.channel, deleteDelay);
+    return this.db.channels.setAutoDelete(this.channel.id, deleteDelay);
   }
 }
 

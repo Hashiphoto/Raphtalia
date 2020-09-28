@@ -45,6 +45,7 @@ class AutoDelete extends Command {
         var response = start
           ? `Messages are deleted after ${durationMs}ms`
           : "Messages are no longer deleted";
+        this.inputChannel.setTopic(response);
         return this.inputChannel.watchSend(response);
       })
       .then(() => this.useItem());
