@@ -165,7 +165,10 @@ class Raphtalia {
   selectCommand(message) {
     let command = Raphtalia.getCommandByName(message.command, message, this.db);
     if (!command) {
-      return Promise.resolve(new NullCommand(message, `Unknown command "${message.command}"`));
+      command = new NullCommand(message, `Unknown command "${message.command}"`);
+    }
+    if (command instanceof NullCommand) {
+      return Promise.resolve(command);
     }
 
     const inventoryController = new InventoryController(this.db, message.guild);
