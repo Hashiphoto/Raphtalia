@@ -7,7 +7,7 @@ class UserInventory {
    * @param {Item[]} items
    */
   constructor(member, items) {
-    this.user = member;
+    this.member = member;
     this.items = items;
   }
 
@@ -24,9 +24,10 @@ class UserInventory {
     });
 
     const embed = new Discord.RichEmbed()
-      .setColor(this.user.displayColor)
-      .setTitle(`${this.user.displayName}'s Inventory`)
-      .setTimestamp(new Date());
+      .setColor(this.member.displayColor)
+      .setTitle(`${this.member.displayName}'s Inventory`)
+      .setTimestamp(new Date())
+      .setThumbnail(this.member.user.avatarURL);
 
     fields.forEach((field) => embed.addField(field.name, field.value, field.inline));
 
