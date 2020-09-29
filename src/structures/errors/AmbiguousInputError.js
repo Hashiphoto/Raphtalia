@@ -1,4 +1,4 @@
-import Format from "../Format.js";
+import Format from "../../Format.js";
 
 class AmbiguousInputError extends Error {
   constructor(possibleResults, ...params) {

@@ -4,7 +4,7 @@ import db from "../db/Database.js";
 import discordConfig from "../../config/discord.config.js";
 import RoleUtil from "../RoleUtil.js";
 import GuildBasedController from "./GuildBasedController.js";
-import MemberLimitError from "../structures/MemberLimitError.js";
+import MemberLimitError from "../structures/errors/MemberLimitError.js";
 import links from "../../resources/links.js";
 import dayjs from "dayjs";
 import delay from "delay";

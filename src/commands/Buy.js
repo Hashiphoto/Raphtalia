@@ -1,7 +1,7 @@
 import Discord from "discord.js";
 import CurrencyController from "../controllers/CurrencyController.js";
 import StoreStatusController from "../controllers/StoreStatusController.js";
-import AmbiguousInputError from "../structures/AmbiguousInputError.js";
+import AmbiguousInputError from "../structures/errors/AmbiguousInputError.js";
 import Command from "./Command.js";
 
 class Buy extends Command {
