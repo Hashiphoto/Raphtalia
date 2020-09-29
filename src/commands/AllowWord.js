@@ -23,7 +23,7 @@ class AllowWord extends Command {
       return this.sendHelpMessage();
     }
 
-    if (words.length > this.item.remainingUses) {
+    if (!this.item.unlimitedUses && words.length > this.item.remainingUses) {
       return this.inputChannel.watchSend(
         `Your ${this.item.name} does not have enough charges. ` +
           `Attempting to use ${words.length}/${this.item.remainingUses} remaining uses`

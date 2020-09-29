@@ -4,6 +4,7 @@ import Command from "./Command.js";
 import RNumber from "../structures/RNumber.js";
 import CurrencyController from "../controllers/CurrencyController.js";
 import MemberController from "../controllers/MemberController.js";
+import UserItem from "../structures/UserItem.js";
 
 class Give extends Command {
   /**
@@ -15,7 +16,10 @@ class Give extends Command {
     super(message);
     this.currencyController = currencyController;
     this.memberController = memberController;
-    this.instructions = "**Give**\nGive the specified member either an amount of money or an item";
+    this.instructions =
+      "**Give**\nGive the specified member(s) either an amount of money or an item. " +
+      "If multiple members are listed, each member will be given the amount of money specified. " +
+      "When giving an item, each member will be given one of that item. Only unused items can be given.";
     this.usage = "Usage: `Give @member ($1|item name)`";
   }
 
@@ -25,7 +29,7 @@ class Give extends Command {
       return this.sendHelpMessage();
     }
 
-    if (targets.length > this.item.remainingUses) {
+    if (!this.item.unlimitedUses && targets.length > this.item.remainingUses) {
       return this.inputChannel.watchSend(
         `Your ${this.item.name} does not have enough charges. ` +
           `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
@@ -33,15 +37,36 @@ class Give extends Command {
     }
 
     let rNumber = RNumber.parse(this.message.content);
-    if (!rNumber) {
-      return this.sendHelpMessage("Enter the amount you want to give in dollar format");
+    if (rNumber) {
+      return this.giveMoney(rNumber, targets).then(() => this.useItem(targets.length));
     }
-    if (rNumber.amount < 0) {
-      return this.memberController
-        .addInfractions(this.message.sender)
-        .then((feedback) =>
-          this.inputChannel.watchSend("You cannot send a negative amount of money\n" + feedback)
+
+    // Parse item name
+    const itemName = this.message.content
+      .substring(this.message.content.lastIndexOf(">") + 1)
+      .trim();
+
+    if (itemName === "") {
+      return this.sendHelpMessage();
+    }
+
+    return this.inventoryController.getUserItem(this.message.sender, itemName).then((item) => {
+      if (!item) {
+        return this.sendHelpMessage(
+          `You do not have any item named "${itemName}". ` +
+            `If you are attempting to send money, make sure to format it as \`$1\``
         );
+      }
+      return this.giveItem(item, targets);
+    });
+  }
+
+  /**
+   * @param {RNumber} rNumber
+   */
+  giveMoney(rNumber, targets) {
+    if (rNumber.amount < 0) {
+      return this.inputChannel.watchSend("You cannot send a negative amount of money\n");
     }
 
     let totalAmount = rNumber.amount * targets.length;
@@ -61,9 +86,32 @@ class Give extends Command {
 
       return Promise.all(givePromises)
         .then((messages) => messages.reduce(this.sum))
-        .then((response) => this.inputChannel.watchSend(response))
-        .then(() => this.useItem(targets.length));
+        .then((response) => this.inputChannel.watchSend(response));
     });
+  }
+
+  /**
+   * @param {UserItem} item
+   * @param {Discord.GuildMember[]} targets
+   */
+  giveItem(item, targets) {
+    const unusedItems = Math.floor(item.remainingUses / item.maxUses);
+    if (unusedItems < targets.length) {
+      return this.inputChannel.watchSend(
+        `You need ${targets.length - unusedItems} more unused items for that. ` +
+          `Unused ${item.name} in inventory: ${unusedItems}`
+      );
+    }
+
+    const givePromises = targets.map((target) => {
+      return this.inventoryController.transferItem(item, this.message.sender, target).then(() => {
+        return `Transferred one ${item.name} to ${target}\n`;
+      });
+    });
+
+    return Promise.all(givePromises)
+      .then((messages) => messages.reduce(this.sum))
+      .then((response) => this.inputChannel.watchSend(response));
   }
 }
 

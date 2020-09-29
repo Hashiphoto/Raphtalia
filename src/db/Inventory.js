@@ -91,6 +91,21 @@ class Inventory {
     );
   }
 
+  findUserItem(guildId, userId, itemName) {
+    return this.pool
+      .query(
+        this.userSelect + `WHERE ui.guild_id=? AND ui.user_id=? AND i.name LIKE '%${itemName}%'`,
+        [guildId, userId]
+      )
+      .then(([rows, fields]) => {
+        if (rows.length === 0) {
+          return null;
+        }
+
+        return this.toUserItem(rows[0]);
+      });
+  }
+
   /**
    * @param {String} guildId
    * @param {String} userId

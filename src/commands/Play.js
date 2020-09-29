@@ -106,7 +106,7 @@ class Play extends Command {
      */
 
     // Folder and channel name
-    if (matches.length > 2) {
+    if (matches[2]) {
       const folderName = matches[1].trim();
       const channelName = matches[3].trim();
 

@@ -2,6 +2,7 @@ import GuildBasedController from "./GuildBasedController.js";
 import Discord from "discord.js";
 import UserInventory from "../structures/UserInventory.js";
 import GuildItem from "../structures/GuildItem.js";
+import UserItem from "../structures/UserItem.js";
 
 class InventoryController extends GuildBasedController {
   /**
@@ -10,6 +11,15 @@ class InventoryController extends GuildBasedController {
    */
   getGuildItem(name) {
     return this.db.inventory.findGuildItem(this.guild.id, name);
+  }
+
+  /**
+   * @param {String} name
+   * @param {Discord.GuildMember} member
+   * @returns {Promise<UserItem>}
+   */
+  getUserItem(member, name) {
+    return this.db.inventory.findUserItem(this.guild.id, member.id, name);
   }
 
   /**
@@ -64,11 +74,33 @@ class InventoryController extends GuildBasedController {
       this.db.inventory.updateGuildItemQuantity(this.guild.id, item, uses);
     }
 
+    return this.updateUserItem(item, member);
+  }
+
+  updateUserItem(item, member) {
     if (item.quantity === 0) {
       return this.db.inventory.deleteUserItem(this.guild.id, member.id, item);
     }
 
     return this.db.inventory.updateUserItem(this.guild.id, member.id, item);
+  }
+
+  /**
+   * @param {UserItem} item
+   * @param {Discord.GuildMember} fromMember
+   * @param {Discord.GuildMember} toMember
+   */
+  transferItem(item, fromMember, toMember) {
+    // Remove the item from the owner
+    item.quantity -= 1;
+    item.remainingUses -= item.maxUses;
+    this.updateUserItem(item, fromMember);
+
+    // Reset the item and give it to the receiver
+    const givenItem = item.copy();
+    givenItem.quantity = 1;
+    givenItem.remainingUses = givenItem.maxUses;
+    return this.db.inventory.insertUserItem(this.guild.id, toMember.id, givenItem);
   }
 }
 

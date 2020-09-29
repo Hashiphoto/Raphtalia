@@ -49,6 +49,7 @@ import Store from "./commands/Store.js";
 import Roles from "./commands/Roles.js";
 import RoleStatusController from "./controllers/RoleStatusController.js";
 import StoreStatusController from "./controllers/StoreStatusController.js";
+import Take from "./commands/Take.js";
 
 class Raphtalia {
   constructor() {
@@ -299,6 +300,12 @@ class Raphtalia {
         return new Status(message, new CurrencyController(db, guild));
       case "store":
         return new Store(message, new StoreStatusController(db, guild));
+      case "take":
+        return new Take(
+          message,
+          new CurrencyController(db, guild),
+          new MemberController(db, guild)
+        );
       default:
         return new NullCommand(message, `Unknown command "${message.command}"`);
     }

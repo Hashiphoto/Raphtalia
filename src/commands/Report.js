@@ -19,7 +19,7 @@ class Report extends Command {
       return this.sendHelpMessage();
     }
 
-    if (targets.length > this.item.remainingUses) {
+    if (!this.item.unlimitedUses && targets.length > this.item.remainingUses) {
       return this.inputChannel.watchSend(
         `Your ${this.item.name} does not have enough charges. ` +
           `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
