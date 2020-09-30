@@ -87,7 +87,10 @@ class Raphtalia {
         if (deleteTime >= 0) {
           setTimeout(function () {
             message.delete().catch((error) => {
-              console.error("Message was probably already deleted\n" + error);
+              if (error.name === "DiscordAPIError" && error.message === "Unknown Message") {
+                return; // Message was manually deleted
+              }
+              throw error;
             });
           }, deleteTime);
         }
