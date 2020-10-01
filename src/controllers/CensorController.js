@@ -28,6 +28,7 @@ class CensorController extends GuildBasedController {
    * @returns {Boolean} - True if the message was censored
    */
   censorMessage(message) {
+    return Promise.resolve(false);
     return this.db.guilds.get(message.guild.id).then((dbGuild) => {
       if (!dbGuild.censorshipEnabled) {
         return false;

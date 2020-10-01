@@ -1,9 +1,78 @@
+import dayjs from "dayjs";
 import Discord from "discord.js";
+import RNumber from "../structures/RNumber.js";
 import GuildBasedController from "./GuildBasedController.js";
 
 class CurrencyController extends GuildBasedController {
+  /**
+   * @param {Discord.Message} message
+   */
   payoutMessage(message) {
-    return this.db.guilds.get(message.guild.id).then((dbGuild) => {});
+    return this.db.guilds.get(message.guild.id).then(async (dbGuild) => {
+      const dbUser = await this.db.users.get(message.member.id, message.guild.id);
+      const roleScalar = this.getRoleScalar(message.member);
+      const timeElapsed = this.getTimeElapsedSeconds(dbUser.lastMessageDate, message.createdAt);
+      console.log(
+        `Last message sent at ${
+          dbUser.lastMessageDate ? dbUser.lastMessageDate.toLocaleString() : "never"
+        }. This message sent at ${message.createdAt.toLocaleString()}\n` +
+          `Time interval: ${timeElapsed} seconds`
+      );
+      // If they've never sent a message before, give them full value
+      const timeScalar =
+        timeElapsed == null ? 1 : Math.min(1, timeElapsed / dbGuild.messageResetTime);
+      const payout = dbGuild.messageRate * timeScalar * roleScalar;
+
+      return this.addCurrency(message.member, payout)
+        .then(() => {
+          return this.db.users.setLastMessageDate(
+            message.member.id,
+            message.guild.id,
+            message.createdAt
+          );
+        })
+        .then(
+          () =>
+            `(Message Rate: ${
+              dbGuild.messageRate
+            }) * (Time: ${timeScalar}) * (Role: ${roleScalar}) = ${RNumber.formatDollar(payout)}`
+        );
+    });
+  }
+
+  /**
+   * @param {Discord.GuildMember} member
+   */
+  getRoleScalar(member) {
+    const role = member.hoistRole;
+    if (!role) {
+      return 0;
+    }
+
+    const hoistRoles = member.guild.roles
+      .filter((r) => r.hoist)
+      .sort((a, b) => a.calculatedPosition - b.calculatedPosition)
+      .array();
+
+    const hoistedPosition = hoistRoles.findIndex((r) => r.id === role.id) + 1;
+
+    // Linear scaling from 0 to 1
+    // To flatten the distance between the top and bottom, divide the output by some number
+    // and add a coefficient to make the range comparable to previous values
+    return hoistedPosition / hoistRoles.length;
+  }
+
+  /**
+   * @param {Date} startDate
+   * @param {Date} finishDate
+   * @returns {Number}
+   */
+  getTimeElapsedSeconds(startDate, finishDate) {
+    if (!startDate || !finishDate) {
+      return null;
+    }
+    const msElapsed = finishDate - startDate;
+    return Math.floor(msElapsed / 1000);
   }
 
   addCurrency(member, amount = 1) {
@@ -20,8 +89,8 @@ class CurrencyController extends GuildBasedController {
     return this.db.users.get(member.id, member.guild.id).then((dbUser) => {
       // Check for personally-set income
       let bonusIncome = 0;
-      if (dbUser.bonus_income != 0) {
-        bonusIncome = dbUser.bonus_income;
+      if (dbUser.bonusIncome != 0) {
+        bonusIncome = dbUser.bonusIncome;
       }
       // Check for role income
       if (!member.hoistRole) {
@@ -38,8 +107,8 @@ class CurrencyController extends GuildBasedController {
   }
 
   getCurrency(member) {
-    return this.db.users.get(member.id, member.guild.id).then((user) => {
-      return user.currency;
+    return this.db.users.get(member.id, member.guild.id).then((dbUser) => {
+      return dbUser.currency;
     });
   }
 }

@@ -89,7 +89,7 @@ class Raphtalia {
             if (censored) {
               return;
             }
-            return this.payoutMessage(message);
+            return this.payoutMessage(message).then((response) => message.reply(response));
           });
         }
       });
@@ -127,7 +127,7 @@ class Raphtalia {
 
   payoutMessage(message) {
     const currencyController = new CurrencyController(this.db, message.guild);
-    // currencyController.
+    return currencyController.payoutMessage(message);
   }
 
   /**

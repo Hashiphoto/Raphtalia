@@ -16,12 +16,14 @@ class GuildsTable {
    */
   toGuildObject(dbRow) {
     return new DbGuild(
+      dbRow.id,
       dbRow.censorship_enabled,
       dbRow.censor_regex,
       dbRow.tax_rate,
       dbRow.role_message_id,
       dbRow.store_message_id,
-      dbRow.message_rate
+      dbRow.message_rate,
+      dbRow.message_reset_s
     );
   }
 
@@ -36,7 +38,7 @@ class GuildsTable {
         if (rows.length === 0) {
           return null;
         }
-        return toGuildObject(rows[0]);
+        return this.toGuildObject(rows[0]);
       })
       .catch((e) => {
         console.error(e);

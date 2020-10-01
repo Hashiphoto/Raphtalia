@@ -4,8 +4,13 @@ import welcomeQuestions from "../resources/welcomeQuestions.js";
 import discordConfig from "../config/discord.config.js";
 import Question from "./structures/Question.js";
 import MemberController from "./controllers/MemberController.js";
+import Database from "./db/Database.js";
 
 class OnBoarder {
+  /**
+   * @param {Database} db
+   * @param {Discord.Guild} guild
+   */
   constructor(db, guild) {
     this.db = db;
     this.guild = guild;
@@ -27,7 +32,7 @@ class OnBoarder {
     let dbUser = await this.db.users.get(member.id, member.guild.id);
 
     // Check if already a citizen
-    if (dbUser.citizenship) {
+    if (dbUser.isCitizen) {
       channel.watchSend(`Welcome back ${member}!`);
       memberController.setHoistedRole(member, discordConfig().roles.neutral);
       return;
