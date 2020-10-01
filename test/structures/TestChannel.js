@@ -12,6 +12,11 @@ class TestChannel {
     this.output += text;
     return Promise.resolve(text);
   }
+
+  setTopic(text) {
+    this.topic = text;
+    return Promise.resolve(text);
+  }
 }
 
 export default TestChannel;

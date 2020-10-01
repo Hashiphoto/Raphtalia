@@ -568,33 +568,6 @@ describe("Commands", () => {
       });
     });
 
-    it("fails if a money amount is not specified", () => {
-      const give = new Give(new TestMessage("foo bar"))
-        .setItem(new UserItem())
-        .setInventoryController(new TestInventoryController());
-      give.message.setMentionedMembers(["TEST1", "TEST2"]);
-      sandbox.spy(give, "sendHelpMessage");
-
-      return give.execute().then(() => {
-        assert(give.sendHelpMessage.calledOnce);
-      });
-    });
-
-    it("infracts user sending negative money", () => {
-      const memberController = new TestMemberController();
-      const give = new Give(new TestMessage("-$50.00"), null, memberController)
-        .setItem(new UserItem())
-        .setInventoryController(new TestInventoryController());
-      give.message.setMentionedMembers(["TEST1", "TEST2"]);
-      sandbox.spy(give, "sendHelpMessage");
-      sandbox.spy(memberController, "addInfractions");
-
-      return give.execute().then(() => {
-        assert(memberController.addInfractions.calledOnce);
-        assert(give.sendHelpMessage.notCalled);
-      });
-    });
-
     it("fails if the sender does not have enough money", () => {
       const memberController = new TestMemberController();
       const currencyController = new TestCurrencyController();

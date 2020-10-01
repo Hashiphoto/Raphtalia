@@ -9,6 +9,10 @@ class TestInventoryController {
   useItem(item, member) {
     return Promise.resolve();
   }
+
+  getUserItem() {
+    return Promise.resolve(new UserItem());
+  }
 }
 
 export default TestInventoryController;
