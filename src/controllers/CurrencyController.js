@@ -2,27 +2,8 @@ import Discord from "discord.js";
 import GuildBasedController from "./GuildBasedController.js";
 
 class CurrencyController extends GuildBasedController {
-  payoutMessage(message, dbGuild) {
-    var amount = this.calculatePayout(message, dbGuild);
-
-    if (!amount) {
-      return;
-    }
-
-    let sender = message.guild.members.get(message.author.id);
-
-    return this.addCurrency(sender, amount);
-  }
-
-  calculatePayout(message, dbGuild) {
-    if (message.content.length < dbGuild.min_length) {
-      return 0;
-    }
-
-    return Math.min(
-      dbGuild.base_payout + message.content.length * dbGuild.character_value,
-      dbGuild.max_payout
-    );
+  payoutMessage(message) {
+    return this.db.guilds.get(message.guild.id).then((dbGuild) => {});
   }
 
   addCurrency(member, amount = 1) {

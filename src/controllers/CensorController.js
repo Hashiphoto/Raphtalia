@@ -28,8 +28,8 @@ class CensorController extends GuildBasedController {
    * @returns {Boolean} - True if the message was censored
    */
   censorMessage(message) {
-    return this.db.guilds.get(message.guild.id).then((guild) => {
-      if (!guild.censorship_enabled) {
+    return this.db.guilds.get(message.guild.id).then((dbGuild) => {
+      if (!dbGuild.censorshipEnabled) {
         return false;
       }
 
@@ -43,7 +43,7 @@ class CensorController extends GuildBasedController {
         return false;
       }
 
-      let bannedRegex = new RegExp(guild.censor_regex, "gi");
+      let bannedRegex = new RegExp(dbGuild.censorRegex, "gi");
       if (message.content.match(bannedRegex) == null) {
         return false;
       }

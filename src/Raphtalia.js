@@ -4,8 +4,6 @@ import dayjs from "dayjs";
 import Database from "./db/Database.js";
 import secretConfig from "../config/secrets.config.js";
 import discordConfig from "../config/discord.config.js";
-// TODO: Fix scheduled tasks
-// import tasks from "./scheduledTasks.js";
 import CommandParser from "./CommandParser.js";
 import OnBoarder from "./OnBoarder.js";
 
@@ -50,6 +48,7 @@ import Roles from "./commands/Roles.js";
 import RoleStatusController from "./controllers/RoleStatusController.js";
 import StoreStatusController from "./controllers/StoreStatusController.js";
 import Take from "./commands/Take.js";
+import delay from "delay";
 
 class Raphtalia {
   constructor() {
@@ -67,13 +66,11 @@ class Raphtalia {
     this.client.login(secretConfig().discord.token).then(() => {
       console.log(`Logged in! Listening for events...`);
     });
-
-    // TODO: Fix scheduled tasks
-    // tasks.init(this.client);
   }
 
   configureDiscordClient() {
     this.client.on("message", (message) => {
+      // Delete the "Raphtalia has pinned a message to this channel" message
       if (message.author.id === this.client.user.id && message.type === "PINS_ADD") {
         return message.delete();
       }
@@ -83,37 +80,17 @@ class Raphtalia {
       }
 
       this.attachWatchCommand(message.channel).then((deleteTime) => {
-        // Delete the incoming message if the channel is auto-delete enabled
-        if (deleteTime >= 0) {
-          setTimeout(function () {
-            message.delete().catch((error) => {
-              if (error.name === "DiscordAPIError" && error.message === "Unknown Message") {
-                return; // Message was manually deleted
-              }
-              throw error;
-            });
-          }, deleteTime);
-        }
+        this.delayedDelete(message, deleteTime);
 
         if (message.content.startsWith(CommandParser.prefix)) {
-          const parsedMessage = CommandParser.parse(message);
-          return this.selectCommand(parsedMessage).then((command) =>
-            this.executeCommand(command, parsedMessage)
-          );
+          return this.handleCommand(message);
         } else {
-          const censorManager = new CensorController(this.db, message.guild);
-          censorManager
-            .censorMessage(message)
-            .then((censored) => {
-              if (censored || message.channel.autoDelete) {
-                throw new Error("Cannot payout a censored message");
-              }
-              return this.db.guilds.get(message.guild.id);
-            })
-            .then((dbGuild) => {
-              return payoutMessage(message, dbGuild);
-            })
-            .catch((error) => {});
+          return this.censorMessage(message).then((censored) => {
+            if (censored) {
+              return;
+            }
+            return this.payoutMessage(message);
+          });
         }
       });
     });
@@ -136,11 +113,49 @@ class Raphtalia {
     });
   }
 
+  handleCommand(message) {
+    const parsedMessage = CommandParser.parse(message);
+    return this.selectCommand(parsedMessage).then((command) =>
+      this.executeCommand(command, parsedMessage)
+    );
+  }
+
+  censorMessage(message) {
+    const censorManager = new CensorController(this.db, message.guild);
+    return censorManager.censorMessage(message);
+  }
+
+  payoutMessage(message) {
+    const currencyController = new CurrencyController(this.db, message.guild);
+    // currencyController.
+  }
+
+  /**
+   * Delete a message after the given interval. Nothing happens for negative time intervals
+   * @param {Discord.Message} message
+   * @param {Number} timeMs
+   */
+  delayedDelete(message, timeMs) {
+    if (timeMs < 0) {
+      return;
+    }
+
+    return delay(timeMs).then(() => {
+      message.delete().catch((error) => {
+        if (error.name === "DiscordAPIError" && error.message === "Unknown Message") {
+          return; // Message was manually deleted
+        }
+        throw error;
+      });
+    });
+  }
+
   /**
    * Adds the "watchSend" method to the channel to send messages and delete them
    * after a delay (set in the channel's db entry)
    *
    * @param {Discord.Channel} channel
+   * @returns {Number} Milliseconds before messages in this channel should be deleted
    */
   attachWatchCommand(channel) {
     return this.db.channels.get(channel.id).then((dbChannel) => {

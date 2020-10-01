@@ -1,4 +1,5 @@
 import mysqlPromise from "mysql2/promise.js";
+import DbGuild from "../structures/DbGuild.js";
 
 class GuildsTable {
   /**
@@ -9,6 +10,25 @@ class GuildsTable {
     this.pool = pool;
   }
 
+  /**
+   * @param {any} dbRow
+   * @returns {DbGuild}
+   */
+  toGuildObject(dbRow) {
+    return new DbGuild(
+      dbRow.censorship_enabled,
+      dbRow.censor_regex,
+      dbRow.tax_rate,
+      dbRow.role_message_id,
+      dbRow.store_message_id,
+      dbRow.message_rate
+    );
+  }
+
+  /**
+   * @param {String} guildId
+   * @returns {Promise<DbGuild>}
+   */
   get(guildId) {
     return this.pool
       .query("SELECT * FROM guilds WHERE id = ?", [guildId])
@@ -16,11 +36,25 @@ class GuildsTable {
         if (rows.length === 0) {
           return null;
         }
-        return rows[0];
+        return toGuildObject(rows[0]);
       })
       .catch((e) => {
         console.error(e);
       });
+  }
+
+  /**
+   * @param {String} guildId
+   * @param {Number} messagePayout
+   * @returns {Promise<any>}
+   */
+  setMessageRate(guildId, messagePayout) {
+    return this.pool
+      .query(
+        "INSERT INTO guilds (id, message_rate) VALUES (?,?) ON DUPLICATE KEY UPDATE message_rate = VALUES(message_rate)",
+        [guildId, messagePayout]
+      )
+      .catch((error) => console.error(error));
   }
 
   setCensorship(guildId, enabled) {
@@ -37,60 +71,6 @@ class GuildsTable {
       .query(
         "INSERT INTO guilds (id, censor_regex) VALUES (?,?) ON DUPLICATE KEY UPDATE censor_regex = VALUES(censor_regex)",
         [guildId, regex]
-      )
-      .catch((error) => console.error(error));
-  }
-
-  setCharacterValue(guildId, characterValue) {
-    return this.pool
-      .query(
-        "INSERT INTO guilds (id, character_value) VALUES (?,?) ON DUPLICATE KEY UPDATE character_value = VALUES(character_value)",
-        [guildId, characterValue]
-      )
-      .catch((error) => console.error(error));
-  }
-
-  setMaxPayout(guildId, maxPayout) {
-    return this.pool
-      .query(
-        "INSERT INTO guilds (id, max_payout) VALUES (?,?) ON DUPLICATE KEY UPDATE max_payout = VALUES(max_payout)",
-        [guildId, maxPayout]
-      )
-      .catch((error) => console.error(error));
-  }
-
-  setBasePayout(guildId, basePayout) {
-    return this.pool
-      .query(
-        "INSERT INTO guilds (id, base_payout) VALUES (?,?) ON DUPLICATE KEY UPDATE base_payout = VALUES(base_payout)",
-        [guildId, basePayout]
-      )
-      .catch((error) => console.error(error));
-  }
-
-  setMinLength(guildId, minLength) {
-    return this.pool
-      .query(
-        "INSERT INTO guilds (id, min_length) VALUES (?,?) ON DUPLICATE KEY UPDATE min_length = VALUES(min_length)",
-        [guildId, minLength]
-      )
-      .catch((error) => console.error(error));
-  }
-
-  setTaxRate(guildId, taxRate) {
-    return this.pool
-      .query(
-        "INSERT INTO guilds (id, tax_rate) VALUES (?,?) ON DUPLICATE KEY UPDATE tax_rate = VALUES(tax_rate)",
-        [guildId, taxRate]
-      )
-      .catch((error) => console.error(error));
-  }
-
-  setBaseIncome(guildId, baseIncome) {
-    return this.pool
-      .query(
-        "INSERT INTO guilds (id, base_income) VALUES (?,?) ON DUPLICATE KEY UPDATE base_income = VALUES(base_income)",
-        [guildId, baseIncome]
       )
       .catch((error) => console.error(error));
   }

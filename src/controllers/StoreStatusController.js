@@ -8,7 +8,7 @@ class StoreStatusController extends SingletonMessageController {
 
     return this.db.guilds.get(this.guild.id).then(async (dbGuild) => {
       // Exit if no message to update
-      if (!dbGuild || !dbGuild.store_message_id) {
+      if (!dbGuild || !dbGuild.storeMessageId) {
         return;
       }
       // Find the existing message and update it
@@ -17,7 +17,7 @@ class StoreStatusController extends SingletonMessageController {
         .array();
       for (let i = 0; i < textChannels.length; i++) {
         try {
-          let message = await textChannels[i].fetchMessage(dbGuild.store_message_id);
+          let message = await textChannels[i].fetchMessage(dbGuild.storeMessageId);
           message.edit({ embed: statusEmbed });
           break;
         } catch (e) {}
@@ -61,13 +61,13 @@ class StoreStatusController extends SingletonMessageController {
   }
 
   removeMessage() {
-    return this.db.guilds.get(this.guild.id).then(async (guild) => {
+    return this.db.guilds.get(this.guild.id).then(async (dbGuild) => {
       // Delete the existing status message, if it exists
-      if (!guild || !guild.store_message_id) {
+      if (!dbGuild || !dbGuild.storeMessageId) {
         return;
       }
 
-      return this.fetchMessage(guild.store_message_id).then((message) => {
+      return this.fetchMessage(dbGuild.storeMessageId).then((message) => {
         if (message) {
           return message.delete();
         }
