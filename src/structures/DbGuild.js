@@ -7,7 +7,9 @@ class DbGuild {
     roleMessageId,
     storeMessageId,
     messageRate,
-    messageResetTime
+    messageResetTime,
+    reactorRate,
+    reacteeRate
   ) {
     this.id = id;
     this.censorshipEnabled = censorshipEnabled;
@@ -17,6 +19,8 @@ class DbGuild {
     this.storeMessageId = storeMessageId;
     this.messageRate = messageRate;
     this.messageResetTime = messageResetTime;
+    this.reactorRate = reactorRate;
+    this.reacteeRate = reacteeRate;
   }
 }
 

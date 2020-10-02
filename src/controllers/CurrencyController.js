@@ -41,6 +41,22 @@ class CurrencyController extends GuildBasedController {
   }
 
   /**
+   * @param {Discord.Message} message
+   * @param {Discord.GuildMember} member
+   * @param {Boolean} undo
+   */
+  payoutReaction(message, member, undo) {
+    return this.db.guilds.get(message.guild.id).then((dbGuild) => {
+      const reactorAmount = undo ? -dbGuild.reactorRate : dbGuild.reactorRate;
+      const reacteeAmount = undo ? -dbGuild.reacteeRate : dbGuild.reacteeRate;
+
+      return this.addCurrency(member, reactorAmount).then(
+        this.addCurrency(message.member, reacteeAmount)
+      );
+    });
+  }
+
+  /**
    * @param {Discord.GuildMember} member
    */
   getRoleScalar(member) {

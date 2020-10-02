@@ -106,10 +106,65 @@ class Raphtalia {
       this.db.users.setCitizenship(member.id, member.guild.id, false);
     });
 
-    this.client.on("disconnect", function (event) {
-      ``;
+    this.client.on("disconnect", (event) => {
       console.log("Bot disconnecting");
       process.exit();
+    });
+
+    this.client.on("messageReactionAdd", (messageReaction, user) => {
+      const message = messageReaction.message;
+      // Only pay users for their first reaction to a message
+      if (message.reactions.filter((e) => e.users.get(user.id)).size > 1) {
+        return;
+      }
+      this.payoutReaction(message, user);
+    });
+
+    this.client.on("messageReactionRemove", (messageReaction, user) => {
+      // It's possible that the message wasn't cached. If so, the raw event processor will pass in
+      // the message instead
+      let message = messageReaction;
+      if (messageReaction instanceof Discord.MessageReaction) {
+        message = messageReaction.message;
+      }
+      // Only subtract money for removing the user's only remaining reaction
+      if (message.reactions.filter((e) => e.users.get(user.id)).size > 0) {
+        return;
+      }
+      this.payoutReaction(message, user, true);
+    });
+
+    /**
+     * "raw" has to be used since "messageReactionAdd" only applies to cached messages. This will make sure that all
+     * reactions emit an event
+     * Copied from https://github.com/AnIdiotsGuide/discordjs-bot-guide/blob/master/coding-guides/raw-events.md
+     */
+    this.client.on("raw", (packet) => {
+      if (!["MESSAGE_REACTION_ADD", "MESSAGE_REACTION_REMOVE"].includes(packet.t)) return;
+      const channel = this.client.channels.get(packet.d.channel_id);
+      if (channel.messages.has(packet.d.message_id)) return;
+      channel.fetchMessage(packet.d.message_id).then((message) => {
+        const emoji = packet.d.emoji.id
+          ? `${packet.d.emoji.name}:${packet.d.emoji.id}`
+          : packet.d.emoji.name;
+        const reaction = message.reactions.get(emoji);
+        if (reaction) {
+          reaction.users.set(packet.d.user_id, this.client.users.get(packet.d.user_id));
+        } else {
+          console.log();
+        }
+        if (packet.t === "MESSAGE_REACTION_ADD") {
+          this.client.emit("messageReactionAdd", reaction, this.client.users.get(packet.d.user_id));
+        }
+        // If the message reactions weren't cached, pass in the message instead
+        if (packet.t === "MESSAGE_REACTION_REMOVE") {
+          this.client.emit(
+            "messageReactionRemove",
+            reaction ?? message,
+            this.client.users.get(packet.d.user_id)
+          );
+        }
+      });
     });
   }
 
@@ -128,6 +183,27 @@ class Raphtalia {
   payoutMessage(message) {
     const currencyController = new CurrencyController(this.db, message.guild);
     return currencyController.payoutMessage(message);
+  }
+
+  /**
+   * @param {Discord.Message} message
+   * @param {Discord.User} user
+   * @param {Boolean} undo
+   */
+  payoutReaction(message, user, undo = false) {
+    if (message.author.id === user.id) {
+      return;
+    }
+    const oneDay = dayjs.duration({ hours: 24 });
+    if (new Date() - message.createdAt > oneDay.asMilliseconds()) {
+      // Ignore reactions to messages older than 24 hours
+      return;
+    }
+
+    const member = message.guild.members.get(user.id);
+    const currencyController = new CurrencyController(this.db, message.guild);
+
+    return currencyController.payoutReaction(message, member, undo);
   }
 
   /**

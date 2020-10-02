@@ -23,7 +23,9 @@ class GuildsTable {
       dbRow.role_message_id,
       dbRow.store_message_id,
       dbRow.message_rate,
-      dbRow.message_reset_s
+      dbRow.message_reset_s,
+      dbRow.reactor_rate,
+      dbRow.reactee_rate
     );
   }
 
