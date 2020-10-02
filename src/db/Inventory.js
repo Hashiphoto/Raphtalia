@@ -28,7 +28,7 @@ class Inventory {
       row.max_uses,
       row.quantity,
       commands,
-      row.price,
+      parseFloat(row.price),
       row.max_quantity
     );
   }

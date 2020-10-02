@@ -19,7 +19,7 @@ class UsersTable {
       dbRow.id,
       dbRow.guild_id,
       dbRow.infractions,
-      dbRow.currency,
+      parseFloat(dbRow.currency),
       dbRow.citizenship,
       dbRow.bonus_income,
       dbRow.last_message_date
