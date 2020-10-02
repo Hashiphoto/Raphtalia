@@ -270,37 +270,22 @@ class MemberController extends GuildBasedController {
   /**
    * Remove all hoisted roles from one target and increase their former highest role by one
    *
-   * @param {Discord.TextChannel} channel - The channel to send messages in
-   * @param {Discord.GuildMember} sender - The GuildMember doing the promotion
-   * @param {Discord.GuildMember} target - The GuildMember being promoted
+   * @param {Discord.GuildMember} member - The GuildMember being promoted
    */
-  promoteMember(sender, target) {
-    let nextHighest = this.getNextRole(target, target.guild);
+  promoteMember(member) {
+    let nextHighest = this.getNextRole(member, member.guild);
     if (nextHighest == null) {
-      return `${target} holds the highest office already`;
-    }
-
-    // Disallow self-promotion
-    if (sender.id === target.id) {
-      return this.addInfractions(sender, 1).then((feedback) => {
-        return `You cannot promote yourself!\n${feedback}`;
-      });
-    }
-    // Ensure the target's next highest role is not higher than the sender's
-    if (sender.highestRole.comparePositionTo(nextHighest) < 0) {
-      return this.addInfractions(sender, 1).then((feedback) => {
-        return `You cannot promote someone to a role higher than your own!\n${feedback}`;
-      });
+      return `${member} holds the highest office already`;
     }
 
     // promote the target
-    return this.setHoistedRole(target, nextHighest)
+    return this.setHoistedRole(member, nextHighest)
       .then((roleChanged) => {
         if (roleChanged) {
-          this.setInfractions(target, 0);
-          return `${target} has been promoted to ${nextHighest.name}!\nInfractions have been reset to 0`;
+          this.setInfractions(member, 0);
+          return `${member} has been promoted to ${nextHighest.name}!\nInfractions have been reset to 0`;
         } else {
-          return `Could not promote ${target} to ${nextHighest.name}`;
+          return `Could not promote ${member} to ${nextHighest.name}`;
         }
       })
       .catch((error) => {
