@@ -13,7 +13,6 @@ import Buy from "./commands/Buy.js";
 import Comfort from "./commands/Comfort.js";
 import DeliverCheck from "./commands/DeliverCheck.js";
 import Demote from "./commands/Demote.js";
-import Economy from "./commands/Economy.js";
 import Exile from "./commands/Exile.js";
 import Fine from "./commands/Fine.js";
 import Give from "./commands/Give.js";
@@ -27,7 +26,6 @@ import Play from "./commands/Play.js";
 import Promote from "./commands/Promote.js";
 import Register from "./commands/Register.js";
 import Report from "./commands/Report.js";
-import RolePrice from "./commands/RolePrice.js";
 import ServerStatus from "./commands/ServerStatus.js";
 import SoftKick from "./commands/SoftKick.js";
 import NullCommand from "./commands/NullCommand.js";
@@ -334,8 +332,6 @@ class Raphtalia {
         return new DeliverCheck(message, new CurrencyController(db, guild));
       case "demote":
         return new Demote(message, new MemberController(db, guild));
-      case "economy":
-        return new Economy(message, new GuildController(db, guild));
       case "exile":
         return new Exile(message, new MemberController(db, guild));
       case "fine":
@@ -374,12 +370,6 @@ class Raphtalia {
         return new Register(message, new MemberController(db, guild));
       case "report":
         return new Report(message, new MemberController(db, guild));
-      case "roleprice":
-        return new RolePrice(
-          message,
-          new GuildController(db, guild),
-          new StoreStatusController((db, guild))
-        );
       case "roles":
         return new Roles(message, new RoleStatusController(db, guild));
       case "serverstatus":

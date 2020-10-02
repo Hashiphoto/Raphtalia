@@ -68,24 +68,6 @@ class GuildController extends GuildBasedController {
     results.forEach((r) => (announcement += r));
     return announcement;
   }
-
-  async setRolePriceMultiplier(multiplier, neutralRole) {
-    let discordRoles = this.guild.roles
-      .filter((role) => role.hoist && role.calculatedPosition >= neutralRole.calculatedPosition)
-      .sort((a, b) => b.calculatedPosition - a.calculatedPosition)
-      .array();
-
-    let response = "";
-
-    for (const role of discordRoles) {
-      let dbRole = await this.db.roles.getSingle(role.id);
-      let newPrice = dbRole.income * multiplier;
-      this.db.roles.setRolePrice(role.id, newPrice);
-      response += `${role.name} new price: $${newPrice.toFixed(2)}\n`;
-    }
-
-    return response;
-  }
 }
 
 export default GuildController;

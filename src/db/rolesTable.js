@@ -31,24 +31,6 @@ class RolesTable {
       })
       .catch((error) => console.error(error));
   }
-
-  setRoleIncome(roleId, income) {
-    return this.pool
-      .query(
-        "INSERT INTO roles (id, income) VALUES (?,?) ON DUPLICATE KEY UPDATE income = VALUES(income)",
-        [roleId, income]
-      )
-      .catch((error) => console.error(error));
-  }
-
-  setRolePrice(roleId, price) {
-    return this.pool
-      .query(
-        "INSERT INTO roles (id, price) VALUES (?,?) ON DUPLICATE KEY UPDATE price = VALUES(price)",
-        [roleId, price]
-      )
-      .catch((error) => console.error(error));
-  }
 }
 
 export default RolesTable;

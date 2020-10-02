@@ -32,14 +32,6 @@ class TestGuildController {
     return Promise.resolve();
   }
 
-  setIncomeScale() {
-    return Promise.resolve();
-  }
-
-  setRolePriceMultiplier() {
-    return Promise.resolve();
-  }
-
   removeStatusMessage() {
     return Promise.resolve();
   }

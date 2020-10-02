@@ -20,7 +20,6 @@ import Comfort from "../../src/commands/Comfort.js";
 import DeliverCheck from "../../src/commands/DeliverCheck.js";
 import Demote from "../../src/commands/Demote.js";
 import TestMemberController from "../structures/TestMemberController.js";
-import Economy from "../../src/commands/Economy.js";
 import GuildController from "../../src/controllers/GuildController.js";
 import TestGuild from "../structures/TestGuild.js";
 import Exile from "../../src/commands/Exile.js";
@@ -360,70 +359,6 @@ describe("Commands", () => {
 
       return demote.execute().then(() => {
         assert(memberController.demoteMember.calledTwice);
-      });
-    });
-  });
-
-  describe("Economy", () => {
-    it("fails if fewer than 2 arguments are given", () => {
-      const economy = new Economy(new TestMessage("foo"))
-        .setItem(new UserItem())
-        .setInventoryController(new TestInventoryController());
-      sandbox.spy(economy, "sendHelpMessage");
-
-      economy.execute().then(() => {
-        assert(economy.sendHelpMessage.calledOnce);
-      });
-    });
-
-    it("fails if an argument is not recognized", () => {
-      const guildController = new TestGuildController();
-      const economy = new Economy(
-        new TestMessage(
-          "MinLength 100 charValue $10 maxpayout $100 basepayout $13 tAxRaTe 45% foo"
-        ),
-        guildController
-      )
-        .setItem(new UserItem())
-        .setInventoryController(new TestInventoryController());
-      sandbox.spy(economy, "sendHelpMessage");
-
-      return economy.execute().then(() => {
-        assert(economy.sendHelpMessage.calledOnce);
-      });
-    });
-
-    it("fails if a value is not supplied for an argument", () => {
-      const guildController = new TestGuildController();
-      const economy = new Economy(
-        new TestMessage("MinLength 100 charValue $10 maxpayout basepayout $13 tAxRaTe 45%"),
-        guildController
-      )
-        .setItem(new UserItem())
-        .setInventoryController(new TestInventoryController());
-      sandbox.spy(economy, "sendHelpMessage");
-
-      return economy.execute().then(() => {
-        assert(economy.sendHelpMessage.calledOnce);
-      });
-    });
-
-    it("correctly parses all parameters", () => {
-      const guildController = new TestGuildController();
-      const economy = new Economy(
-        new TestMessage("MinLength 100 charValue $10 maxpayout $100 basepayout $13 tAxRaTe 45%"),
-        guildController
-      )
-        .setItem(new UserItem())
-        .setInventoryController(new TestInventoryController());
-      sandbox.spy(guildController);
-
-      return economy.execute().then(() => {
-        assert(guildController.setMinLength.calledOnce);
-        assert(guildController.setCharacterValue.calledOnce);
-        assert(guildController.setMaxPayout.calledOnce);
-        assert(guildController.setBasePayout.calledOnce);
-        assert(guildController.setTaxRate.calledOnce);
       });
     });
   });
