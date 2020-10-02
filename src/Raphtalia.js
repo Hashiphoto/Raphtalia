@@ -89,7 +89,7 @@ class Raphtalia {
             if (censored) {
               return;
             }
-            return this.payoutMessage(message).then((response) => message.reply(response));
+            return this.payoutMessage(message);
           });
         }
       });

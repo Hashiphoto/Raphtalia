@@ -11,10 +11,7 @@ class UsersTable {
   }
 
   roundCurrency(amount) {
-    amount *= 100;
-    amount = Math.round(amount);
-    amount /= 100;
-    return amount;
+    return Number(Math.round(amount + "e2") + "e-2");
   }
 
   toUserObject(dbRow) {

@@ -12,31 +12,24 @@ class CurrencyController extends GuildBasedController {
       const dbUser = await this.db.users.get(message.member.id, message.guild.id);
       const roleScalar = this.getRoleScalar(message.member);
       const timeElapsed = this.getTimeElapsedSeconds(dbUser.lastMessageDate, message.createdAt);
-      console.log(
-        `Last message sent at ${
-          dbUser.lastMessageDate ? dbUser.lastMessageDate.toLocaleString() : "never"
-        }. This message sent at ${message.createdAt.toLocaleString()}\n` +
-          `Time interval: ${timeElapsed} seconds`
-      );
+      // console.log(
+      //   `Last message sent at ${
+      //     dbUser.lastMessageDate ? dbUser.lastMessageDate.toLocaleString() : "never"
+      //   }. This message sent at ${message.createdAt.toLocaleString()}\n` +
+      //     `Time interval: ${timeElapsed} seconds`
+      // );
       // If they've never sent a message before, give them full value
       const timeScalar =
         timeElapsed == null ? 1 : Math.min(1, timeElapsed / dbGuild.messageResetTime);
       const payout = dbGuild.messageRate * timeScalar * roleScalar;
 
-      return this.addCurrency(message.member, payout)
-        .then(() => {
-          return this.db.users.setLastMessageDate(
-            message.member.id,
-            message.guild.id,
-            message.createdAt
-          );
-        })
-        .then(
-          () =>
-            `(Message Rate: ${
-              dbGuild.messageRate
-            }) * (Time: ${timeScalar}) * (Role: ${roleScalar}) = ${RNumber.formatDollar(payout)}`
+      return this.addCurrency(message.member, payout).then(() => {
+        return this.db.users.setLastMessageDate(
+          message.member.id,
+          message.guild.id,
+          message.createdAt
         );
+      });
     });
   }
 
