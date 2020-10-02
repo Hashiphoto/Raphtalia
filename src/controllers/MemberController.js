@@ -239,11 +239,11 @@ class MemberController extends GuildBasedController {
     let discordRole = RoleUtil.convertToRole(member.guild, role);
 
     let dbRole = await this.db.roles.getSingle(discordRole.id);
-    if (dbRole.member_limit >= 0 && discordRole.members.size >= dbRole.member_limit) {
+    if (dbRole.memberLimit >= 0 && discordRole.members.size >= dbRole.memberLimit) {
       throw new MemberLimitError(
-        dbRole.member_limit,
+        dbRole.memberLimit,
         `Cannot assign ${member} to ${discordRole.name} ` +
-          `since it already has ${discordRole.members.size}/${dbRole.member_limit} members!`
+          `since it already has ${discordRole.members.size}/${dbRole.memberLimit} members!`
       );
     }
     // Remove all hoisted roles and add the ones specified

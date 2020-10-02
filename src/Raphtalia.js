@@ -18,7 +18,6 @@ import Fine from "./commands/Fine.js";
 import Give from "./commands/Give.js";
 import Help from "./commands/Help.js";
 import HoldVote from "./commands/HoldVote.js";
-import Income from "./commands/Income.js";
 import Infractions from "./commands/Infractions.js";
 import Kick from "./commands/Kick.js";
 import Pardon from "./commands/Pardon.js";
@@ -350,12 +349,6 @@ class Raphtalia {
         return new Help(message);
       case "holdvote":
         return new HoldVote(message);
-      case "income":
-        return new Income(
-          message,
-          new CurrencyController(db, guild),
-          new GuildController(db, guild)
-        );
       case "infractions":
         return new Infractions(message, new MemberController(db, guild));
       case "kick":

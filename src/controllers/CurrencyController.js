@@ -94,27 +94,6 @@ class CurrencyController extends GuildBasedController {
       .then(this.db.users.incrementCurrency(toMember.id, this.guild.id, -amount));
   }
 
-  getUserIncome(member) {
-    return this.db.users.get(member.id, member.guild.id).then((dbUser) => {
-      // Check for personally-set income
-      let bonusIncome = 0;
-      if (dbUser.bonusIncome != 0) {
-        bonusIncome = dbUser.bonusIncome;
-      }
-      // Check for role income
-      if (!member.hoistRole) {
-        return bonusIncome;
-      }
-      return this.db.roles.getSingle(member.hoistRole.id).then((dbRole) => {
-        if (!dbRole) {
-          return bonusIncome;
-        }
-
-        return dbRole.income;
-      });
-    });
-  }
-
   getCurrency(member) {
     return this.db.users.get(member.id, member.guild.id).then((dbUser) => {
       return dbUser.currency;

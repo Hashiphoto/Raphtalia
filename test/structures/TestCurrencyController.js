@@ -20,10 +20,6 @@ class TestCurrencyController {
     return Promise.resolve();
   }
 
-  getUserIncome() {
-    return Promise.resolve();
-  }
-
   getCurrency(target) {
     return Promise.resolve(this.db.get(target) ?? 0);
   }

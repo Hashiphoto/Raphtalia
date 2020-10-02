@@ -24,50 +24,6 @@ class GuildController extends GuildBasedController {
   setCensorship(enable) {
     return this.db.guilds.setCensorship(this.guild.id, enable);
   }
-
-  setMinLength(amount) {
-    return this.db.guilds.setMinLength(this.guild.id, amount);
-  }
-
-  setCharacterValue(amount) {
-    return this.db.guilds.setCharacterValue(this.guild.id, amount);
-  }
-
-  setMaxPayout(amount) {
-    return this.db.guilds.setMaxPayout(this.guild.id, amount);
-  }
-
-  setBasePayout(amount) {
-    return this.db.guilds.setBasePayout(this.guild.id, amount);
-  }
-
-  setTaxRate(amount) {
-    return this.db.guilds.setTaxRate(this.guild.id, amount);
-  }
-
-  setBaseIncome(amount) {
-    return this.db.guilds.setBaseIncome(this.guild.id, amount);
-  }
-
-  async setIncomeScale(baseIncome, roles, scale) {
-    let nextIncome = baseIncome;
-    let results = [];
-    for (let i = 0; i < roles.length; i++) {
-      await this.db.roles.setRoleIncome(roles[i].id, nextIncome);
-      results.push(`${roles[i].name} will now earn $${nextIncome.toFixed(2)}\n`);
-      if (scale.type === RNumber.types.DOLLAR) {
-        nextIncome += scale.amount;
-      } else {
-        nextIncome = nextIncome * scale.amount;
-      }
-    }
-
-    // Return the income scale highest to lowest
-    let announcement = "";
-    results.reverse();
-    results.forEach((r) => (announcement += r));
-    return announcement;
-  }
 }
 
 export default GuildController;

@@ -52,11 +52,9 @@ class RoleStatusController extends SingletonMessageController {
       .array();
     for (let i = 0; i < discordRoles.length; i++) {
       let dbRole = await this.db.roles.getSingle(discordRoles[i].id);
-      let roleInfo = `Daily Income: $${dbRole.income.toFixed(
-        2
-      )}\nPurchase Price: $${dbRole.price.toFixed(2)}\nMembers: ${discordRoles[i].members.size}`;
-      if (dbRole.member_limit >= 0) {
-        roleInfo += `/${dbRole.member_limit}`;
+      let roleInfo = `Members: ${discordRoles[i].members.size}`;
+      if (dbRole.memberLimit >= 0) {
+        roleInfo += `/${dbRole.memberLimit}`;
       }
       fields.push({
         name: discordRoles[i].name,
