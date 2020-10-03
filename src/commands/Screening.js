@@ -41,6 +41,7 @@ class Screening extends Command {
         return this.getNewQuestionDetails()
           .then((question) => this.guildController.addScreeningQuestion(question))
           .then(() => this.inputChannel.watchSend("New question added!"))
+          .then(() => this.useItem())
           .catch((error) => {
             if (error instanceof BadParametersError) {
               return this.inputChannel.watchSend(
@@ -57,13 +58,12 @@ class Screening extends Command {
           );
         }
         const id = this.message.args[1];
-        return this.guildController
-          .deleteScreeningQuestion(id)
-          .then((deleted) =>
-            this.inputChannel.watchSend(
-              deleted ? "Question deleted" : `There is no question with id ${id}`
-            )
-          );
+        return this.guildController.deleteScreeningQuestion(id).then((deleted) => {
+          if (deleted) {
+            return this.inputChannel.watchSend("Question deleted").then(() => this.useItem());
+          }
+          return this.inputChannel.watchSend(`There is no question with id ${id}`);
+        });
     }
   }
 
