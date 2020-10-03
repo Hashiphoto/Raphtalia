@@ -44,9 +44,7 @@ class SoftKick extends Command {
         reason = matches[0];
       }
 
-      return this.memberController
-        .softKick(target, reason, this.message.author)
-        .then((feedback) => (response += feedback));
+      return this.memberController.softKick(target, reason, this.message.author);
     });
 
     return Promise.all(softPromises)

@@ -72,8 +72,7 @@ class Screening extends Command {
     return sendTimedMessage(
       this.inputChannel,
       this.message.member,
-      new Question("What is the question they will be asked?", ".*", 120000),
-      true
+      new Question("What is the question they will be asked?", ".*", 120000)
     )
       .then((message) => (question.prompt = message.content))
       .then(() =>
@@ -84,8 +83,7 @@ class Screening extends Command {
             "What is the acceptable answer to the question? (case-insensitive)",
             ".*",
             120000
-          ),
-          true
+          )
         )
       )
       .then((message) => (question.answer = message.content))
@@ -97,8 +95,7 @@ class Screening extends Command {
             "How many milliseconds (ms) will they have to answer correctly?",
             ".*",
             120000
-          ),
-          true
+          )
         )
       )
       .then((message) => {
@@ -116,8 +113,7 @@ class Screening extends Command {
             "Should the user be ejected immediately after answering incorrectly? (yes/no)",
             "(yes|no)",
             120000
-          ),
-          true
+          )
         )
       )
       .then((message) => (question.strict = message.content.includes("yes")))

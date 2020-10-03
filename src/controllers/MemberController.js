@@ -105,7 +105,7 @@ class MemberController extends GuildBasedController {
         member
           .send(
             `You were kicked from ${this.guild.name} ${kicker ? `by ${kicker.username}` : ``} ${
-              `"${reason}"` ?? ""
+              reason ?? ""
             }` +
               "\n" +
               invite.toString()
@@ -118,8 +118,11 @@ class MemberController extends GuildBasedController {
 
         return `:wave: ${member.displayName} has been kicked and invited back\n${kickGif}`;
       })
-      .catch((e) => {
-        console.error(e);
+      .catch((error) => {
+        if (error.name === "DiscordAPIError" && error.message === "Missing Permissions") {
+          return `I don't have high enough permissions to kick ${member.displayName}`;
+        }
+        throw error;
       });
   }
 

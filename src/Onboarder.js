@@ -1,19 +1,26 @@
 import Discord from "discord.js";
 import sendTimedMessage from "./timedMessage.js";
-import welcomeQuestions from "../resources/welcomeQuestions.js";
 import discordConfig from "../config/discord.config.js";
 import Question from "./structures/Question.js";
 import MemberController from "./controllers/MemberController.js";
 import Database from "./db/Database.js";
+import delay from "delay";
+import GuildController from "./controllers/GuildController.js";
+
+const messageSpacing = 800;
 
 class OnBoarder {
   /**
    * @param {Database} db
    * @param {Discord.Guild} guild
+   * @param {Discord.GuildMember} member
+   * @param {Discord.TextChannel} channel
    */
-  constructor(db, guild) {
+  constructor(db, guild, member, channel) {
     this.db = db;
     this.guild = guild;
+    this.member = member;
+    this.channel = channel;
   }
 
   /**
@@ -21,74 +28,93 @@ class OnBoarder {
    * it creates a new one and sends a greeting. Second, it gives them the immigrant role. Third, it checks if they need a nickname and
    * allows them to assign a new one. Fourth, it asks them to recite a pledge (unless they have already given the pledge).
    * If they do, they are made a comrade. If they don't, they are softkicked
-   *
-   * @param {Discord.TextChannel} channel - The channel to send messages in
-   * @param {Discord.GuildMember} member - The guildMember that is being onboarded
    */
-  async onBoard(member, channel) {
+  async onBoard() {
     const memberController = new MemberController(this.db, this.guild);
-    await memberController.setHoistedRole(member, discordConfig().roles.immigrant);
+    await memberController.setHoistedRole(this.member, discordConfig().roles.immigrant);
 
-    let dbUser = await this.db.users.get(member.id, member.guild.id);
-
-    // Check if already a citizen
-    if (dbUser.isCitizen) {
-      channel.watchSend(`Welcome back ${member}!`);
-      memberController.setHoistedRole(member, discordConfig().roles.neutral);
-      return;
-    }
-
-    channel.watchSend(
-      `Welcome ${member} to ${this.guild.name}!\n` +
+    this.channel.watchSend(
+      `Welcome ${this.member} to ${this.guild.name}!\n` +
         `I have a few questions for you. If you answer correctly, you will be granted citizenship.`
     );
 
     // Set nickname
-    try {
-      let nickname = (await sendTimedMessage(channel, member, welcomeQuestions.nickname)).content;
-      // TODO: Disallow banned words from being in nickname
-      // if (await censorship.containsBannedWords(channel.guild.id, nickname)) {
-      //   softkickMember(
-      //     channel,
-      //     member,
-      //     "We don't allow those words around here"
-      //   );
-      //   return;
-      // }
-      channel.watchSend(`${member.displayName} will be known as ${nickname}!`);
-      member.setNickname(nickname).catch((e) => {
-        console.error(e);
-        channel.watchSend(`Sorry. I don't have permissions to set your nickname...`);
-      });
-    } catch (e) {
-      console.error(e);
-      channel.watchSend(`${member} doesn't want a nickname...`);
-    }
+    return this.setNickname()
+      .then(() => this.screen())
+      .then((passedScreening) => {
+        if (!passedScreening) {
+          return delay(2100)
+            .then(() => this.channel.watchSend("😠"))
+            .then(() => delay(300))
+            .then(() => memberController.softKick(this.member, "for answering a question wrong"))
+            .then((feedback) => this.channel.watchSend(feedback));
+        }
 
-    for (let i = 0; i < welcomeQuestions.gulagQuestions.length; i++) {
-      let answeredCorrect = await this.askGateQuestion(
-        channel,
-        member,
-        welcomeQuestions.gulagQuestions[i]
-      );
-      if (!answeredCorrect) {
-        return;
+        // Creates the user in the DB if they didn't exist
+        return this.db.users
+          .setCitizenship(this.member.id, this.guild.id, true)
+          .then(() =>
+            this.channel.watchSend(
+              `Thank you! And welcome loyal citizen to ${this.guild.name}! 🎉🎉🎉`
+            )
+          )
+          .then(() => memberController.setHoistedRole(this.member, discordConfig().roles.neutral));
+      });
+  }
+
+  /**
+   * @returns {Promise<void>}
+   */
+  setNickname() {
+    // TODO: Disallow banned words in the nickname
+    return sendTimedMessage(
+      this.channel,
+      this.member,
+      new Question("What do you want to be called?", ".*", 60000)
+    )
+      .then((message) => {
+        const nickname = message.content;
+        const oldName = this.member.displayName;
+        return this.member
+          .setNickname(nickname)
+          .then(() => this.channel.watchSend(`${oldName} will be known as ${nickname}!`))
+          .catch((error) => {
+            if (error.name === "DiscordAPIError" && error.message === "Missing Permissions") {
+              return this.channel.watchSend(
+                "I don't have high enough permissions to set your nickname"
+              );
+            }
+            throw error;
+          });
+      })
+      .catch((collectedMessages) => {
+        if (collectedMessages.size === 0) {
+          return this.channel.watchSend(`${this.member} doesn't want a nickname`);
+        }
+      });
+  }
+
+  screen() {
+    const guildController = new GuildController(this.db, this.guild);
+    return guildController.getScreeningQuestions().then(async (questions) => {
+      for (let i = 0; i < questions.length; i++) {
+        let answeredCorrect = await delay(messageSpacing).then(() =>
+          this.askGateQuestion(questions[i])
+        );
+
+        if (!answeredCorrect) {
+          return false;
+        }
       }
-    }
 
-    // Creates the user in the DB if they didn't exist
-    this.db.users.setCitizenship(member.id, member.guild.id, true);
-    channel
-      .watchSend(`Thank you! And welcome loyal citizen to ${channel.guild.name}! 🎉🎉🎉`)
-      .then(() => {
-        memberController.setHoistedRole(member, discordConfig().roles.neutral);
-      });
+      return true;
+    });
   }
 
   /**
    * Sends the timed message, but also kicks them if they answer incorrectly or include a censored word
    */
-  async askGateQuestion(channel, member, question) {
+  async askGateQuestion(question) {
     try {
       // For strict questions, always take the first answer
       let questionCopy = new Question(
@@ -102,7 +128,7 @@ class OnBoarder {
       }
 
       // Wait until they supply an answer matching the question.answer regex
-      let response = (await sendTimedMessage(channel, member, questionCopy)).content;
+      let response = (await sendTimedMessage(this.channel, this.member, questionCopy)).content;
 
       // if (await censorship.containsBannedWords(member.guild.id, response)) {
       //   softkickMember(channel, member, "We don't allow those words here");
@@ -119,7 +145,6 @@ class OnBoarder {
 
       return true;
     } catch (e) {
-      softkickMember(channel, member, "Come join the Gulag when you're feeling more agreeable.");
       return false;
     }
   }

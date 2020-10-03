@@ -95,8 +95,8 @@ class Raphtalia {
 
     this.client.on("guildMemberAdd", (member) => {
       const welcomeChannel = this.client.channels.get(discordConfig().channels.welcomeChannelId);
-      attachWatchCommand(welcomeChannel).then(() => {
-        new OnBoarder(this.db, member.guild).onBoard(member, welcomeChannel);
+      this.attachWatchCommand(welcomeChannel).then(() => {
+        new OnBoarder(this.db, member.guild, member, welcomeChannel).onBoard();
       });
     });
 
