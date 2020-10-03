@@ -86,7 +86,7 @@ class Screening extends Command {
           )
         )
       )
-      .then((message) => (question.answer = message.content))
+      .then((message) => (question.answer = "^" + message.content + "$"))
       .then(() =>
         sendTimedMessage(
           this.inputChannel,
