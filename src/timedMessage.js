@@ -11,9 +11,8 @@ import Question from "./structures/Question.js";
  * @returns {Promise<Discord.Message>} On fulfilled, returns a collection of messages received
  */
 function sendTimedMessage(channel, member, question, showDuration = true) {
-  if (!channel) return;
+  var re = new RegExp(question.answer, "gi");
   const filter = function (message) {
-    var re = new RegExp(question.answer, "gi");
     return message.content.match(re) != null && message.author.id === member.id;
   };
   let text = `${member} `;

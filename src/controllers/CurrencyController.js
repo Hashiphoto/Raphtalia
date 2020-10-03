@@ -90,8 +90,8 @@ class CurrencyController extends GuildBasedController {
 
   transferCurrency(fromMember, toMember, amount) {
     return this.db.users
-      .incrementCurrency(fromMember.id, this.guild.id, amount)
-      .then(this.db.users.incrementCurrency(toMember.id, this.guild.id, -amount));
+      .incrementCurrency(fromMember.id, this.guild.id, -amount)
+      .then(this.db.users.incrementCurrency(toMember.id, this.guild.id, amount));
   }
 
   getCurrency(member) {

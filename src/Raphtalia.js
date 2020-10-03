@@ -46,6 +46,7 @@ import RoleStatusController from "./controllers/RoleStatusController.js";
 import StoreStatusController from "./controllers/StoreStatusController.js";
 import Take from "./commands/Take.js";
 import delay from "delay";
+import Screening from "./commands/Screening.js";
 
 class Raphtalia {
   constructor() {
@@ -365,6 +366,8 @@ class Raphtalia {
         return new Report(message, new MemberController(db, guild));
       case "roles":
         return new Roles(message, new RoleStatusController(db, guild));
+      case "screening":
+        return new Screening(message, new GuildController(db, guild));
       case "serverstatus":
         return new ServerStatus(
           message,

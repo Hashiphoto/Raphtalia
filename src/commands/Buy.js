@@ -22,7 +22,7 @@ class Buy extends Command {
 
   execute() {
     if (!this.message.args || this.message.args.length === 0) {
-      return this.message.channel.watchSend(`Usage: !Buy (Item Name)`);
+      return this.sendHelpMessage();
     }
 
     return this.inventoryController

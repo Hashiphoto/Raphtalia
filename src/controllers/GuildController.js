@@ -1,7 +1,5 @@
-import Discord from "discord.js";
-import links from "../../resources/links.js";
+import ScreeningQuestion from "../structures/ScreeningQuestion.js";
 import GuildBasedController from "./GuildBasedController.js";
-import RNumber from "../structures/RNumber.js";
 
 class GuildController extends GuildBasedController {
   // TODO: Move to a ChannelController class?
@@ -23,6 +21,24 @@ class GuildController extends GuildBasedController {
 
   setCensorship(enable) {
     return this.db.guilds.setCensorship(this.guild.id, enable);
+  }
+
+  getScreeningQuestions() {
+    return this.db.guilds.getScreeningQuestions(this.guild.id);
+  }
+
+  /**
+   * @param {ScreeningQuestion} question
+   */
+  addScreeningQuestion(question) {
+    return this.db.guilds.insertScreeningQuestion(this.guild.id, question);
+  }
+
+  /**
+   * @param {Number} questionId
+   */
+  deleteScreeningQuestion(questionId) {
+    return this.db.guilds.deleteScreeningQuestion(this.guild.id, questionId);
   }
 }
 

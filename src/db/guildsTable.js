@@ -1,5 +1,7 @@
 import mysqlPromise from "mysql2/promise.js";
 import DbGuild from "../structures/DbGuild.js";
+import ScreeningQuestion from "../structures/ScreeningQuestion.js";
+import Question from "../structures/ScreeningQuestion.js";
 
 class GuildsTable {
   /**
@@ -79,6 +81,11 @@ class GuildsTable {
       .catch((error) => console.error(error));
   }
 
+  /**
+   * @param {String} guildId
+   * @param {String} messageId
+   * @returns {Promise<void>}
+   */
   setRoleMessage(guildId, messageId) {
     return this.pool
       .query(
@@ -88,6 +95,11 @@ class GuildsTable {
       .catch((error) => console.error(error));
   }
 
+  /**
+   * @param {String} guildId
+   * @param {String} messageId
+   * @returns {Promise<void>}
+   */
   setStoreMessage(guildId, messageId) {
     return this.pool
       .query(
@@ -95,6 +107,44 @@ class GuildsTable {
         [guildId, messageId]
       )
       .catch((error) => console.error(error));
+  }
+
+  /**
+   * @param {String} guildId
+   * @returns {Promise<ScreeningQuestion[]>}
+   */
+  getScreeningQuestions(guildId) {
+    return this.pool
+      .query("SELECT * FROM screening_questions WHERE guild_id=?", [guildId])
+      .then(([rows, fields]) => {
+        return rows.map(
+          (r) => new ScreeningQuestion(r.id, r.prompt, r.answer, r.timeout_ms, r.strict)
+        );
+      });
+  }
+
+  /**
+   * @param {String} guildId
+   * @param {ScreeningQuestion} question
+   */
+  insertScreeningQuestion(guildId, question) {
+    return this.pool.query(
+      "INSERT INTO screening_questions (guild_id, prompt, answer, timeout_ms, strict) VALUES(?,?,?,?,?)",
+      [guildId, question.prompt, question.answer, question.timeout, question.strict]
+    );
+  }
+
+  /**
+   * @param {String} guildId
+   * @param {Number} questionId
+   * @returns {Promise<Boolean>} True if at least one row was deleted
+   */
+  deleteScreeningQuestion(guildId, questionId) {
+    return this.pool
+      .query("DELETE FROM screening_questions WHERE guild_id=? AND id=?", [guildId, questionId])
+      .then(([header, fields]) => {
+        return header.affectedRows > 0;
+      });
   }
 }
 
