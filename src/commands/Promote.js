@@ -2,6 +2,7 @@ import Discord from "discord.js";
 
 import Command from "./Command.js";
 import MemberController from "../controllers/MemberController.js";
+import MemberLimitError from "../structures/errors/MemberLimitError.js";
 
 class Promote extends Command {
   /**
@@ -19,7 +20,13 @@ class Promote extends Command {
     return this.memberController
       .promoteMember(this.message.member)
       .then((response) => this.inputChannel.watchSend(response))
-      .then(() => this.useItem());
+      .then(() => this.useItem())
+      .catch((error) => {
+        if (error instanceof MemberLimitError) {
+          return this.inputChannel.watchSend(error.message);
+        }
+        throw error;
+      });
   }
 }
 

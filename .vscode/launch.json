@@ -13,9 +13,7 @@
       "args": [],
       "env": {
         "NODE_ENV": "dev"
-      },
-
-      "sourceMaps": true
+      }
     },
     {
       "type": "node",
