@@ -256,7 +256,7 @@ class Raphtalia {
    * @returns {Promise<Command>}
    */
   selectCommand(message) {
-    let command = Raphtalia.getCommandByName(message.command, message, this.db);
+    let command = Raphtalia.getCommandByName(message.command, message, this.db, this.client);
     if (!command) {
       command = new NullCommand(message, `Unknown command "${message.command}"`);
     }
@@ -295,9 +295,10 @@ class Raphtalia {
   /**
    * @param {Discord.Message} message
    * @param {Database} db
+   * @param {Discord.Client} client
    * @returns {Command}
    */
-  static getCommandByName(name, message, db) {
+  static getCommandByName(name, message, db, client) {
     // Keep alphabetical by primary command word
     // The primary command keyword should be listed first
     const guild = message.guild;
@@ -344,7 +345,8 @@ class Raphtalia {
         return new Give(
           message,
           new CurrencyController(db, guild),
-          new MemberController(db, guild)
+          new MemberController(db, guild),
+          client
         );
       case "help":
         return new Help(message);

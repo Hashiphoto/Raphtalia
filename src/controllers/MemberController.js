@@ -293,7 +293,7 @@ class MemberController extends GuildBasedController {
 
       // If it's full, but not contested, start a new contest
       if (!dbRole.unlimited && nextHighest.members.size >= dbRole.memberLimit) {
-        return this.startContest(nextHighest, member.hoistRole).then(
+        return this.startContest(nextHighest, member.hoistRole, member).then(
           () =>
             `**${member} is contesting a promotion into the ${nextHighest} role!**\n` +
             `🔸 ${member} and everyone who currently holds the ${nextHighest} role can give me money to keep the role. ` +
@@ -354,8 +354,18 @@ class MemberController extends GuildBasedController {
     return Promise.resolve(response);
   }
 
-  startContest(contestedRole, previousRole) {
-    return this.db.roles.insertRoleContest(contestedRole.id, previousRole.id, new Date());
+  /**
+   * @param {Discord.Role} contestedRole
+   * @param {Discord.Role} previousRole
+   * @param {Discord.GuildMember} member
+   */
+  startContest(contestedRole, previousRole, member) {
+    return this.db.roles.insertRoleContest(
+      contestedRole.id,
+      previousRole.id,
+      member.id,
+      new Date()
+    );
   }
 }
 

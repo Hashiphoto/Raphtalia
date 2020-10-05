@@ -99,6 +99,21 @@ class CurrencyController extends GuildBasedController {
       return dbUser.currency;
     });
   }
+
+  /**
+   * @param {Discord.Role} role
+   * @param {Discord.GuildMember} member
+   * @param {Number} amount
+   */
+  bidOnRoleContest(role, member, amount) {
+    return this.db.roles.getRoleContest(role.id, member.id).then((roleContest) => {
+      if (!roleContest) {
+        return false;
+      }
+
+      return this.db.roles.insertContestBid(roleContest.id, member.id, amount).then(() => true);
+    });
+  }
 }
 
 export default CurrencyController;

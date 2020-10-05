@@ -11,11 +11,13 @@ class Give extends Command {
    * @param {Discord.Message} message
    * @param {CurrencyController} currencyController
    * @param {MemberController} memberController
+   * @param {Discord.Client} client
    */
-  constructor(message, currencyController, memberController) {
+  constructor(message, currencyController, memberController, client) {
     super(message);
     this.currencyController = currencyController;
     this.memberController = memberController;
+    this.client = client;
     this.instructions =
       "**Give**\nGive the specified member(s) either an amount of money or an item. " +
       "If multiple members are listed, each member will be given the amount of money specified. " +
@@ -63,6 +65,7 @@ class Give extends Command {
 
   /**
    * @param {RNumber} rNumber
+   * @param {Discord.GuildMember[]} targets
    */
   giveMoney(rNumber, targets) {
     if (rNumber.amount < 0) {
@@ -79,9 +82,22 @@ class Give extends Command {
       }
 
       const givePromises = targets.map((target) => {
-        return this.currencyController
-          .transferCurrency(this.sender, target, rNumber.amount)
-          .then(() => `Transfered ${rNumber.toString()} to ${target}!`);
+        // Giving money to Raphtalia, presumably for a contest
+        if (target.id === this.client.user.id) {
+          return this.currencyController
+            .bidOnRoleContest(this.message.member.hoistRole, this.message.member, rNumber.amount)
+            .then((bidSuccess) =>
+              bidSuccess
+                ? `Paid ${rNumber.toString()} towards contesting the ${
+                    this.message.member.hoistRole.name
+                  } role!`
+                : `Thanks for the ${rNumber.toString()}!`
+            );
+        } else {
+          return this.currencyController
+            .transferCurrency(this.sender, target, rNumber.amount)
+            .then(() => `Transfered ${rNumber.toString()} to ${target}!`);
+        }
       });
 
       return Promise.all(givePromises)
