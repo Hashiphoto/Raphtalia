@@ -26,7 +26,7 @@ class RolesTable {
     return this.pool
       .query(
         "SELECT *, r.id AS role_id, rc.id AS contest_id FROM roles r " +
-          "LEFT JOIN role_contests rc ON r.id = rc.role_id " +
+          "LEFT JOIN role_contests rc ON r.id = rc.role_id OR r.id = rc.from_role_id " +
           "WHERE r.id=?",
         [roleId]
       )

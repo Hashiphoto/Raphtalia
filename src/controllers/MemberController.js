@@ -296,10 +296,10 @@ class MemberController extends GuildBasedController {
         return this.startContest(nextHighest, member.hoistRole).then(
           () =>
             `**${member} is contesting a promotion into the ${nextHighest} role!**\n` +
-            `• ${member} and everyone who currently holds the ${nextHighest} role can give me money to keep the role. ` +
+            `🔸 ${member} and everyone who currently holds the ${nextHighest} role can give me money to keep the role. ` +
             `Whoever gives the least amount of money by the end of the contest period will be demoted.\n` +
-            `• Contests are resolved at 8PM every day, if at least 24 hours have passed since the start of the contest.\n` +
-            `• Use the command \`Give @Raphtalia\` to pay me`
+            `🔸 Contests are resolved at 8PM every day, if at least 24 hours have passed since the start of the contest.\n` +
+            `🔸 Use the command \`Give @Raphtalia\` to pay me`
         );
       }
 
