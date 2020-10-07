@@ -47,6 +47,8 @@ import StoreStatusController from "./controllers/StoreStatusController.js";
 import Take from "./commands/Take.js";
 import delay from "delay";
 import Screening from "./commands/Screening.js";
+import ScheduleWatcher from "./ScheduleWatcher.js";
+import Debug from "./commands/Debug.js";
 
 class Raphtalia {
   constructor() {
@@ -64,6 +66,8 @@ class Raphtalia {
     this.client.login(secretConfig().discord.token).then(() => {
       console.log(`Logged in! Listening for events...`);
     });
+
+    this.scheduleWatcher = new ScheduleWatcher(this.db, this.client);
   }
 
   configureDiscordClient() {
@@ -388,6 +392,10 @@ class Raphtalia {
           new CurrencyController(db, guild),
           new MemberController(db, guild)
         );
+      case "debug":
+        if (process.env.NODE_ENV === "dev") {
+          return new Debug(message, new MemberController(db, guild));
+        }
       default:
         return new NullCommand(message, `Unknown command "${message.command}"`);
     }

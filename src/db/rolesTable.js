@@ -1,6 +1,7 @@
 import mysqlPromise from "mysql2/promise.js";
 import DbRole from "../structures/DbRole.js";
 import RoleContest from "../structures/RoleContest.js";
+import RoleContestBid from "../structures/RoleContestBid.js";
 
 class RolesTable {
   /**
@@ -9,6 +10,7 @@ class RolesTable {
    */
   constructor(pool) {
     this.pool = pool;
+    this.contestSelect = "SELECT *, rc.id as contestId FROM raphtaliaDev.role_contests rc ";
   }
 
   /**
@@ -17,6 +19,16 @@ class RolesTable {
    */
   toRoleObject(row) {
     return new DbRole(row.role_id, row.member_limit, row.contest_id != null);
+  }
+
+  toRoleContest(row) {
+    return new RoleContest(
+      row.contestId,
+      row.role_id,
+      row.from_role_id,
+      row.initiator_id,
+      row.start_date
+    );
   }
 
   /**
@@ -80,22 +92,53 @@ class RolesTable {
    * @param {String} roleId
    * @param {String} userId
    */
-  getRoleContest(roleId = "", userId = "") {
+  findRoleContest(roleId = "", userId = "") {
     return this.pool
-      .query("SELECT * FROM role_contests WHERE role_id=? OR initiator_id=?", [roleId, userId])
+      .query(this.contestSelect + "WHERE role_id=? OR initiator_id=?", [roleId, userId])
       .then(([rows, fields]) => {
         if (rows.length === 0) {
           return null;
         }
 
-        return new RoleContest(
-          rows[0].id,
-          rows[0].role_id,
-          rows[0].from_role_id,
-          rows[0].initiator_id,
-          rows[0].start_date
-        );
+        return this.toRoleContest(rows[0]);
       });
+  }
+
+  /**
+   * @param {String} guildId
+   * @returns {Promise<RoleContest[]>}
+   */
+  getAllContests(guildId) {
+    return this.pool
+      .query(this.contestSelect + "JOIN users u ON u.id = rc.initiator_id WHERE u.guild_id=?", [
+        guildId,
+      ])
+      .then(async ([rows, fields]) => {
+        const roleContests = rows.map((r) => this.toRoleContest(r));
+
+        for (const contest of roleContests) {
+          const bids = await this.getContestBids(contest.id);
+          contest.bids = bids;
+        }
+
+        return roleContests;
+      });
+  }
+
+  deleteContest(contestId) {
+    return this.pool.query("DELETE FROM role_contests WHERE id=?", [contestId]);
+  }
+
+  /**
+   * @param {Number} contestId
+   * @returns {Promise<RoleContestBid[]>}
+   */
+  getContestBids(contestId) {
+    return this.pool
+      .query("SELECT * FROM role_contest_bids WHERE contest_id=?", [contestId])
+      .then(([rows, fields]) =>
+        rows.map((r) => new RoleContestBid(r.user_id, parseFloat(r.bid_amount)))
+      );
   }
 
   /**

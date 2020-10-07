@@ -106,7 +106,7 @@ class CurrencyController extends GuildBasedController {
    * @param {Number} amount
    */
   bidOnRoleContest(role, member, amount) {
-    return this.db.roles.getRoleContest(role.id, member.id).then((roleContest) => {
+    return this.db.roles.findRoleContest(role.id, member.id).then((roleContest) => {
       if (!roleContest) {
         return false;
       }
