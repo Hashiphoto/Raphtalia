@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import Discord from "discord.js";
 import RNumber from "../structures/RNumber.js";
+import RoleContest from "../structures/RoleContest.js";
 import GuildBasedController from "./GuildBasedController.js";
 
 class CurrencyController extends GuildBasedController {
@@ -104,14 +105,17 @@ class CurrencyController extends GuildBasedController {
    * @param {Discord.Role} role
    * @param {Discord.GuildMember} member
    * @param {Number} amount
+   * @returns {Promise<RoleContest|null>}
    */
   bidOnRoleContest(role, member, amount) {
     return this.db.roles.findRoleContest(role.id, member.id).then((roleContest) => {
       if (!roleContest) {
-        return false;
+        return null;
       }
 
-      return this.db.roles.insertContestBid(roleContest.id, member.id, amount).then(() => true);
+      return this.db.roles
+        .insertContestBid(roleContest.id, member.id, amount)
+        .then(() => roleContest);
     });
   }
 }

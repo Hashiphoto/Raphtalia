@@ -86,10 +86,10 @@ class Give extends Command {
         if (target.id === this.client.user.id) {
           return this.currencyController
             .bidOnRoleContest(this.message.member.hoistRole, this.message.member, rNumber.amount)
-            .then((bidSuccess) =>
-              bidSuccess
+            .then((roleContest) =>
+              roleContest
                 ? `Paid ${rNumber.toString()} towards contesting the ${
-                    this.message.member.hoistRole.name
+                    this.message.guild.roles.get(roleContest.roleId).name
                   } role!`
                 : `Thanks for the ${rNumber.toString()}!`
             );
