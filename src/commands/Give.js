@@ -40,6 +40,7 @@ class Give extends Command {
 
     let rNumber = RNumber.parse(this.message.content);
     if (rNumber) {
+      rNumber.type = RNumber.types.DOLLAR;
       return this.giveMoney(rNumber, targets).then(() => this.useItem(targets.length));
     }
 

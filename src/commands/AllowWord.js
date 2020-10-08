@@ -2,6 +2,7 @@ import Discord from "discord.js";
 
 import Command from "./Command.js";
 import CensorController from "../controllers/CensorController.js";
+import Format from "../Format.js";
 
 class AllowWord extends Command {
   /**
@@ -32,8 +33,9 @@ class AllowWord extends Command {
 
     return this.censorController
       .deleteWords(words)
-      .then(this.censorController.rebuildCensorshipList())
-      .then(this.inputChannel.watchSend(`These words are allowed again: ${words}`))
+      .then((wordList) =>
+        this.inputChannel.watchSend(`These words are allowed again: ${Format.listFormat(wordList)}`)
+      )
       .then(() => this.useItem(words.length));
   }
 }

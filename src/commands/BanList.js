@@ -17,8 +17,9 @@ class BanList extends Command {
   execute() {
     return this.censorController
       .getAllBannedWords()
-      .then((words) => Format.listFormat(words))
-      .then((banList) => this.inputChannel.watchSend(`Here are all the banned words: ${banList}`))
+      .then((banList) =>
+        this.inputChannel.watchSend(`Here are all the banned words: ${Format.listFormat(banList)}`)
+      )
       .then(() => this.useItem());
   }
 }

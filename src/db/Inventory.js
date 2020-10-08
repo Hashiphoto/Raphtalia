@@ -1,4 +1,5 @@
 import mysqlPromise from "mysql2/promise.js";
+import mysql from "mysql2";
 import AmbiguousInputError from "../structures/errors/AmbiguousInputError.js";
 import GuildItem from "../structures/GuildItem.js";
 import Item from "../structures/Item.js";
@@ -65,9 +66,11 @@ class Inventory {
   }
 
   findGuildItem(guildId, itemName) {
-    // TODO: Sanitize itemName
     return this.pool
-      .query(this.guildSelect + `WHERE guild_id = ? AND name LIKE '%${itemName}%'`, [guildId])
+      .query(
+        this.guildSelect + `WHERE guild_id = ? AND name LIKE ${mysql.escape(`%${itemName}%`)}`,
+        [guildId]
+      )
       .then(([rows, fields]) => {
         if (rows.length === 0) {
           return null;

@@ -1,5 +1,6 @@
 import Command from "./Command.js";
 import CensorController from "../controllers/CensorController.js";
+import Format from "../Format.js";
 
 class BanWord extends Command {
   /**
@@ -28,10 +29,18 @@ class BanWord extends Command {
       );
     }
 
+    let normalizedList = [];
+
     return this.censorController
       .insertWords(words)
-      .then(() => this.censorController.rebuildCensorshipList())
-      .then(this.inputChannel.watchSend(`You won't see these words again: ${words}`))
+      .then((list) => (normalizedList = list))
+      .then(() => this.censorController.getAllBannedWords())
+      .then((banList) =>
+        this.inputChannel.watchSend(
+          `Banned these words: ${Format.listFormat(normalizedList)}\n` +
+            `Current ban list: ${Format.listFormat(banList)}`
+        )
+      )
       .then(() => this.useItem(words.length));
   }
 }

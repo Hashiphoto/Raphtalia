@@ -3,22 +3,19 @@ import diacritic from "diacritic-regex";
 
 import discordConfig from "../../config/discord.config.js";
 import GuildBasedController from "./GuildBasedController.js";
+import CommandParser from "../CommandParser.js";
 
 class CensorController extends GuildBasedController {
-  async rebuildCensorshipList() {
-    let bannedWords = await this.db.bannedWords.getAll(this.guild.id);
-    let regexString = "(^|[^a-zA-Z0-9À-ÖØ-öø-ÿ])(";
-    for (let i = 0; i < bannedWords.length; i++) {
-      // Last word
-      if (i === bannedWords.length - 1) {
-        regexString += diacritic.toString()(bannedWords[i].word);
-      } else {
-        regexString += diacritic.toString()(bannedWords[i].word) + "|";
-      }
-    }
-    regexString += ")(?![a-zA-Z0-9À-ÖØ-öø-ÿ])";
+  toWordRegex(text) {
+    return new RegExp(`(?<=^|[^a-zA-Z0-9À-ÖØ-öø-ÿ])(${text})(?![a-zA-Z0-9À-ÖØ-öø-ÿ])`, "gi");
+  }
 
-    return this.db.guilds.updateCensorshipRegex(this.guild.id, regexString);
+  normalize(text) {
+    return text
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/^["'`\[\{\(\*]+/gi, "")
+      .replace(/[!,\.;:\)\]\}\*`'"|\?]+$/gi, "");
   }
 
   /**
@@ -28,57 +25,55 @@ class CensorController extends GuildBasedController {
    * @returns {Boolean} - True if the message was censored
    */
   censorMessage(message) {
-    return Promise.resolve(false);
-    return this.db.guilds.get(message.guild.id).then((dbGuild) => {
-      if (!dbGuild.censorshipEnabled) {
-        return false;
-      }
+    // Remove diacritics and non-alphanumeric characters
+    const messageContent = this.normalize(message.content);
 
-      const sender = message.guild.members.get(message.author.id);
+    return this.db.guilds
+      .get(this.guild.id)
+      .then((dbGuild) => {
+        if (!dbGuild.censorshipEnabled) {
+          return false;
+        }
 
-      // The supreme dictator is not censored. Also, immigrants are handled by the Arrive command
-      if (
-        hasRole(sender, discordConfig().roles.leader) ||
-        hasRole(sender, discordConfig().roles.immigrant)
-      ) {
-        return false;
-      }
+        const uniqueWords = Array.from(new Set(messageContent.split(/\s+/)));
 
-      let bannedRegex = new RegExp(dbGuild.censorRegex, "gi");
-      if (message.content.match(bannedRegex) == null) {
-        return false;
-      }
+        return this.db.bannedWords.contains(this.guild.id, uniqueWords);
+      })
+      .then((wordViolations) => {
+        if (wordViolations.length === 0) {
+          return;
+        }
 
-      message.delete();
-      if (message.channel) {
-        message.channel.watchSend({
-          embed: {
-            title: "Censorship Report",
-            description: `What ${
-              sender.displayName
-            } ***meant*** to say is \n> ${message.content.replace(bannedRegex, "██████")}`,
-            color: 13057084,
-            timestamp: new Date(),
-          },
-        });
-      }
+        let censoredMessage = message.content;
 
-      addInfractions(sender, message.channel, 1, `This infraction has been recorded`);
-      return true;
-    });
+        for (const word of wordViolations) {
+          censoredMessage = censoredMessage.replace(
+            this.toWordRegex(word),
+            "█".repeat(word.length / 2 + 1)
+          );
+        }
+
+        message.delete();
+        message.channel.watchSend(
+          `> ${message.member} ${censoredMessage}\n*This message has been censored*`
+        );
+      });
   }
 
   deleteWords(words) {
-    return this.db.bannedWords.delete(this.guild.id, words);
+    const normalizedWords = words.map((word) => this.normalize(word));
+    return this.db.bannedWords.delete(this.guild.id, normalizedWords).then(() => normalizedWords);
   }
 
   insertWords(words) {
-    let guildWordPairs = words.map((word) => [word, this.guild.id]);
-    return this.db.bannedWords.insert(guildWordPairs);
+    const normalizedWords = words.map((word) => this.normalize(word));
+    let guildWordPairs = normalizedWords.map((word) => [word, this.guild.id]);
+
+    return this.db.bannedWords.insert(guildWordPairs).then(() => normalizedWords);
   }
 
   getAllBannedWords() {
-    return this.db.bannedWords.getAll(this.guild.id).then((rows) => rows.map((r) => r.word));
+    return this.db.bannedWords.getAll(this.guild.id);
   }
 }
 

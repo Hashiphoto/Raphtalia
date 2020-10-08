@@ -8,11 +8,14 @@ class CommandParser {
    * @param {Discord.Message} message
    */
   static parse(message) {
-    message.args = message.content.slice(CommandParser.prefix.length).split(/\s+/);
-    message.command = message.args.shift().toLowerCase();
+    // Every word separated by white space
+    message.args = message.content.split(/\s+/);
+    // Remove the command from message args and remove the prefix from it
+    message.command = message.args.shift().slice(CommandParser.prefix.length).toLowerCase();
     message.sender = message.member;
     message.mentionedMembers = CommandParser.getMemberMentions(message.guild, message.args);
     message.mentionedRoles = CommandParser.getRoleMentions(message.guild, message.args);
+    // Remove the command from the content
     message.content = message.content
       .slice(CommandParser.prefix.length + message.command.length)
       .trim();
