@@ -68,6 +68,7 @@ class Raphtalia {
     });
 
     this.scheduleWatcher = new ScheduleWatcher(this.db, this.client);
+    this.scheduleWatcher.start();
   }
 
   configureDiscordClient() {

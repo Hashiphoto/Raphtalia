@@ -24,7 +24,9 @@ class ScheduleWatcher {
   constructor(db, client) {
     this.db = db;
     this.client = client;
+  }
 
+  start() {
     // Every day at 8:00 PM
     new CronJob("0 20 * * *", this.resolveRoleContests, null, true, "America/Los_Angeles");
   }

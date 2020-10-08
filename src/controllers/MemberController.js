@@ -131,15 +131,14 @@ class MemberController extends GuildBasedController {
    * Get the next highest hoisted role for a given member
    *
    * @param {Discord.GuildMember} member - The guildMember to check the highest role for
-   * @param {Discord.Guild} guild - The guild to check the roles for
    * @returns {Discord.Role} The Role object that is one higher than the member's current highest
    * in the hierarchy
    */
-  getNextRole(member, guild) {
+  getNextRole(member) {
     var curRole = member.hoistRole;
 
     var higherRoles = [];
-    guild.roles.forEach((role) => {
+    this.guild.roles.forEach((role) => {
       if (role.comparePositionTo(curRole) > 0 && !role.managed && role.hoist) {
         higherRoles.push(role);
       }
@@ -147,8 +146,8 @@ class MemberController extends GuildBasedController {
     if (higherRoles.length === 0) {
       return null;
     }
-    higherRoles.sort(function (role1, role2) {
-      return role1.position > role2.position;
+    higherRoles.sort((role1, role2) => {
+      return role1.position - role2.position;
     });
 
     return higherRoles[0];
@@ -264,56 +263,61 @@ class MemberController extends GuildBasedController {
   }
 
   /**
+   * @param {Discord.GuildMember} member
+   * @returns {Boolean, Discord.Role} The next role to promote to, or null if a contest was started
+   * @throws {MemberLimitError}
+   * @throws {RangeError}
+   */
+  nextRoleAvailable(member) {
+    let nextRole = this.getNextRole(member, this.guild);
+    if (nextRole == null) {
+      throw new RangeError(`${member} holds the highest office already\n`);
+    }
+
+    return this.db.roles.getSingle(nextRole.id).then((dbRole) => {
+      // If it's contested, no one can move into it
+      if (dbRole.contested) {
+        throw new MemberLimitError(
+          dbRole.memberLimit,
+          `Cannot promote ${member} to ${nextRole.name} ` +
+            `since it is currently being contested. Try again after the contest is resolved\n`
+        );
+      }
+
+      // If it's full, but not contested, start a new contest
+      if (!dbRole.unlimited && nextRole.members.size >= dbRole.memberLimit) {
+        return this.startContest(nextRole, member.hoistRole, member).then(() => {
+          // TODO: Turn this object into a type
+          return { available: false, role: nextRole };
+        });
+      }
+
+      return { available: true, role: nextRole };
+    });
+  }
+
+  /**
    * Remove all hoisted roles from one target and increase their former highest role by one
    *
    * @param {Discord.GuildMember} member - The GuildMember being promoted
-   * @param {Boolean} force - Use to bypass role contests and member limits
+   * @param {Discord.Role} role - If left empty, the next highest role will be used
+   * @throws {RangeError}
    */
-  promoteMember(member, force = false) {
-    let nextHighest = this.getNextRole(member, member.guild);
-    if (nextHighest == null) {
-      return `${member} holds the highest office already\n`;
+  promoteMember(member, role = null) {
+    if (!role) {
+      role = this.getNextRole(member, member.guild);
+      if (role == null) {
+        throw new RangeError(`${member} holds the highest office already\n`);
+      }
     }
 
-    return this.db.roles.getSingle(nextHighest.id).then((dbRole) => {
-      if (!force) {
-        // If it's contested, no one can move into it
-        if (dbRole.contested) {
-          throw new MemberLimitError(
-            dbRole.memberLimit,
-            `Cannot promote ${member} to ${nextHighest.name} ` +
-              `since it is currently being contested. Try again after the contest is resolved\n`
-          );
-        }
-
-        // If it's full, but not contested, start a new contest
-        if (!dbRole.unlimited && nextHighest.members.size >= dbRole.memberLimit) {
-          return this.startContest(nextHighest, member.hoistRole, member).then(
-            () =>
-              `**${member} is contesting a promotion into the ${nextHighest} role!**\n` +
-              `🔸 ${member} and everyone who currently holds the ${nextHighest} role can give me money to keep the role. ` +
-              `Whoever gives the least amount of money by the end of the contest period will be demoted.\n` +
-              `🔸 Contests are resolved at 8PM every day, if at least 24 hours have passed since the start of the contest.\n` +
-              `🔸 Use the command \`Give @Raphtalia\` to pay me\n`
-          );
-        }
+    return this.setHoistedRole(member, role).then((roleChanged) => {
+      if (roleChanged) {
+        this.setInfractions(member, 0);
+        return `${member} has been promoted to **${role.name}**!\nInfractions have been reset\n`;
+      } else {
+        return `Could not promote ${member} to ${role.name}\n`;
       }
-
-      // promote the target
-      return this.setHoistedRole(member, nextHighest)
-        .then((roleChanged) => {
-          if (roleChanged) {
-            this.setInfractions(member, 0);
-            return `${member} has been promoted to **${nextHighest.name}**!\nInfractions have been reset\n`;
-          } else {
-            return `Could not promote ${member} to ${nextHighest.name}\n`;
-          }
-        })
-        .catch((error) => {
-          if (error instanceof MemberLimitError) {
-            response += error.message;
-          }
-        });
     });
   }
 
