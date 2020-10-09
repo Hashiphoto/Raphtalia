@@ -35,7 +35,11 @@ class Exile extends Command {
 
     // Ensure exile role exists
     if (!this.guild.roles.find((r) => r.name === "Exile")) {
-      await this.guild.createRole({ name: "Exile", hoist: false, color: "#ff896d" });
+      await this.guild
+        .createRole({ name: "Exile", hoist: false, color: "#010000" })
+        .then((role) => {
+          return role.setPosition(this.guild.roles.size - 2);
+        });
     }
 
     // Input or default 6 hours
