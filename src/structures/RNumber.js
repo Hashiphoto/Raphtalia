@@ -71,18 +71,32 @@ class RNumber {
     }
   }
 
+  /**
+   * @param {Number} amount
+   */
   static formatInt(amount) {
     return amount.toFixed(0);
   }
 
+  /**
+   * @param {Number} amount
+   */
   static formatDollar(amount) {
-    return "$" + amount.toFixed(2);
+    return (
+      "$" + amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    );
   }
 
+  /**
+   * @param {Number} amount
+   */
   static formatPercent(amount) {
     return amount.toFixed(2) + "%";
   }
 
+  /**
+   * @param {Number} amount
+   */
   static formatMultiplier(amount) {
     return amount.toFixed(2) + "x";
   }
