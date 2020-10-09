@@ -15,11 +15,11 @@ class Exile extends Command {
     this.memberController = memberController;
     this.instructions =
       "**Exile**\nPut a specified member in exile for a period of time. " +
-      "Exiled members cannot use any commands";
-    this.usage = "Usage: `Exile @member [1d 1h 1m 1s]`";
+      "Exiled members cannot use any commands. If no time is specified, the maximum value of 6 hours will be used. ";
+    this.usage = "Usage: `Exile @member [1h 1m 1s]`";
   }
 
-  execute() {
+  async execute() {
     const targets = this.message.mentionedMembers;
 
     if (targets.length === 0) {
@@ -33,19 +33,32 @@ class Exile extends Command {
       );
     }
 
-    // Current time + exile duration
-    const duration = Format.parseTime(this.message.content);
-    const releaseDate = duration != null ? dayjs().add(duration) : null;
-
-    if (!this.sender.hasAuthorityOver(targets)) {
-      return this.memberController
-        .addInfractions(this.sender)
-        .then((feedback) =>
-          this.inputChannel.watchSend(
-            `You must hold a higher rank than the members you are exiling\n` + feedback
-          )
-        );
+    // Ensure exile role exists
+    if (!this.guild.roles.find((r) => r.name === "Exile")) {
+      await this.guild.createRole({ name: "Exile", hoist: false, color: "#ff896d" });
     }
+
+    // Input or default 6 hours
+    const duration =
+      Format.parseTime(this.message.content) ?? dayjs.duration({ hours: 6 }).asMilliseconds();
+    // Current time + exile duration
+    const releaseDate = dayjs().add(duration);
+
+    // Comment back in if exile should only affect lower rank targets
+    // if (!this.sender.hasAuthorityOver(targets)) {
+    //   return this.memberController
+    //     .addInfractions(this.sender)
+    //     .then((feedback) =>
+    //       this.inputChannel.watchSend(
+    //         `You must hold a higher rank than the members you are exiling\n` + feedback
+    //       )
+    //     );
+    // }
+
+    const response = targets.reduce(
+      (sum, target) => sum + `${target} has been exiled until ${Format.formatDate(releaseDate)}`,
+      ""
+    );
 
     const exilePromises = targets.map((target) =>
       this.memberController.exileMember(target, duration).then((released) => {
@@ -55,19 +68,9 @@ class Exile extends Command {
       })
     );
 
-    const response = targets.reduce(
-      (sum, target) =>
-        sum +
-        `${target} has been exiled ${
-          releaseDate ? `until ${Format.formatDate(releaseDate)}` : `indefinitely`
-        }\n`,
-      ""
-    );
+    Promise.all(exilePromises);
 
-    return this.inputChannel
-      .watchSend(response)
-      .then(() => Promise.all(exilePromises))
-      .then(() => this.useItem(targets.length));
+    return this.inputChannel.watchSend(response).then(() => this.useItem(targets.length));
   }
 }
 

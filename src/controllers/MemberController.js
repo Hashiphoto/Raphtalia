@@ -199,13 +199,10 @@ class MemberController extends GuildBasedController {
    * @param {Number} duration - The duration of the exile in milliseconds
    * @returns {Promise<boolean>} - Whether the member was released from exile or not
    */
-  exileMember(member, duration = null) {
-    return this.setHoistedRole(member, discordConfig().roles.exile).then((result) => {
-      if (duration == null) {
-        return false;
-      }
-
-      return delay(duration).then(() => this.releaseFromExile(member));
+  exileMember(member, duration) {
+    const exileRole = this.guild.roles.find((r) => r.name === "Exile");
+    return member.addRole(exileRole).then(() => {
+      return delay(duration).then(() => member.removeRole(exileRole));
     });
   }
 
