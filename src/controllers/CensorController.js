@@ -1,9 +1,6 @@
 import Discord from "discord.js";
-import diacritic from "diacritic-regex";
-
-import discordConfig from "../../config/discord.config.js";
 import GuildBasedController from "./GuildBasedController.js";
-import CommandParser from "../CommandParser.js";
+import MemberController from "./MemberController.js";
 
 class CensorController extends GuildBasedController {
   toWordRegex(text) {
@@ -53,10 +50,22 @@ class CensorController extends GuildBasedController {
           );
         }
 
+        const embed = new Discord.RichEmbed()
+          .setColor(13057084)
+          .setTitle("Censorship Report")
+          .setDescription(`${message.member}\n> ${censoredMessage}`);
+
         message.delete();
-        message.channel.watchSend(
-          `> ${message.member} ${censoredMessage}\n*This message has been censored*`
-        );
+
+        return new MemberController(this.db, this.guild)
+          .addInfractions(message.member)
+          .then((feedback) => message.channel.watchSend(feedback, embed))
+          .catch((error) => {
+            if (error instanceof RangeError) {
+              return message.channel.watchSend(error.message, embed);
+            }
+            throw error;
+          });
       });
   }
 

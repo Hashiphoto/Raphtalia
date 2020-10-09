@@ -34,7 +34,7 @@ class MemberController extends GuildBasedController {
   addInfractions(member, amount = 1) {
     return this.db.users
       .incrementInfractions(member.id, member.guild.id, amount)
-      .then((result) => this.getInfractions(member))
+      .then(() => this.getInfractions(member))
       .then((count) => {
         return this.checkInfractionCount(member, count);
       });
@@ -84,12 +84,7 @@ class MemberController extends GuildBasedController {
     }
     let response = `${member} has incurred ${count} infractions\n`;
     if (count >= this.infractionLimit) {
-      // TODO: Change to dead role
-      if (this.hasRole(member, discordConfig().roles.exile)) {
-        return this.softKick(member, `for breaking the rules while in exile`);
-      } else {
-        return this.demoteMember(member, response);
-      }
+      return this.demoteMember(member, response);
     }
     return Promise.resolve(response);
   }
@@ -326,7 +321,7 @@ class MemberController extends GuildBasedController {
     let nextLowest = this.getPreviousRole(target, target.guild);
 
     if (nextLowest == null) {
-      throw new Error(`${target} can't get any lower\n`);
+      throw new RangeError(`${response}\n${target} can't get any lower\n`);
     }
 
     this.setInfractions(target, 0);
