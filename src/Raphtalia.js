@@ -261,6 +261,13 @@ class Raphtalia {
    * @returns {Promise<Command>}
    */
   selectCommand(message) {
+    // Check for exile
+    const exileRole = message.guild.roles.find((r) => r.name === "Exile");
+    if (exileRole && message.member.roles.has(exileRole.id)) {
+      return Promise.resolve(new NullCommand(message, `You cannot use commands while in exile`));
+    }
+
+    // Get the command
     let command = Raphtalia.getCommandByName(message.command, message, this.db, this.client);
     if (!command) {
       command = new NullCommand(message, `Unknown command "${message.command}"`);
@@ -269,6 +276,7 @@ class Raphtalia {
       return Promise.resolve(command);
     }
 
+    // Check if member has the correct item
     const inventoryController = new InventoryController(this.db, message.guild);
     command.setInventoryController(inventoryController);
 
