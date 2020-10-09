@@ -2,7 +2,7 @@ import Discord from "discord.js";
 
 import Command from "./Command.js";
 
-class Comfort extends Command {
+class Headpat extends Command {
   constructor(message) {
     super(message);
     this.instructions = "**Comfort**\nI will give a headpat to the member(s) is specified";
@@ -32,4 +32,4 @@ class Comfort extends Command {
   }
 }
 
-export default Comfort;
+export default Headpat;

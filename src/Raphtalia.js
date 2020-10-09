@@ -10,7 +10,7 @@ import OnBoarder from "./OnBoarder.js";
 import AutoDelete from "./commands/AutoDelete.js";
 import Balance from "./commands/Balance.js";
 import Buy from "./commands/Buy.js";
-import Comfort from "./commands/Comfort.js";
+import Headpat from "./commands/Headpat.js";
 import DeliverCheck from "./commands/DeliverCheck.js";
 import Demote from "./commands/Demote.js";
 import Exile from "./commands/Exile.js";
@@ -342,8 +342,6 @@ class Raphtalia {
         );
       case "censorship":
         return new Censorship(message, new GuildController(db, guild));
-      case "comfort":
-        return new Comfort(message);
       case "delivercheck":
         return new DeliverCheck(message, new CurrencyController(db, guild));
       case "demote":
@@ -363,6 +361,8 @@ class Raphtalia {
           new MemberController(db, guild),
           client
         );
+      case "headpat":
+        return new Headpat(message);
       case "help":
         return new Help(message);
       case "holdvote":
