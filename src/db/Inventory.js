@@ -94,6 +94,19 @@ class Inventory {
     );
   }
 
+  /**
+   * @param {String} guildId
+   * @param {GuildItem} item
+   */
+  updateGuildItem(guildId, item) {
+    return this.pool
+      .query(
+        "UPDATE guild_inventory SET price=?, max_uses=?, quantity=?, max_quantity=? WHERE guild_id=? AND item_id=?",
+        [item.price, item.maxUses, item.quantity, item.maxQuantity, guildId, item.id]
+      )
+      .then(() => this.pool.query("UPDATE items SET name=? WHERE id=?", [item.name, item.id]));
+  }
+
   findUserItem(guildId, userId, itemName) {
     return this.pool
       .query(

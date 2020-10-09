@@ -14,6 +14,13 @@ class InventoryController extends GuildBasedController {
   }
 
   /**
+   * @param {GuildItem} item
+   */
+  updateGuildItem(item) {
+    return this.db.inventory.updateGuildItem(this.guild.id, item);
+  }
+
+  /**
    * @param {String} name
    * @param {Discord.GuildMember} member
    * @returns {Promise<UserItem>}
