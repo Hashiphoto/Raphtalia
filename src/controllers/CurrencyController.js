@@ -66,10 +66,10 @@ class CurrencyController extends GuildBasedController {
 
     const hoistedPosition = hoistRoles.findIndex((r) => r.id === role.id) + 1;
 
-    // Linear scaling from 0 to 1
-    // To flatten the distance between the top and bottom, divide the output by some number
-    // and add a coefficient to make the range comparable to previous values
-    return hoistedPosition / hoistRoles.length;
+    // Linear scaling (0.0 - 1.0)
+    const roleScale = hoistedPosition / hoistRoles.length;
+    // Bump scale to (1.0 - 2.0)
+    return 1 + roleScale;
   }
 
   /**
