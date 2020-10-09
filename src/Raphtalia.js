@@ -1,12 +1,12 @@
 import Discord from "discord.js";
 import dayjs from "dayjs";
+import delay from "delay";
 
 import Database from "./db/Database.js";
 import secretConfig from "../config/secrets.config.js";
 import discordConfig from "../config/discord.config.js";
 import CommandParser from "./CommandParser.js";
 import OnBoarder from "./OnBoarder.js";
-
 import AutoDelete from "./commands/AutoDelete.js";
 import Balance from "./commands/Balance.js";
 import Buy from "./commands/Buy.js";
@@ -45,15 +45,17 @@ import Roles from "./commands/Roles.js";
 import RoleStatusController from "./controllers/RoleStatusController.js";
 import StoreStatusController from "./controllers/StoreStatusController.js";
 import Take from "./commands/Take.js";
-import delay from "delay";
 import Screening from "./commands/Screening.js";
 import ScheduleWatcher from "./ScheduleWatcher.js";
 import Debug from "./commands/Debug.js";
 
 class Raphtalia {
-  constructor() {
+  /**
+   * @param {Database} db
+   */
+  constructor(db) {
     this.client = new Discord.Client();
-    this.db = new Database(Database.createPool());
+    this.db = db;
 
     this.client.once("ready", () => {
       console.log(

@@ -18,7 +18,7 @@ class Database {
     this.inventory = new Inventory(pool);
   }
 
-  static createPool() {
+  static async createPool() {
     const pool = mysql
       .createPool({
         host: secretConfig().database.host,
@@ -29,26 +29,6 @@ class Database {
         connectionLimit: 5,
       })
       .promise();
-
-    // Test connection
-    pool
-      .query("SELECT 1+1")
-      .then(() => {
-        console.log("Connected to db");
-      })
-      .catch((e) => {
-        if (process.env.NODE_ENV === "dev") {
-          let command = `ssh -f ${secretConfig().database.user}@${secretConfig().ssh} -L ${
-            secretConfig().database.port
-          }:localhost:3306 -N`;
-          console.error(
-            "Can't connect to the database. Make sure that you are forwarding traffic to the server with the powershell command\n" +
-              command
-          );
-        } else {
-          console.error("Can't establish connection to the database\n" + e);
-        }
-      });
 
     return pool;
   }
