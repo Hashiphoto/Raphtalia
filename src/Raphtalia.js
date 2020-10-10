@@ -357,7 +357,8 @@ class Raphtalia {
         return new Buy(
           message,
           new CurrencyController(db, guild),
-          new StoreStatusController(db, guild)
+          new StoreStatusController(db, guild),
+          client
         );
       case "censorship":
         return new Censorship(

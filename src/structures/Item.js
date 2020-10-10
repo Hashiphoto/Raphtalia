@@ -13,6 +13,10 @@ class Item {
     return `**${this.name}**\n`;
   }
 
+  getMaxUses() {
+    return this.unlimitedUses ? "∞" : this.maxUses;
+  }
+
   getCommands() {
     // TODO: Once the prefix is moved into the db, grab that instead
     return "```fix\n" + this.commands.reduce((sum, value) => sum + `!${value.name}\n`, "") + "```";

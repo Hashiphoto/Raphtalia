@@ -2,6 +2,7 @@ import Discord from "discord.js";
 import CurrencyController from "../controllers/CurrencyController.js";
 import StoreStatusController from "../controllers/message/StoreStatusController.js";
 import AmbiguousInputError from "../structures/errors/AmbiguousInputError.js";
+import RNumber from "../structures/RNumber.js";
 import Command from "./Command.js";
 
 class Buy extends Command {
@@ -10,11 +11,13 @@ class Buy extends Command {
    * @param {Discord.Message} message
    * @param {CurrencyController} currencyController
    * @param {StoreStatusController} storeStatusCtlr
+   * @param {Discord.Client} client
    */
-  constructor(message, currencyController, storeStatusCtlr) {
+  constructor(message, currencyController, storeStatusCtlr, client) {
     super(message);
     this.currencyController = currencyController;
     this.storeStatusCtlr = storeStatusCtlr;
+    this.client = client;
     this.instructions =
       "**Buy**\nPurchase an item from the server store. The item will be added to your inventory, if there is adequate quantity in the store";
     this.usage = "Usage: `Buy (item name)`";
@@ -31,10 +34,9 @@ class Buy extends Command {
         if (!item) {
           return this.inputChannel.watchSend(`There are no items named "${this.message.content}"`);
         }
-        this.inputChannel.watchSend(">>> " + item.name + " " + item.getDetails());
 
         if (!item.unlimitedQuantity && item.quantity === 0) {
-          return this.inputChannel.watchSend(`This item is currently out of stock`);
+          return this.inputChannel.watchSend(`${item.name} is currently out of stock`);
         }
 
         const userCurrency = await this.currencyController.getCurrency(this.message.sender);
@@ -44,9 +46,15 @@ class Buy extends Command {
         }
 
         return this.currencyController
-          .addCurrency(this.message.sender, -item.price)
+          .transferCurrency(this.message.member, this.client.user, item.price)
           .then(() => this.inventoryController.userPurchase(item, this.message.sender))
-          .then(() => this.inputChannel.watchSend("`Purchase complete`"))
+          .then(() =>
+            this.inputChannel.watchSend(
+              `Thank you for your purchase of ${RNumber.formatDollar(item.price)}!\n>>> ${
+                item.name
+              } | Uses: ${item.getMaxUses()}`
+            )
+          )
           .then(() => this.storeStatusCtlr.update())
           .then(() => this.useItem());
       })
