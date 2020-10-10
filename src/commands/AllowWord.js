@@ -2,23 +2,24 @@ import Discord from "discord.js";
 
 import Command from "./Command.js";
 import CensorController from "../controllers/CensorController.js";
-import Format from "../Format.js";
+import BanListStatusController from "../controllers/message/BanListStatusController.js";
 
 class AllowWord extends Command {
   /**
    * @param {Discord.Message} message
    * @param {CensorController} censorController
+   * @param {BanListStatusController} banlistStatusCtlr
    */
-  constructor(message, censorController) {
+  constructor(message, censorController, banlistStatusCtlr) {
     super(message);
     this.censorController = censorController;
+    this.banlistStatusCtlr = banlistStatusCtlr;
     this.instructions = "**AllowWord**\nRemove a word from the ban list";
     this.usage = "Usage: `AllowWord word1 word2 etc`";
   }
 
   execute() {
     // TODO: Check if censorship is enabled at all
-
     let words = this.message.args;
     if (words.length === 0) {
       return this.sendHelpMessage();
@@ -33,9 +34,8 @@ class AllowWord extends Command {
 
     return this.censorController
       .deleteWords(words)
-      .then((wordList) =>
-        this.inputChannel.watchSend(`These words are allowed again: ${Format.listFormat(wordList)}`)
-      )
+      .then(() => this.banlistStatusCtlr.update())
+      .then(() => this.inputChannel.watchSend("Banned words list has been updated"))
       .then(() => this.useItem(words.length));
   }
 }

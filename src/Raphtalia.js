@@ -323,7 +323,11 @@ class Raphtalia {
     switch (name) {
       case "allowword":
       case "allowwords":
-        return new AllowWord(message, new CensorController(db, guild));
+        return new AllowWord(
+          message,
+          new CensorController(db, guild),
+          new BanListStatusController(db, guild)
+        );
       case "autodelete":
         return new AutoDelete(message, new ChannelController(db, channel));
       case "balance":
@@ -334,7 +338,11 @@ class Raphtalia {
         return new BanList(message, new BanListStatusController(db, guild));
       case "banword":
       case "banwords":
-        return new BanWord(message, new CensorController(db, guild));
+        return new BanWord(
+          message,
+          new CensorController(db, guild),
+          new BanListStatusController(db, guild)
+        );
       case "buy":
         return new Buy(
           message,
@@ -342,7 +350,11 @@ class Raphtalia {
           new StoreStatusController(db, guild)
         );
       case "censorship":
-        return new Censorship(message, new GuildController(db, guild));
+        return new Censorship(
+          message,
+          new GuildController(db, guild),
+          new BanListStatusController(db, guild)
+        );
       case "delivercheck":
         return new DeliverCheck(message, new CurrencyController(db, guild));
       case "demote":

@@ -18,7 +18,7 @@ class StoreStatusController extends SingletonMessageController {
   async generateEmbed() {
     const storeFields = await this.getStoreFields();
     const statusEmbed = {
-      color: 0x73f094,
+      color: 0x38a3e0,
       title: "Store",
       timestamp: new Date(),
       fields: storeFields,

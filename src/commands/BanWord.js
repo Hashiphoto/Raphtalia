@@ -1,15 +1,18 @@
 import Command from "./Command.js";
 import CensorController from "../controllers/CensorController.js";
 import Format from "../Format.js";
+import BanListStatusController from "../controllers/message/BanListStatusController.js";
 
 class BanWord extends Command {
   /**
    * @param {Discord.Message} message
    * @param {CensorController} censorController
+   * @param {BanListStatusController} banlistStatusCtlr
    */
-  constructor(message, censorController) {
+  constructor(message, censorController, banlistStatusCtlr) {
     super(message);
     this.censorController = censorController;
+    this.banlistStatusCtlr = banlistStatusCtlr;
     this.instructions = "**BanWord**\nAdd a word to the ban list";
     this.usage = "Usage: `BanWord word1 word2 etc1`";
   }
@@ -34,13 +37,8 @@ class BanWord extends Command {
     return this.censorController
       .insertWords(words)
       .then((list) => (normalizedList = list))
-      .then(() => this.censorController.getAllBannedWords())
-      .then((banList) =>
-        this.inputChannel.watchSend(
-          `Banned these words: ${Format.listFormat(normalizedList)}\n` +
-            `Current ban list: ${Format.listFormat(banList)}`
-        )
-      )
+      .then(() => this.banlistStatusCtlr.update())
+      .then(() => this.inputChannel.watchSend("Banned words list has been updated"))
       .then(() => this.useItem(words.length));
   }
 }

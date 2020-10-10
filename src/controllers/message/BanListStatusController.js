@@ -18,10 +18,12 @@ class BanListStatusController extends SingletonMessageController {
    * @returns {Promise<Discord.RichEmbed>}
    */
   async generateEmbed() {
-    const words = await new CensorController(this.db, this.guild).getAllBannedWords();
+    const censorCtlr = new CensorController(this.db, this.guild);
+    const enabled = await censorCtlr.censorshipEnabled();
+    const words = await censorCtlr.getAllBannedWords();
     const statusEmbed = {
-      color: 0x73f094,
-      title: "Banned Words",
+      color: enabled ? 0xf54c38 : 0x471d18,
+      title: `Banned Words | Censorship is ${enabled ? "Enabled" : "Disabled"}`,
       timestamp: new Date(),
       description: Format.listFormat(words, ""),
       thumbnail: { url: this.guild.iconURL },

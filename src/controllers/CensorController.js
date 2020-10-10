@@ -7,8 +7,12 @@ class CensorController extends GuildBasedController {
     return new RegExp(`(?<=^|[^a-zA-Z0-9À-ÖØ-öø-ÿ])(${text})(?![a-zA-Z0-9À-ÖØ-öø-ÿ])`, "gi");
   }
 
+  /**
+   * @param {String} text
+   */
   normalize(text) {
     return text
+      .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/^["'`\[\{\(\*]+/gi, "")
@@ -79,6 +83,13 @@ class CensorController extends GuildBasedController {
     let guildWordPairs = normalizedWords.map((word) => [word, this.guild.id]);
 
     return this.db.bannedWords.insert(guildWordPairs).then(() => normalizedWords);
+  }
+
+  /**
+   * @returns {Promise<Boolean>} Whether censorship is enabled for the server or not
+   */
+  censorshipEnabled() {
+    return this.db.guilds.get(this.guild.id).then((dbGuild) => dbGuild.censorshipEnabled);
   }
 
   /**
