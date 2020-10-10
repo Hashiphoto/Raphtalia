@@ -55,7 +55,16 @@ class Command {
   }
 
   useItem(uses = 1) {
-    return this.inventoryController.useItem(this.item, this.message.sender, uses);
+    const oldQuantity = this.item.quantity;
+    return this.inventoryController
+      .useItem(this.item, this.message.sender, uses)
+      .then((newItem) => {
+        if (newItem && newItem.quantity < oldQuantity) {
+          return this.inputChannel.watchSend(
+            `Your ${newItem.printName()} broke! You have ${newItem.quantity} remaining.\n`
+          );
+        }
+      });
   }
 
   /**

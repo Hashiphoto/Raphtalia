@@ -9,11 +9,11 @@ class Item {
     this.unlimitedQuantity = this.quantity < 0;
   }
 
-  getName() {
-    return `**${this.name}**\n`;
+  printName() {
+    return `**${this.name}**`;
   }
 
-  getMaxUses() {
+  printMaxUses() {
     return this.unlimitedUses ? "∞" : this.maxUses;
   }
 

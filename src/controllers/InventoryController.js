@@ -66,10 +66,11 @@ class InventoryController extends GuildBasedController {
   /**
    * @param {UserItem} item
    * @param {Discord.GuildMember} member
+   * @returns {Promise<UserItem|null>}
    */
   useItem(item, member, uses) {
     if (item.unlimitedUses) {
-      return;
+      return Promise.resolve();
     }
 
     item.remainingUses -= uses;
@@ -81,7 +82,9 @@ class InventoryController extends GuildBasedController {
       this.db.inventory.updateGuildItemQuantity(this.guild.id, item, uses);
     }
 
-    return this.updateUserItem(item, member);
+    return this.updateUserItem(item, member).then(() => {
+      return item;
+    });
   }
 
   updateUserItem(item, member) {

@@ -36,7 +36,7 @@ class Buy extends Command {
         }
 
         if (!item.unlimitedQuantity && item.quantity === 0) {
-          return this.inputChannel.watchSend(`${item.name} is currently out of stock`);
+          return this.inputChannel.watchSend(`${item.printName()} is currently out of stock`);
         }
 
         const userCurrency = await this.currencyController.getCurrency(this.message.sender);
@@ -50,9 +50,9 @@ class Buy extends Command {
           .then(() => this.inventoryController.userPurchase(item, this.message.sender))
           .then(() =>
             this.inputChannel.watchSend(
-              `Thank you for your purchase of ${RNumber.formatDollar(item.price)}!\n>>> ${
-                item.name
-              } | Uses: ${item.getMaxUses()}`
+              `Thank you for your purchase of ${RNumber.formatDollar(
+                item.price
+              )}!\n>>> ${item.printName()} | Uses: ${item.printMaxUses()}`
             )
           )
           .then(() => this.storeStatusCtlr.update())
