@@ -122,7 +122,7 @@ class Raphtalia {
     });
 
     this.client.on("disconnect", (event) => {
-      console.log("Bot disconnecting");
+      console.log(`Bot disconnecting\n ${event.reason}\n ${event.code}`);
       process.exit();
     });
 
