@@ -20,8 +20,7 @@ function sendTimedMessage(channel, member, question, showDuration = true) {
     text += `\`(${question.timeout / 1000}s)\`\n`;
   }
   text += question.prompt;
-  return channel
-    .send(text)
+  return (channel.watchSend ? channel.watchSend(text) : channel.send(text))
     .then(() => {
       // Get the first message that matches the filter. Errors out if the time limit is reached
       return channel.awaitMessages(filter, {

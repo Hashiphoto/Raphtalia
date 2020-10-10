@@ -33,7 +33,7 @@ class CensorController extends GuildBasedController {
       .get(this.guild.id)
       .then((dbGuild) => {
         if (!dbGuild.censorshipEnabled) {
-          return false;
+          return [];
         }
 
         const uniqueWords = Array.from(new Set(messageContent.split(/\s+/)));

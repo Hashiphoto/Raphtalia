@@ -30,14 +30,6 @@ class Command {
     this.usage = "";
   }
 
-  userCanExecute() {
-    return true;
-
-    // Move logic into an InventoryController
-    // Get the user's inventory
-    //
-  }
-
   execute() {
     throw new Error("Implement this function");
   }

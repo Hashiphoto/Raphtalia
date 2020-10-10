@@ -1,7 +1,6 @@
 import Discord from "discord.js";
 
 import Command from "./Command.js";
-import discordConfig from "../../config/discord.config.js";
 import MemberController from "../controllers/MemberController.js";
 
 class Register extends Command {
@@ -26,7 +25,7 @@ class Register extends Command {
     }
 
     if (this.message.member.roles.has(voterRole.id)) {
-      return this.inputChannel.watchSend(`You are already a registered voter`);
+      return this.inputChannel.watchSend(`You are already a registered voter, dingus`);
     }
 
     return this.message.member

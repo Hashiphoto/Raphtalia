@@ -23,6 +23,9 @@ class GuildController extends GuildBasedController {
     return this.db.guilds.setCensorship(this.guild.id, enable);
   }
 
+  /**
+   * @returns {Promise<ScreeningQuestion[]>}
+   */
   getScreeningQuestions() {
     return this.db.guilds.getScreeningQuestions(this.guild.id);
   }

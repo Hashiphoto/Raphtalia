@@ -16,7 +16,7 @@ import BanWord from "../../src/commands/BanWord.js";
 import CensorController from "../../src/controllers/CensorController.js";
 import Censorship from "../../src/commands/Censorship.js";
 import TestGuildController from "../structures/TestGuildController.js";
-import Comfort from "../../src/commands/Comfort.js";
+import Headpat from "../../src/commands/Headpat.js";
 import DeliverCheck from "../../src/commands/DeliverCheck.js";
 import Demote from "../../src/commands/Demote.js";
 import TestMemberController from "../structures/TestMemberController.js";
@@ -249,7 +249,7 @@ describe("Commands", () => {
 
   describe("Comfort", () => {
     it("fails if no one is mentioned", () => {
-      const comfort = new Comfort(new TestMessage("foo bar"))
+      const comfort = new Headpat(new TestMessage("foo bar"))
         .setItem(new UserItem())
         .setInventoryController(new TestInventoryController());
       sandbox.spy(comfort, "sendHelpMessage");
@@ -261,7 +261,7 @@ describe("Commands", () => {
 
     it("comforts everyone mentioned", () => {
       const message = new TestMessage("foo bar").setMentionedMembers(["TEST1", "TEST2", "TEST3"]);
-      const comfort = new Comfort(message)
+      const comfort = new Headpat(message)
         .setItem(new UserItem())
         .setInventoryController(new TestInventoryController());
 

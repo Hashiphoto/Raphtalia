@@ -419,7 +419,11 @@ class Raphtalia {
       case "softkick":
         return new SoftKick(message, new MemberController(db, guild));
       case "status":
-        return new Status(message, new CurrencyController(db, guild));
+        return new Status(
+          message,
+          new CurrencyController(db, guild),
+          new MemberController(db, guild)
+        );
       case "store":
         return new Store(message, new StoreStatusController(db, guild));
       case "take":
