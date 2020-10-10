@@ -102,7 +102,7 @@ class Raphtalia {
     });
 
     this.client.on("guildMemberAdd", (member) => {
-      const welcomeChannel = this.client.channels.get(discordConfig().channels.welcomeChannelId);
+      const welcomeChannel = member.guild.systemChannel;
       this.attachWatchCommand(welcomeChannel).then(() => {
         new OnBoarder(this.db, member.guild, member, welcomeChannel).onBoard();
       });
@@ -110,6 +110,16 @@ class Raphtalia {
 
     this.client.on("guildMemberRemove", (member) => {
       this.db.users.setCitizenship(member.id, member.guild.id, false);
+    });
+
+    this.client.on("guildMemberUpdate", (oldMember, newMember) => {
+      // Check if roles changed
+      const differentSize = oldMember.roles.size !== newMember.roles.size;
+      for (const [id, role] of oldMember.roles) {
+        if (differentSize || !newMember.roles.has(id)) {
+          return new RoleStatusController(this.db, newMember.guild).update();
+        }
+      }
     });
 
     this.client.on("disconnect", (event) => {
