@@ -1,0 +1,9 @@
+{
+  "all": true,
+  "include": [
+  ],
+  "exclude": [
+    "*.config.*", "test"
+  ],
+  "reporter": ["html", "text"]
+}
