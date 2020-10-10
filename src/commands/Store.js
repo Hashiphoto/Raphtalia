@@ -1,5 +1,5 @@
 import Command from "./Command.js";
-import StoreStatusController from "../controllers/StoreStatusController.js";
+import StoreStatusController from "../controllers/message/StoreStatusController.js";
 
 class Store extends Command {
   /**

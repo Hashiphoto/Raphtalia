@@ -1,11 +1,24 @@
 class DbGuild {
+  /**
+   *
+   * @param {String} id
+   * @param {Boolean} censorshipEnabled
+   * @param {Number} taxRate
+   * @param {String} roleMessageId
+   * @param {String} storeMessageId
+   * @param {String} banListMessageId
+   * @param {Number} messageRate
+   * @param {Number} messageResetTime
+   * @param {Number} reactorRate
+   * @param {Number} reacteeRate
+   */
   constructor(
     id,
     censorshipEnabled,
-    censorRegex,
     taxRate,
     roleMessageId,
     storeMessageId,
+    banListMessageId,
     messageRate,
     messageResetTime,
     reactorRate,
@@ -13,10 +26,10 @@ class DbGuild {
   ) {
     this.id = id;
     this.censorshipEnabled = censorshipEnabled;
-    this.censorRegex = censorRegex;
     this.taxRate = taxRate;
     this.roleMessageId = roleMessageId;
     this.storeMessageId = storeMessageId;
+    this.banListMessageId = banListMessageId;
     this.messageRate = messageRate;
     this.messageResetTime = messageResetTime;
     this.reactorRate = reactorRate;

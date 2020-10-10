@@ -20,10 +20,10 @@ class GuildsTable {
     return new DbGuild(
       dbRow.id,
       dbRow.censorship_enabled,
-      dbRow.censor_regex,
       dbRow.tax_rate,
       dbRow.role_message_id,
       dbRow.store_message_id,
+      dbRow.ban_list_message_id,
       dbRow.message_rate,
       dbRow.message_reset_s,
       dbRow.reactor_rate,
@@ -104,6 +104,15 @@ class GuildsTable {
     return this.pool
       .query(
         "INSERT INTO guilds (id, store_message_id) VALUES (?,?) ON DUPLICATE KEY UPDATE store_message_id = VALUES(store_message_id)",
+        [guildId, messageId]
+      )
+      .catch((error) => console.error(error));
+  }
+
+  setBanListMessage(guildId, messageId) {
+    return this.pool
+      .query(
+        "INSERT INTO guilds (id, ban_list_message_id) VALUES (?,?) ON DUPLICATE KEY UPDATE ban_list_message_id = VALUES(ban_list_message_id)",
         [guildId, messageId]
       )
       .catch((error) => console.error(error));

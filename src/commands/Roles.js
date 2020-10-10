@@ -1,5 +1,5 @@
 import Command from "./Command.js";
-import RoleStatusController from "../controllers/RoleStatusController.js";
+import RoleStatusController from "../controllers/message/RoleStatusController.js";
 
 class Roles extends Command {
   /**

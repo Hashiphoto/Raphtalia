@@ -1,7 +1,7 @@
 import Command from "./Command.js";
 import Discord from "discord.js";
-import RoleStatusController from "../controllers/RoleStatusController.js";
-import StoreStatusController from "../controllers/StoreStatusController.js";
+import RoleStatusController from "../controllers/message/RoleStatusController.js";
+import StoreStatusController from "../controllers/message/StoreStatusController.js";
 import Store from "./Store.js";
 import Roles from "./Roles.js";
 

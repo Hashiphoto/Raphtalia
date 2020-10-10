@@ -42,12 +42,13 @@ import Status from "./commands/Status.js";
 import Command from "./commands/Command.js";
 import Store from "./commands/Store.js";
 import Roles from "./commands/Roles.js";
-import RoleStatusController from "./controllers/RoleStatusController.js";
-import StoreStatusController from "./controllers/StoreStatusController.js";
+import RoleStatusController from "./controllers/message/RoleStatusController.js";
+import StoreStatusController from "./controllers/message/StoreStatusController.js";
 import Take from "./commands/Take.js";
 import Screening from "./commands/Screening.js";
 import ScheduleWatcher from "./ScheduleWatcher.js";
 import Debug from "./commands/Debug.js";
+import BanListStatusController from "./controllers/message/BanListStatusController.js";
 
 class Raphtalia {
   /**
@@ -330,7 +331,7 @@ class Raphtalia {
         return new Balance(message, new CurrencyController(db, guild));
       case "banlist":
       case "bannedwords":
-        return new BanList(message, new CensorController(db, guild));
+        return new BanList(message, new BanListStatusController(db, guild));
       case "banword":
       case "banwords":
         return new BanWord(message, new CensorController(db, guild));

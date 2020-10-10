@@ -1,25 +1,31 @@
 import Command from "./Command.js";
-import CensorController from "../controllers/CensorController.js";
-import Format from "../Format.js";
+import BanListStatusController from "../controllers/message/BanListStatusController.js";
 
 class BanList extends Command {
   /**
    * @param {Discord.Message} message
-   * @param {CensorController} censorController
+   * @param {BanListStatusController} banListStatusCtlr
    */
-  constructor(message, censorController) {
+  constructor(message, banListStatusCtlr) {
     super(message);
-    this.censorController = censorController;
-    this.instructions = "**BanList**\nPrint every banned word";
+    this.banListStatusCtlr = banListStatusCtlr;
+    this.instructions = "**BanList**\nPost the Banned Words List in this channel";
     this.usage = "Usage: `BanList`";
   }
 
   execute() {
-    return this.censorController
-      .getAllBannedWords()
-      .then((banList) =>
-        this.inputChannel.watchSend(`Here are all the banned words: ${Format.listFormat(banList)}`)
-      )
+    return this.banListStatusCtlr
+      .removeMessage()
+      .then(() => {
+        return this.banListStatusCtlr.generateEmbed();
+      })
+      .then((embed) => {
+        return this.inputChannel.send({ embed: embed });
+      })
+      .then((message) => {
+        message.pin();
+        return this.banListStatusCtlr.setMessage(message.id);
+      })
       .then(() => this.useItem());
   }
 }

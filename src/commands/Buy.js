@@ -1,6 +1,6 @@
 import Discord from "discord.js";
 import CurrencyController from "../controllers/CurrencyController.js";
-import StoreStatusController from "../controllers/StoreStatusController.js";
+import StoreStatusController from "../controllers/message/StoreStatusController.js";
 import AmbiguousInputError from "../structures/errors/AmbiguousInputError.js";
 import Command from "./Command.js";
 

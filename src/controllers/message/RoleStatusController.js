@@ -3,26 +3,13 @@ import Discord from "discord.js";
 import SingletonMessageController from "./SingletonMessageController.js";
 
 class RoleStatusController extends SingletonMessageController {
-  async update() {
-    const statusEmbed = await this.generateEmbed(this.guild);
-
-    return this.db.guilds.get(this.guild.id).then(async (dbGuild) => {
-      // Exit if no message to update
-      if (!dbGuild || !dbGuild.storeMessageId) {
-        return;
-      }
-      // Find the existing message and update it
-      let textChannels = this.guild.channels
-        .filter((channel) => channel.type === "text" && !channel.deleted)
-        .array();
-      for (let i = 0; i < textChannels.length; i++) {
-        try {
-          let message = await textChannels[i].fetchMessage(dbGuild.storeMessageId);
-          message.edit({ embed: statusEmbed });
-          break;
-        } catch (e) {}
-      }
-    });
+  /**
+   * @param {Database} db
+   * @param {Discord.Guild} guild
+   */
+  constructor(db, guild) {
+    super(db, guild);
+    this.guildProperty = "roleMessageId";
   }
 
   /**
@@ -64,21 +51,6 @@ class RoleStatusController extends SingletonMessageController {
     }
 
     return fields;
-  }
-
-  removeMessage() {
-    return this.db.guilds.get(this.guild.id).then(async (dbGuild) => {
-      // Delete the existing status message, if it exists
-      if (!dbGuild || !dbGuild.storeMessageId) {
-        return;
-      }
-
-      return this.fetchMessage(dbGuild.storeMessageId).then((message) => {
-        if (message) {
-          return message.delete();
-        }
-      });
-    });
   }
 
   setMessage(messageId) {

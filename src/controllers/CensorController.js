@@ -81,6 +81,9 @@ class CensorController extends GuildBasedController {
     return this.db.bannedWords.insert(guildWordPairs).then(() => normalizedWords);
   }
 
+  /**
+   * @returns {Promise<String[]>}
+   */
   getAllBannedWords() {
     return this.db.bannedWords.getAll(this.guild.id);
   }
