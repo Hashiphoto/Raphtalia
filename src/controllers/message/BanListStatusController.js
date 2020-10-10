@@ -26,7 +26,7 @@ class BanListStatusController extends SingletonMessageController {
       title: `Banned Words | Censorship is ${enabled ? "Enabled" : "Disabled"}`,
       timestamp: new Date(),
       description: Format.listFormat(words, ""),
-      thumbnail: { url: this.guild.iconURL },
+      thumbnail: { url: "https://i.imgur.com/tnMtgLT.png" },
     };
 
     return statusEmbed;

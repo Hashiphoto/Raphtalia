@@ -18,11 +18,11 @@ class StoreStatusController extends SingletonMessageController {
   async generateEmbed() {
     const storeFields = await this.getStoreFields();
     const statusEmbed = {
-      color: 0x38a3e0,
+      color: 0xe3c91e,
       title: "Store",
       timestamp: new Date(),
       fields: storeFields,
-      thumbnail: { url: this.guild.iconURL },
+      thumbnail: { url: "https://i.imgur.com/b8xakAL.png" },
     };
 
     return statusEmbed;

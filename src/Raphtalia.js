@@ -402,7 +402,8 @@ class Raphtalia {
         return new ServerStatus(
           message,
           new RoleStatusController(db, guild),
-          new StoreStatusController(db, guild)
+          new StoreStatusController(db, guild),
+          new BanListStatusController(db, guild)
         );
       case "softkick":
         return new SoftKick(message, new MemberController(db, guild));

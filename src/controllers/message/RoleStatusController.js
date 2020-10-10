@@ -22,7 +22,7 @@ class RoleStatusController extends SingletonMessageController {
       title: "Roles",
       timestamp: new Date(),
       fields: roleFields,
-      thumbnail: { url: this.guild.iconURL },
+      thumbnail: { url: "https://i.imgur.com/Q8GEn6N.png" },
     };
 
     return statusEmbed;
