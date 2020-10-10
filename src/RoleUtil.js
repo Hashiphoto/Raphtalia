@@ -46,23 +46,6 @@ class RoleUtil {
     return role;
   }
 
-  static getNextLower(guild, currentRole) {
-    var lowerRoles = [];
-    guild.roles.forEach((role) => {
-      if (role.comparePositionTo(currentRole) < 0 && !role.managed && role.hoist) {
-        lowerRoles.push(role);
-      }
-    });
-    if (lowerRoles.length === 0) {
-      return null;
-    }
-    lowerRoles.sort(function (role1, role2) {
-      return role1.position < role2.position;
-    });
-
-    return lowerRoles[0];
-  }
-
   /**
    * @param {Discord.Guild} guild
    * @returns {Discord.Collection<Discord.Role>} The hoisted roles, sorted lowest to highest

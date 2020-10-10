@@ -28,15 +28,21 @@ class ScheduleWatcher {
 
   start() {
     // Every day at 8:00 PM
-    new CronJob("0 20 * * *", this.resolveRoleContests, null, true, "America/Los_Angeles");
-  }
+    new CronJob(
+      "0 20 * * *",
+      () => {
+        const guildContests = this.client.guilds.map((guild) =>
+          new MemberController(this.db, guild)
+            .resolveRoleContests()
+            .then((feedback) => feedback && guild.systemChannel.send(feedback))
+        );
 
-  resolveRoleContests() {
-    const guildContests = this.client.guilds.map((guild) =>
-      new MemberController(this.db, guild).resolveRoleContests()
+        return Promise.all(guildContests);
+      },
+      null,
+      true,
+      "America/Los_Angeles"
     );
-
-    return Promise.all(guildContests);
   }
 }
 

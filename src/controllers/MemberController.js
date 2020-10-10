@@ -1,14 +1,13 @@
 import Discord from "discord.js";
 
 import db from "../db/Database.js";
-import discordConfig from "../../config/discord.config.js";
 import RoleUtil from "../RoleUtil.js";
 import GuildBasedController from "./GuildBasedController.js";
 import MemberLimitError from "../structures/errors/MemberLimitError.js";
 import links from "../../resources/links.js";
-import dayjs from "dayjs";
 import delay from "delay";
 import RNumber from "../structures/RNumber.js";
+import dayjs from "dayjs";
 
 class MemberController extends GuildBasedController {
   infractionLimit = 3;
@@ -130,20 +129,18 @@ class MemberController extends GuildBasedController {
    * in the hierarchy
    */
   getNextRole(member) {
-    var curRole = member.hoistRole;
+    var curRole = member.hoistRole ?? this.guild.roles.find((r) => r.name === "@everyone");
 
-    var higherRoles = [];
-    this.guild.roles.forEach((role) => {
-      if (role.comparePositionTo(curRole) > 0 && !role.managed && role.hoist) {
-        higherRoles.push(role);
-      }
-    });
+    var higherRoles = this.guild.roles
+      .filter((role) => role.comparePositionTo(curRole) > 0 && role.hoist)
+      .array()
+      .sort((role1, role2) => {
+        return role1.position - role2.position;
+      });
+
     if (higherRoles.length === 0) {
       return null;
     }
-    higherRoles.sort((role1, role2) => {
-      return role1.position - role2.position;
-    });
 
     return higherRoles[0];
   }
@@ -156,9 +153,24 @@ class MemberController extends GuildBasedController {
    * @returns {Discord.Role} The Role object that is one lower than the member's current highest
    * in the hierarchy
    */
-  getPreviousRole(member, guild) {
-    var highestRole = member.highestRole;
-    return RoleUtil.getNextLower(guild, highestRole);
+  getPreviousRole(member) {
+    var curRole = member.hoistRole;
+    if (!curRole) {
+      return null;
+    }
+
+    var lowerRoles = this.guild.roles
+      .filter((role) => role.comparePositionTo(curRole) < 0 && role.hoist)
+      .array()
+      .sort((role1, role2) => {
+        return role1.position - role2.position;
+      });
+
+    if (lowerRoles.length === 0) {
+      return null;
+    }
+
+    return lowerRoles[lowerRoles.length - 1];
   }
 
   /**
@@ -168,23 +180,15 @@ class MemberController extends GuildBasedController {
    */
   pardonMember(member) {
     return this.db.users.setInfractions(member.id, member.guild.id, 0).then(() => {
-      const released = this.releaseFromExile(member);
-
-      if (released) {
-        return `${member} has been released from exile\n`;
+      const response = `${member}'s infractions have been reset\n`;
+      const exileRole = this.guild.roles.find((r) => r.name === "Exile");
+      const inExile = member.roles.has(exileRole.id);
+      if (inExile) {
+        return member.removeRole(exileRole).then(() => response + `${member}'s exile has ended\n`);
       }
 
-      return `${member} has been cleared of all charges\n`;
+      return response;
     });
-  }
-
-  releaseFromExile(member) {
-    if (this.hasRole(member, discordConfig().roles.exile)) {
-      this.setHoistedRole(member, discordConfig().roles.neutral);
-      return true;
-    }
-
-    return false;
   }
 
   /**
@@ -365,8 +369,14 @@ class MemberController extends GuildBasedController {
   }
 
   resolveRoleContests() {
-    return this.db.roles.getAllContests(this.guild.id).then((roleContests) => {
-      const promises = roleContests.map((contest) => {
+    return this.db.roles.getAllContests(this.guild.id).then((rawContests) => {
+      const contests = rawContests.filter((contest) => {
+        return dayjs(contest.startDate).add(24, "hour").isBefore(dayjs());
+      });
+      if (contests.length === 0) {
+        return;
+      }
+      const promises = contests.map((contest) => {
         const role = RoleUtil.convertToRole(this.guild, contest.roleId);
         const initiator = this.guild.members.get(contest.initiatorId);
         const participants = role.members.array();
@@ -403,7 +413,7 @@ class MemberController extends GuildBasedController {
     }
     // Switching places with someone higher
     else {
-      return this.promoteMember(initiator, true).then((feedback) =>
+      return this.promoteMember(initiator).then((feedback) =>
         this.demoteMember(loserBid.member, feedback)
       );
     }

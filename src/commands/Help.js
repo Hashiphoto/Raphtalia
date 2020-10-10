@@ -21,7 +21,7 @@ class Help extends Command {
     );
 
     if (command instanceof NullCommand) {
-      return this.sendHelpMessage(this.instructions);
+      return this.sendHelpMessage(`Unknown command "${this.message.args[0]}"`);
     }
 
     return command.sendHelpMessage(command.instructions);
