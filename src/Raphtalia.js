@@ -4,9 +4,8 @@ import delay from "delay";
 
 import Database from "./db/Database.js";
 import secretConfig from "../config/secrets.config.js";
-import discordConfig from "../config/discord.config.js";
 import CommandParser from "./CommandParser.js";
-import OnBoarder from "./OnBoarder.js";
+import OnBoarder from "./Onboarder.js";
 import AutoDelete from "./commands/AutoDelete.js";
 import Balance from "./commands/Balance.js";
 import Buy from "./commands/Buy.js";
