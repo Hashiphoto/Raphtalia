@@ -11,7 +11,7 @@ import Balance from "../../src/commands/Balance.js";
 import TestChannel from "../structures/TestChannel.js";
 import RNumber from "../../src/structures/RNumber.js";
 import BanList from "../../src/commands/BanList.js";
-import Format from "../../src/Format.js";
+import Util from "../../src/Util.js";
 import BanWord from "../../src/commands/BanWord.js";
 import CensorController from "../../src/controllers/CensorController.js";
 import Censorship from "../../src/commands/Censorship.js";
@@ -169,7 +169,7 @@ describe("Commands", () => {
         assert(censorController.getAllBannedWords.calledOnce);
         assert(
           banList.inputChannel.output ===
-            `Here are all the banned words: ${Format.listFormat(fakeBanList)}`
+            `Here are all the banned words: ${Util.listFormat(fakeBanList)}`
         );
       });
     });

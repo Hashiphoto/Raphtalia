@@ -1,4 +1,4 @@
-import Format from "../../Format.js";
+import Util from "../../Util.js";
 
 class AmbiguousInputError extends Error {
   constructor(possibleResults, ...params) {
@@ -6,7 +6,7 @@ class AmbiguousInputError extends Error {
 
     this.name = "AmbiguousInputError";
     this.possibleResults = possibleResults;
-    this.message = Format.listFormat(possibleResults, "or");
+    this.message = Util.listFormat(possibleResults, "or");
   }
 }
 

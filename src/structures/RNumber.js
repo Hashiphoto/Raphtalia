@@ -1,3 +1,5 @@
+import Util from "../Util.js";
+
 class RNumber {
   amount;
   type;
@@ -43,6 +45,7 @@ class RNumber {
     if (matches[4]) {
       if (matches[4] === "%") {
         type = RNumber.types.PERCENT;
+        amount /= 100;
       } else if (matches[4].toLowerCase() === "x") {
         type = RNumber.types.MULTIPLIER;
       }
@@ -51,7 +54,7 @@ class RNumber {
     }
 
     // Round to 2 decimal places
-    amount = Math.floor(amount * 100) / 100;
+    amount = Util.round(amount);
 
     return new RNumber(amount, type);
   }

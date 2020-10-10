@@ -1,5 +1,5 @@
 import Discord from "discord.js";
-import Format from "../../Format.js";
+import Util from "../../Util.js";
 import CensorController from "../CensorController.js";
 
 import SingletonMessageController from "./SingletonMessageController.js";
@@ -25,7 +25,7 @@ class BanListStatusController extends SingletonMessageController {
       color: enabled ? 0xf54c38 : 0x471d18,
       title: `Banned Words | Censorship is ${enabled ? "Enabled" : "Disabled"}`,
       timestamp: new Date(),
-      description: Format.listFormat(words, ""),
+      description: Util.listFormat(words, ""),
       thumbnail: { url: "https://i.imgur.com/tnMtgLT.png" },
     };
 

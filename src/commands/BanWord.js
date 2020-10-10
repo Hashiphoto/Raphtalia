@@ -1,6 +1,6 @@
 import Command from "./Command.js";
 import CensorController from "../controllers/CensorController.js";
-import Format from "../Format.js";
+import Util from "../Util.js";
 import BanListStatusController from "../controllers/message/BanListStatusController.js";
 
 class BanWord extends Command {

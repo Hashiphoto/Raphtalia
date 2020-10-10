@@ -4,7 +4,7 @@ import dayjs from "dayjs";
 import Command from "./Command.js";
 import discordConfig from "../../config/discord.config.js";
 import sendTimedMessage from "../timedMessage.js";
-import Format from "../Format.js";
+import Util from "../Util.js";
 import Question from "../structures/Question.js";
 import VotingOption from "../structures/VotingOption.js";
 import RNumber from "../structures/RNumber.js";
@@ -65,7 +65,7 @@ class HoldVote extends Command {
     let timeContent = (await sendTimedMessage(this.inputChannel, this.sender, timeQuestion, true))
       .content;
 
-    let duration = Format.parseTime(timeContent);
+    let duration = Util.parseTime(timeContent);
     let endDate = dayjs().add(duration);
     // Don't allow the time (in ms) to exceed Integer max value (a little more than 24 days)
     if (duration > 0x7fffffff) {
@@ -74,7 +74,7 @@ class HoldVote extends Command {
 
     // Send out the voting ballots
     this.inputChannel
-      .watchSend(`Voting begins now and ends at ${Format.formatDate(endDate)}`)
+      .watchSend(`Voting begins now and ends at ${Util.formatDate(endDate)}`)
       .then(() => this.useItem());
 
     const ballot = this.constructBallot(votePrompt, votingOptions, endDate, duration);
@@ -163,7 +163,7 @@ class HoldVote extends Command {
     let ballotText =
       `**A vote is being held in ${this.message.guild.name}!**\n` +
       `Please vote for one of the options below by replying with the number of the choice.\n` +
-      `Voting ends at ${Format.formatDate(endDate)}\n\n`;
+      `Voting ends at ${Util.formatDate(endDate)}\n\n`;
     ballotText += `${prompt}\n-------------------------\n`;
     ballotText += textOptions;
 

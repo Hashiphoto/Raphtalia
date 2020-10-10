@@ -1,5 +1,6 @@
 import mysqlPromise from "mysql2/promise.js";
 import DbUser from "../structures/DbUser.js";
+import Util from "../Util.js";
 
 class UsersTable {
   /**
@@ -8,10 +9,6 @@ class UsersTable {
    */
   constructor(pool) {
     this.pool = pool;
-  }
-
-  roundCurrency(amount) {
-    return Number(Math.round(amount + "e2") + "e-2");
   }
 
   toUserObject(dbRow) {
@@ -68,7 +65,7 @@ class UsersTable {
       .query(
         "INSERT INTO users (id, guild_id, currency) VALUES (?,?,?) " +
           "ON DUPLICATE KEY UPDATE currency = currency + VALUES(currency)",
-        [id, guildId, this.roundCurrency(amount)]
+        [id, guildId, Util.round(amount)]
       )
       .catch((error) => console.error(error));
   }
@@ -78,7 +75,7 @@ class UsersTable {
       .query(
         "INSERT INTO users (id, guild_id, currency) VALUES (?,?,?) " +
           "ON DUPLICATE KEY UPDATE currency = VALUES(currency)",
-        [id, guildId, this.roundCurrency(amount)]
+        [id, guildId, Util.round(amount)]
       )
       .catch((error) => console.error(error));
   }

@@ -2,7 +2,7 @@ import Discord from "discord.js";
 
 import Command from "./Command.js";
 import ChannelController from "../controllers/ChannelController.js";
-import Format from "../Format.js";
+import Util from "../Util.js";
 
 class AutoDelete extends Command {
   /**
@@ -24,7 +24,7 @@ class AutoDelete extends Command {
 
     const start = this.message.args.includes("start");
     const stop = this.message.args.includes("stop");
-    const durationMs = Format.parseTime(this.message.content);
+    const durationMs = Util.parseTime(this.message.content);
 
     // Ensure start or stop is specified but not both
     if (start && stop) {

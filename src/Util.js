@@ -3,7 +3,19 @@ import duration from "dayjs/plugin/duration.js";
 
 dayjs.extend(duration);
 
-class Format {
+class Util {
+  /**
+   * @param {Number} amount
+   * @returns {Number}
+   */
+  static round(amount) {
+    return Number(Math.round(amount + "e2") + "e-2");
+  }
+
+  /**
+   * @param {dayjs.Dayjs} date
+   * @returns {String}
+   */
   static formatDate(date) {
     return date.format("h:mm A on MMM D, YYYY");
   }
@@ -66,4 +78,4 @@ class Format {
   }
 }
 
-export default Format;
+export default Util;

@@ -1,8 +1,8 @@
 import assert from "assert";
 import RNumber from "../../src/structures/RNumber.js";
-import Format from "../../src/Format.js";
+import Util from "../../src/Util.js";
 
-describe("Formatting", () => {
+describe("Utilting", () => {
   describe("Percent format", () => {
     it("percent format", () => {
       const num = 1.123123;
@@ -25,7 +25,7 @@ describe("Formatting", () => {
 describe("Parsing", () => {
   describe("Time parsing", () => {
     it("parses time correctly", () => {
-      const duration = Format.parseTime("16d 21h 43m 4s 455ms 803x");
+      const duration = Util.parseTime("16d 21h 43m 4s 455ms 803x");
       assert.equal(duration, 1460584455);
     });
   });

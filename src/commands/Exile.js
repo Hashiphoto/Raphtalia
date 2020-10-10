@@ -2,7 +2,7 @@ import Discord from "discord.js";
 import dayjs from "dayjs";
 
 import Command from "./Command.js";
-import Format from "../Format.js";
+import Util from "../Util.js";
 import MemberController from "../controllers/MemberController.js";
 
 class Exile extends Command {
@@ -44,7 +44,7 @@ class Exile extends Command {
 
     // Input or default 6 hours
     const duration =
-      Format.parseTime(this.message.content) ?? dayjs.duration({ hours: 6 }).asMilliseconds();
+      Util.parseTime(this.message.content) ?? dayjs.duration({ hours: 6 }).asMilliseconds();
     // Current time + exile duration
     const releaseDate = dayjs().add(duration);
 
@@ -60,7 +60,7 @@ class Exile extends Command {
     // }
 
     const response = targets.reduce(
-      (sum, target) => sum + `${target} has been exiled until ${Format.formatDate(releaseDate)}`,
+      (sum, target) => sum + `${target} has been exiled until ${Util.formatDate(releaseDate)}`,
       ""
     );
 
