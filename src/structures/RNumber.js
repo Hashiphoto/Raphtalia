@@ -91,7 +91,7 @@ class RNumber {
    * @param {Number} amount
    */
   static formatPercent(amount) {
-    return amount.toFixed(2) + "%";
+    return (amount * 100).toFixed(2) + "%";
   }
 
   /**

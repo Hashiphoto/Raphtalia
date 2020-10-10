@@ -9,6 +9,7 @@ import Question from "../structures/Question.js";
 import VotingOption from "../structures/VotingOption.js";
 import RNumber from "../structures/RNumber.js";
 import RoleUtil from "../RoleUtil.js";
+import delay from "delay";
 
 class HoldVote extends Command {
   constructor(message) {
@@ -38,11 +39,14 @@ class HoldVote extends Command {
       ".*",
       60000
     );
-    let optionsContent = (
-      await sendTimedMessage(this.inputChannel, this.sender, optionsQuestion, true)
-    ).content;
+    let optionsMessage = await sendTimedMessage(
+      this.inputChannel,
+      this.sender,
+      optionsQuestion,
+      true
+    );
 
-    let options = this.removeMentions(optionsContent).split(",");
+    let options = this.removeMentions(optionsMessage).split(",");
     let votingOptions = [];
     for (var i = 0; i < options.length; i++) {
       options[i] = options[i].trim();
@@ -70,7 +74,7 @@ class HoldVote extends Command {
 
     // Send out the voting ballots
     this.inputChannel
-      .watchSend(`Voting begins now and ends at ${endDate.format(dateFormat)}`)
+      .watchSend(`Voting begins now and ends at ${Format.formatDate(endDate)}`)
       .then(() => this.useItem());
 
     const ballot = this.constructBallot(votePrompt, votingOptions, endDate, duration);
@@ -99,7 +103,7 @@ class HoldVote extends Command {
     });
 
     // Announce results
-    setTimeout(() => {
+    delay(duration).then(() => {
       let totalVotes = 0;
 
       // Sort results from most votes to least
@@ -122,17 +126,17 @@ class HoldVote extends Command {
       let finalResults = "Voting is done!\n";
 
       if (winners.length > 1) {
-        let tieList = this.formatTieList();
+        let tieList = this.formatTieList(votingOptions);
         finalResults += `**There is a ${winners.length}-way tie between ${tieList}** `;
       } else {
         finalResults += `**The winner is ${votingOptions[0].body.toUpperCase()}** `;
       }
       finalResults += `with ${RNumber.formatPercent(
-        winners[0].votes / totalVotes
-      )}% of the vote \n${resultsTable}`;
+        totalVotes ? winners[0].votes / totalVotes : 0
+      )} of the vote \n${resultsTable}`;
 
       this.inputChannel.watchSend(finalResults);
-    }, duration);
+    });
   }
 
   //TODO: Move logic into controller
@@ -159,7 +163,7 @@ class HoldVote extends Command {
     let ballotText =
       `**A vote is being held in ${this.message.guild.name}!**\n` +
       `Please vote for one of the options below by replying with the number of the choice.\n` +
-      `Voting ends at ${endDate.format(dateFormat)}\n\n`;
+      `Voting ends at ${Format.formatDate(endDate)}\n\n`;
     ballotText += `${prompt}\n-------------------------\n`;
     ballotText += textOptions;
 
@@ -167,27 +171,36 @@ class HoldVote extends Command {
   }
 
   /**
-   * @param {String} text
+   * @param {Discord.Message} optionsMessage
+   * @returns {String}
    */
-  removeMentions(text) {
+  removeMentions(optionsMessage) {
     // Replace the mentions with their nicknames and tags
-    for (let i = 0; i < this.message.mentionedMembers.length; i++) {
-      let re = new RegExp(`<@!?${this.message.mentionedMembers[i].id}>`);
-      let plainText = this.message.mentionedMembers[i].user.tag;
-      if (this.message.mentionedMembers[i].nickname) {
-        plainText += ` (${this.message.mentionedMembers[i].nickname})`;
+    let content = optionsMessage.content;
+    for (const [id, user] of optionsMessage.mentions.users) {
+      let re = new RegExp(`<@!?${id}>`);
+      let plainText = user.tag;
+      const member = this.guild.members.get(user.id);
+      if (member && member.nickname) {
+        plainText += ` (${member.nickname})`;
       }
-      text = text.replace(re, plainText);
+      content = content.replace(re, plainText);
     }
 
-    return text;
+    return content;
   }
 
   /**
-   * @returns {Discord.GuildMember[]}
+   * @returns {Discord.Collection<Discord.GuildMember>}
    */
   getVoters() {
-    return RoleUtil.convertToRole(this.message.guild, discordConfig().roles.voter).members;
+    const voterRole = this.guild.roles.find((r) => r.name === "Voter");
+    if (!voterRole) {
+      // Create it asyncrhonously
+      this.guild.createRole({ name: "Voter", hoist: false, color: "#4cd692" });
+      return new Map();
+    }
+    return voterRole.members;
   }
 
   /**
@@ -235,15 +248,22 @@ class HoldVote extends Command {
     return winners;
   }
 
-  formatTieList(list) {
-    for (let i = 0; i < list.length; i++) {
-      tieList += list[i].body.toUpperCase();
-      if (i === list.length - 2) {
+  /**
+   * @param {VotingOption[]} options
+   */
+  formatTieList(options) {
+    let tieList = "";
+
+    for (let i = 0; i < options.length; i++) {
+      tieList += options[i].body.toUpperCase();
+      if (i === options.length - 2) {
         tieList += ", and ";
-      } else if (i < list.length - 1) {
+      } else if (i < options.length - 1) {
         tieList += ", ";
       }
     }
+
+    return tieList;
   }
 }
 

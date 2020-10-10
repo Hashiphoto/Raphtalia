@@ -1,15 +1,15 @@
 import RNumber from "./RNumber.js";
 
 class VotingOption {
-  id;
-  body;
-  votes;
-  totalVotes;
-
+  /**
+   * @param {Number} id
+   * @param {String} body
+   */
   constructor(id, body) {
     this.id = id;
     this.body = body;
     this.votes = 0;
+    this.totalVotes;
   }
 
   toString() {
