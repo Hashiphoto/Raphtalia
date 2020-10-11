@@ -62,7 +62,10 @@ class SingletonMessageController extends GuildBasedController {
         const message = await channel.fetchMessage(messageId);
         return message;
       } catch (error) {
-        if (error.name === "DiscordAPIError" && error.message === "Unknown Message") {
+        if (
+          error.name === "DiscordAPIError" &&
+          (error.message === "Unknown Message" || error.message === "Missing Access")
+        ) {
           continue;
         }
         console.error(error);

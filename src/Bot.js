@@ -21,7 +21,7 @@ dayjs.extend(duration);
       raphtalia.configureDiscordClient();
     })
     .catch((e) => {
-      if (process.env.NODE_ENV === "dev") {
+      if (process.env.NODE_ENV === "dev" || process.env.NODE_ENV === "test") {
         let command = `ssh -f ${secretConfig().database.user}@${secretConfig().ssh} -L ${
           secretConfig().database.port
         }:localhost:3306 -N`;

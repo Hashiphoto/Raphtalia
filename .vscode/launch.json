@@ -12,7 +12,7 @@
       "program": "${workspaceFolder}/src/bot.js",
       "args": [],
       "env": {
-        "NODE_ENV": "dev"
+        "NODE_ENV": "test"
       }
     },
     {
