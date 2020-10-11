@@ -62,7 +62,7 @@ class Take extends Command {
             `If you are attempting to take money, make sure to format it as \`$1\``
         );
       }
-      return this.takeItem(item, target);
+      return this.takeItem(item, target).then(() => this.useItem(targets.length));
     });
   }
 

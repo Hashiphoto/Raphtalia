@@ -43,7 +43,7 @@ class SingletonMessageController extends GuildBasedController {
       }
 
       return this.fetchMessage(dbGuild[this.guildProperty]).then((message) => {
-        return message && message.delete();
+        return message && !message.deleted && message.delete();
       });
     });
   }

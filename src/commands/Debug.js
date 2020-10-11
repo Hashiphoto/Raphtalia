@@ -59,7 +59,7 @@ class Debug extends Command {
         }
 
         return this.inventoryController.updateGuildItem(item).then(() => {
-          return this.inputChannel.watchSend("Item updated");
+          return this.inputChannel.watchSend("Item updated").then(() => true);
         });
       default:
         return this.sendHelpMessage();

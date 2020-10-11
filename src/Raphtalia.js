@@ -313,8 +313,13 @@ class Raphtalia {
         console.error(error);
         return message.react("🛑");
       })
-      .then(() => message.channel.stopTyping(true))
-      .then(() => new StoreStatusController(this.db, message.guild).update());
+      .then((storeNeedsUpdate) => {
+        message.channel.stopTyping(true);
+        return storeNeedsUpdate;
+      })
+      .then((storeNeedsUpdate) => {
+        storeNeedsUpdate === true && new StoreStatusController(this.db, message.guild).update();
+      });
   }
 
   /**

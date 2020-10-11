@@ -73,10 +73,6 @@ class HoldVote extends Command {
     }
 
     // Send out the voting ballots
-    this.inputChannel
-      .watchSend(`Voting begins now and ends at ${Util.formatDate(endDate)}`)
-      .then(() => this.useItem());
-
     const ballot = this.constructBallot(votePrompt, votingOptions, endDate, duration);
 
     voters.forEach((voter) => {
@@ -137,6 +133,10 @@ class HoldVote extends Command {
 
       this.inputChannel.watchSend(finalResults);
     });
+
+    return this.inputChannel
+      .watchSend(`Voting begins now and ends at ${Util.formatDate(endDate)}`)
+      .then(() => this.useItem());
   }
 
   //TODO: Move logic into controller

@@ -56,7 +56,8 @@ class Buy extends Command {
             )
           )
           .then(() => this.storeStatusCtlr.update())
-          .then(() => this.useItem());
+          .then(() => this.useItem())
+          .then(() => true);
       })
       .catch((error) => {
         if (error instanceof AmbiguousInputError) {

@@ -60,7 +60,7 @@ class Give extends Command {
             `If you are attempting to send money, make sure to format it as \`$1\``
         );
       }
-      return this.giveItem(item, targets);
+      return this.giveItem(item, targets).then(() => this.useItem(targets.length));
     });
   }
 

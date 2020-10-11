@@ -30,6 +30,9 @@ class Command {
     this.usage = "";
   }
 
+  /**
+   * @returns {Boolean} Whether the store needs to be updated or not
+   */
   execute() {
     throw new Error("Implement this function");
   }
@@ -46,16 +49,23 @@ class Command {
     return this;
   }
 
+  /**
+   * @param {Number} uses
+   * @returns {Boolean} Whether the store needs to be updated or not
+   */
   useItem(uses = 1) {
     const oldQuantity = this.item.quantity;
     return this.inventoryController
       .useItem(this.item, this.message.sender, uses)
       .then((newItem) => {
         if (newItem && newItem.quantity < oldQuantity) {
-          return this.inputChannel.watchSend(
-            `Your ${newItem.printName()} broke! You have ${newItem.quantity} remaining.\n`
-          );
+          return this.inputChannel
+            .watchSend(
+              `Your ${newItem.printName()} broke! You have ${newItem.quantity} remaining.\n`
+            )
+            .then(() => true);
         }
+        return false;
       });
   }
 
