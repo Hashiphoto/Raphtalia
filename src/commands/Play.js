@@ -10,16 +10,18 @@ class Play extends Command {
     super(message);
     this.instructions =
       "**Play**\nPlay the server theme in the voice channel you are in. " +
-      "You can specify which voice channel to play in by voice channel name or channel group and voice channel name. " +
-      "You can change the volume by specifying a percentage.";
-    this.usage = "Usage: `Play [in (Group/VoiceChannel | VoiceChannel)] [100%]`";
+      "You can specify which voice channel to play in by voice channel name or channel group and voice channel name. ";
+    this.usage = "Usage: `Play [in (Group/VoiceChannel | VoiceChannel)]`";
   }
   execute() {
     let content = this.message.content;
-    let volume = this.getVolume(content);
-    if (volume == null) {
-      return this.sendHelpMessage("Please specify volume as a percentage. `Play 70%`");
-    }
+    // TODO: fix percentage parsing
+    // const lastArg = this.message.args[this.message.args.length - 1];
+    // let volume = this.getVolume(lastArg);
+    // if (volume == null) {
+    //   return this.sendHelpMessage("Please specify volume as a percentage. `Play 70%`");
+    // }
+    let volume = 0.5;
 
     let voiceChannel = this.getVoiceChannel(content);
 

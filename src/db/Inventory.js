@@ -48,6 +48,10 @@ class Inventory {
       });
   }
 
+  /**
+   * @param {String} guildId
+   * @returns {Promise<GuildItem[]>}
+   */
   getGuildStock(guildId) {
     return this.pool
       .query(this.guildSelect + "WHERE guild_id = ?", [guildId])
