@@ -37,12 +37,29 @@ class InventoryController extends GuildBasedController {
   async userPurchase(item, user, quantity = 1) {
     // Subtract from guild stock
     if (!item.unlimitedQuantity) {
-      await this.db.inventory.updateGuildItemQuantity(this.guild.id, item, -1);
+      const updatedItem = await this.db.inventory.updateGuildItemQuantity(this.guild.id, item, -1);
+      if (updatedItem.soldInCycle > 1) {
+        await this.increaseGuildItemPrice(updatedItem);
+      }
     }
 
     // Add it to player stock
     item.quantity = quantity;
     return this.db.inventory.insertUserItem(this.guild.id, user.id, item);
+  }
+
+  /**
+   * @param {GuildItem} guildItem
+   */
+  increaseGuildItemPrice(guildItem) {
+    return this.db.guilds.get(this.guild.id).then((dbGuild) => {
+      const priceMultiplier = Math.exp((guildItem.soldInCycle - 1) * dbGuild.priceHikeCoefficient);
+      if (priceMultiplier === 1) {
+        return;
+      }
+
+      return this.db.inventory.updateGuildItemPrice(this.guild.id, guildItem, priceMultiplier);
+    });
   }
 
   /**

@@ -89,14 +89,39 @@ class Inventory {
       });
   }
 
+  getGuildItem(guildId, itemId) {
+    return this.pool
+      .query(this.guildSelect + `WHERE guild_id = ? AND id=?`, [guildId, itemId])
+      .then(([rows, fields]) => {
+        if (rows.length === 0) {
+          return null;
+        }
+
+        return this.toGuildItem(rows[0]);
+      });
+  }
+
   /**
    * @param {String} guildId
    * @param {Item} item
+   * @returns {GuildItem} The item after updating
    */
   updateGuildItemQuantity(guildId, item, quantityChange) {
+    // If decreasing in quantity, increase sold_in_cycle
+    const increaseSoldQuery =
+      quantityChange < 0 ? `, sold_in_cycle=sold_in_cycle+${-quantityChange}` : ``;
+    return this.pool
+      .query(
+        `UPDATE guild_inventory SET quantity=quantity+? ${increaseSoldQuery} WHERE guild_id=? AND item_id=?`,
+        [quantityChange, guildId, item.id]
+      )
+      .then(() => this.getGuildItem(guildId, item.id));
+  }
+
+  updateGuildItemPrice(guildId, item, priceMultiplier) {
     return this.pool.query(
-      "UPDATE guild_inventory SET quantity=quantity+? WHERE guild_id=? AND item_id=?",
-      [quantityChange, guildId, item.id]
+      "UPDATE guild_inventory SET price=price*? WHERE guild_id=? and item_id=?",
+      [priceMultiplier, guildId, item.id]
     );
   }
 
