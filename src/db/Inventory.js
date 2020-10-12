@@ -30,7 +30,9 @@ class Inventory {
       row.quantity,
       commands,
       parseFloat(row.price),
-      row.max_quantity
+      row.max_quantity,
+      row.sold_in_cycle,
+      row.date_last_sold
     );
   }
 

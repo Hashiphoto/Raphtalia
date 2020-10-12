@@ -11,6 +11,9 @@ class DbGuild {
    * @param {Number} messageResetTime
    * @param {Number} reactorRate
    * @param {Number} reacteeRate
+   * @param {Number} priceHikeCoefficient
+   * @param {Number} priceDropDays
+   * @param {Number} priceDropRate
    */
   constructor(
     id,
@@ -22,7 +25,10 @@ class DbGuild {
     messageRate,
     messageResetTime,
     reactorRate,
-    reacteeRate
+    reacteeRate,
+    priceHikeCoefficient,
+    priceDropDays,
+    priceDropRate
   ) {
     this.id = id;
     this.censorshipEnabled = censorshipEnabled;
@@ -34,6 +40,9 @@ class DbGuild {
     this.messageResetTime = messageResetTime;
     this.reactorRate = reactorRate;
     this.reacteeRate = reacteeRate;
+    this.priceHikeCoefficient = priceHikeCoefficient;
+    this.priceDropDays = priceDropDays;
+    this.priceDropRate = priceDropRate;
   }
 }
 
