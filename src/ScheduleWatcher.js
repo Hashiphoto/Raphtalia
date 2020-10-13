@@ -56,7 +56,8 @@ class ScheduleWatcher {
         .getGuildStock(guild.id)
         .then(async (guildItems) => {
           for (const item of guildItems) {
-            if (item.soldInCycle !== 0) {
+            // Don't let sold-out items depreciate for no reason
+            if (item.soldInCycle !== 0 || item.quantity === 0) {
               continue;
             }
             const hoursSinceLastSold = dayjs
