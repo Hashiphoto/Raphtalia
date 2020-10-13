@@ -30,7 +30,9 @@ class Inventory {
       row.quantity,
       commands,
       parseFloat(row.price),
-      row.max_quantity
+      row.max_quantity,
+      row.sold_in_cycle,
+      row.date_last_sold
     );
   }
 
@@ -87,14 +89,53 @@ class Inventory {
       });
   }
 
+  getGuildItem(guildId, itemId) {
+    return this.pool
+      .query(this.guildSelect + `WHERE guild_id = ? AND id=?`, [guildId, itemId])
+      .then(([rows, fields]) => {
+        if (rows.length === 0) {
+          return null;
+        }
+
+        return this.toGuildItem(rows[0]);
+      });
+  }
+
   /**
    * @param {String} guildId
    * @param {Item} item
+   * @returns {GuildItem} The item after updating
    */
-  updateGuildItemQuantity(guildId, item, quantityChange) {
+  updateGuildItemQuantity(guildId, item, quantityChange, soldDateTime) {
+    // If decreasing in quantity, increase sold_in_cycle
+    const increaseSoldQuery =
+      quantityChange < 0 ? `, sold_in_cycle=sold_in_cycle+${-quantityChange}` : ``;
+    return this.pool
+      .query(
+        `UPDATE guild_inventory SET quantity=quantity+?, date_last_sold=? ${increaseSoldQuery} WHERE guild_id=? AND item_id=?`,
+        [quantityChange, soldDateTime, guildId, item.id]
+      )
+      .then(() => this.getGuildItem(guildId, item.id));
+  }
+
+  /**
+   * @param {String} guildId
+   * @param {Item} item
+   * @returns {GuildItem} The item after updating
+   */
+  updateGuildItemSold(guildId, item, soldInCycle, soldDateTime) {
+    return this.pool
+      .query(
+        `UPDATE guild_inventory SET sold_in_cycle=sold_in_cycle+?, date_last_sold=? WHERE guild_id=? AND item_id=?`,
+        [soldInCycle, soldDateTime, guildId, item.id]
+      )
+      .then(() => this.getGuildItem(guildId, item.id));
+  }
+
+  updateGuildItemPrice(guildId, item, priceMultiplier) {
     return this.pool.query(
-      "UPDATE guild_inventory SET quantity=quantity+? WHERE guild_id=? AND item_id=?",
-      [quantityChange, guildId, item.id]
+      "UPDATE guild_inventory SET price=price*? WHERE guild_id=? and item_id=?",
+      [priceMultiplier, guildId, item.id]
     );
   }
 
@@ -111,10 +152,17 @@ class Inventory {
       .then(() => this.pool.query("UPDATE items SET name=? WHERE id=?", [item.name, item.id]));
   }
 
+  resetStoreCycle(guildId) {
+    return this.pool.query("UPDATE guild_inventory SET sold_in_cycle=0 WHERE guild_id=?", [
+      guildId,
+    ]);
+  }
+
   findUserItem(guildId, userId, itemName) {
     return this.pool
       .query(
-        this.userSelect + `WHERE ui.guild_id=? AND ui.user_id=? AND i.name LIKE '%${itemName}%'`,
+        this.userSelect +
+          `WHERE ui.guild_id=? AND ui.user_id=? AND i.name LIKE ${mysql.escape(`%${itemName}%`)}`,
         [guildId, userId]
       )
       .then(([rows, fields]) => {

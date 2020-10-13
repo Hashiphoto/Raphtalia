@@ -27,7 +27,10 @@ class GuildsTable {
       dbRow.message_rate,
       dbRow.message_reset_s,
       dbRow.reactor_rate,
-      dbRow.reactee_rate
+      dbRow.reactee_rate,
+      dbRow.price_hike_coefficient,
+      dbRow.price_drop_days,
+      dbRow.price_drop_rate
     );
   }
 
