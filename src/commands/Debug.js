@@ -21,7 +21,7 @@ class Debug extends Command {
     switch (args[0].toLowerCase()) {
       case "resolvecontests":
         return this.memberController
-          .resolveRoleContests()
+          .resolveRoleContests(true)
           .then((responses) => responses.reduce(this.sum))
           .then((feedback) => this.inputChannel.watchSend(feedback));
       case "store":

@@ -368,10 +368,10 @@ class MemberController extends GuildBasedController {
     );
   }
 
-  resolveRoleContests() {
+  resolveRoleContests(force = false) {
     return this.db.roles.getAllContests(this.guild.id).then((rawContests) => {
       const contests = rawContests.filter((contest) => {
-        return dayjs(contest.startDate).add(24, "hour").isBefore(dayjs());
+        return force ? true : dayjs(contest.startDate).add(24, "hour").isBefore(dayjs());
       });
       if (contests.length === 0) {
         return;

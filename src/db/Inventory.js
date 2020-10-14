@@ -112,12 +112,12 @@ class Inventory {
     // If decreasing in quantity, increase sold_in_cycle
     const increaseSoldQuery =
       quantityChange < 0 ? `, sold_in_cycle=sold_in_cycle+${-quantityChange}` : ``;
-    const updateDateSold = soldDateTime ? `, date_last_sold=${soldDateTime}` : ``;
+    const updateDateSold = soldDateTime ? `, date_last_sold=${mysql.escape(soldDateTime)}` : ``;
 
     return this.pool
       .query(
         `UPDATE guild_inventory SET quantity=quantity+? ${updateDateSold} ${increaseSoldQuery} WHERE guild_id=? AND item_id=?`,
-        [quantityChange, soldDateTime, guildId, item.id]
+        [quantityChange, guildId, item.id]
       )
       .then(() => this.getGuildItem(guildId, item.id));
   }
