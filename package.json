@@ -19,7 +19,7 @@
   "homepage": "https://github.com/Hashiphoto/Raphtalia#readme",
   "dependencies": {
     "@discordjs/opus": "^0.3.2",
-    "cron": "^1.8.2",
+    "cron": "1.7.2",
     "dayjs": "^1.8.33",
     "delay": "^4.4.0",
     "diacritic-regex": "^1.1.0",
