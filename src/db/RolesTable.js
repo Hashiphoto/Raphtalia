@@ -10,7 +10,7 @@ class RolesTable {
    */
   constructor(pool) {
     this.pool = pool;
-    this.contestSelect = "SELECT *, rc.id as contestId FROM raphtaliaDev.role_contests rc ";
+    this.contestSelect = "SELECT *, rc.id as contestId FROM role_contests rc ";
   }
 
   /**

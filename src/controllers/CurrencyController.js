@@ -108,14 +108,11 @@ class CurrencyController extends GuildBasedController {
    * @returns {Promise<RoleContest|null>}
    */
   bidOnRoleContest(role, member, amount) {
-    console.log(`Role: ${role.id}, Member: ${member.id}, Amount: ${amount}`);
     return this.db.roles.findRoleContest(role.id, member.id).then((roleContest) => {
       if (!roleContest) {
-        console.log("Contest not found");
         return null;
       }
 
-      console.log(`Contest ${roleContest.id} match`);
       return this.db.roles
         .insertContestBid(roleContest.id, member.id, amount)
         .then(() => roleContest);
