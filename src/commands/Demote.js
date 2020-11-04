@@ -5,6 +5,7 @@ import MemberController from "../controllers/MemberController.js";
 
 class Demote extends Command {
   /**
+   * @deprecated
    * @param {Discord.Message} message
    * @param {MemberController} memberController
    */

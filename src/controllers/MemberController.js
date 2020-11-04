@@ -19,7 +19,9 @@ class MemberController extends GuildBasedController {
    * @param {Discord.GuildMember} target
    */
   hasAuthorityOver(sender, target) {
-    return sender.id != target.id && sender.highestRole.comparePositionTo(target.highestRole) > 0;
+    return (
+      sender.id != target.id && sender.roles.highest.comparePositionTo(target.roles.highest) > 0
+    );
   }
 
   /**
@@ -129,9 +131,9 @@ class MemberController extends GuildBasedController {
    * in the hierarchy
    */
   getNextRole(member) {
-    var curRole = member.hoistRole ?? this.guild.roles.find((r) => r.name === "@everyone");
+    var curRole = member.roles.hoist ?? this.guild.roles.cache.find((r) => r.name === "@everyone");
 
-    var higherRoles = this.guild.roles
+    var higherRoles = this.guild.roles.cache
       .filter((role) => role.comparePositionTo(curRole) > 0 && role.hoist)
       .array()
       .sort((role1, role2) => {
@@ -154,12 +156,12 @@ class MemberController extends GuildBasedController {
    * in the hierarchy
    */
   getPreviousRole(member) {
-    var curRole = member.hoistRole;
+    var curRole = member.roles.hoist;
     if (!curRole) {
       return null;
     }
 
-    var lowerRoles = this.guild.roles
+    var lowerRoles = this.guild.roles.cache
       .filter((role) => role.comparePositionTo(curRole) < 0 && role.hoist)
       .array()
       .sort((role1, role2) => {
@@ -181,10 +183,12 @@ class MemberController extends GuildBasedController {
   pardonMember(member) {
     return this.db.users.setInfractions(member.id, member.guild.id, 0).then(() => {
       const response = `${member}'s infractions have been reset\n`;
-      const exileRole = this.guild.roles.find((r) => r.name === "Exile");
-      const inExile = member.roles.has(exileRole.id);
+      const exileRole = this.guild.roles.cache.find((r) => r.name === "Exile");
+      const inExile = member.roles.cache.has(exileRole.id);
       if (inExile) {
-        return member.removeRole(exileRole).then(() => response + `${member}'s exile has ended\n`);
+        return member.roles
+          .remove(exileRole)
+          .then(() => response + `${member}'s exile has ended\n`);
       }
 
       return response;
@@ -199,9 +203,9 @@ class MemberController extends GuildBasedController {
    * @returns {Promise<boolean>} - Whether the member was released from exile or not
    */
   exileMember(member, duration) {
-    const exileRole = this.guild.roles.find((r) => r.name === "Exile");
-    return member.addRole(exileRole).then(() => {
-      return delay(duration).then(() => member.removeRole(exileRole));
+    const exileRole = this.guild.roles.cache.find((r) => r.name === "Exile");
+    return member.roles.add(exileRole).then(() => {
+      return delay(duration).then(() => member.roles.remove(exileRole));
     });
   }
 
@@ -214,7 +218,7 @@ class MemberController extends GuildBasedController {
    */
   hasRole(member, role) {
     role = RoleUtil.convertToRole(member.guild, role);
-    return member.roles.get(role.id);
+    return member.roles.cache.get(role.id);
   }
 
   /**
@@ -225,7 +229,7 @@ class MemberController extends GuildBasedController {
    */
   hasRoleOrHigher(member, role) {
     role = RoleUtil.convertToRole(member.guild, role);
-    return member.highestRole.comparePositionTo(role) >= 0;
+    return member.roles.highest.comparePositionTo(role) >= 0;
   }
 
   /**
@@ -238,10 +242,10 @@ class MemberController extends GuildBasedController {
     let discordRole = RoleUtil.convertToRole(member.guild, role);
 
     // Remove all hoisted roles and add the ones specified
-    let hoistedRoles = member.roles.filter((role) => role.hoist);
-    return member
-      .removeRoles(hoistedRoles)
-      .then(() => member.addRoles(discordRole).then(() => true))
+    let hoistedRoles = member.roles.cache.filter((role) => role.hoist);
+    return member.roles
+      .remove(hoistedRoles)
+      .then(() => member.roles.add(discordRole).then(() => true))
       .catch(() => {
         console.error("Could not change roles for " + member.displayName);
         return false;
@@ -255,7 +259,7 @@ class MemberController extends GuildBasedController {
   addRoles(member, roles) {
     var discordRoles = RoleUtil.parseRoles(member.guild, roles);
 
-    return member.addRoles(discordRoles);
+    return member.roles.add(discordRoles);
   }
 
   /**
@@ -282,7 +286,7 @@ class MemberController extends GuildBasedController {
 
       // If it's full, but not contested, start a new contest
       if (!dbRole.unlimited && nextRole.members.size >= dbRole.memberLimit) {
-        return this.startContest(nextRole, member.hoistRole, member).then(() => {
+        return this.startContest(nextRole, member.roles.hoist, member).then(() => {
           // TODO: Turn this object into a type
           return { available: false, role: nextRole };
         });
@@ -378,7 +382,7 @@ class MemberController extends GuildBasedController {
       }
       const promises = contests.map((contest) => {
         const role = RoleUtil.convertToRole(this.guild, contest.roleId);
-        const initiator = this.guild.members.get(contest.initiatorId);
+        const initiator = this.guild.members.cache.get(contest.initiatorId);
         const participants = role.members.array();
         participants.push(initiator);
 

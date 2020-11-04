@@ -34,11 +34,11 @@ class Exile extends Command {
     }
 
     // Ensure exile role exists
-    if (!this.guild.roles.find((r) => r.name === "Exile")) {
-      await this.guild
-        .createRole({ name: "Exile", hoist: false, color: "#010000" })
+    if (!this.guild.roles.cache.find((r) => r.name === "Exile")) {
+      await this.guild.roles
+        .create({ data: { name: "Exile", hoist: false, color: "#010000" } })
         .then((role) => {
-          return role.setPosition(this.guild.roles.size - 2);
+          return role.setPosition(this.guild.roles.cache.size - 2);
         });
     }
 

@@ -62,12 +62,12 @@ class Play extends Command {
           quality: "highestaudio",
           highWaterMark: 1 << 25,
         });
-        const dispatcher = connection.playStream(stream, {
+        const dispatcher = connection.play(stream, {
           volume: vol,
           highWaterMark: 1,
         });
 
-        dispatcher.on("end", () => voiceChannel.leave());
+        dispatcher.on("finish", () => voiceChannel.leave());
       })
       .catch((error) => {
         console.log(error);
@@ -112,7 +112,7 @@ class Play extends Command {
       const folderName = matches[1].trim();
       const channelName = matches[3].trim();
 
-      return this.guild.channels.find(
+      return this.guild.channels.cache.find(
         (channel) =>
           channel.type == "voice" &&
           channel.name.toLowerCase() === channelName.toLowerCase() &&
@@ -124,7 +124,7 @@ class Play extends Command {
     // Just channel name
     const channelName = matches[1].trim();
 
-    return this.guild.channels.find(
+    return this.guild.channels.cache.find(
       (channel) =>
         channel.type == "voice" && channel.name.toLowerCase() === channelName.toLowerCase()
     );

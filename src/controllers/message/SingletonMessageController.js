@@ -29,7 +29,7 @@ class SingletonMessageController extends GuildBasedController {
   }
 
   /**
-   * @returns {Promise<Discord.RichEmbed>}
+   * @returns {Promise<Discord.MessageEmbed>}
    */
   async generateEmbed() {
     throw new Error("This function must be overriden");
@@ -53,13 +53,13 @@ class SingletonMessageController extends GuildBasedController {
   }
 
   async fetchMessage(messageId) {
-    let textChannels = this.guild.channels
+    let textChannels = this.guild.channels.cache
       .filter((channel) => channel.type === "text" && !channel.deleted)
       .array();
 
     for (const channel of textChannels) {
       try {
-        const message = await channel.fetchMessage(messageId);
+        const message = await channel.messages.fetch(messageId);
         return message;
       } catch (error) {
         if (

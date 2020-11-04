@@ -13,27 +13,26 @@ class RoleStatusController extends SingletonMessageController {
   }
 
   /**
-   * @returns {Promise<Discord.RichEmbed>}
+   * @returns {Promise<Discord.MessageEmbed>}
    */
   async generateEmbed() {
     const roleFields = await this.getFields();
-    const statusEmbed = {
-      color: 0x73f094,
-      title: "Roles",
-      timestamp: new Date(),
-      fields: roleFields,
-      thumbnail: { url: "https://i.imgur.com/Q8GEn6N.png" },
-    };
+    const statusEmbed = new Discord.MessageEmbed()
+      .setColor(0x73f094)
+      .setTitle("Roles")
+      .setTimestamp(new Date())
+      .setThumbnail("https://i.imgur.com/Q8GEn6N.png")
+      .addFields(roleFields);
 
     return statusEmbed;
   }
 
   /**
-   * @returns {Promise<EmbedField[]>}
+   * @returns {Promise<Discord.EmbedFieldData[]>}
    */
   async getFields() {
     let fields = [];
-    let discordRoles = this.guild.roles
+    let discordRoles = this.guild.roles.cache
       .filter((role) => role.hoist)
       .sort((a, b) => b.calculatedPosition - a.calculatedPosition)
       .array();

@@ -18,18 +18,18 @@ class Register extends Command {
   }
 
   async execute() {
-    let voterRole = this.guild.roles.find((r) => r.name === "Voter");
+    let voterRole = this.guild.roles.cache.find((r) => r.name === "Voter");
     if (!voterRole) {
       // TODO: consolidate this with HoldVote, which also can create the Voter role
-      voterRole = await this.guild.createRole({ name: "Voter", hoist: false, color: "#4cd692" });
+      voterRole = await this.guild.roles.create({ name: "Voter", hoist: false, color: "#4cd692" });
     }
 
     if (this.message.member.roles.has(voterRole.id)) {
       return this.inputChannel.watchSend(`You are already a registered voter, dingus`);
     }
 
-    return this.message.member
-      .addRoles(voterRole)
+    return this.message.member.roles
+      .add(voterRole)
       .then(() => {
         this.inputChannel.watchSend(`You are now a registered voter!`);
       })

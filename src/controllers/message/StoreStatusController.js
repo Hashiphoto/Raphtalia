@@ -13,23 +13,22 @@ class StoreStatusController extends SingletonMessageController {
   }
 
   /**
-   * @returns {Promise<Discord.RichEmbed>}
+   * @returns {Promise<Discord.MessageEmbed>}
    */
   async generateEmbed() {
     const storeFields = await this.getStoreFields();
-    const statusEmbed = {
-      color: 0xe3c91e,
-      title: "Store",
-      timestamp: new Date(),
-      fields: storeFields,
-      thumbnail: { url: "https://i.imgur.com/b8xakAL.png" },
-    };
+    const statusEmbed = new Discord.MessageEmbed()
+      .setColor(0xe3c91e)
+      .setTitle("Store")
+      .setTimestamp(new Date())
+      .setThumbnail("https://i.imgur.com/b8xakAL.png")
+      .addFields(storeFields);
 
     return statusEmbed;
   }
 
   /**
-   * @returns {Promise<EmbedField[]>}
+   * @returns {Promise<Discord.EmbedFieldData[]>}
    */
   async getStoreFields() {
     const fields = [];

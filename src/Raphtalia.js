@@ -1,4 +1,4 @@
-import Discord from "discord.js";
+import Discord, { TextChannel } from "discord.js";
 import dayjs from "dayjs";
 import delay from "delay";
 
@@ -121,7 +121,7 @@ class Raphtalia {
       }
     });
 
-    this.client.on("disconnect", (event) => {
+    this.client.on("sharedDisconnect", (event) => {
       console.log(`Bot disconnecting\n ${event.reason}\n ${event.code}`);
       process.exit();
     });
@@ -129,7 +129,7 @@ class Raphtalia {
     this.client.on("messageReactionAdd", (messageReaction, user) => {
       const message = messageReaction.message;
       // Only pay users for their first reaction to a message
-      if (message.reactions.filter((e) => e.users.get(user.id)).size > 1) {
+      if (message.reactions.cache.filter((e) => e.users.cache.get(user.id)).size > 1) {
         return;
       }
       this.payoutReaction(message, user);
@@ -143,7 +143,7 @@ class Raphtalia {
         message = messageReaction.message;
       }
       // Only subtract money for removing the user's only remaining reaction
-      if (message.reactions.filter((e) => e.users.get(user.id)).size > 0) {
+      if (message.reactions.cache.filter((e) => e.users.get(user.id)).size > 0) {
         return;
       }
       this.payoutReaction(message, user, true);
@@ -156,13 +156,13 @@ class Raphtalia {
      */
     this.client.on("raw", (packet) => {
       if (!["MESSAGE_REACTION_ADD", "MESSAGE_REACTION_REMOVE"].includes(packet.t)) return;
-      const channel = this.client.channels.get(packet.d.channel_id);
+      const channel = this.client.channels.cache.get(packet.d.channel_id);
       if (channel.messages.has(packet.d.message_id)) return;
-      channel.fetchMessage(packet.d.message_id).then((message) => {
+      channel.messages.fetch(packet.d.message_id).then((message) => {
         const emoji = packet.d.emoji.id
           ? `${packet.d.emoji.name}:${packet.d.emoji.id}`
           : packet.d.emoji.name;
-        const reaction = message.reactions.get(emoji);
+        const reaction = message.reactions.cache.get(emoji);
         if (reaction) {
           reaction.users.set(packet.d.user_id, this.client.users.get(packet.d.user_id));
         } else {
@@ -176,7 +176,7 @@ class Raphtalia {
           this.client.emit(
             "messageReactionRemove",
             reaction ?? message,
-            this.client.users.get(packet.d.user_id)
+            this.client.users.cache.get(packet.d.user_id)
           );
         }
       });
@@ -215,7 +215,7 @@ class Raphtalia {
       return;
     }
 
-    const member = message.guild.members.get(user.id);
+    const member = message.guild.members.cache.get(user.id);
     const currencyController = new CurrencyController(this.db, message.guild);
 
     return currencyController.payoutReaction(message, member, undo);
@@ -245,7 +245,7 @@ class Raphtalia {
    * Adds the "watchSend" method to the channel to send messages and delete them
    * after a delay (set in the channel's db entry)
    *
-   * @param {Discord.Channel} channel
+   * @param {Discord.TextChannel} channel
    * @returns {Number} Milliseconds before messages in this channel should be deleted
    */
   attachWatchCommand(channel) {
@@ -255,15 +255,13 @@ class Raphtalia {
         deleteTime = dbChannel.delete_ms;
       }
       channel.autoDelete = deleteTime >= 0;
-      channel.watchSend = function (...content) {
-        return this.send(...content).then((message) => {
+      channel.watchSend = (...content) =>
+        channel.send(...content).then((message) => {
           if (deleteTime >= 0) {
-            message.delete(deleteTime);
+            message.delete({ timeout: deleteTime });
           }
           return message;
         });
-      };
-
       return deleteTime;
     });
   }
@@ -274,8 +272,8 @@ class Raphtalia {
    */
   selectCommand(message) {
     // Check for exile
-    const exileRole = message.guild.roles.find((r) => r.name === "Exile");
-    if (exileRole && message.member.roles.has(exileRole.id)) {
+    const exileRole = message.guild.roles.cache.find((r) => r.name === "Exile");
+    if (exileRole && message.member.roles.cache.has(exileRole.id)) {
       return Promise.resolve(new NullCommand(message, `You cannot use commands while in exile`));
     }
 

@@ -55,7 +55,7 @@ class CommandParser {
     for (let i = 0; i < args.length; i++) {
       let roleMatches = args[i].match(/<@&(\d+)>/);
       if (roleMatches) {
-        let role = guild.roles.get(roleMatches[1]);
+        let role = guild.roles.cache.get(roleMatches[1]);
         roles.push(role);
       }
     }
@@ -77,13 +77,13 @@ class CommandParser {
     if (memberMatches) {
       // The first element in the matches array will be the entire mention, not just the ID,
       // so use index 1.
-      return guild.members.get(memberMatches[1]);
+      return guild.members.cache.get(memberMatches[1]);
     }
 
     // Check if a role was mentioned instead
     let roleMatches = mention.match(/<@&(\d+)>/);
     if (roleMatches) {
-      let role = guild.roles.get(roleMatches[1]);
+      let role = guild.roles.cache.get(roleMatches[1]);
       return role.members.array();
     }
   }

@@ -37,6 +37,9 @@ class Inventory {
   }
 
   async toUserItem(row) {
+    if (!row) {
+      return null;
+    }
     const commands = await this.getCommandsForItem(row.id);
 
     return new UserItem(row.id, row.name, row.max_uses, row.quantity, commands, row.remaining_uses);
@@ -209,6 +212,11 @@ class Inventory {
       });
   }
 
+  /**
+   * @param {String} guildId
+   * @param {String} userId
+   * @param {String} itemId
+   */
   getUserItem(guildId, userId, itemId) {
     return this.pool
       .query(this.userSelect + "WHERE ui.guild_id=? AND ui.user_id=? AND i.id=?", [

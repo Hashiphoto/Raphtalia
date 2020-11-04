@@ -12,7 +12,7 @@ class UserInventory {
   }
 
   /**
-   * @returns {Discord.RichEmbed}
+   * @returns {Discord.MessageEmbed}
    */
   toEmbed() {
     const fields = this.items.map((item) => {
@@ -23,11 +23,11 @@ class UserInventory {
       };
     });
 
-    const embed = new Discord.RichEmbed()
+    const embed = new Discord.MessageEmbed()
       .setColor(this.member.displayColor)
       .setTitle(`${this.member.displayName}'s Inventory`)
       .setTimestamp(new Date())
-      .setThumbnail(this.member.user.avatarURL);
+      .setThumbnail(this.member.user.avatarURL());
 
     fields.forEach((field) => embed.addField(field.name, field.value, field.inline));
 

@@ -5,8 +5,8 @@ import Command from "./Command.js";
 class Headpat extends Command {
   constructor(message) {
     super(message);
-    this.instructions = "**Comfort**\nI will give a headpat to the member(s) is specified";
-    this.usage = "Usage: `Comfort @member`";
+    this.instructions = "**Headpat**\nI will give a headpat to the member(s) is specified";
+    this.usage = "Usage: `Headpat @member`";
   }
 
   execute() {

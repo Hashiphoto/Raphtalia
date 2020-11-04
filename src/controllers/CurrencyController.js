@@ -54,12 +54,12 @@ class CurrencyController extends GuildBasedController {
    * @param {Discord.GuildMember} member
    */
   getRoleScalar(member) {
-    const role = member.hoistRole;
+    const role = member.roles.hoist;
     if (!role) {
       return 0;
     }
 
-    const hoistRoles = member.guild.roles
+    const hoistRoles = member.guild.roles.cache
       .filter((r) => r.hoist)
       .sort((a, b) => a.calculatedPosition - b.calculatedPosition)
       .array();

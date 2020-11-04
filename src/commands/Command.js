@@ -18,7 +18,7 @@ class Command {
       const isHigher = (member, otherMember) => {
         return (
           member.id != otherMember.id &&
-          member.highestRole.comparePositionTo(otherMember.highestRole) > 0
+          member.roles.highest.comparePositionTo(otherMember.roles.highest) > 0
         );
       };
       if (Array.isArray(input)) {
