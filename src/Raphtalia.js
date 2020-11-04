@@ -1,4 +1,4 @@
-import Discord, { TextChannel } from "discord.js";
+import Discord from "discord.js";
 import dayjs from "dayjs";
 import delay from "delay";
 

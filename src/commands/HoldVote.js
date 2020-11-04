@@ -197,7 +197,7 @@ class HoldVote extends Command {
     const voterRole = this.guild.roles.cache.find((r) => r.name === "Voter");
     if (!voterRole) {
       // Create it asyncrhonously
-      this.guild.roles.create({ name: "Voter", hoist: false, color: "#4cd692" });
+      this.guild.roles.create({ data: { name: "Voter", hoist: false, color: "#4cd692" } });
       return new Map();
     }
     return voterRole.members;

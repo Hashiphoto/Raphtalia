@@ -12,9 +12,7 @@ import Question from "./structures/Question.js";
  */
 function sendTimedMessage(channel, member, question, showDuration = true) {
   var re = new RegExp(question.answer, "gi");
-  const filter = function (message) {
-    return message.content.match(re) != null && message.author.id === member.id;
-  };
+  const filter = (message) => message.content.match(re) != null && message.author.id === member.id;
   let text = `${member} `;
   if (showDuration) {
     text += `\`(${question.timeout / 1000}s)\`\n`;
@@ -22,9 +20,8 @@ function sendTimedMessage(channel, member, question, showDuration = true) {
   text += question.prompt;
   return (channel.watchSend ? channel.watchSend(text) : channel.send(text))
     .then(() => {
-      // Get the first message that matches the filter. Errors out if the time limit is reached
       return channel.awaitMessages(filter, {
-        maxMatches: 1,
+        max: 1,
         time: question.timeout,
         errors: ["time"],
       });
