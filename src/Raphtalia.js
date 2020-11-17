@@ -275,7 +275,7 @@ class Raphtalia {
   selectCommand(message) {
     // Check for exile
     const exileRole = message.guild.roles.find((r) => r.name === "Exile");
-    if (exileRole && message.member.roles.has(exileRole.id)) {
+    if (exileRole && message.member.roles.find((r) => r.id === exileRole.id)) {
       return Promise.resolve(new NullCommand(message, `You cannot use commands while in exile`));
     }
 
