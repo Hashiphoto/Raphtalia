@@ -17,6 +17,8 @@ class SingletonMessageController extends GuildBasedController {
     const statusEmbed = await this.generateEmbed();
 
     return this.db.guilds.get(this.guild.id).then(async (dbGuild) => {
+      console.log(`Updating roles for ${dbGuild.name}`);
+      console.log(dbGuild[this.guildProperty]);
       // Exit if no message to update
       if (!dbGuild || !dbGuild[this.guildProperty]) {
         return;

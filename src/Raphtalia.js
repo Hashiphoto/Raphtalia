@@ -127,6 +127,9 @@ class Raphtalia {
     });
 
     this.client.on("messageReactionAdd", (messageReaction, user) => {
+      if (!user) {
+        return;
+      }
       const message = messageReaction.message;
       // Only pay users for their first reaction to a message
       if (message.reactions.filter((e) => e.users.get(user.id)).size > 1) {
@@ -136,6 +139,9 @@ class Raphtalia {
     });
 
     this.client.on("messageReactionRemove", (messageReaction, user) => {
+      if (!user) {
+        return;
+      }
       // It's possible that the message wasn't cached. If so, the raw event processor will pass in
       // the message instead
       let message = messageReaction;
