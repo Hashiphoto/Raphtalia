@@ -59,8 +59,8 @@ class Play extends Command {
       .then((connection) => {
         const stream = ytdl(url, {
           filter: "audioonly",
-          quality: "highestaudio",
-          highWaterMark: 1 << 25,
+          quality: "lowestaudio",
+          highWaterMark: 1 << 20,
         });
         const dispatcher = connection.play(stream, {
           volume: vol,
