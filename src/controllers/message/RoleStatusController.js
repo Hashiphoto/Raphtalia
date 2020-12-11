@@ -34,8 +34,9 @@ class RoleStatusController extends SingletonMessageController {
     let fields = [];
     let discordRoles = this.guild.roles.cache
       .filter((role) => role.hoist)
-      .sort((a, b) => b.calculatedPosition - a.calculatedPosition)
+      .sort((a, b) => b.comparePositionTo(a))
       .array();
+
     for (let i = 0; i < discordRoles.length; i++) {
       let dbRole = await this.db.roles.getSingle(discordRoles[i].id);
       let roleInfo = `Members: ${discordRoles[i].members.size}`;

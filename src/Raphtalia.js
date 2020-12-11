@@ -114,8 +114,8 @@ class Raphtalia {
     this.client.on("guildMemberUpdate", (oldMember, newMember) => {
       // Check if roles changed
       const differentSize = oldMember.roles.size !== newMember.roles.size;
-      for (const [id, role] of oldMember.roles) {
-        if (differentSize || !newMember.roles.has(id)) {
+      for (const [id, role] of oldMember.roles.cache) {
+        if (differentSize || !newMember.roles.cache.has(id)) {
           return new RoleStatusController(this.db, newMember.guild).update();
         }
       }

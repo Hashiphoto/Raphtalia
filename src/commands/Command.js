@@ -15,6 +15,10 @@ class Command {
     this.guild = message.guild;
     this.item;
     this.sender.hasAuthorityOver = (input) => {
+      /**
+       * @param {Discord.GuildMember} member
+       * @param {Discord.GuildMember} otherMember
+       */
       const isHigher = (member, otherMember) => {
         return (
           member.id != otherMember.id &&
