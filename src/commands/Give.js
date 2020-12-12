@@ -82,24 +82,28 @@ class Give extends Command {
         );
       }
 
-      const givePromises = targets.map((target) => {
-        // Giving money to Raphtalia, presumably for a contest
-        if (target.id === this.client.user.id) {
-          return this.currencyController
-            .bidOnRoleContest(this.message.member.roles.hoist, this.message.member, rNumber.amount)
-            .then((roleContest) =>
-              roleContest
-                ? `Paid ${rNumber.toString()} towards contesting the ${
-                    this.message.guild.roles.cache.get(roleContest.roleId).name
-                  } role!`
-                : `Thanks for the ${rNumber.toString()}!`
-            );
-        } else {
-          return this.currencyController
-            .transferCurrency(this.sender, target, rNumber.amount)
-            .then(() => `Transfered ${rNumber.toString()} to ${target}!`);
-        }
-      });
+      const givePromises = targets.map((target) =>
+        this.currencyController.transferCurrency(this.sender, target, rNumber.amount).then(() => {
+          // Giving money to Raphtalia, presumably for a contest
+          if (target.id === this.client.user.id) {
+            return this.currencyController
+              .bidOnRoleContest(
+                this.message.member.roles.hoist,
+                this.message.member,
+                rNumber.amount
+              )
+              .then((roleContest) =>
+                roleContest
+                  ? `Paid ${rNumber.toString()} towards contesting the ${
+                      this.message.guild.roles.cache.get(roleContest.roleId).name
+                    } role!`
+                  : `Thanks for the ${rNumber.toString()}!`
+              );
+          } else {
+            return `Transfered ${rNumber.toString()} to ${target}!`;
+          }
+        })
+      );
 
       return Promise.all(givePromises)
         .then((messages) => messages.reduce(this.sum))

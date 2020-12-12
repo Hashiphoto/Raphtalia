@@ -339,12 +339,6 @@ class MemberController extends GuildBasedController {
 
     this.setInfractions(target, 0);
 
-    // TODO: Figure out if exile should have to be a separate command only
-    // if (nextLowest.id == discordConfig().roles.exile) {
-    //   exileMember(target, channel, dayjs().add(1, "day"));
-    //   return;
-    // }
-
     let changed = false;
     while (!changed) {
       await this.setHoistedRole(target, nextLowest)
