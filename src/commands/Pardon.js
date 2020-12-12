@@ -18,7 +18,7 @@ class Pardon extends Command {
     this.usage = "Usage: `Pardon @member`";
   }
 
-  execute() {
+  async execute() {
     const targets = this.message.mentionedMembers;
     if (targets.length === 0) {
       return this.sendHelpMessage();
@@ -29,6 +29,15 @@ class Pardon extends Command {
         `Your ${this.item.name} does not have enough charges. ` +
           `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
       );
+    }
+
+    // Ensure exile role exists
+    if (!this.guild.roles.find((r) => r.name === "Exile")) {
+      await this.guild
+        .createRole({ name: "Exile", hoist: false, color: "#010000" })
+        .then((role) => {
+          return role.setPosition(this.guild.roles.size - 2);
+        });
     }
 
     const pardonPromises = targets.map((target) => {

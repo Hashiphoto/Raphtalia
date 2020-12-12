@@ -127,6 +127,9 @@ class Raphtalia {
     });
 
     this.client.on("messageReactionAdd", (messageReaction, user) => {
+      if (!user) {
+        return;
+      }
       const message = messageReaction.message;
       // Only pay users for their first reaction to a message
       if (message.reactions.cache.filter((e) => e.users.cache.get(user.id)).size > 1) {
@@ -136,6 +139,9 @@ class Raphtalia {
     });
 
     this.client.on("messageReactionRemove", (messageReaction, user) => {
+      if (!user) {
+        return;
+      }
       // It's possible that the message wasn't cached. If so, the raw event processor will pass in
       // the message instead
       let message = messageReaction;
@@ -273,7 +279,7 @@ class Raphtalia {
   selectCommand(message) {
     // Check for exile
     const exileRole = message.guild.roles.cache.find((r) => r.name === "Exile");
-    if (exileRole && message.member.roles.cache.has(exileRole.id)) {
+    if (exileRole && message.member.roles.cache.find((r) => r.id === exileRole.id)) {
       return Promise.resolve(new NullCommand(message, `You cannot use commands while in exile`));
     }
 
