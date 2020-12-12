@@ -53,7 +53,7 @@ class Give extends Command {
       return this.sendHelpMessage();
     }
 
-    return this.inventoryController.getUserItem(this.message.sender, itemName).then((item) => {
+    return this.inventoryController.findUserItem(this.message.sender, itemName).then((item) => {
       if (!item) {
         return this.sendHelpMessage(
           `You do not have any item named "${itemName}". ` +

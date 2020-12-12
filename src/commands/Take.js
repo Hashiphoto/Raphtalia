@@ -55,7 +55,7 @@ class Take extends Command {
       return this.sendHelpMessage();
     }
 
-    return this.inventoryController.getUserItem(target, itemName).then((item) => {
+    return this.inventoryController.findUserItem(target, itemName).then((item) => {
       if (!item) {
         return this.sendHelpMessage(
           `${target} does not have any item named "${itemName}". ` +

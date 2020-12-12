@@ -25,7 +25,7 @@ class InventoryController extends GuildBasedController {
    * @param {Discord.GuildMember} member
    * @returns {Promise<UserItem>}
    */
-  getUserItem(member, name) {
+  findUserItem(member, name) {
     return this.db.inventory.findUserItem(this.guild.id, member.id, name);
   }
 
