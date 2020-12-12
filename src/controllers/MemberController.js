@@ -237,14 +237,17 @@ class MemberController extends GuildBasedController {
    *
    * @param {Discord.GuildMember} member - The member to set the roles for
    * @param {RoleResolvable[]} role - An array of roles representing the names of the roles to give the members
+   * @param {Boolean} clearAllRoles - True to remove all hoisted and non-hoisted roles first
    */
-  async setHoistedRole(member, role) {
+  async setHoistedRole(member, role, clearAllRoles = false) {
     let discordRole = RoleUtil.convertToRole(member.guild, role);
 
     // Remove all hoisted roles and add the ones specified
-    let hoistedRoles = member.roles.cache.filter((role) => role.hoist);
+    let currentRoles = clearAllRoles
+      ? member.roles.cache
+      : member.roles.cache.filter((role) => role.hoist);
     return member.roles
-      .remove(hoistedRoles)
+      .remove(currentRoles)
       .then(() => member.roles.add(discordRole).then(() => true))
       .catch(() => {
         console.error("Could not change roles for " + member.displayName);
@@ -264,14 +267,16 @@ class MemberController extends GuildBasedController {
 
   /**
    * @param {Discord.GuildMember} member
-   * @returns {Boolean, Discord.Role} The next role to promote to, or null if a contest was started
+   * @returns {Promise<{Boolean, Discord.Role}>} The next role to promote to, or null if a contest was started
    * @throws {MemberLimitError}
    * @throws {RangeError}
    */
   nextRoleAvailable(member) {
     let nextRole = this.getNextRole(member, this.guild);
     if (nextRole == null) {
-      throw new RangeError(`${member} holds the highest office already\n`);
+      return new Promise(() => {
+        throw new RangeError(`${member} holds the highest office already\n`);
+      });
     }
 
     return this.db.roles.getSingle(nextRole.id).then((dbRole) => {
@@ -388,7 +393,7 @@ class MemberController extends GuildBasedController {
 
         const loserBid = contest.getLoser(participants);
 
-        return this.punishContestLoser(initiator, loserBid)
+        return this.punishContestLoser(initiator, loserBid, role)
           .then((feedback) => {
             this.db.roles.deleteContest(contest.id);
             return feedback;
@@ -409,15 +414,16 @@ class MemberController extends GuildBasedController {
   /**
    * @param {Discord.GuildMember} initiator
    * @param {RoleContestBid} loserBid
+   * @param {Discord.Role} role
    */
-  punishContestLoser(initiator, loserBid) {
+  punishContestLoser(initiator, loserBid, role) {
     // If the initiator loses, we can just demote him
     if (loserBid.userId === initiator.id) {
       return this.demoteMember(initiator);
     }
-    // Switching places with someone higher
+    // Initiator promoted to role. Loser demoted
     else {
-      return this.promoteMember(initiator).then((feedback) =>
+      return this.promoteMember(initiator, role).then((feedback) =>
         this.demoteMember(loserBid.member, feedback)
       );
     }
