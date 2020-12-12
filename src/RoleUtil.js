@@ -26,7 +26,7 @@ class RoleUtil {
     }
 
     // Test if it's an ID
-    let role = guild.roles.get(roleResolvable);
+    let role = guild.roles.cache.get(roleResolvable);
     if (role != null) {
       return role;
     }
@@ -34,14 +34,14 @@ class RoleUtil {
     // Test if it's a mention
     let matches = roleResolvable.match(/\d+/);
     if (matches) {
-      role = guild.roles.get(matches[0]);
+      role = guild.roles.cache.get(matches[0]);
       if (role != null) {
         return role;
       }
     }
 
     // Test if it's a name
-    role = guild.roles.find((r) => r.name.toLowerCase() === roleResolvable.toLowerCase());
+    role = guild.roles.cache.find((r) => r.name.toLowerCase() === roleResolvable.toLowerCase());
 
     return role;
   }
@@ -51,7 +51,7 @@ class RoleUtil {
    * @returns {Discord.Collection<Discord.Role>} The hoisted roles, sorted lowest to highest
    */
   static getHoistedRoles(guild) {
-    return guild.roles
+    return guild.roles.cache
       .filter((role) => role.hoist)
       .sort((a, b) => a.calculatedPosition - b.calculatedPosition);
   }

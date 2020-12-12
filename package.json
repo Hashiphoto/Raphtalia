@@ -18,16 +18,15 @@
   },
   "homepage": "https://github.com/Hashiphoto/Raphtalia#readme",
   "dependencies": {
-    "@discordjs/opus": "^0.3.2",
+    "@discordjs/opus": "^0.3.3",
     "cron": "1.7.2",
     "dayjs": "^1.8.33",
     "delay": "^4.4.0",
     "diacritic-regex": "^1.1.0",
-    "discord.js": "^11.6.4",
-    "ffmpeg": "0.0.4",
+    "discord.js": "^12.4.1",
     "minimist": "^1.2.3",
     "mysql2": "^2.1.0",
-    "ytdl-core": "^2.1.7"
+    "ytdl-core": "^4.1.4"
   },
   "devDependencies": {
     "mocha": "^8.1.1",

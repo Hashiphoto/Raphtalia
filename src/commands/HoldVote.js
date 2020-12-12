@@ -180,7 +180,7 @@ class HoldVote extends Command {
     for (const [id, user] of optionsMessage.mentions.users) {
       let re = new RegExp(`<@!?${id}>`);
       let plainText = user.tag;
-      const member = this.guild.members.get(user.id);
+      const member = this.guild.members.cache.get(user.id);
       if (member && member.nickname) {
         plainText += ` (${member.nickname})`;
       }
@@ -194,10 +194,10 @@ class HoldVote extends Command {
    * @returns {Discord.Collection<Discord.GuildMember>}
    */
   getVoters() {
-    const voterRole = this.guild.roles.find((r) => r.name === "Voter");
+    const voterRole = this.guild.roles.cache.find((r) => r.name === "Voter");
     if (!voterRole) {
       // Create it asyncrhonously
-      this.guild.createRole({ name: "Voter", hoist: false, color: "#4cd692" });
+      this.guild.roles.create({ data: { name: "Voter", hoist: false, color: "#4cd692" } });
       return new Map();
     }
     return voterRole.members;

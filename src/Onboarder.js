@@ -7,7 +7,6 @@ import Database from "./db/Database.js";
 import delay from "delay";
 import GuildController from "./controllers/GuildController.js";
 import InventoryController from "./controllers/InventoryController.js";
-import GuildItem from "./structures/GuildItem.js";
 
 const messageSpacing = 800;
 
@@ -60,7 +59,9 @@ class OnBoarder {
               `Thank you! And welcome loyal citizen to ${this.guild.name}! 🎉🎉🎉`
             )
           )
-          .then(() => memberController.setHoistedRole(this.member, discordConfig().roles.neutral))
+          .then(() =>
+            memberController.setHoistedRole(this.member, discordConfig().roles.neutral, true)
+          )
           .then(() => this.db.inventory.findGuildItem(this.guild.id, "Player Badge"))
           .then((playerBadge) =>
             new InventoryController(this.db, this.guild).userPurchase(playerBadge, this.member)

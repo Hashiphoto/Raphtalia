@@ -87,17 +87,21 @@ class Give extends Command {
           // Giving money to Raphtalia, presumably for a contest
           if (target.id === this.client.user.id) {
             return this.currencyController
-              .bidOnRoleContest(this.message.member.hoistRole, this.message.member, rNumber.amount)
+              .bidOnRoleContest(
+                this.message.member.roles.hoist,
+                this.message.member,
+                rNumber.amount
+              )
               .then((roleContest) =>
                 roleContest
                   ? `Paid ${rNumber.toString()} towards contesting the ${
-                      this.message.guild.roles.get(roleContest.roleId).name
+                      this.message.guild.roles.cache.get(roleContest.roleId).name
                     } role!`
                   : `Thanks for the ${rNumber.toString()}!`
               );
+          } else {
+            return `Transfered ${rNumber.toString()} to ${target}!`;
           }
-
-          return `Transfered ${rNumber.toString()} to ${target}!`;
         })
       );
 

@@ -54,7 +54,7 @@ class CensorController extends GuildBasedController {
           );
         }
 
-        const embed = new Discord.RichEmbed()
+        const embed = new Discord.MessageEmbed()
           .setColor(13057084)
           .setTitle("Censorship Report")
           .setDescription(`${message.member}\n> ${censoredMessage}`);

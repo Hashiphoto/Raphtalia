@@ -15,19 +15,18 @@ class BanListStatusController extends SingletonMessageController {
   }
 
   /**
-   * @returns {Promise<Discord.RichEmbed>}
+   * @returns {Promise<Discord.MessageEmbed>}
    */
   async generateEmbed() {
     const censorCtlr = new CensorController(this.db, this.guild);
     const enabled = await censorCtlr.censorshipEnabled();
     const words = await censorCtlr.getAllBannedWords();
-    const statusEmbed = {
-      color: enabled ? 0xf54c38 : 0x471d18,
-      title: `Banned Words | Censorship is ${enabled ? "Enabled" : "Disabled"}`,
-      timestamp: new Date(),
-      description: Util.listFormat(words, ""),
-      thumbnail: { url: "https://i.imgur.com/tnMtgLT.png" },
-    };
+    const statusEmbed = new Discord.MessageEmbed()
+      .setColor(enabled ? 0xf54c38 : 0x471d18)
+      .setTitle(`Banned Words | Censorship is ${enabled ? "Enabled" : "Disabled"}`)
+      .setTimestamp(new Date())
+      .setDescription(Util.listFormat(words, ""))
+      .setThumbnail("https://i.imgur.com/tnMtgLT.png");
 
     return statusEmbed;
   }
