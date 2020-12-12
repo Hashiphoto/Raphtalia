@@ -1,4 +1,4 @@
-import mysqlPromise from "mysql2/promise.js";
+import mysqlPromise from "mysql2/promise";
 import mysql from "mysql2";
 import AmbiguousInputError from "../structures/errors/AmbiguousInputError.js";
 import GuildItem from "../structures/GuildItem.js";
@@ -57,9 +57,11 @@ class Inventory {
    * @param {String} guildId
    * @returns {Promise<GuildItem[]>}
    */
-  getGuildStock(guildId) {
+  getGuildStock(guildId, showHidden = false) {
     return this.pool
-      .query(this.guildSelect + "WHERE guild_id = ?", [guildId])
+      .query(this.guildSelect + "WHERE guild_id = ? " + `${showHidden ? "" : "AND hidden = 0"}`, [
+        guildId,
+      ])
       .then(([rows, fields]) => {
         return rows;
       })
@@ -77,7 +79,8 @@ class Inventory {
   findGuildItem(guildId, itemName) {
     return this.pool
       .query(
-        this.guildSelect + `WHERE guild_id = ? AND name LIKE ${mysql.escape(`%${itemName}%`)}`,
+        this.guildSelect +
+          `WHERE guild_id = ? AND hidden = 0 AND name LIKE ${mysql.escape(`%${itemName}%`)}`,
         [guildId]
       )
       .then(([rows, fields]) => {
@@ -165,11 +168,12 @@ class Inventory {
     ]);
   }
 
-  findUserItem(guildId, userId, itemName) {
+  findUserItem(guildId, userId, itemName, showHidden = false) {
     return this.pool
       .query(
         this.userSelect +
-          `WHERE ui.guild_id=? AND ui.user_id=? AND i.name LIKE ${mysql.escape(`%${itemName}%`)}`,
+          `WHERE ui.guild_id=? AND ui.user_id=? AND i.name LIKE ${mysql.escape(`%${itemName}%`)} ` +
+          `${showHidden ? "" : "AND hidden = 0"}`,
         [guildId, userId]
       )
       .then(([rows, fields]) => {
@@ -195,9 +199,14 @@ class Inventory {
     );
   }
 
-  getUserInventory(guildId, userId) {
+  getUserInventory(guildId, userId, showHidden = false) {
     return this.pool
-      .query(this.userSelect + "WHERE ui.guild_id=? AND ui.user_id=?", [guildId, userId])
+      .query(
+        this.userSelect +
+          "WHERE ui.guild_id=? AND ui.user_id=?" +
+          `${showHidden ? "" : "AND hidden = 0"}`,
+        [guildId, userId]
+      )
       .then(([rows, fields]) => {
         return rows;
       })

@@ -1,4 +1,4 @@
-import mysqlPromise from "mysql2/promise.js";
+import mysqlPromise from "mysql2/promise";
 import DbRole from "../structures/DbRole.js";
 import RoleContest from "../structures/RoleContest.js";
 import RoleContestBid from "../structures/RoleContestBid.js";

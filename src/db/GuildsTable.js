@@ -1,4 +1,4 @@
-import mysqlPromise from "mysql2/promise.js";
+import mysqlPromise from "mysql2/promise";
 import DbGuild from "../structures/DbGuild.js";
 import ScreeningQuestion from "../structures/ScreeningQuestion.js";
 import Question from "../structures/ScreeningQuestion.js";
