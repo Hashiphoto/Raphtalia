@@ -1,9 +1,9 @@
-import mysqlPromise from "mysql2/promise";
-import mysql from "mysql2";
 import AmbiguousInputError from "../structures/errors/AmbiguousInputError.js";
 import GuildItem from "../structures/GuildItem.js";
 import Item from "../structures/Item.js";
 import UserItem from "../structures/UserItem.js";
+import mysql from "mysql2";
+import mysqlPromise from "mysql2/promise";
 
 class Inventory {
   /**
@@ -142,11 +142,12 @@ class Inventory {
       .then(() => this.getGuildItem(guildId, item.id));
   }
 
-  updateGuildItemPrice(guildId, item, priceMultiplier) {
-    return this.pool.query(
-      "UPDATE guild_inventory SET price=price*? WHERE guild_id=? and item_id=?",
-      [priceMultiplier, guildId, item.id]
-    );
+  updateGuildItemPrice(guildId, item, newPrice) {
+    return this.pool.query("UPDATE guild_inventory SET price=? WHERE guild_id=? and item_id=?", [
+      newPrice,
+      guildId,
+      item.id,
+    ]);
   }
 
   /**

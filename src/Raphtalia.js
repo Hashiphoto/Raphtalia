@@ -25,6 +25,7 @@ import Help from "./commands/Help.js";
 import HoldVote from "./commands/HoldVote.js";
 import Infractions from "./commands/Infractions.js";
 import InventoryController from "./controllers/InventoryController.js";
+import JobScheduler from "./JobScheduler.js";
 import Kick from "./commands/Kick.js";
 import MemberController from "./controllers/MemberController.js";
 import NullCommand from "./commands/NullCommand.js";
@@ -36,7 +37,6 @@ import Register from "./commands/Register.js";
 import Report from "./commands/Report.js";
 import RoleStatusController from "./controllers/message/RoleStatusController.js";
 import Roles from "./commands/Roles.js";
-import ScheduleWatcher from "./ScheduleWatcher.js";
 import Screening from "./commands/Screening.js";
 import ServerStatus from "./commands/ServerStatus.js";
 import SoftKick from "./commands/SoftKick.js";
@@ -68,7 +68,7 @@ class Raphtalia {
       console.log(`Logged in! Listening for events...`);
     });
 
-    this.scheduleWatcher = new ScheduleWatcher(this.db, this.client);
+    this.scheduleWatcher = new JobScheduler(this.db, this.client);
     this.scheduleWatcher.start();
   }
 

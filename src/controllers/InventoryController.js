@@ -1,7 +1,7 @@
-import GuildBasedController from "./GuildBasedController.js";
 import Discord from "discord.js";
-import UserInventory from "../structures/UserInventory.js";
+import GuildBasedController from "./GuildBasedController.js";
 import GuildItem from "../structures/GuildItem.js";
+import UserInventory from "../structures/UserInventory.js";
 import UserItem from "../structures/UserItem.js";
 
 class InventoryController extends GuildBasedController {
