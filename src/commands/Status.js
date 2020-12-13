@@ -1,9 +1,8 @@
-import Discord from "discord.js";
-
 import Command from "./Command.js";
 import CurrencyController from "../controllers/CurrencyController.js";
-import RNumber from "../structures/RNumber.js";
+import Discord from "discord.js";
 import MemberController from "../controllers/MemberController.js";
+import RNumber from "../structures/RNumber.js";
 
 class Status extends Command {
   /**
@@ -38,8 +37,9 @@ class Status extends Command {
         return userInventory.toEmbed();
       });
 
-    return this.inputChannel
-      .watchSend(balanceMessage + infractionMessage, inventoryEmbed)
+    const dmChannel = await this.sender.createDM();
+    return dmChannel
+      .send(balanceMessage + infractionMessage, inventoryEmbed)
       .then(() => this.useItem());
   }
 }
