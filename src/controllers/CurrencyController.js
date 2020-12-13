@@ -43,15 +43,15 @@ class CurrencyController extends GuildBasedController {
         timeElapsed == null ? 1 : Math.min(1, timeElapsed / dbGuild.messageResetTime);
       const payout = dbGuild.messageRate * timeScalar * roleScalar;
 
-      console.log(
-        `${member.displayName}\n` +
-          `Last interaction: ${
-            dbUser.lastMessageDate ? dbUser.lastMessageDate.toLocaleString() : "never"
-          }.\n` +
-          `This interaction ${interactionDate.toLocaleString()}\n` +
-          `Time interval: ${timeElapsed} seconds\n` +
-          `Payout: rate (${dbGuild.messageRate}) * time (${timeScalar}) * role (${roleScalar}) = ${payout}\n\n`
-      );
+      // console.log(
+      //   `${member.displayName}\n` +
+      //     `Last interaction: ${
+      //       dbUser.lastMessageDate ? dbUser.lastMessageDate.toLocaleString() : "never"
+      //     }.\n` +
+      //     `This interaction ${interactionDate.toLocaleString()}\n` +
+      //     `Time interval: ${timeElapsed} seconds\n` +
+      //     `Payout: rate (${dbGuild.messageRate}) * time (${timeScalar}) * role (${roleScalar}) = ${payout}\n\n`
+      // );
 
       return this.addCurrency(member, payout).then(() => {
         return this.db.users.setLastMessageDate(member.id, guildId, interactionDate);
