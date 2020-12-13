@@ -1,53 +1,52 @@
-import Discord from "discord.js";
-import dayjs from "dayjs";
-import delay from "delay";
-
-import Database from "./db/Database.js";
-import secretConfig from "../config/secrets.config.js";
-import CommandParser from "./CommandParser.js";
-import OnBoarder from "./Onboarder.js";
+import AllowWord from "./commands/AllowWord.js";
 import AutoDelete from "./commands/AutoDelete.js";
 import Balance from "./commands/Balance.js";
+import BanList from "./commands/BanList.js";
+import BanListStatusController from "./controllers/message/BanListStatusController.js";
+import BanWord from "./commands/BanWord.js";
 import Buy from "./commands/Buy.js";
-import Headpat from "./commands/Headpat.js";
+import CensorController from "./controllers/CensorController.js";
+import Censorship from "./commands/Censorship.js";
+import ChannelController from "./controllers/ChannelController.js";
+import Command from "./commands/Command.js";
+import CommandParser from "./CommandParser.js";
+import CurrencyController from "./controllers/CurrencyController.js";
+import Database from "./db/Database.js";
+import Debug from "./commands/Debug.js";
 import DeliverCheck from "./commands/DeliverCheck.js";
 import Demote from "./commands/Demote.js";
+import Discord from "discord.js";
 import Exile from "./commands/Exile.js";
 import Fine from "./commands/Fine.js";
 import Give from "./commands/Give.js";
+import GuildController from "./controllers/GuildController.js";
+import Headpat from "./commands/Headpat.js";
 import Help from "./commands/Help.js";
 import HoldVote from "./commands/HoldVote.js";
 import Infractions from "./commands/Infractions.js";
+import InventoryController from "./controllers/InventoryController.js";
 import Kick from "./commands/Kick.js";
+import MemberController from "./controllers/MemberController.js";
+import NullCommand from "./commands/NullCommand.js";
+import OnBoarder from "./Onboarder.js";
 import Pardon from "./commands/Pardon.js";
 import Play from "./commands/Play.js";
 import Promote from "./commands/Promote.js";
 import Register from "./commands/Register.js";
 import Report from "./commands/Report.js";
+import RoleStatusController from "./controllers/message/RoleStatusController.js";
+import Roles from "./commands/Roles.js";
+import ScheduleWatcher from "./ScheduleWatcher.js";
+import Screening from "./commands/Screening.js";
 import ServerStatus from "./commands/ServerStatus.js";
 import SoftKick from "./commands/SoftKick.js";
-import NullCommand from "./commands/NullCommand.js";
-import BanWord from "./commands/BanWord.js";
-import AllowWord from "./commands/AllowWord.js";
-import BanList from "./commands/BanList.js";
-import CensorController from "./controllers/CensorController.js";
-import Censorship from "./commands/Censorship.js";
-import ChannelController from "./controllers/ChannelController.js";
-import CurrencyController from "./controllers/CurrencyController.js";
-import GuildController from "./controllers/GuildController.js";
-import MemberController from "./controllers/MemberController.js";
-import InventoryController from "./controllers/InventoryController.js";
 import Status from "./commands/Status.js";
-import Command from "./commands/Command.js";
 import Store from "./commands/Store.js";
-import Roles from "./commands/Roles.js";
-import RoleStatusController from "./controllers/message/RoleStatusController.js";
 import StoreStatusController from "./controllers/message/StoreStatusController.js";
 import Take from "./commands/Take.js";
-import Screening from "./commands/Screening.js";
-import ScheduleWatcher from "./ScheduleWatcher.js";
-import Debug from "./commands/Debug.js";
-import BanListStatusController from "./controllers/message/BanListStatusController.js";
+import dayjs from "dayjs";
+import delay from "delay";
+import secretConfig from "../config/secrets.config.js";
 
 class Raphtalia {
   /**
@@ -149,7 +148,7 @@ class Raphtalia {
         message = messageReaction.message;
       }
       // Only subtract money for removing the user's only remaining reaction
-      if (message.reactions.cache.filter((e) => e.users.get(user.id)).size > 0) {
+      if (message.reactions.cache.filter((r) => r.users.cache.get(user.id)).size > 0) {
         return;
       }
       this.payoutReaction(message, user, true);
@@ -163,19 +162,25 @@ class Raphtalia {
     this.client.on("raw", (packet) => {
       if (!["MESSAGE_REACTION_ADD", "MESSAGE_REACTION_REMOVE"].includes(packet.t)) return;
       const channel = this.client.channels.cache.get(packet.d.channel_id);
-      if (channel.messages.has(packet.d.message_id)) return;
+      if (channel.messages.cache.has(packet.d.message_id)) {
+        return;
+      }
       channel.messages.fetch(packet.d.message_id).then((message) => {
         const emoji = packet.d.emoji.id
           ? `${packet.d.emoji.name}:${packet.d.emoji.id}`
           : packet.d.emoji.name;
         const reaction = message.reactions.cache.get(emoji);
         if (reaction) {
-          reaction.users.set(packet.d.user_id, this.client.users.get(packet.d.user_id));
+          reaction.users.cache.set(packet.d.user_id, this.client.users.cache.get(packet.d.user_id));
         } else {
           console.log();
         }
         if (packet.t === "MESSAGE_REACTION_ADD") {
-          this.client.emit("messageReactionAdd", reaction, this.client.users.get(packet.d.user_id));
+          this.client.emit(
+            "messageReactionAdd",
+            reaction,
+            this.client.users.cache.get(packet.d.user_id)
+          );
         }
         // If the message reactions weren't cached, pass in the message instead
         if (packet.t === "MESSAGE_REACTION_REMOVE") {
@@ -215,9 +220,9 @@ class Raphtalia {
     if (message.author.id === user.id) {
       return;
     }
-    const oneDay = dayjs.duration({ hours: 24 });
-    if (new Date() - message.createdAt > oneDay.asMilliseconds()) {
-      // Ignore reactions to messages older than 24 hours
+    const expiration = dayjs.duration({ hours: 48 });
+    if (new Date() - message.createdAt > expiration.asMilliseconds()) {
+      // Ignore reactions to messages older than 48 hours
       return;
     }
 
