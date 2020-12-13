@@ -1,7 +1,6 @@
 import Database from "./db/Database.js";
 import Discord from "discord.js";
 import MemberController from "./controllers/MemberController.js";
-import RNumber from "./structures/RNumber.js";
 import StoreStatusController from "./controllers/message/StoreStatusController.js";
 import cron from "cron";
 import dayjs from "dayjs";
@@ -19,7 +18,7 @@ const { CronJob } = cron;
     
     @yearly, @monthly, @weekly, @daily, @hourly,
   */
-class ScheduleWatcher {
+class JobScheduler {
   /**
    * @param {Database} db
    * @param {Discord.Client} client
@@ -57,7 +56,8 @@ class ScheduleWatcher {
         .then(async (guildItems) => {
           for (const item of guildItems) {
             // Don't let sold-out items depreciate for no reason
-            if (item.soldInCycle !== 0 || item.quantity === 0) {
+            // Also, don't change the price of explictly set free items
+            if (item.soldInCycle !== 0 || item.quantity === 0 || item.price === 0) {
               continue;
             }
             const hoursSinceLastSold = dayjs
@@ -67,7 +67,11 @@ class ScheduleWatcher {
             const salePercentage =
               Math.ceil(daysSinceLastSold / dbGuild.priceDropDays) * dbGuild.priceDropRate;
 
-            await this.db.inventory.updateGuildItemPrice(guild.id, item, 1.0 - salePercentage);
+            let newPrice = item.price * (1.0 - salePercentage);
+            if (newPrice <= 0.01) {
+              newPrice = 0.01;
+            }
+            await this.db.inventory.updateGuildItemPrice(guild.id, item, newPrice);
           }
         })
         .then(() => this.db.inventory.resetStoreCycle(guild.id))
@@ -78,4 +82,4 @@ class ScheduleWatcher {
   }
 }
 
-export default ScheduleWatcher;
+export default JobScheduler;

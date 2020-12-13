@@ -1,6 +1,6 @@
 {
   "name": "raphtalia",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "A discord bot to assist with managing the Gulag. Still in development right now, but the planned features are as follows:\r 1. Kick members\r 2. Count infractions\r 3. Detect pro-capitalist or pro-democracy language\r 4. Play the soviet national anthem on a voice channel\r 5. Post the communist manifesto",
   "main": "Bot.js",
   "scripts": {
