@@ -1,21 +1,21 @@
-import MemberController from "./controllers/MemberController.js";
-import Discord from "discord.js";
-import cron from "cron";
-const { CronJob } = cron;
 import Database from "./db/Database.js";
-import dayjs from "dayjs";
+import Discord from "discord.js";
+import MemberController from "./controllers/MemberController.js";
 import RNumber from "./structures/RNumber.js";
 import StoreStatusController from "./controllers/message/StoreStatusController.js";
+import cron from "cron";
+import dayjs from "dayjs";
+
+const { CronJob } = cron;
 
 /**
   CRON Quick Refernce
     * * * * *
-    | | | | |
-    | | | | ----- Day of week (0 - 7) (Sunday=0 or 7)
-    | | | ------- Month (1 - 12)
-    | | --------- Day of month (1 - 31)
-    | ----------- Hour (0 - 23)
-    ------------- Minute (0 - 59)
+    │ │ │ │ └ Day of week (0 - 7) (Sunday=0 or 7)
+    │ │ │ └── Month (1 - 12)
+    │ │ └──── Day of month (1 - 31)
+    │ └────── Hour (0 - 23)
+    └──────── Minute (0 - 59)
     
     @yearly, @monthly, @weekly, @daily, @hourly,
   */
@@ -39,7 +39,7 @@ class ScheduleWatcher {
   }
 
   resolveRoleContests() {
-    const guildContests = this.client.guilds.map((guild) =>
+    const guildContests = this.client.guilds.cache.map((guild) =>
       new MemberController(this.db, guild)
         .resolveRoleContests()
         .then((feedback) => feedback && guild.systemChannel.send(feedback))
@@ -49,7 +49,7 @@ class ScheduleWatcher {
   }
 
   dropStorePrices() {
-    const guildStoreUpdates = this.client.guilds.map(async (guild) => {
+    const guildStoreUpdates = this.client.guilds.cache.map(async (guild) => {
       const dbGuild = await this.db.guilds.get(guild.id);
 
       return this.db.inventory

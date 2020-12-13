@@ -1,37 +1,15 @@
-import dayjs from "dayjs";
 import Discord from "discord.js";
+import GuildBasedController from "./GuildBasedController.js";
 import RNumber from "../structures/RNumber.js";
 import RoleContest from "../structures/RoleContest.js";
-import GuildBasedController from "./GuildBasedController.js";
+import dayjs from "dayjs";
 
 class CurrencyController extends GuildBasedController {
   /**
    * @param {Discord.Message} message
    */
   payoutMessage(message) {
-    return this.db.guilds.get(message.guild.id).then(async (dbGuild) => {
-      const dbUser = await this.db.users.get(message.member.id, message.guild.id);
-      const roleScalar = this.getRoleScalar(message.member);
-      const timeElapsed = this.getTimeElapsedSeconds(dbUser.lastMessageDate, message.createdAt);
-      // console.log(
-      //   `Last message sent at ${
-      //     dbUser.lastMessageDate ? dbUser.lastMessageDate.toLocaleString() : "never"
-      //   }. This message sent at ${message.createdAt.toLocaleString()}\n` +
-      //     `Time interval: ${timeElapsed} seconds`
-      // );
-      // If they've never sent a message before, give them full value
-      const timeScalar =
-        timeElapsed == null ? 1 : Math.min(1, timeElapsed / dbGuild.messageResetTime);
-      const payout = dbGuild.messageRate * timeScalar * roleScalar;
-
-      return this.addCurrency(message.member, payout).then(() => {
-        return this.db.users.setLastMessageDate(
-          message.member.id,
-          message.guild.id,
-          message.createdAt
-        );
-      });
-    });
+    return this.payoutInteraction(message.member, message.guild.id, message.createdAt);
   }
 
   /**
@@ -41,12 +19,43 @@ class CurrencyController extends GuildBasedController {
    */
   payoutReaction(message, member, undo) {
     return this.db.guilds.get(message.guild.id).then((dbGuild) => {
-      const reactorAmount = undo ? -dbGuild.reactorRate : dbGuild.reactorRate;
       const reacteeAmount = undo ? -dbGuild.reacteeRate : dbGuild.reacteeRate;
+      if (!undo) {
+        this.payoutInteraction(member, message.guild.id, message.createdAt);
+      }
+      return this.addCurrency(message.member, reacteeAmount);
+    });
+  }
 
-      return this.addCurrency(member, reactorAmount).then(
-        this.addCurrency(message.member, reacteeAmount)
+  /**
+   *
+   * @param {Discord.GuildMember} member
+   * @param {String} guildId
+   * @param {Date} interactionDate
+   */
+  payoutInteraction(member, guildId, interactionDate) {
+    return this.db.guilds.get(guildId).then(async (dbGuild) => {
+      const dbUser = await this.db.users.get(member.id, guildId);
+      const roleScalar = this.getRoleScalar(member);
+      const timeElapsed = this.getTimeElapsedSeconds(dbUser.lastMessageDate, interactionDate);
+      // If they've never sent a message before, give them full value
+      const timeScalar =
+        timeElapsed == null ? 1 : Math.min(1, timeElapsed / dbGuild.messageResetTime);
+      const payout = dbGuild.messageRate * timeScalar * roleScalar;
+
+      console.log(
+        `${member.displayName}\n` +
+          `Last interaction: ${
+            dbUser.lastMessageDate ? dbUser.lastMessageDate.toLocaleString() : "never"
+          }.\n` +
+          `This interaction ${interactionDate.toLocaleString()}\n` +
+          `Time interval: ${timeElapsed} seconds\n` +
+          `Payout: rate (${dbGuild.messageRate}) * time (${timeScalar}) * role (${roleScalar}) = ${payout}\n\n`
       );
+
+      return this.addCurrency(member, payout).then(() => {
+        return this.db.users.setLastMessageDate(member.id, guildId, interactionDate);
+      });
     });
   }
 
