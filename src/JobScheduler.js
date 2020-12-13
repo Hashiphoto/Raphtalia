@@ -34,7 +34,7 @@ class JobScheduler {
     new CronJob("0 20 * * *", () => this.resolveRoleContests(), null, true, this.timezone);
 
     // Every day at 06:30 AM
-    new CronJob("* * * * *", () => this.dropStorePrices(), null, true, this.timezone);
+    new CronJob("30 6 * * *", () => this.dropStorePrices(), null, true, this.timezone);
   }
 
   resolveRoleContests() {
