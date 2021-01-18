@@ -1,11 +1,5 @@
-import mysqlPromise from "mysql2/promise";
-import mysql from "mysql2";
-
 class BannedWordsTable {
-  /**
-   *
-   * @param {mysqlPromise.PromisePool} pool
-   */
+
   constructor(pool) {
     this.pool = pool;
   }

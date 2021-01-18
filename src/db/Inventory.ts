@@ -2,8 +2,6 @@ import AmbiguousInputError from "../structures/errors/AmbiguousInputError.js";
 import GuildItem from "../structures/GuildItem.js";
 import Item from "../structures/Item.js";
 import UserItem from "../structures/UserItem.js";
-import mysql from "mysql2";
-import mysqlPromise from "mysql2/promise";
 
 class Inventory {
   /**

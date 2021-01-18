@@ -1,5 +1,3 @@
-import mysqlPromise from "mysql2/promise";
-
 class ChannelsTable {
   /**
    *

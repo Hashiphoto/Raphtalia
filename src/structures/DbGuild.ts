@@ -44,4 +44,4 @@ class DbGuild {
   }
 }
 
-module.exports = DbGuild;
+export default DbGuild;

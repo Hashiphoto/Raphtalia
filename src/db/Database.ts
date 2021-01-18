@@ -1,12 +1,11 @@
-import mysql from "mysql2";
-
-import secretConfig from "../../config/secrets.config.js";
-import UsersTable from "./UsersTable.js";
 import BannedWordsTable from "./BannedWordsTable.js";
-import GuildsTable from "./GuildsTable.js";
 import ChannelsTable from "./ChannelsTable.js";
-import RolesTable from "./RolesTable.js";
+import GuildsTable from "./GuildsTable.js";
 import Inventory from "./Inventory.js";
+import RolesTable from "./RolesTable.js";
+import UsersTable from "./UsersTable.js";
+import {createPool} from "mysql2";
+import secretConfig from "../../config/secrets.config.js";
 
 class Database {
   constructor(pool) {
@@ -19,8 +18,8 @@ class Database {
   }
 
   static async createPool() {
-    const pool = mysql
-      .createPool({
+    const pool = 
+    createPool({
         host: secretConfig().database.host,
         port: secretConfig().database.port,
         user: secretConfig().database.user,

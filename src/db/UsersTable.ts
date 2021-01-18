@@ -1,4 +1,3 @@
-import mysqlPromise from "mysql2/promise";
 import DbUser from "../structures/DbUser.js";
 import Util from "../Util.js";
 

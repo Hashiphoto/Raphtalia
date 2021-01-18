@@ -1,4 +1,3 @@
-import Discord from "discord.js";
 import GuildBasedController from "./GuildBasedController.js";
 import MemberController from "./MemberController.js";
 

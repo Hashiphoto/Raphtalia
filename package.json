@@ -2,8 +2,7 @@
   "name": "raphtalia",
   "version": "0.8.2",
   "description": "A discord bot to assist with managing the Gulag. Still in development right now, but the planned features are as follows:\r 1. Kick members\r 2. Count infractions\r 3. Detect pro-capitalist or pro-democracy language\r 4. Play the soviet national anthem on a voice channel\r 5. Post the communist manifesto",
-  "main": "Bot.js",
-  "type": "module",
+  "main": "Bot.ts",
   "scripts": {
     "test": "set NODE_ENV=test&& nyc node_modules/mocha/bin/_mocha './test/**/*.test.js' --exit"
   },
@@ -29,6 +28,7 @@
     "ytdl-core": "^4.1.4"
   },
   "devDependencies": {
+    "@types/mysql2": "types/mysql2",
     "@types/node": "^14.14.21",
     "mocha": "^8.2.1",
     "nyc": "^15.1.0",
