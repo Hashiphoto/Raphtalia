@@ -7,23 +7,31 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Launch Program",
-      "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/src/bot.js",
-      "args": [],
-      "env": {
-        "NODE_ENV": "dev"
-      }
+      "name": "Typescript",
+      "program": "${workspaceFolder}/src/Bot.js",
+      "preLaunchTask": "tsc: build - tsconfig.json",
+      "outFiles": ["${workspaceFolder}/build/**/*.js"]
     },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "Mocha All",
-      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
-      "args": ["${workspaceFolder}/test/**/*.js"],
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "skipFiles": ["<node_internals>/**/*.js"]
-    }
+    // {
+    //   "type": "node",
+    //   "request": "launch",
+    //   "name": "Launch Program",
+    //   "skipFiles": ["<node_internals>/**"],
+    //   "program": "${workspaceFolder}/src/Bot.js",
+    //   "args": [],
+    //   "env": {
+    //     "NODE_ENV": "dev"
+    //   }
+    // },
+    // {
+    //   "type": "node",
+    //   "request": "launch",
+    //   "name": "Mocha All",
+    //   "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+    //   "args": ["${workspaceFolder}/test/**/*.js"],
+    //   "console": "integratedTerminal",
+    //   "internalConsoleOptions": "neverOpen",
+    //   "skipFiles": ["<node_internals>/**/*.js"]
+    // }
   ]
 }
