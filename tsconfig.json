@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "module": "commonjs",
+    "outDir": "./build",
+    "allowJs": true,
+    "moduleResolution": "node",
+    "noImplicitAny": true,
+    "strictNullChecks": true ,
+    "skipLibCheck": true,
+    "sourceMap": true
+  },
+  "include": ["./src/**/*"]
+}

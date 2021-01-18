@@ -1,5 +1,5 @@
-import Discord from "discord.js";
-import Question from "./structures/Question.js";
+const Discord = require("discord.js");
+const Question = require("./structures/Question");
 
 /**
  * Send a message and wait for the first matching response. If no responses are recieved within the timeout,
@@ -31,4 +31,4 @@ function sendTimedMessage(channel, member, question, showDuration = true) {
     });
 }
 
-export default sendTimedMessage;
+module.exports = sendTimedMessage;
