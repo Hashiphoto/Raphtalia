@@ -1,16 +1,17 @@
-import Discord from "discord.js";
-
-import Command from "./Command.js";
-import CensorController from "../controllers/CensorController.js";
 import BanListStatusController from "../controllers/message/BanListStatusController.js";
+import CensorController from "../controllers/CensorController.js";
+import Command from "./Command.js";
+import {Message} from "discord.js";
 
 class AllowWord extends Command {
-  /**
-   * @param {Discord.Message} message
-   * @param {CensorController} censorController
-   * @param {BanListStatusController} banlistStatusCtlr
-   */
-  constructor(message, censorController, banlistStatusCtlr) {
+  censorController: CensorController;
+  banlistStatusCtlr: BanListStatusController;
+  instructions: string;
+  usage: string;
+  message: any;
+  item: any;
+  inputChannel: any;
+  constructor(message: Message, censorController: CensorController, banlistStatusCtlr: BanListStatusController) {
     super(message);
     this.censorController = censorController;
     this.banlistStatusCtlr = banlistStatusCtlr;

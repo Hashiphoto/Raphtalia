@@ -1,5 +1,4 @@
 class BannedWordsTable {
-
   constructor(pool) {
     this.pool = pool;
   }
@@ -7,7 +6,7 @@ class BannedWordsTable {
   getAll(guildId) {
     return this.pool
       .query("SELECT * FROM banned_words WHERE guild_id = ?", [guildId])
-      .then(([rows, fields]) => {
+      .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
         return rows.map((r) => r.word);
       })
       .catch((e) => {
@@ -43,7 +42,7 @@ class BannedWordsTable {
       .query(`SELECT * FROM banned_words WHERE guild_id = ? AND word IN (${mysql.escape(words)})`, [
         guildId,
       ])
-      .then(([rows, fields]) => {
+      .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
         return rows.map((r) => r.word);
       });
   }

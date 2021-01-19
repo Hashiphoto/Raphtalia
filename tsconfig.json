@@ -5,11 +5,11 @@
     "outDir": "./build",
     "allowJs": true,
     "moduleResolution": "node",
-    // "noImplicitAny": true,
-    // "strictNullChecks": true ,
+    "noImplicitAny": true,
+    "strictNullChecks": true ,
     "skipLibCheck": true,
     "sourceMap": true,
     "esModuleInterop": true
   },
-  "include": ["./src/**/*", "./src/structures/**/*"]
+  "include": ["./src/**/*"]
 }

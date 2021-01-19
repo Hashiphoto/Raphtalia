@@ -1,26 +1,37 @@
-import Discord from "discord.js";
+import Discord, { Guild, GuildMember, Role } from "discord.js";
+
+import { Context } from "./structures/Context";
+import { MessageHelper } from "./MessageHelper";
 
 class CommandParser {
-  static prefix = "!";
+  static COMMAND_PREFIX = "!";
 
   /**
    * Separates the message's arguments and finds the mentioned roles/members
    * @param {Discord.Message} message
    */
-  static parse(message) {
+  static parse(context: Context) {
+    const message = context.message;
+    const messageHelper = new MessageHelper();
     // Every word separated by white space
-    message.args = message.content.split(/\s+/);
-    // Remove the command from message args and remove the prefix from it
-    message.command = message.args.shift().slice(CommandParser.prefix.length).toLowerCase();
-    message.sender = message.member;
-    message.mentionedMembers = CommandParser.getMemberMentions(message.guild, message.args);
-    message.mentionedRoles = CommandParser.getRoleMentions(message.guild, message.args);
+    messageHelper.args = message.content.split(/\s+/);
+
     // Remove the command from the content
-    message.content = message.content
-      .slice(CommandParser.prefix.length + message.command.length)
+    messageHelper.content = message.content
+      .slice(CommandParser.COMMAND_PREFIX.length + messageHelper.command.length)
       .trim();
 
-    return message;
+    if (!message.guild) {
+      return messageHelper;
+    }
+    // Get mention info
+    messageHelper.mentionedMembers = CommandParser.getMemberMentions(
+      message.guild,
+      messageHelper.args
+    );
+    messageHelper.mentionedRoles = CommandParser.getRoleMentions(message.guild, messageHelper.args);
+
+    return messageHelper;
   }
 
   /**
@@ -30,8 +41,8 @@ class CommandParser {
    * @param {String[]} args - An array of strings to parse for mentions
    * @returns {Discord.GuildMember[]} - An array of guildMember objects
    */
-  static getMemberMentions(guild, args) {
-    let members = [];
+  static getMemberMentions(guild: Guild, args: String[]) {
+    let members = new Array<GuildMember>();
     for (let i = 0; i < args.length; i++) {
       let member = CommandParser.getMemberFromMention(guild, args[i]);
       if (!member) {
@@ -50,12 +61,15 @@ class CommandParser {
    * @param {String[]} args - An array of strings to parse for mentions
    * @returns {Discord.GuildMember[]} - An array of guildMember objects
    */
-  static getRoleMentions(guild, args) {
-    let roles = [];
+  static getRoleMentions(guild: Guild, args: String[]) {
+    let roles: Role[] = [];
     for (let i = 0; i < args.length; i++) {
       let roleMatches = args[i].match(/<@&(\d+)>/);
-      if (roleMatches) {
-        let role = guild.roles.cache.get(roleMatches[1]);
+      if (!roleMatches) {
+        continue;
+      }
+      let role = guild.roles.cache.get(roleMatches[1]);
+      if (role) {
         roles.push(role);
       }
     }
@@ -67,25 +81,30 @@ class CommandParser {
    * Removes the prefix and suffix characters from a mention.
    * Discord mentions are the user or role id surrounded by < > and other characters
    * Read the Discord.js documentation for more info
-   *
-   * @param {String} mention - A string containing a mention
-   * @returns {Discord.GuildMember} The guild member that the mention refers to
    */
-  static getMemberFromMention(guild, mention) {
+  static getMemberFromMention(guild: Guild, mention: String) {
     // The id is the first and only match found by the RegEx.
     let memberMatches = mention.match(/<@!?(\d+)>/);
     if (memberMatches) {
       // The first element in the matches array will be the entire mention, not just the ID,
       // so use index 1.
-      return guild.members.cache.get(memberMatches[1]);
+      const member = guild.members.cache.get(memberMatches[1]);
+      if (!member) {
+        return [];
+      }
+      return [member];
     }
 
     // Check if a role was mentioned instead
     let roleMatches = mention.match(/<@&(\d+)>/);
-    if (roleMatches) {
-      let role = guild.roles.cache.get(roleMatches[1]);
-      return role.members.array();
+    if (!roleMatches) {
+      return [];
     }
+    let role = guild.roles.cache.get(roleMatches[1]);
+    if (!role) {
+      return [];
+    }
+    return role.members.array();
   }
 }
 

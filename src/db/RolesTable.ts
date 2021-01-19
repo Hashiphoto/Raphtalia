@@ -42,7 +42,7 @@ class RolesTable {
           "WHERE r.id=?",
         [roleId]
       )
-      .then(([rows, fields]) => {
+      .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
         if (rows.length === 0) {
           return new DbRole(roleId, -1);
         }
@@ -60,7 +60,7 @@ class RolesTable {
   getMulti(roleIds) {
     return this.pool
       .query("SELECT * FROM roles WHERE id IN (?)", [roleIds])
-      .then(([rows, fields]) => {
+      .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
         return rows.map((r) => this.toRoleObject(r));
       })
       .catch((error) => console.error(error));
@@ -94,7 +94,7 @@ class RolesTable {
   findRoleContest(roleId = "", userId = "") {
     return this.pool
       .query(this.contestSelect + "WHERE role_id=? OR initiator_id=?", [roleId, userId])
-      .then(([rows, fields]) => {
+      .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
         if (rows.length === 0) {
           return null;
         }
@@ -112,7 +112,7 @@ class RolesTable {
       .query(this.contestSelect + "JOIN users u ON u.id = rc.initiator_id WHERE u.guild_id=?", [
         guildId,
       ])
-      .then(async ([rows, fields]) => {
+      .then(async ([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
         const roleContests = rows.map((r) => this.toRoleContest(r));
 
         for (const contest of roleContests) {
@@ -135,7 +135,7 @@ class RolesTable {
   getContestBids(contestId) {
     return this.pool
       .query("SELECT * FROM role_contest_bids WHERE contest_id=?", [contestId])
-      .then(([rows, fields]) =>
+      .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) =>
         rows.map((r) => new RoleContestBid(r.user_id, parseFloat(r.bid_amount)))
       );
   }

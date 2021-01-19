@@ -1,17 +1,13 @@
+import Discord, { Guild } from "discord.js";
+
 import Controller from "./Controller.js";
-import Discord from "discord.js";
 import Database from "../db/Database.js";
 
-class GuildBasedController extends Controller {
-  /**
-   *
-   * @param {Database} db
-   * @param {Discord.Guild} guild
-   */
-  constructor(db, guild) {
+export default class GuildBasedController extends Controller {
+  public guild: Discord.Guild;
+
+  public constructor(db: Database, guild: Guild) {
     super(db);
     this.guild = guild;
   }
 }
-
-export default GuildBasedController;

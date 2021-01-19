@@ -32,7 +32,7 @@ class GuildsTable {
   get(guildId: String) {
     return this.pool
       .query("SELECT * FROM guilds WHERE id = ?", [guildId])
-      .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
+      .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]: [RowDataPacket[], FieldPacket[]]) => {
         if (rows.length === 0) {
           return null;
         }
@@ -104,7 +104,7 @@ class GuildsTable {
   getScreeningQuestions(guildId: String) {
     return this.pool
       .query("SELECT * FROM screening_questions WHERE guild_id=?", [guildId])
-      .then(([rows, fields]: [RowDataPacket[], FieldPacket[]) => {
+      .then( ([rows, fields]: [RowDataPacket[], FieldPacket[]]: [RowDataPacket[], FieldPacket[]]) => {
         return rows.map(
           (r) => new ScreeningQuestion(r.id, r.prompt, r.answer, r.timeout_ms, r.strict)
         );

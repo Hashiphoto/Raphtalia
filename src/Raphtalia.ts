@@ -15,7 +15,7 @@ import Database from "./db/Database.js";
 import Debug from "./commands/Debug.js";
 import DeliverCheck from "./commands/DeliverCheck.js";
 import Demote from "./commands/Demote.js";
-import Discord from "discord.js";
+import { Client, NewsChannel, Structures } from "discord.js";
 import Exile from "./commands/Exile.js";
 import Fine from "./commands/Fine.js";
 import Give from "./commands/Give.js";
@@ -47,13 +47,16 @@ import Take from "./commands/Take.js";
 import dayjs from "dayjs";
 import delay from "delay";
 import secretConfig from "../config/secrets.config.js";
+import { Context } from "./structures/Context.js";
+import { ChannelHelper } from "./ChannelHelper.js";
 
 class Raphtalia {
-  /**
-   * @param {Database} db
-   */
-  constructor(db) {
-    this.client = new Discord.Client();
+  private client: Client;
+  private db: Database;
+  private jobScheduler: JobScheduler;
+
+  constructor(db: Database) {
+    this.client = new Client();
     this.db = db;
 
     this.client.once("ready", () => {
@@ -68,41 +71,61 @@ class Raphtalia {
       console.log(`Logged in! Listening for events...`);
     });
 
-    this.scheduleWatcher = new JobScheduler(this.db, this.client);
-    this.scheduleWatcher.start();
+    this.jobScheduler = new JobScheduler(this.db, this.client);
+    this.jobScheduler.start();
   }
 
   configureDiscordClient() {
-    this.client.on("message", (message) => {
+    this.client.on("message", async (message) => {
       // Delete the "Raphtalia has pinned a message to this channel" message
-      if (message.author.id === this.client.user.id && message.type === "PINS_ADD") {
+      if (
+        this.client.user &&
+        this.client.user.id === message.author.id &&
+        message.type === "PINS_ADD"
+      ) {
         return message.delete();
       }
 
-      if (message.author.bot || message.channel.type === "dm" || message.type !== "DEFAULT") {
+      if (
+        message.author.bot ||
+        message.channel.type === "dm" ||
+        message.type !== "DEFAULT" ||
+        message.channel instanceof NewsChannel
+      ) {
         return;
       }
 
-      this.attachWatchCommand(message.channel).then((deleteTime) => {
-        this.delayedDelete(message, deleteTime);
+      const deleteTime = await this.getDeleteTime(message.channel);
+      const context = new Context(message, new ChannelHelper(message.channel, deleteTime));
 
-        if (message.content.startsWith(CommandParser.prefix)) {
-          return this.handleCommand(message);
-        } else {
-          return this.censorMessage(message).then((censored) => {
-            if (censored) {
-              return;
-            }
-            return this.payoutMessage(message);
-          });
-        }
-      });
+      // Delete the incoming message
+      this.delayedDelete(message, deleteTime);
+
+      if (message.content.startsWith(CommandParser.COMMAND_PREFIX)) {
+        return this.handleCommand(context);
+      } else {
+        return this.censorMessage(message).then((censored) => {
+          if (censored) {
+            return;
+          }
+          return this.payoutMessage(message);
+        });
+      }
     });
 
     this.client.on("guildMemberAdd", (member) => {
       const welcomeChannel = member.guild.systemChannel;
-      this.attachWatchCommand(welcomeChannel).then(() => {
-        new OnBoarder(this.db, member.guild, member, welcomeChannel).onBoard();
+      if (!welcomeChannel) {
+        return;
+      }
+      this.getDeleteTime(welcomeChannel).then((deleteTime) => {
+        const textChannel = (<any>{
+          ...welcomeChannel,
+          autodelete: deleteTime >= 0,
+          deleteMessageDelay: 2,
+        }) as RTextChannel;
+
+        new OnBoarder(this.db, member.guild, member, textChannel).onBoard();
       });
     });
 
@@ -194,10 +217,10 @@ class Raphtalia {
     });
   }
 
-  handleCommand(message) {
-    const parsedMessage = CommandParser.parse(message);
-    return this.selectCommand(parsedMessage).then((command) =>
-      this.executeCommand(command, parsedMessage)
+  handleCommand(context: Context) {
+    context.messageHelper = CommandParser.parse(context);
+    return this.selectCommand(messageHelper).then((command) =>
+      this.executeCommand(command, messageHelper)
     );
   }
 
@@ -259,54 +282,53 @@ class Raphtalia {
    * @param {Discord.TextChannel} channel
    * @returns {Number} Milliseconds before messages in this channel should be deleted
    */
-  attachWatchCommand(channel) {
+  getDeleteTime(channel: Discord.TextChannel) {
     return this.db.channels.get(channel.id).then((dbChannel) => {
       let deleteTime = -1;
       if (dbChannel && dbChannel.delete_ms >= 0) {
         deleteTime = dbChannel.delete_ms;
       }
-      channel.autoDelete = deleteTime >= 0;
-      channel.watchSend = (...content) =>
-        channel.send(...content).then((message) => {
-          if (deleteTime >= 0) {
-            message.delete({ timeout: deleteTime });
-          }
-          return message;
-        });
+
       return deleteTime;
     });
   }
 
-  /**
-   * @param {Discord.Message} message
-   * @returns {Promise<Command>}
-   */
-  selectCommand(message) {
+  selectCommand(context: Context) {
     // Check for exile
-    const exileRole = message.guild.roles.cache.find((r) => r.name === "Exile");
-    if (exileRole && message.member.roles.cache.find((r) => r.id === exileRole.id)) {
-      return Promise.resolve(new NullCommand(message, `You cannot use commands while in exile`));
+    const exileRole = context.guild.roles.cache.find((r) => r.name === "Exile");
+    if (exileRole && context.message.member?.roles.cache.find((r) => r.id === exileRole.id)) {
+      return Promise.resolve(
+        new NullCommand(context.message, `You cannot use commands while in exile`)
+      );
     }
 
     // Get the command
-    let command = Raphtalia.getCommandByName(message.command, message, this.db, this.client);
+    let command = Raphtalia.getCommandByName(
+      context.messageHelper.command,
+      context.message,
+      this.db,
+      this.client
+    );
     if (!command) {
-      command = new NullCommand(message, `Unknown command "${message.command}"`);
+      command = new NullCommand(
+        context.message,
+        `Unknown command "${context.messageHelper.command}"`
+      );
     }
     if (command instanceof NullCommand) {
       return Promise.resolve(command);
     }
 
     // Check if member has the correct item
-    const inventoryController = new InventoryController(this.db, message.guild);
+    const inventoryController = new InventoryController(this.db, context.message.guild);
     command.setInventoryController(inventoryController);
 
     return inventoryController
-      .getItemForCommand(message.member, command.constructor.name)
+      .getItemForCommand(context.message.member, command.constructor.name)
       .then((item) =>
         item
           ? command.setItem(item)
-          : new NullCommand(message, `You do not have the correct item to use this command`)
+          : new NullCommand(context.message, `You do not have the correct item to use this command`)
       );
   }
 

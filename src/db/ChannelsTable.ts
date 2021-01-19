@@ -1,16 +1,16 @@
+import { FieldPacket, Pool, RowDataPacket } from "mysql2/promise";
+
 class ChannelsTable {
-  /**
-   *
-   * @param {mysqlPromise.PromisePool} pool
-   */
-  constructor(pool) {
+  private pool: Pool;
+
+  constructor(pool: Pool) {
     this.pool = pool;
   }
 
-  get(channelId) {
+  public get(channelId: string) {
     return this.pool
       .query("SELECT * FROM channels WHERE id = ?", [channelId])
-      .then(([rows, fields]) => {
+      .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
         if (rows.length === 0) {
           return null;
         }
@@ -21,7 +21,7 @@ class ChannelsTable {
       });
   }
 
-  setAutoDelete(channelId, deleteDelay) {
+  setAutoDelete(channelId: string, deleteDelay: number) {
     return this.pool
       .query(
         "INSERT INTO channels (id, delete_ms) VALUES (?,?) ON DUPLICATE KEY UPDATE delete_ms = VALUES(delete_ms)",

@@ -1,14 +1,19 @@
+import { FieldPacket, RowDataPacket } from "mysql2/promise";
+
 import AmbiguousInputError from "../structures/errors/AmbiguousInputError.js";
+import CommandItem from "../structures/CommandItem.js";
 import GuildItem from "../structures/GuildItem.js";
 import Item from "../structures/Item.js";
+import { Pool } from "mysql2/promise";
 import UserItem from "../structures/UserItem.js";
+import { escape } from "mysql2";
 
-class Inventory {
-  /**
-   *
-   * @param {mysqlPromise.PromisePool} pool
-   */
-  constructor(pool) {
+export default class InventoryTable {
+  public pool: Pool;
+  public guildSelect: string;
+  public userSelect: string;
+
+  public constructor(pool: Pool) {
     this.pool = pool;
     this.guildSelect = "SELECT * FROM guild_inventory gi JOIN items i ON gi.item_id = i.id ";
     this.userSelect =
@@ -18,49 +23,12 @@ class Inventory {
       "JOIN guild_inventory gi ON gi.item_id = i.id ";
   }
 
-  async toGuildItem(row) {
-    const commands = await this.getCommandsForItem(row.id);
-
-    return new GuildItem(
-      row.id,
-      row.name,
-      row.max_uses,
-      row.quantity,
-      commands,
-      parseFloat(row.price),
-      row.max_quantity,
-      row.sold_in_cycle,
-      row.date_last_sold
-    );
-  }
-
-  async toUserItem(row) {
-    if (!row) {
-      return null;
-    }
-    const commands = await this.getCommandsForItem(row.id);
-
-    return new UserItem(row.id, row.name, row.max_uses, row.quantity, commands, row.remaining_uses);
-  }
-
-  getCommandsForItem(itemId) {
-    return this.pool
-      .query("SELECT * FROM commands WHERE item_id = ?", itemId)
-      .then(([rows, fields]) => {
-        return rows;
-      });
-  }
-
-  /**
-   * @param {String} guildId
-   * @returns {Promise<GuildItem[]>}
-   */
-  getGuildStock(guildId, showHidden = false) {
+  public getGuildStock(guildId: string, showHidden = false) {
     return this.pool
       .query(this.guildSelect + "WHERE guild_id = ? " + `${showHidden ? "" : "AND hidden = 0"}`, [
         guildId,
       ])
-      .then(([rows, fields]) => {
+      .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
         return rows;
       })
       .then(async (dbRows) => {
@@ -74,14 +42,14 @@ class Inventory {
       });
   }
 
-  findGuildItem(guildId, itemName) {
+  public findGuildItem(guildId: string, itemName: string) {
     return this.pool
       .query(
         this.guildSelect +
-          `WHERE guild_id = ? AND hidden = 0 AND name LIKE ${mysql.escape(`%${itemName}%`)}`,
+          `WHERE guild_id = ? AND hidden = 0 AND name LIKE ${escape(`%${itemName}%`)}`,
         [guildId]
       )
-      .then(([rows, fields]) => {
+      .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
         if (rows.length === 0) {
           return null;
         }
@@ -93,10 +61,10 @@ class Inventory {
       });
   }
 
-  getGuildItem(guildId, itemId) {
+  public getGuildItem(guildId: string, itemId: string) {
     return this.pool
       .query(this.guildSelect + `WHERE guild_id = ? AND id=?`, [guildId, itemId])
-      .then(([rows, fields]) => {
+      .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
         if (rows.length === 0) {
           return null;
         }
@@ -112,11 +80,16 @@ class Inventory {
    * @param {Date|null} soldDateTime
    * @returns {GuildItem} The item after updating
    */
-  updateGuildItemQuantity(guildId, item, quantityChange, soldDateTime = null) {
+  public updateGuildItemQuantity(
+    guildId: string,
+    item: Item,
+    quantityChange: number,
+    soldDateTime: Date | undefined = undefined
+  ) {
     // If decreasing in quantity, increase sold_in_cycle
     const increaseSoldQuery =
       quantityChange < 0 ? `, sold_in_cycle=sold_in_cycle+${-quantityChange}` : ``;
-    const updateDateSold = soldDateTime ? `, date_last_sold=${mysql.escape(soldDateTime)}` : ``;
+    const updateDateSold = soldDateTime ? `, date_last_sold=${escape(soldDateTime)}` : ``;
 
     return this.pool
       .query(
@@ -126,12 +99,7 @@ class Inventory {
       .then(() => this.getGuildItem(guildId, item.id));
   }
 
-  /**
-   * @param {String} guildId
-   * @param {Item} item
-   * @returns {GuildItem} The item after updating
-   */
-  updateGuildItemSold(guildId, item, soldInCycle, soldDateTime) {
+  public updateGuildItemSold(guildId: string, item: Item, soldInCycle: number, soldDateTime: Date) {
     return this.pool
       .query(
         `UPDATE guild_inventory SET sold_in_cycle=sold_in_cycle+?, date_last_sold=? WHERE guild_id=? AND item_id=?`,
@@ -140,7 +108,7 @@ class Inventory {
       .then(() => this.getGuildItem(guildId, item.id));
   }
 
-  updateGuildItemPrice(guildId, item, newPrice) {
+  public updateGuildItemPrice(guildId: string, item: Item, newPrice: number) {
     return this.pool.query("UPDATE guild_inventory SET price=? WHERE guild_id=? and item_id=?", [
       newPrice,
       guildId,
@@ -148,11 +116,7 @@ class Inventory {
     ]);
   }
 
-  /**
-   * @param {String} guildId
-   * @param {GuildItem} item
-   */
-  updateGuildItem(guildId, item) {
+  public updateGuildItem(guildId: string, item: GuildItem) {
     return this.pool
       .query(
         "UPDATE guild_inventory SET price=?, max_uses=?, quantity=?, max_quantity=? WHERE guild_id=? AND item_id=?",
@@ -161,21 +125,21 @@ class Inventory {
       .then(() => this.pool.query("UPDATE items SET name=? WHERE id=?", [item.name, item.id]));
   }
 
-  resetStoreCycle(guildId) {
+  public resetStoreCycle(guildId: string) {
     return this.pool.query("UPDATE guild_inventory SET sold_in_cycle=0 WHERE guild_id=?", [
       guildId,
     ]);
   }
 
-  findUserItem(guildId, userId, itemName, showHidden = false) {
+  public findUserItem(guildId: string, userId: string, itemName: string, showHidden = false) {
     return this.pool
       .query(
         this.userSelect +
-          `WHERE ui.guild_id=? AND ui.user_id=? AND i.name LIKE ${mysql.escape(`%${itemName}%`)} ` +
+          `WHERE ui.guild_id=? AND ui.user_id=? AND i.name LIKE ${escape(`%${itemName}%`)} ` +
           `${showHidden ? "" : "AND hidden = 0"}`,
         [guildId, userId]
       )
-      .then(([rows, fields]) => {
+      .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
         if (rows.length === 0) {
           return null;
         }
@@ -184,12 +148,7 @@ class Inventory {
       });
   }
 
-  /**
-   * @param {String} guildId
-   * @param {String} userId
-   * @param {Item} item
-   */
-  insertUserItem(guildId, userId, item) {
+  public insertUserItem(guildId: string, userId: string, item: Item) {
     return this.pool.query(
       "INSERT INTO user_inventory " +
         "VALUES (?,?,?,?,?) " +
@@ -198,7 +157,7 @@ class Inventory {
     );
   }
 
-  getUserInventory(guildId, userId, showHidden = false) {
+  public getUserInventory(guildId: string, userId: string, showHidden = false) {
     return this.pool
       .query(
         this.userSelect +
@@ -206,7 +165,7 @@ class Inventory {
           `${showHidden ? "" : "AND hidden = 0"}`,
         [guildId, userId]
       )
-      .then(([rows, fields]) => {
+      .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
         return rows;
       })
       .then(async (dbRows) => {
@@ -220,22 +179,17 @@ class Inventory {
       });
   }
 
-  /**
-   * @param {String} guildId
-   * @param {String} userId
-   * @param {String} itemId
-   */
-  getUserItem(guildId, userId, itemId) {
+  public getUserItem(guildId: string, userId: string, itemId: string) {
     return this.pool
       .query(this.userSelect + "WHERE ui.guild_id=? AND ui.user_id=? AND i.id=?", [
         guildId,
         userId,
         itemId,
       ])
-      .then(([rows, fields]) => this.toUserItem(rows[0]));
+      .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => this.toUserItem(rows[0]));
   }
 
-  getUserItemByCommand(guildId, userId, commandName) {
+  public getUserItemByCommand(guildId: string, userId: string, commandName: string) {
     return this.pool
       .query(
         "SELECT i.id FROM user_inventory ui " +
@@ -244,7 +198,7 @@ class Inventory {
           "WHERE ui.guild_id=? AND ui.user_id=? AND c.name LIKE ?",
         [guildId, userId, commandName]
       )
-      .then(([rows, fields]) => {
+      .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
         if (rows.length == 0) {
           return null;
         }
@@ -253,7 +207,7 @@ class Inventory {
       .then((itemId) => (itemId == null ? null : this.getUserItem(guildId, userId, itemId)));
   }
 
-  updateUserItem(guildId, userId, item) {
+  public updateUserItem(guildId: string, userId: string, item: UserItem) {
     return this.pool.query(
       "UPDATE user_inventory SET quantity=?, remaining_uses=? " +
         "WHERE guild_id=? AND user_id=? AND item_id=?",
@@ -261,12 +215,50 @@ class Inventory {
     );
   }
 
-  deleteUserItem(guildId, userId, item) {
+  public deleteUserItem(guildId: string, userId: string, item: UserItem) {
     return this.pool.query(
       "DELETE FROM user_inventory WHERE guild_id=? AND user_id=? AND item_id=?",
       [guildId, userId, item.id]
     );
   }
-}
 
-export default Inventory;
+  private getCommandsForItem(itemId: number) {
+    return this.pool
+      .query(
+        "SELECT c.*, i.id as item_id, i.name as item_name FROM commands c JOIN items i ON c.item_id = i.id WHERE c.item_id = ?",
+        itemId
+      )
+      .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
+        return rows.map(this.toCommandItem);
+      });
+  }
+
+  private async toGuildItem(row: RowDataPacket) {
+    const commands = await this.getCommandsForItem(row.id);
+
+    return new GuildItem(
+      row.id,
+      row.name,
+      row.max_uses,
+      row.quantity,
+      commands,
+      parseFloat(row.price),
+      row.max_quantity,
+      row.sold_in_cycle,
+      row.date_last_sold
+    );
+  }
+
+  private async toUserItem(row: RowDataPacket) {
+    if (!row) {
+      return null;
+    }
+    const commands = await this.getCommandsForItem(row.id);
+
+    return new UserItem(row.id, row.name, row.max_uses, row.quantity, commands, row.remaining_uses);
+  }
+
+  private toCommandItem(row: RowDataPacket) {
+    return new CommandItem(row.id, row.name, row.item_id, row.item_name);
+  }
+}

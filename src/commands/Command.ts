@@ -1,15 +1,23 @@
-import Discord from "discord.js";
-import UserItem from "../structures/UserItem.js";
-import InventoryController from "../controllers/InventoryController.js";
+import { DMChannel, Guild, Message, NewsChannel, TextChannel } from "discord.js";
+
 import CommandParser from "../CommandParser.js";
+import InventoryController from "../controllers/InventoryController.js";
+import UserItem from "../structures/UserItem.js";
 
 class Command {
-  /**
-   * @param {Discord.Message} message - The message sent to issue this command
-   */
-  constructor(message) {
+  message: Message;
+  sender: any;
+  inputChannel: TextChannel | DMChannel | NewsChannel;
+  reply: any;
+  guild: Guild | null;
+  item: UserItem;
+  instructions: string;
+  usage: string;
+  inventoryController: InventoryController;
+
+  constructor(message: Message) {
     this.message = message;
-    this.sender = message.sender;
+    this.sender = message.author;
     this.inputChannel = message.channel;
     this.reply = this.inputChannel.watchSend;
     this.guild = message.guild;

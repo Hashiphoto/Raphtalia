@@ -1,17 +1,23 @@
+import CommandItem from "./CommandItem.js";
 import Item from "./Item.js";
 import RNumber from "./RNumber.js";
 
-class GuildItem extends Item {
-  constructor(
-    id,
-    name,
-    maxUses,
-    quantity,
-    commands,
-    price,
-    maxQuantity,
-    soldInCycle,
-    dateLastSold
+export default class GuildItem extends Item {
+  public price: number;
+  public maxQuantity: number;
+  public soldInCycle: number;
+  public dateLastSold: Date;
+
+  public constructor(
+    id: string,
+    name: string,
+    maxUses: number,
+    quantity: number,
+    commands: CommandItem[],
+    price: number,
+    maxQuantity: number,
+    soldInCycle: number,
+    dateLastSold: Date
   ) {
     super(id, name, maxUses, quantity, commands);
 
@@ -21,7 +27,7 @@ class GuildItem extends Item {
     this.dateLastSold = dateLastSold;
   }
 
-  getDetails() {
+  public getDetails() {
     const price = `Price: ${RNumber.formatDollar(this.price)}\n`;
     const uses = `Uses: ${this.unlimitedUses ? "∞" : this.maxUses}\n`;
     const quantity =
@@ -30,5 +36,3 @@ class GuildItem extends Item {
     return price + uses + quantity + this.getCommands();
   }
 }
-
-export default GuildItem;

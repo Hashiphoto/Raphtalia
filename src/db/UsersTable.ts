@@ -30,7 +30,7 @@ class UsersTable {
   get(id, guildId) {
     return this.pool
       .query("SELECT * FROM users WHERE id = ? AND guild_id = ?", [id, guildId])
-      .then(([rows, fields]) => {
+      .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
         if (rows.length === 0) {
           return new DbUser(id, guildId, 0, 0, false, 0, null);
         }

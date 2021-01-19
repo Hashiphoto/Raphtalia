@@ -1,12 +1,9 @@
 import Database from "../db/Database.js";
 
-class Controller {
-  /**
-   * @param {Database} db
-   */
-  constructor(db) {
+export default class Controller {
+  public db: Database;
+
+  public constructor(db: Database) {
     this.db = db;
   }
 }
-
-export default Controller;

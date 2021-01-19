@@ -1,31 +1,20 @@
-import Discord from "discord.js";
+import Discord, { GuildMember } from "discord.js";
+
 import GuildBasedController from "./GuildBasedController.js";
 import GuildItem from "../structures/GuildItem.js";
 import UserInventory from "../structures/UserInventory.js";
 import UserItem from "../structures/UserItem.js";
 
 class InventoryController extends GuildBasedController {
-  /**
-   * @param {String} name
-   * @returns {Promise<GuildItem>}
-   */
-  getGuildItem(name) {
+  getGuildItem(name: String) {
     return this.db.inventory.findGuildItem(this.guild.id, name);
   }
 
-  /**
-   * @param {GuildItem} item
-   */
-  updateGuildItem(item) {
+  updateGuildItem(item: GuildItem) {
     return this.db.inventory.updateGuildItem(this.guild.id, item);
   }
 
-  /**
-   * @param {String} name
-   * @param {Discord.GuildMember} member
-   * @returns {Promise<UserItem>}
-   */
-  findUserItem(member, name) {
+  findUserItem(member: GuildMember, name: String) {
     return this.db.inventory.findUserItem(this.guild.id, member.id, name);
   }
 
@@ -34,7 +23,7 @@ class InventoryController extends GuildBasedController {
    * @param {Discord.GuildMember} user
    * @param {Number} quantity How many of the item is being purchased
    */
-  async userPurchase(item, user, quantity = 1) {
+  async userPurchase(item: GuildItem, user: GuildMember, quantity = 1) {
     // Subtract from guild stock
     const updatedItem = await this.subtractGuildStock(item, quantity);
     if (updatedItem.soldInCycle > 1) {
@@ -88,7 +77,7 @@ class InventoryController extends GuildBasedController {
    * @param {Discord.GuildMember} member
    * @param {String} commandName
    */
-  getItemForCommand(member, commandName) {
+  getItemForCommand(member: GuildMember, commandName: String) {
     return this.db.inventory.getUserItemByCommand(this.guild.id, member.id, commandName);
   }
 
