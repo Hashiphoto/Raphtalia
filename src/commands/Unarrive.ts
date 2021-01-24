@@ -5,7 +5,7 @@
  */
 
 class Unarrive extends Command {
-  execute() {
+  execute(): Promise<any> {
     let target = this.sender;
     if (this.message.mentionedMembers.length > 0) {
       target = this.message.mentionedMembers[0];
@@ -19,7 +19,7 @@ class Unarrive extends Command {
         });
       })
       .then(() => {
-        return this.inputChannel.watchSend(`${target}'s papers have been deleted from record`);
+        return this.ec.channelHelper.watchSend(`${target}'s papers have been deleted from record`);
       });
   }
 }

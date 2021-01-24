@@ -1,16 +1,12 @@
-import Discord from "discord.js";
-import Util from "../../Util.js";
 import CensorController from "../CensorController.js";
-
+import Discord from "discord.js";
+import ExecutionContext from "../../structures/ExecutionContext.js";
 import SingletonMessageController from "./SingletonMessageController.js";
+import Util from "../../Util.js";
 
-class BanListStatusController extends SingletonMessageController {
-  /**
-   * @param {Database} db
-   * @param {Discord.Guild} guild
-   */
-  constructor(db, guild) {
-    super(db, guild);
+export default class BanListStatusController extends SingletonMessageController {
+  constructor(context: ExecutionContext) {
+    super(context);
     this.guildProperty = "banListMessageId";
   }
 
@@ -18,9 +14,8 @@ class BanListStatusController extends SingletonMessageController {
    * @returns {Promise<Discord.MessageEmbed>}
    */
   async generateEmbed() {
-    const censorCtlr = new CensorController(this.db, this.guild);
-    const enabled = await censorCtlr.censorshipEnabled();
-    const words = await censorCtlr.getAllBannedWords();
+    const enabled = await this.ec.censorController.censorshipEnabled();
+    const words = await this.ec.censorController.getAllBannedWords();
     const statusEmbed = new Discord.MessageEmbed()
       .setColor(enabled ? 0xf54c38 : 0x471d18)
       .setTitle(`Banned Words | Censorship is ${enabled ? "Enabled" : "Disabled"}`)
@@ -31,9 +26,7 @@ class BanListStatusController extends SingletonMessageController {
     return statusEmbed;
   }
 
-  setMessage(messageId) {
+  setMessage(messageId: string) {
     return this.db.guilds.setBanListMessage(this.guild.id, messageId);
   }
 }
-
-export default BanListStatusController;

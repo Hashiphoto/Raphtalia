@@ -1,6 +1,6 @@
-import Raphtalia from "../Raphtalia.js";
 import Command from "./Command.js";
 import NullCommand from "./NullCommand.js";
+import Raphtalia from "../Raphtalia.js";
 
 class Help extends Command {
   constructor(message) {
@@ -9,7 +9,7 @@ class Help extends Command {
     this.usage = "Usage: `Help (command name)`";
   }
 
-  execute() {
+  execute(): Promise<any> {
     if (this.message.args.length === 0) {
       return this.sendHelpMessage(this.instructions);
     }

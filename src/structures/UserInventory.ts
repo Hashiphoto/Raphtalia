@@ -1,20 +1,17 @@
-import Discord from "discord.js";
-import Item from "../structures/Item.js";
+import { GuildMember, MessageEmbed } from "discord.js";
 
-class UserInventory {
-  /**
-   * @param {Discord.GuildMember} member
-   * @param {Item[]} items
-   */
-  constructor(member, items) {
+import UserItem from "./UserItem.js";
+
+export default class UserInventory {
+  public member: GuildMember;
+  public items: UserItem[];
+
+  public constructor(member: GuildMember, items: UserItem[]) {
     this.member = member;
     this.items = items;
   }
 
-  /**
-   * @returns {Discord.MessageEmbed}
-   */
-  toEmbed() {
+  public toEmbed() {
     const fields = this.items.map((item) => {
       return {
         name: item.name,
@@ -23,16 +20,14 @@ class UserInventory {
       };
     });
 
-    const embed = new Discord.MessageEmbed()
+    const embed = new MessageEmbed()
       .setColor(this.member.displayColor)
       .setTitle(`${this.member.displayName}'s Inventory`)
       .setTimestamp(new Date())
-      .setThumbnail(this.member.user.avatarURL());
+      .setThumbnail(this.member.user.avatarURL() ?? "");
 
     fields.forEach((field) => embed.addField(field.name, field.value, field.inline));
 
     return embed;
   }
 }
-
-export default UserInventory;

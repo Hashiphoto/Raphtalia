@@ -1,27 +1,25 @@
 import RNumber from "./RNumber.js";
 
-class VotingOption {
-  /**
-   * @param {Number} id
-   * @param {String} body
-   */
-  constructor(id, body) {
+export default class VotingOption {
+  public id: number;
+  public body: string;
+  public votes: number;
+  public totalVotes: number;
+
+  public constructor(id: number, body: string) {
     this.id = id;
     this.body = body;
     this.votes = 0;
-    this.totalVotes;
   }
 
-  toString() {
+  public toString() {
     return `${this.id}. ${this.body}\n`;
   }
 
-  getPercentage() {
+  public getPercentage() {
     if (this.totalVotes === 0) {
       return RNumber.formatPercent(0);
     }
     return `${RNumber.formatPercent(this.votes / this.totalVotes)}`;
   }
 }
-
-export default VotingOption;

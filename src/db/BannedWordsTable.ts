@@ -1,23 +1,26 @@
-class BannedWordsTable {
-  constructor(pool) {
-    this.pool = pool;
+import { FieldPacket, Pool, ResultSetHeader, RowDataPacket } from "mysql2/promise";
+
+import { escape } from "mysql2";
+
+export default class BannedWordsTable {
+  private _pool: Pool;
+
+  public constructor(pool: Pool) {
+    this._pool = pool;
   }
 
-  getAll(guildId) {
-    return this.pool
+  public getAll(guildId: string) {
+    return this._pool
       .query("SELECT * FROM banned_words WHERE guild_id = ?", [guildId])
       .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
-        return rows.map((r) => r.word);
-      })
-      .catch((e) => {
-        console.error(e);
+        return rows.map((r) => r.word as string);
       });
   }
 
-  insert(wordList) {
-    return this.pool
+  public insert(wordList: string[][]) {
+    return this._pool
       .query("INSERT IGNORE INTO banned_words (word, guild_id) VALUES ?", [wordList])
-      .then(([results, fields]) => {
+      .then(([results, fields]: [ResultSetHeader, FieldPacket[]]) => {
         return results.insertId;
       })
       .catch((e) => {
@@ -25,27 +28,21 @@ class BannedWordsTable {
       });
   }
 
-  delete(guildId, word) {
-    return this.pool
-      .query("DELETE FROM banned_words WHERE (word) IN (?) AND guild_id = ?", [word, guildId])
+  public delete(guildId: string, words: string[]) {
+    return this._pool
+      .query("DELETE FROM banned_words WHERE (word) IN (?) AND guild_id = ?", [words, guildId])
       .catch((e) => {
         console.error(e);
       });
   }
 
-  /**
-   * @param {String} guildId
-   * @param {String[]} words
-   */
-  contains(guildId, words) {
-    return this.pool
-      .query(`SELECT * FROM banned_words WHERE guild_id = ? AND word IN (${mysql.escape(words)})`, [
+  public contains(guildId: string, words: string[]) {
+    return this._pool
+      .query(`SELECT * FROM banned_words WHERE guild_id = ? AND word IN (${escape(words)})`, [
         guildId,
       ])
       .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
-        return rows.map((r) => r.word);
+        return rows.map((r) => r.word as string);
       });
   }
 }
-
-export default BannedWordsTable;

@@ -1,20 +1,11 @@
 import Controller from "./Controller.js";
 
-class ChannelController extends Controller {
-  channel;
-
-  constructor(db, channel) {
-    super(db);
-    this.channel = channel;
-  }
-
-  setAutoDelete(enable, deleteDelay) {
-    if (!enable) {
-      deleteDelay = -1;
-    }
-
-    return this.db.channels.setAutoDelete(this.channel.id, deleteDelay);
+export default class ChannelController extends Controller {
+  /**
+   * A negative number means deletion is off.
+   * A zero or greater means messages will be deleted.
+   */
+  public setAutoDelete(deleteDelay: number) {
+    return this.ec.db.channels.setAutoDelete(this.ec.channel.id, deleteDelay);
   }
 }
-
-export default ChannelController;

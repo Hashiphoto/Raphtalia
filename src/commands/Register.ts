@@ -1,6 +1,5 @@
-import Discord from "discord.js";
-
 import Command from "./Command.js";
+import Discord from "discord.js";
 import MemberController from "../controllers/MemberController.js";
 
 class Register extends Command {
@@ -17,7 +16,7 @@ class Register extends Command {
     this.usage = "Usage: `Register`";
   }
 
-  async execute() {
+  async execute(): Promise<any> {
     let voterRole = this.guild.roles.cache.find((r) => r.name === "Voter");
     if (!voterRole) {
       // TODO: consolidate this with HoldVote, which also can create the Voter role
@@ -27,13 +26,13 @@ class Register extends Command {
     }
 
     if (this.message.member.roles.cache.has(voterRole.id)) {
-      return this.inputChannel.watchSend(`You are already a registered voter, dingus`);
+      return this.ec.channelHelper.watchSend(`You are already a registered voter, dingus`);
     }
 
     return this.message.member.roles
       .add(voterRole)
       .then(() => {
-        this.inputChannel.watchSend(`You are now a registered voter!`);
+        this.ec.channelHelper.watchSend(`You are now a registered voter!`);
       })
       .then(() => this.useItem());
   }

@@ -1,70 +1,62 @@
 import Command from "./Command.js";
+import ExecutionContext from "../structures/ExecutionContext.js";
 import MemberController from "../controllers/MemberController.js";
 
-class Debug extends Command {
-  /**
-   * @param {Discord.Message} message
-   * @param {MemberController} memberController
-   */
-  constructor(message, memberController) {
-    super(message);
-    this.memberController = memberController;
+export default class Debug extends Command {
+  constructor(context: ExecutionContext) {
+    super(context);
     this.instructions = "For testing in development only";
     this.usage = "Usage: `Debug (options)`";
   }
 
-  async execute() {
-    const args = this.message.args;
+  async execute(): Promise<any> {
+    const args = this.ec.messageHelper.args;
     if (args.length === 0) {
       return this.sendHelpMessage();
     }
     switch (args[0].toLowerCase()) {
       case "resolvecontests":
-        return this.memberController
+        return this.ec.memberController
           .resolveRoleContests(true)
           .then((responses) => responses.reduce(this.sum))
-          .then((feedback) => this.inputChannel.watchSend(feedback));
+          .then((feedback) => this.ec.channelHelper.watchSend(feedback));
       case "store":
-        const itemArgs = this.message.content
-          .slice(this.message.content.indexOf("store") + 5)
+        const itemArgs = this.ec.messageHelper.parsedContent
+          .slice(this.ec.messageHelper.parsedContent.indexOf("store") + 5)
           .split(",")
           .map((arg) => arg.trim());
         if (itemArgs.length < 5) {
-          return this.inputChannel.watchSend(
+          return this.ec.channelHelper.watchSend(
             "Please provide all 5 arguments (search, name, price, uses, quantity)"
           );
         }
-        const searchTerm = itemArgs[0];
-        const newName = itemArgs[1];
-        const newPrice = itemArgs[2];
-        const newUses = itemArgs[3];
-        const newQuantity = itemArgs[4];
 
-        const item = await this.inventoryController.getGuildItem(searchTerm);
+        const [searchTerm, newName, newPrice, newUses, newQuantity] = itemArgs;
+        const item = await this.ec.inventoryController.getGuildItem(searchTerm);
+
         if (!item) {
-          return this.inputChannel.watchSend("Couldn't find that item");
+          return this.ec.channelHelper.watchSend("Couldn't find that item");
         }
         if (newName !== "") {
           item.name = newName;
         }
         if (newPrice !== "") {
-          item.price = newPrice;
+          item.price = Number(newPrice);
         }
         if (newUses !== "") {
-          item.maxUses = newUses;
+          item.maxUses = Number(newUses);
         }
         if (newQuantity !== "") {
-          item.quantity += newQuantity - item.maxQuantity;
-          item.maxQuantity = newQuantity;
+          const newQuantityNumber = Number(newQuantity);
+          item.quantity += newQuantityNumber - item.maxQuantity;
+          item.maxQuantity = newQuantityNumber;
         }
 
-        return this.inventoryController.updateGuildItem(item).then(() => {
-          return this.inputChannel.watchSend("Item updated").then(() => true);
+        return this.ec.inventoryController.updateGuildItem(item).then(() => {
+          return this.ec.channelHelper.watchSend("Item updated").then(() => true);
         });
       default:
         return this.sendHelpMessage();
     }
   }
 }
-
-export default Debug;

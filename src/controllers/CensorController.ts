@@ -1,15 +1,93 @@
-import GuildBasedController from "./GuildBasedController.js";
+import GuildBasedController from "./Controller.js";
 import MemberController from "./MemberController.js";
+import { MessageEmbed } from "discord.js";
 
-class CensorController extends GuildBasedController {
-  toWordRegex(text) {
-    return new RegExp(`(?<=^|[^a-zA-Z0-9À-ÖØ-öø-ÿ])(${text})(?![a-zA-Z0-9À-ÖØ-öø-ÿ])`, "gi");
+export default class CensorController extends GuildBasedController {
+  /**
+   * Check a message for banned words and censor it appropriately
+   */
+  public async censorMessage() {
+    // TextChannel members will have member, but DMChannel messages will not
+    if (!this.ec.message.member) {
+      return false;
+    }
+
+    // Remove diacritics and non-alphanumeric characters
+    let originalContent = this.ec.message.content;
+    const normalizedContent = this.normalize(this.ec.message.content);
+    const dbGuild = await this.ec.db.guilds.get(this.ec.guild.id);
+
+    if (!dbGuild || !dbGuild.censorshipEnabled) {
+      return false;
+    }
+
+    const uniqueWords = Array.from(new Set(normalizedContent.split(/\s+/)));
+    const wordViolations = await this.ec.db.bannedWords.contains(this.ec.guild.id, uniqueWords);
+
+    if (wordViolations.length === 0) {
+      return false;
+    }
+
+    for (const word of wordViolations) {
+      originalContent = originalContent.replace(
+        this.toWordRegex(word),
+        "█".repeat(word.length / 2 + 1) // the character is kinda wide, so divide it in half
+      );
+    }
+
+    const embed = new MessageEmbed()
+      .setColor(13057084)
+      .setTitle("Censorship Report")
+      .setDescription(`${this.ec.message.member}\n> ${originalContent}`);
+
+    this.ec.message.delete();
+
+    await this.ec.memberController
+      .addInfractions(this.ec.message.member)
+      .then((feedback) => this.ec.channelHelper.watchSend(feedback, embed))
+      .catch((error) => {
+        if (error instanceof RangeError) {
+          return this.ec.channelHelper.watchSend(error.message, embed);
+        }
+        throw error;
+      });
+    return true;
+  }
+
+  public deleteWords(words: string[]) {
+    const normalizedWords = words.map((word) => this.normalize(word));
+    return this.ec.db.bannedWords
+      .delete(this.ec.guild.id, normalizedWords)
+      .then(() => normalizedWords);
+  }
+
+  public insertWords(words: string[]) {
+    const normalizedWords = words.map((word) => this.normalize(word));
+    let guildWordPairs = normalizedWords.map((word) => [word, this.ec.guild.id]);
+
+    return this.ec.db.bannedWords.insert(guildWordPairs).then(() => normalizedWords);
   }
 
   /**
-   * @param {String} text
+   * Checks whether censorship is enabled for the server or not
    */
-  normalize(text) {
+  public async censorshipEnabled() {
+    const dbGuild = await this.ec.db.guilds.get(this.ec.guild.id);
+    return dbGuild && dbGuild.censorshipEnabled;
+  }
+
+  /**
+   * @returns {Promise<String[]>}
+   */
+  public getAllBannedWords() {
+    return this.ec.db.bannedWords.getAll(this.ec.guild.id);
+  }
+
+  private toWordRegex(text: string) {
+    return new RegExp(`(?<=^|[^a-zA-Z0-9À-ÖØ-öø-ÿ])(${text})(?![a-zA-Z0-9À-ÖØ-öø-ÿ])`, "gi");
+  }
+
+  private normalize(text: string) {
     return text
       .toLowerCase()
       .normalize("NFD")
@@ -17,86 +95,4 @@ class CensorController extends GuildBasedController {
       .replace(/^["'`\[\{\(\*]+/gi, "")
       .replace(/[!,\.;:\)\]\}\*`'"|\?]+$/gi, "");
   }
-
-  /**
-   * Check a message for banned words and censor it appropriately
-   *
-   * @param {Discord.Message} message - The message to check for censorship
-   * @returns {Boolean} - True if the message was censored
-   */
-  censorMessage(message) {
-    // Remove diacritics and non-alphanumeric characters
-    const messageContent = this.normalize(message.content);
-
-    return this.db.guilds
-      .get(this.guild.id)
-      .then((dbGuild) => {
-        if (!dbGuild.censorshipEnabled) {
-          return [];
-        }
-
-        const uniqueWords = Array.from(new Set(messageContent.split(/\s+/)));
-
-        return this.db.bannedWords.contains(this.guild.id, uniqueWords);
-      })
-      .then((wordViolations) => {
-        if (wordViolations.length === 0) {
-          return;
-        }
-
-        let censoredMessage = message.content;
-
-        for (const word of wordViolations) {
-          censoredMessage = censoredMessage.replace(
-            this.toWordRegex(word),
-            "█".repeat(word.length / 2 + 1)
-          );
-        }
-
-        const embed = new Discord.MessageEmbed()
-          .setColor(13057084)
-          .setTitle("Censorship Report")
-          .setDescription(`${message.member}\n> ${censoredMessage}`);
-
-        message.delete();
-
-        return new MemberController(this.db, this.guild)
-          .addInfractions(message.member)
-          .then((feedback) => message.channel.watchSend(feedback, embed))
-          .catch((error) => {
-            if (error instanceof RangeError) {
-              return message.channel.watchSend(error.message, embed);
-            }
-            throw error;
-          });
-      });
-  }
-
-  deleteWords(words) {
-    const normalizedWords = words.map((word) => this.normalize(word));
-    return this.db.bannedWords.delete(this.guild.id, normalizedWords).then(() => normalizedWords);
-  }
-
-  insertWords(words) {
-    const normalizedWords = words.map((word) => this.normalize(word));
-    let guildWordPairs = normalizedWords.map((word) => [word, this.guild.id]);
-
-    return this.db.bannedWords.insert(guildWordPairs).then(() => normalizedWords);
-  }
-
-  /**
-   * @returns {Promise<Boolean>} Whether censorship is enabled for the server or not
-   */
-  censorshipEnabled() {
-    return this.db.guilds.get(this.guild.id).then((dbGuild) => dbGuild.censorshipEnabled);
-  }
-
-  /**
-   * @returns {Promise<String[]>}
-   */
-  getAllBannedWords() {
-    return this.db.bannedWords.getAll(this.guild.id);
-  }
 }
-
-export default CensorController;

@@ -13,7 +13,7 @@ class Roles extends Command {
     this.usage = "Usage: `Roles`";
   }
 
-  execute() {
+  execute(): Promise<any> {
     // Remove the current message and post the new one
     return this.roleStatusCtlr
       .removeMessage()

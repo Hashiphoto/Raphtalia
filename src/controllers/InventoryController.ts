@@ -1,21 +1,21 @@
 import Discord, { GuildMember } from "discord.js";
 
-import GuildBasedController from "./GuildBasedController.js";
+import GuildBasedController from "./Controller.js";
 import GuildItem from "../structures/GuildItem.js";
 import UserInventory from "../structures/UserInventory.js";
 import UserItem from "../structures/UserItem.js";
 
-class InventoryController extends GuildBasedController {
-  getGuildItem(name: String) {
-    return this.db.inventory.findGuildItem(this.guild.id, name);
+export default class InventoryController extends GuildBasedController {
+  getGuildItem(name: string) {
+    return this.ec.db.inventory.findGuildItem(this.ec.guild.id, name);
   }
 
   updateGuildItem(item: GuildItem) {
-    return this.db.inventory.updateGuildItem(this.guild.id, item);
+    return this.ec.db.inventory.updateGuildItem(this.ec.guild.id, item);
   }
 
-  findUserItem(member: GuildMember, name: String) {
-    return this.db.inventory.findUserItem(this.guild.id, member.id, name);
+  findUserItem(member: GuildMember, name: string) {
+    return this.ec.db.inventory.findUserItem(this.ec.guild.id, member.id, name);
   }
 
   /**
@@ -32,7 +32,7 @@ class InventoryController extends GuildBasedController {
 
     // Add it to player stock
     item.quantity = quantity;
-    return this.db.inventory.insertUserItem(this.guild.id, user.id, item);
+    return this.ec.db.inventory.insertUserItem(this.ec.guild.id, user.id, item);
   }
 
   /**
@@ -42,24 +42,33 @@ class InventoryController extends GuildBasedController {
   subtractGuildStock(item, quantity) {
     if (item.unlimitedQuantity) {
       // Record how many are sold
-      return this.db.inventory.updateGuildItemSold(this.guild.id, item, quantity, new Date());
+      return this.ec.db.inventory.updateGuildItemSold(this.ec.guild.id, item, quantity, new Date());
     }
 
     // Update the quantity AND how many are sold
-    return this.db.inventory.updateGuildItemQuantity(this.guild.id, item, -quantity, new Date());
+    return this.ec.db.inventory.updateGuildItemQuantity(
+      this.ec.guild.id,
+      item,
+      -quantity,
+      new Date()
+    );
   }
 
   /**
    * @param {GuildItem} guildItem
    */
   increaseGuildItemPrice(guildItem) {
-    return this.db.guilds.get(this.guild.id).then((dbGuild) => {
+    return this.ec.db.guilds.get(this.ec.guild.id).then((dbGuild) => {
       const priceMultiplier = Math.exp((guildItem.soldInCycle - 1) * dbGuild.priceHikeCoefficient);
       if (priceMultiplier === 1) {
         return;
       }
 
-      return this.db.inventory.updateGuildItemPrice(this.guild.id, guildItem, priceMultiplier);
+      return this.ec.db.inventory.updateGuildItemPrice(
+        this.ec.guild.id,
+        guildItem,
+        priceMultiplier
+      );
     });
   }
 
@@ -68,7 +77,7 @@ class InventoryController extends GuildBasedController {
    * @returns {Promise<UserInventory>}
    */
   getUserInventory(user) {
-    return this.db.inventory
+    return this.ec.db.inventory
       .getUserInventory(user.guild.id, user.id)
       .then((items) => new UserInventory(user, items));
   }
@@ -78,7 +87,7 @@ class InventoryController extends GuildBasedController {
    * @param {String} commandName
    */
   getItemForCommand(member: GuildMember, commandName: String) {
-    return this.db.inventory.getUserItemByCommand(this.guild.id, member.id, commandName);
+    return this.ec.db.inventory.getUserItemByCommand(this.ec.guild.id, member.id, commandName);
   }
 
   /**
@@ -97,7 +106,7 @@ class InventoryController extends GuildBasedController {
     const newQuantity = Math.ceil(item.remainingUses / item.maxUses);
     if (item.quantity !== newQuantity) {
       item.quantity = newQuantity;
-      this.db.inventory.updateGuildItemQuantity(this.guild.id, item, uses);
+      this.ec.db.inventory.updateGuildItemQuantity(this.ec.guild.id, item, uses);
     }
 
     return this.updateUserItem(item, member).then(() => {
@@ -107,10 +116,10 @@ class InventoryController extends GuildBasedController {
 
   updateUserItem(item, member) {
     if (item.quantity === 0) {
-      return this.db.inventory.deleteUserItem(this.guild.id, member.id, item);
+      return this.ec.db.inventory.deleteUserItem(this.ec.guild.id, member.id, item);
     }
 
-    return this.db.inventory.updateUserItem(this.guild.id, member.id, item);
+    return this.ec.db.inventory.updateUserItem(this.ec.guild.id, member.id, item);
   }
 
   /**
@@ -128,8 +137,6 @@ class InventoryController extends GuildBasedController {
     const givenItem = item.copy();
     givenItem.quantity = 1;
     givenItem.remainingUses = givenItem.maxUses;
-    return this.db.inventory.insertUserItem(this.guild.id, toMember.id, givenItem);
+    return this.ec.db.inventory.insertUserItem(this.ec.guild.id, toMember.id, givenItem);
   }
 }
-
-export default InventoryController;

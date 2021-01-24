@@ -1,27 +1,19 @@
 import { DMChannel, Guild, Message, NewsChannel, TextChannel } from "discord.js";
 
 import CommandParser from "../CommandParser.js";
-import InventoryController from "../controllers/InventoryController.js";
+import ExecutionContext from "../structures/ExecutionContext.js";
 import UserItem from "../structures/UserItem.js";
 
-class Command {
-  message: Message;
-  sender: any;
-  inputChannel: TextChannel | DMChannel | NewsChannel;
-  reply: any;
-  guild: Guild | null;
-  item: UserItem;
-  instructions: string;
-  usage: string;
-  inventoryController: InventoryController;
+export default class Command {
+  public item: UserItem;
 
-  constructor(message: Message) {
-    this.message = message;
-    this.sender = message.author;
-    this.inputChannel = message.channel;
-    this.reply = this.inputChannel.watchSend;
-    this.guild = message.guild;
-    this.item;
+  protected ec: ExecutionContext;
+  protected instructions: string;
+  protected usage: string;
+
+  public constructor(context: ExecutionContext) {
+    this.ec = context;
+
     this.sender.hasAuthorityOver = (input) => {
       /**
        * @param {Discord.GuildMember} member
@@ -38,34 +30,24 @@ class Command {
       }
       return isHigher(this.sender, input);
     };
-    this.instructions = "";
-    this.usage = "";
   }
 
   /**
    * @returns {Boolean} Whether the store needs to be updated or not
    */
-  execute() {
+  public execute(): Promise<any> {
     throw new Error("Implement this function");
   }
 
-  sendHelpMessage(pretext = "") {
-    return this.inputChannel.watchSend(pretext + "\n" + this.usage);
-  }
-
-  /**
-   * @param {InventoryController} ic
-   */
-  setInventoryController(ic) {
-    this.inventoryController = ic;
-    return this;
+  public sendHelpMessage(pretext = "") {
+    return this.ec.channelHelper.watchSend(pretext + "\n" + this.usage);
   }
 
   /**
    * @param {Number} uses
    * @returns {Boolean} Whether the store needs to be updated or not
    */
-  useItem(uses = 1) {
+  public useItem(uses = 1) {
     const oldQuantity = this.item.quantity;
     return this.inventoryController
       .useItem(this.item, this.message.sender, uses)
@@ -81,17 +63,7 @@ class Command {
       });
   }
 
-  /**
-   * @param {UserItem} item
-   */
-  setItem(item) {
-    this.item = item;
-    return this;
-  }
-
-  sum(total, value) {
+  public sum(total, value) {
     return total + value;
   }
 }
-
-export default Command;

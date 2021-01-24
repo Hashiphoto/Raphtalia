@@ -8,15 +8,15 @@ import UsersTable from "./UsersTable.js";
 import { createPool } from "mysql2";
 import secretConfig from "../../config/secrets.config.js";
 
-class Database {
-  users: UsersTable;
-  bannedWords: BannedWordsTable;
-  guilds: GuildsTable;
-  channels: ChannelsTable;
-  roles: RolesTable;
-  inventory: InventoryTable;
+export default class Database {
+  public users: UsersTable;
+  public bannedWords: BannedWordsTable;
+  public guilds: GuildsTable;
+  public channels: ChannelsTable;
+  public roles: RolesTable;
+  public inventory: InventoryTable;
 
-  constructor(pool: Pool) {
+  public constructor(pool: Pool) {
     this.users = new UsersTable(pool);
     this.bannedWords = new BannedWordsTable(pool);
     this.guilds = new GuildsTable(pool);
@@ -25,7 +25,7 @@ class Database {
     this.inventory = new InventoryTable(pool);
   }
 
-  static async createPool() {
+  public static async createPool() {
     const pool = createPool({
       host: secretConfig().database.host,
       port: secretConfig().database.port,
@@ -38,5 +38,3 @@ class Database {
     return pool;
   }
 }
-
-export default Database;

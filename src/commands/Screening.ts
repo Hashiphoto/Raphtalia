@@ -1,9 +1,9 @@
+import BadParametersError from "../structures/errors/BadParametersError.js";
+import Command from "./Command.js";
 import Discord from "discord.js";
 import GuildController from "../controllers/GuildController.js";
 import Question from "../structures/Question.js";
-import sendTimedMessage from "../timedMessage.js";
-import Command from "./Command.js";
-import BadParametersError from "../structures/errors/BadParametersError.js";
+import sendTimedMessage from "../TimedMessage.js";
 
 class Screening extends Command {
   /**
@@ -22,7 +22,7 @@ class Screening extends Command {
     this.usage = "Usage: `Screening (list | add | delete id)`";
   }
 
-  execute() {
+  execute(): Promise<any> {
     if (this.message.args.length === 0) {
       return this.sendHelpMessage();
     }
@@ -31,20 +31,20 @@ class Screening extends Command {
       case "list":
         return this.guildController.getScreeningQuestions().then((questions) => {
           if (questions.length === 0) {
-            return this.inputChannel.watchSend("There are currently no screening questions");
+            return this.ec.channelHelper.watchSend("There are currently no screening questions");
           }
           const allQuestions = questions.reduce((sum, question) => sum + question, "");
-          return this.inputChannel.watchSend(allQuestions);
+          return this.ec.channelHelper.watchSend(allQuestions);
         });
 
       case "add":
         return this.getNewQuestionDetails()
           .then((question) => this.guildController.addScreeningQuestion(question))
-          .then(() => this.inputChannel.watchSend("New question added!"))
+          .then(() => this.ec.channelHelper.watchSend("New question added!"))
           .then(() => this.useItem())
           .catch((error) => {
             if (error instanceof BadParametersError) {
-              return this.inputChannel.watchSend(
+              return this.ec.channelHelper.watchSend(
                 "Invalid input. Adding new screening question aborted"
               );
             }
@@ -60,9 +60,9 @@ class Screening extends Command {
         const id = this.message.args[1];
         return this.guildController.deleteScreeningQuestion(id).then((deleted) => {
           if (deleted) {
-            return this.inputChannel.watchSend("Question deleted").then(() => this.useItem());
+            return this.ec.channelHelper.watchSend("Question deleted").then(() => this.useItem());
           }
-          return this.inputChannel.watchSend(`There is no question with id ${id}`);
+          return this.ec.channelHelper.watchSend(`There is no question with id ${id}`);
         });
     }
   }

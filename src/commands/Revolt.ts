@@ -1,14 +1,13 @@
+import Command from "./Command.js";
 import Discord from "discord.js";
 
-import Command from "./Command.js";
-
 class Revolt extends Command {
-  execute() {
-    return this.inputChannel.watchSend("This feature hasn't been developed yet");
+  execute(): Promise<any> {
+    return this.ec.channelHelper.watchSend("This feature hasn't been developed yet");
   }
 
   sendHelpMessage() {
-    return this.inputChannel.watchSend("Usage: `Revolt`");
+    return this.ec.channelHelper.watchSend("Usage: `Revolt`");
   }
 }
 

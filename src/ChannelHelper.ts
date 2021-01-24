@@ -1,11 +1,11 @@
 import { DMChannel, StringResolvable, TextChannel } from "discord.js";
 
-export class ChannelHelper {
+export default class ChannelHelper {
   public deleteMessageDelay: number;
 
-  private channel: TextChannel | DMChannel;
+  public channel: TextChannel;
 
-  public constructor(channel: TextChannel | DMChannel, deleteMessageDelay: number) {
+  public constructor(channel: TextChannel, deleteMessageDelay: number) {
     this.channel = channel;
     this.deleteMessageDelay = deleteMessageDelay;
   }

@@ -10,13 +10,14 @@ import { escape } from "mysql2";
 
 export default class InventoryTable {
   public pool: Pool;
-  public guildSelect: string;
-  public userSelect: string;
+
+  private _guildSelect: string;
+  private _userSelect: string;
 
   public constructor(pool: Pool) {
     this.pool = pool;
-    this.guildSelect = "SELECT * FROM guild_inventory gi JOIN items i ON gi.item_id = i.id ";
-    this.userSelect =
+    this._guildSelect = "SELECT * FROM guild_inventory gi JOIN items i ON gi.item_id = i.id ";
+    this._userSelect =
       "SELECT ui.user_id, ui.guild_id, i.id, ui.quantity, ui.remaining_uses, i.name, gi.max_uses " +
       "FROM user_inventory ui " +
       "JOIN items i ON ui.item_id = i.id " +
@@ -25,7 +26,7 @@ export default class InventoryTable {
 
   public getGuildStock(guildId: string, showHidden = false) {
     return this.pool
-      .query(this.guildSelect + "WHERE guild_id = ? " + `${showHidden ? "" : "AND hidden = 0"}`, [
+      .query(this._guildSelect + "WHERE guild_id = ? " + `${showHidden ? "" : "AND hidden = 0"}`, [
         guildId,
       ])
       .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
@@ -45,7 +46,7 @@ export default class InventoryTable {
   public findGuildItem(guildId: string, itemName: string) {
     return this.pool
       .query(
-        this.guildSelect +
+        this._guildSelect +
           `WHERE guild_id = ? AND hidden = 0 AND name LIKE ${escape(`%${itemName}%`)}`,
         [guildId]
       )
@@ -63,7 +64,7 @@ export default class InventoryTable {
 
   public getGuildItem(guildId: string, itemId: string) {
     return this.pool
-      .query(this.guildSelect + `WHERE guild_id = ? AND id=?`, [guildId, itemId])
+      .query(this._guildSelect + `WHERE guild_id = ? AND id=?`, [guildId, itemId])
       .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
         if (rows.length === 0) {
           return null;
@@ -78,7 +79,7 @@ export default class InventoryTable {
    * @param {Item} item
    * @param {Number} quantityChange
    * @param {Date|null} soldDateTime
-   * @returns {GuildItem} The item after updating
+   * @returns {Promise<GuildItem>} The item after updating
    */
   public updateGuildItemQuantity(
     guildId: string,
@@ -134,7 +135,7 @@ export default class InventoryTable {
   public findUserItem(guildId: string, userId: string, itemName: string, showHidden = false) {
     return this.pool
       .query(
-        this.userSelect +
+        this._userSelect +
           `WHERE ui.guild_id=? AND ui.user_id=? AND i.name LIKE ${escape(`%${itemName}%`)} ` +
           `${showHidden ? "" : "AND hidden = 0"}`,
         [guildId, userId]
@@ -160,7 +161,7 @@ export default class InventoryTable {
   public getUserInventory(guildId: string, userId: string, showHidden = false) {
     return this.pool
       .query(
-        this.userSelect +
+        this._userSelect +
           "WHERE ui.guild_id=? AND ui.user_id=?" +
           `${showHidden ? "" : "AND hidden = 0"}`,
         [guildId, userId]
@@ -181,7 +182,7 @@ export default class InventoryTable {
 
   public getUserItem(guildId: string, userId: string, itemId: string) {
     return this.pool
-      .query(this.userSelect + "WHERE ui.guild_id=? AND ui.user_id=? AND i.id=?", [
+      .query(this._userSelect + "WHERE ui.guild_id=? AND ui.user_id=? AND i.id=?", [
         guildId,
         userId,
         itemId,

@@ -1,8 +1,7 @@
-import Discord from "discord.js";
-
 import Command from "./Command.js";
-import links from "../../resources/links.js";
+import Discord from "discord.js";
 import RNumber from "../structures/RNumber.js";
+import links from "../../resources/links.js";
 import ytdl from "ytdl-core";
 
 class Play extends Command {
@@ -13,7 +12,7 @@ class Play extends Command {
       "You can specify which voice channel to play in by voice channel name or channel group and voice channel name. ";
     this.usage = "Usage: `Play [in (Group/VoiceChannel | VoiceChannel)]`";
   }
-  execute() {
+  execute(): Promise<any> {
     let content = this.message.content;
     // TODO: fix percentage parsing
     // const lastArg = this.message.args[this.message.args.length - 1];

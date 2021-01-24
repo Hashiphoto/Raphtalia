@@ -1,5 +1,5 @@
 import Discord from "discord.js";
-
+import ExecutionContext from "../../structures/ExecutionContext.js";
 import SingletonMessageController from "./SingletonMessageController.js";
 
 class StoreStatusController extends SingletonMessageController {
@@ -7,8 +7,8 @@ class StoreStatusController extends SingletonMessageController {
    * @param {Database} db
    * @param {Discord.Guild} guild
    */
-  constructor(db, guild) {
-    super(db, guild);
+  constructor(context: ExecutionContext) {
+    super(context);
     this.guildProperty = "storeMessageId";
   }
 

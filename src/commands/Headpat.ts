@@ -1,6 +1,5 @@
-import Discord from "discord.js";
-
 import Command from "./Command.js";
+import Discord from "discord.js";
 
 class Headpat extends Command {
   constructor(message) {
@@ -9,7 +8,7 @@ class Headpat extends Command {
     this.usage = "Usage: `Headpat @member`";
   }
 
-  execute() {
+  execute(): Promise<any> {
     const targets = this.message.mentionedMembers;
 
     if (targets.length === 0) {
@@ -17,7 +16,7 @@ class Headpat extends Command {
     }
 
     if (!this.item.unlimitedUses && targets.length > this.item.remainingUses) {
-      return this.inputChannel.watchSend(
+      return this.ec.channelHelper.watchSend(
         `Your ${this.item.name} does not have enough charges. ` +
           `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
       );
@@ -28,7 +27,7 @@ class Headpat extends Command {
       response += `${member} headpat\n`;
     }
 
-    return this.inputChannel.watchSend(response).then(() => this.useItem(targets.length));
+    return this.ec.channelHelper.watchSend(response).then(() => this.useItem(targets.length));
   }
 }
 

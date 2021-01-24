@@ -1,8 +1,7 @@
-import Discord from "discord.js";
-import dayjs from "dayjs";
-import MemberController from "../controllers/MemberController.js";
-
 import Command from "./Command.js";
+import Discord from "discord.js";
+import MemberController from "../controllers/MemberController.js";
+import dayjs from "dayjs";
 
 class Pardon extends Command {
   /**
@@ -18,14 +17,14 @@ class Pardon extends Command {
     this.usage = "Usage: `Pardon @member`";
   }
 
-  async execute() {
+  async execute(): Promise<any> {
     const targets = this.message.mentionedMembers;
     if (targets.length === 0) {
       return this.sendHelpMessage();
     }
 
     if (!this.item.unlimitedUses && targets.length > this.item.remainingUses) {
-      return this.inputChannel.watchSend(
+      return this.ec.channelHelper.watchSend(
         `Your ${this.item.name} does not have enough charges. ` +
           `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
       );
@@ -46,7 +45,7 @@ class Pardon extends Command {
 
     return Promise.all(pardonPromises)
       .then((messages) => messages.reduce(this.sum))
-      .then((response) => this.inputChannel.watchSend(response))
+      .then((response) => this.ec.channelHelper.watchSend(response))
       .then(() => this.useItem(targets.length));
   }
 }

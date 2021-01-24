@@ -1,14 +1,21 @@
-class DbUser {
-  /**
-   * @param {String} id
-   * @param {String} guildId
-   * @param {Number} infractions
-   * @param {Number} currency
-   * @param {Boolean} citizenship
-   * @param {Number} bonusIncome
-   * @param {Date} lastMessageDate
-   */
-  constructor(id, guildId, infractions, currency, citizenship, bonusIncome, lastMessageDate) {
+export default class DbUser {
+  public id: string;
+  public guildId: string;
+  public infractions: number;
+  public currency: number;
+  public isCitizen: boolean;
+  public bonusIncome: number;
+  public lastMessageDate: Date;
+
+  public constructor(
+    id: string,
+    guildId: string,
+    infractions: number,
+    currency: number,
+    citizenship: boolean,
+    bonusIncome: number,
+    lastMessageDate: Date
+  ) {
     this.id = id;
     this.guildId = guildId;
     this.infractions = infractions;
@@ -18,5 +25,3 @@ class DbUser {
     this.lastMessageDate = lastMessageDate;
   }
 }
-
-export default DbUser;

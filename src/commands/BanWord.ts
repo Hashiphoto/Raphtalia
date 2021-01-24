@@ -1,46 +1,35 @@
-import Command from "./Command.js";
-import CensorController from "../controllers/CensorController.js";
-import Util from "../Util.js";
 import BanListStatusController from "../controllers/message/BanListStatusController.js";
+import CensorController from "../controllers/CensorController.js";
+import Command from "./Command.js";
+import ExecutionContext from "../structures/ExecutionContext.js";
+import Util from "../Util.js";
 
-class BanWord extends Command {
-  /**
-   * @param {Discord.Message} message
-   * @param {CensorController} censorController
-   * @param {BanListStatusController} banlistStatusCtlr
-   */
-  constructor(message, censorController, banlistStatusCtlr) {
-    super(message);
-    this.censorController = censorController;
-    this.banlistStatusCtlr = banlistStatusCtlr;
+export default class BanWord extends Command {
+  constructor(context: ExecutionContext) {
+    super(context);
     this.instructions = "**BanWord**\nAdd a word to the ban list";
     this.usage = "Usage: `BanWord word1 word2 etc1`";
   }
 
-  execute() {
+  async execute(): Promise<any> {
     // TODO: Check if censorship is enabled at all
 
-    const words = this.message.args;
+    const words = this.ec.messageHelper.args;
     if (words.length === 0) {
       return this.sendHelpMessage();
     }
 
     if (!this.item.unlimitedUses && words.length > this.item.remainingUses) {
-      return this.inputChannel.watchSend(
+      return this.ec.channelHelper.watchSend(
         `Your ${this.item.name} does not have enough charges. ` +
           `Attempting to use ${words.length}/${this.item.remainingUses} remaining uses`
       );
     }
 
-    let normalizedList = [];
-
-    return this.censorController
+    return this.ec.censorController
       .insertWords(words)
-      .then((list) => (normalizedList = list))
-      .then(() => this.banlistStatusCtlr.update())
-      .then(() => this.inputChannel.watchSend("Banned words list has been updated"))
-      .then(() => this.useItem(words.length));
+      .then(() => this.useItem())
+      .then(() => this.ec.banListStatusController.update())
+      .then(() => this.ec.channelHelper.watchSend("Banned words list has been updated"));
   }
 }
-
-export default BanWord;

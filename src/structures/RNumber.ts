@@ -1,25 +1,27 @@
 import Util from "../Util.js";
 
-class RNumber {
-  amount;
-  type;
+enum RNumberType {
+  DOLLAR,
+  PERCENT,
+  INT,
+  FLOAT,
+  MULTIPLIER,
+}
 
-  static types = {
-    DOLLAR: "dollar",
-    PERCENT: "percent",
-    INT: "int",
-    FLOAT: "float",
-    MULTIPLIER: "multiplier",
-  };
+export default class RNumber {
+  public amount: number;
+  public type: RNumberType;
 
-  constructor(amount, type) {
+  public static readonly Types = RNumberType;
+
+  public constructor(amount: number, type: RNumberType) {
     this.amount = amount;
     this.type = type;
   }
 
-  static parse(text) {
+  public static parse(text: string) {
     let amount = null;
-    let type = RNumber.types.FLOAT;
+    let type = RNumber.Types.FLOAT;
     // Remove mentions
     text = text.replace(/<.{2}\d+>/i, "").trim();
     // Get the first number in the text
@@ -44,13 +46,13 @@ class RNumber {
     }
     if (matches[4]) {
       if (matches[4] === "%") {
-        type = RNumber.types.PERCENT;
+        type = RNumber.Types.PERCENT;
         amount /= 100;
       } else if (matches[4].toLowerCase() === "x") {
-        type = RNumber.types.MULTIPLIER;
+        type = RNumber.Types.MULTIPLIER;
       }
     } else if (matches[2] === "$") {
-      type = RNumber.types.DOLLAR;
+      type = RNumber.Types.DOLLAR;
     }
 
     // Round to 2 decimal places
@@ -59,50 +61,36 @@ class RNumber {
     return new RNumber(amount, type);
   }
 
-  toString() {
-    switch (this.type) {
-      case RNumber.types.INT:
-        return RNumber.formatInt(this.amount);
-      case RNumber.types.DOLLAR:
-        return RNumber.formatDollar(this.amount);
-      case RNumber.types.PERCENT:
-        return RNumber.formatPercent(this.amount);
-      case RNumber.types.MULTIPLIER:
-        return RNumber.formatMultiplier(this.amount);
-      default:
-        return this.amount.toFixed(0);
-    }
-  }
-
-  /**
-   * @param {Number} amount
-   */
-  static formatInt(amount) {
+  public static formatInt(amount: number) {
     return amount.toFixed(0);
   }
 
-  /**
-   * @param {Number} amount
-   */
-  static formatDollar(amount) {
+  public static formatDollar(amount: number) {
     return (
       "$" + amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     );
   }
 
-  /**
-   * @param {Number} amount
-   */
-  static formatPercent(amount) {
+  public static formatPercent(amount: number) {
     return (amount * 100).toFixed(2) + "%";
   }
 
-  /**
-   * @param {Number} amount
-   */
-  static formatMultiplier(amount) {
+  public static formatMultiplier(amount: number) {
     return amount.toFixed(2) + "x";
   }
-}
 
-export default RNumber;
+  public toString() {
+    switch (this.type) {
+      case RNumber.Types.INT:
+        return RNumber.formatInt(this.amount);
+      case RNumber.Types.DOLLAR:
+        return RNumber.formatDollar(this.amount);
+      case RNumber.Types.PERCENT:
+        return RNumber.formatPercent(this.amount);
+      case RNumber.Types.MULTIPLIER:
+        return RNumber.formatMultiplier(this.amount);
+      default:
+        return this.amount.toFixed(0);
+    }
+  }
+}

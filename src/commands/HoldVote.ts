@@ -1,15 +1,14 @@
-import Discord from "discord.js";
-import dayjs from "dayjs";
-
 import Command from "./Command.js";
-import discordConfig from "../../config/discord.config.js";
-import sendTimedMessage from "../timedMessage.js";
-import Util from "../Util.js";
+import Discord from "discord.js";
 import Question from "../structures/Question.js";
-import VotingOption from "../structures/VotingOption.js";
 import RNumber from "../structures/RNumber.js";
 import RoleUtil from "../RoleUtil.js";
+import Util from "../Util.js";
+import VotingOption from "../structures/VotingOption.js";
+import dayjs from "dayjs";
 import delay from "delay";
+import discordConfig from "../../config/discord.config.js";
+import sendTimedMessage from "../TimedMessage.js";
 
 class HoldVote extends Command {
   constructor(message) {
@@ -20,10 +19,10 @@ class HoldVote extends Command {
       "After using the initial command, you will be asked several additional questions to specify the parameters of the vote";
     this.usage = "Usage: `HoldVote (Ask your question here)`";
   }
-  async execute() {
+  async execute(): Promise<any> {
     let voters = this.getVoters();
     if (voters.size === 0) {
-      return this.inputChannel.watchSend(
+      return this.ec.channelHelper.watchSend(
         `There are no registered voters. Use the Register command first.`
       );
     }
@@ -131,7 +130,7 @@ class HoldVote extends Command {
         totalVotes ? winners[0].votes / totalVotes : 0
       )} of the vote \n${resultsTable}`;
 
-      this.inputChannel.watchSend(finalResults);
+      this.ec.channelHelper.watchSend(finalResults);
     });
 
     return this.inputChannel

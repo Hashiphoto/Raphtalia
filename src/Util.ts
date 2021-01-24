@@ -1,22 +1,19 @@
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
+
 import duration from "dayjs/plugin/duration.js";
 
 dayjs.extend(duration);
 
-class Util {
+export default class Util {
   /**
    * @param {Number} amount
    * @returns {Number}
    */
-  static round(amount) {
-    return Number(Math.round(amount + "e2") + "e-2");
+  public static round(amount: number) {
+    return Number(Math.round(Number(amount + "e2")) + "e-2");
   }
 
-  /**
-   * @param {dayjs.Dayjs} date
-   * @returns {String}
-   */
-  static formatDate(date) {
+  public static formatDate(date: Dayjs) {
     return date.format("h:mm A on MMM D, YYYY");
   }
 
@@ -27,7 +24,7 @@ class Util {
    * @param {String} inputText - A string representation of a time span. Ex. "5d 4h 3s" or "30m"
    * @returns {Number} - The duration in milliseconds
    */
-  static parseTime(inputText) {
+  public static parseTime(inputText: string) {
     let matches = inputText.matchAll(/\b(\d+)(d|h|m|s|(?:ms))\b/gi);
 
     let length = 0;
@@ -48,10 +45,10 @@ class Util {
       duration = duration.add(timeSpan, timeType);
     }
 
-    return length ? duration.asMilliseconds() : null;
+    return length ? duration.asMilliseconds() : undefined;
   }
 
-  static listFormat(itemArray, conjunction = "and") {
+  public static listFormat(itemArray: string[], conjunction = "and") {
     if (itemArray.length === 1) {
       return itemArray[0];
     }
@@ -77,5 +74,3 @@ class Util {
     return output;
   }
 }
-
-export default Util;

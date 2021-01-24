@@ -26,7 +26,7 @@ class ServerStatus extends Command {
     this.usage = "Usage: `ServerStatus`";
   }
 
-  async execute() {
+  async execute(): Promise<any> {
     const banList = new BanList(this.message, this.banlistStatusCtlr)
       .setItem(this.item)
       .setInventoryController(this.inventoryController);
@@ -38,9 +38,9 @@ class ServerStatus extends Command {
       .setInventoryController(this.inventoryController);
 
     return banList
-      .execute()
-      .then(() => roles.execute())
-      .then(() => store.execute());
+      .execute(): Promise<any>
+      .then(() => roles.execute(): Promise<any>)
+      .then(() => store.execute(): Promise<any>);
   }
 }
 

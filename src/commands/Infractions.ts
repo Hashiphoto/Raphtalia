@@ -1,6 +1,5 @@
-import Discord from "discord.js";
-
 import Command from "./Command.js";
+import Discord from "discord.js";
 import MemberController from "../controllers/MemberController.js";
 
 class Infractions extends Command {
@@ -16,7 +15,7 @@ class Infractions extends Command {
     this.usage = "Usage: `Infractions [@member]`";
   }
 
-  async execute() {
+  async execute(): Promise<any> {
     if (this.message.mentionedMembers == null || this.message.mentionedMembers.length === 0) {
       return this.reportInfractions(this.sender);
     } else {
@@ -28,7 +27,7 @@ class Infractions extends Command {
     return this.memberController
       .getInfractions(member)
       .then((infractCount) =>
-        this.inputChannel.watchSend(`${member} has incurred ${infractCount} infractions\n`)
+        this.ec.channelHelper.watchSend(`${member} has incurred ${infractCount} infractions\n`)
       )
       .then(() => this.useItem());
   }

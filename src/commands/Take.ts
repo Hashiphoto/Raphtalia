@@ -1,9 +1,8 @@
-import Discord from "discord.js";
-
 import Command from "./Command.js";
-import RNumber from "../structures/RNumber.js";
 import CurrencyController from "../controllers/CurrencyController.js";
+import Discord from "discord.js";
 import MemberController from "../controllers/MemberController.js";
+import RNumber from "../structures/RNumber.js";
 import UserItem from "../structures/UserItem.js";
 
 class Take extends Command {
@@ -22,14 +21,14 @@ class Take extends Command {
     this.usage = "Usage: `Take @member ($1|item name)`";
   }
 
-  execute() {
+  execute(): Promise<any> {
     const targets = this.message.mentionedMembers;
     if (this.message.args.length === 0 || targets.length === 0) {
       return this.sendHelpMessage();
     }
 
     if (!this.item.unlimitedUses && targets.length > this.item.remainingUses) {
-      return this.inputChannel.watchSend(
+      return this.ec.channelHelper.watchSend(
         `Your ${this.item.name} does not have enough charges. ` +
           `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
       );
@@ -71,7 +70,7 @@ class Take extends Command {
    */
   takeMoney(rNumber, targets) {
     if (rNumber.amount < 0) {
-      return this.inputChannel.watchSend("You cannot take a negative amount of money\n");
+      return this.ec.channelHelper.watchSend("You cannot take a negative amount of money\n");
     }
 
     const givePromises = targets.map((target) => {
@@ -82,7 +81,7 @@ class Take extends Command {
 
     return Promise.all(givePromises)
       .then((messages) => messages.reduce(this.sum))
-      .then((response) => this.inputChannel.watchSend(response));
+      .then((response) => this.ec.channelHelper.watchSend(response));
   }
 
   /**
@@ -90,7 +89,7 @@ class Take extends Command {
    */
   takeItem(item, target) {
     return this.inventoryController.transferItem(item, target, this.sender).then(() => {
-      return this.inputChannel.watchSend(
+      return this.ec.channelHelper.watchSend(
         `Transferred one ${item.name} from ${target} to ${this.sender}\n`
       );
     });

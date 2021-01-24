@@ -1,18 +1,10 @@
-import Command from "./Command.js";
-import GuildController from "../controllers/GuildController.js";
 import BanListStatusController from "../controllers/message/BanListStatusController.js";
+import Command from "./Command.js";
+import ExecutionContext from "../structures/ExecutionContext.js";
 
-class Censorship extends Command {
-  /**
-   *
-   * @param {Discord.Message} message
-   * @param {GuildController} guildController
-   * @param {BanListStatusController} banlistStatusCtlr
-   */
-  constructor(message, guildController, banlistStatusCtlr) {
-    super(message);
-    this.guildController = guildController;
-    this.banlistStatusCtlr = banlistStatusCtlr;
+export default class Censorship extends Command {
+  constructor(context: ExecutionContext) {
+    super(context);
     this.instructions =
       "**Censorship**\nEnable or disable censorship for the whole server. " +
       "When censorship is enabled, anyone who uses a word from the banned " +
@@ -20,26 +12,24 @@ class Censorship extends Command {
     this.usage = "Usage: `Censorship (start|stop)`";
   }
 
-  execute() {
-    const start = this.message.args.includes("start");
-    const stop = this.message.args.includes("stop");
+  execute(): Promise<any> {
+    const start = this.ec.messageHelper.args.includes("start");
+    const stop = this.ec.messageHelper.args.includes("stop");
 
     if ((start && stop) || (!start && !stop)) {
       return this.sendHelpMessage("Please specify either `start` or `stop`");
     }
 
-    return this.guildController
+    return this.ec.guildController
       .setCensorship(start)
       .then(() => {
         if (start) {
-          return this.inputChannel.watchSend("Censorship is enabled");
+          return this.ec.channelHelper.watchSend("Censorship is enabled");
         } else {
-          return this.inputChannel.watchSend("All speech is permitted!");
+          return this.ec.channelHelper.watchSend("All speech is permitted!");
         }
       })
-      .then(() => this.banlistStatusCtlr.update())
+      .then(() => this.ec.banListStatusController.update())
       .then(() => this.useItem());
   }
 }
-
-export default Censorship;

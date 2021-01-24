@@ -1,9 +1,9 @@
-import Database from "../db/Database.js";
+import ExecutionContext from "../structures/ExecutionContext.js";
 
-export default class Controller {
-  public db: Database;
+export default class GuildBasedController {
+  protected ec: ExecutionContext;
 
-  public constructor(db: Database) {
-    this.db = db;
+  public constructor(context: ExecutionContext) {
+    this.ec = context;
   }
 }

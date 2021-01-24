@@ -1,7 +1,7 @@
-import Discord from "discord.js";
+import Discord, { Guild, Role, RoleResolvable } from "discord.js";
 
-class RoleUtil {
-  static parseRoles(guild, roles) {
+export default class RoleUtil {
+  public static parseRoles(guild: Guild, roles: RoleResolvable[]) {
     var discordRoles = [];
     for (var i = 0; i < roles.length; i++) {
       var roleObject = RoleUtil.convertToRole(guild, roles[i]);
@@ -14,12 +14,7 @@ class RoleUtil {
     return discordRoles;
   }
 
-  /**
-   * Transforms a role name or role ID into a role. Objects that are already a role are ignored
-   * @param {Discord.Guild} guild
-   * @param {Discord.Role|String} roleResolvable
-   */
-  static convertToRole(guild, roleResolvable) {
+  public static convertToRole(guild: Guild, roleResolvable: RoleResolvable) {
     // Test if it's already a role
     if (roleResolvable instanceof Discord.Role) {
       return roleResolvable;
@@ -46,38 +41,19 @@ class RoleUtil {
     return role;
   }
 
+  public static getHoistedRoles(guild: Guild) {
+    return guild.roles.cache.filter((role) => role.hoist).sort((a, b) => a.comparePositionTo(b));
+  }
+
   /**
-   * @param {Discord.Guild} guild
-   * @returns {Discord.Collection<Discord.Role>} The hoisted roles, sorted lowest to highest
+   * Returns the hoisted role one lower than the given role
    */
-  static getHoistedRoles(guild) {
+  public static getNextLower(role: Role, guild: Guild) {
     return guild.roles.cache
-      .filter((role) => role.hoist)
-      .sort((a, b) => a.calculatedPosition - b.calculatedPosition);
+      .filter((role) => role.comparePositionTo(role) < 0 && role.hoist)
+      .array()
+      .sort((role1, role2) => {
+        return role1.comparePositionTo(role2);
+      })[0];
   }
 }
-
-export default RoleUtil;
-
-// Will become obsolete once item-based rule permissioning is implemented
-// /**
-//  * Like hasRoleOrHigher, but infracts the member if they don't have permission
-//  *
-//  * @param {Discord.GuildMember} member - The member to check permissions for
-//  * @param {Discord.TextChannel} channel - The channel to send messages in
-//  * @param {RoleResolvable} allowedRole - The hoisted role that the member must have (or higher)
-//  * @returns {Boolean} True if the member has high enough permission
-//  */
-// export function verifyPermission(member, channel, allowedRole) {
-//   if (!hasRoleOrHigher(member, allowedRole)) {
-//     addInfractions(
-//       member,
-//       channel,
-//       1,
-//       "I don't have to listen to a peasant like you. This infraction has been recorded"
-//     );
-//     return false;
-//   }
-
-//   return true;
-// }

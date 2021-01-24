@@ -1,15 +1,16 @@
-import Discord from "discord.js";
+import Discord, { MessageEmbed } from "discord.js";
 
 import Database from "../../db/Database.js";
-import GuildBasedController from "../GuildBasedController.js";
+import ExecutionContext from "../../structures/ExecutionContext.js";
+import GuildBasedController from "../Controller.js";
 
 class SingletonMessageController extends GuildBasedController {
-  /**
-   * @param {Database} db
-   * @param {Discord.Guild} guild
-   */
-  constructor(db, guild) {
-    super(db, guild);
+  public guildProperty: string;
+  public db: any;
+  public guild: any;
+
+  constructor(context: ExecutionContext) {
+    super(context);
     this.guildProperty = "";
   }
 
@@ -31,7 +32,7 @@ class SingletonMessageController extends GuildBasedController {
   /**
    * @returns {Promise<Discord.MessageEmbed>}
    */
-  async generateEmbed() {
+  async generateEmbed(): Promise<MessageEmbed> {
     throw new Error("This function must be overriden");
   }
 

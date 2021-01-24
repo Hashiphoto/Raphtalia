@@ -1,9 +1,8 @@
-import Discord from "discord.js";
-
 import Command from "./Command.js";
 import CurrencyController from "../controllers/CurrencyController.js";
-import RNumber from "../structures/RNumber.js";
+import Discord from "discord.js";
 import MemberController from "../controllers/MemberController.js";
+import RNumber from "../structures/RNumber.js";
 
 class Fine extends Command {
   /**
@@ -20,7 +19,7 @@ class Fine extends Command {
     this.usage = "Usage: `Fine @member $1`";
   }
 
-  execute() {
+  execute(): Promise<any> {
     const targets = this.message.mentionedMembers;
 
     if (!targets || targets.length === 0) {
@@ -28,7 +27,7 @@ class Fine extends Command {
     }
 
     if (!this.item.unlimitedUses && targets.length > this.item.remainingUses) {
-      return this.inputChannel.watchSend(
+      return this.ec.channelHelper.watchSend(
         `Your ${this.item.name} does not have enough charges. ` +
           `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
       );
@@ -38,7 +37,7 @@ class Fine extends Command {
       return this.memberController
         .addInfractions(this.sender)
         .then((feedback) =>
-          this.inputChannel.watchSend(
+          this.ec.channelHelper.watchSend(
             `You must hold a higher rank than the members you are fining\n` + feedback
           )
         );
@@ -57,7 +56,7 @@ class Fine extends Command {
 
     return Promise.all(finePromises)
       .then((messages) => messages.reduce(this.sum))
-      .then((response) => this.inputChannel.watchSend(response))
+      .then((response) => this.ec.channelHelper.watchSend(response))
       .then(() => this.useItem(targets.length));
   }
 }

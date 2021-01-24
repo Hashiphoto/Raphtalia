@@ -1,3 +1,13 @@
+import {
+  Client,
+  DMChannel,
+  GuildMember,
+  MessageReaction,
+  NewsChannel,
+  Structures,
+  TextChannel,
+} from "discord.js";
+
 import AllowWord from "./commands/AllowWord.js";
 import AutoDelete from "./commands/AutoDelete.js";
 import Balance from "./commands/Balance.js";
@@ -8,6 +18,7 @@ import Buy from "./commands/Buy.js";
 import CensorController from "./controllers/CensorController.js";
 import Censorship from "./commands/Censorship.js";
 import ChannelController from "./controllers/ChannelController.js";
+import ChannelHelper from "./ChannelHelper.js";
 import Command from "./commands/Command.js";
 import CommandParser from "./CommandParser.js";
 import CurrencyController from "./controllers/CurrencyController.js";
@@ -15,7 +26,7 @@ import Database from "./db/Database.js";
 import Debug from "./commands/Debug.js";
 import DeliverCheck from "./commands/DeliverCheck.js";
 import Demote from "./commands/Demote.js";
-import { Client, NewsChannel, Structures } from "discord.js";
+import ExecutionContext from "./structures/ExecutionContext.js";
 import Exile from "./commands/Exile.js";
 import Fine from "./commands/Fine.js";
 import Give from "./commands/Give.js";
@@ -47,8 +58,6 @@ import Take from "./commands/Take.js";
 import dayjs from "dayjs";
 import delay from "delay";
 import secretConfig from "../config/secrets.config.js";
-import { Context } from "./structures/Context.js";
-import { ChannelHelper } from "./ChannelHelper.js";
 
 class Raphtalia {
   private client: Client;
@@ -56,8 +65,9 @@ class Raphtalia {
   private jobScheduler: JobScheduler;
 
   constructor(db: Database) {
-    this.client = new Client();
     this.db = db;
+    this.client = new Client();
+    this.configureDiscordClient();
 
     this.client.once("ready", () => {
       console.log(
@@ -75,7 +85,7 @@ class Raphtalia {
     this.jobScheduler.start();
   }
 
-  configureDiscordClient() {
+  private configureDiscordClient() {
     this.client.on("message", async (message) => {
       // Delete the "Raphtalia has pinned a message to this channel" message
       if (
@@ -96,37 +106,42 @@ class Raphtalia {
       }
 
       const deleteTime = await this.getDeleteTime(message.channel);
-      const context = new Context(message, new ChannelHelper(message.channel, deleteTime));
+      const context = new ExecutionContext(
+        new ChannelHelper(message.channel, deleteTime),
+        this.db,
+        this.client
+      ).setMessage(message);
 
       // Delete the incoming message
-      this.delayedDelete(message, deleteTime);
+      this.delayedDelete(context, deleteTime);
 
       if (message.content.startsWith(CommandParser.COMMAND_PREFIX)) {
         return this.handleCommand(context);
       } else {
-        return this.censorMessage(message).then((censored) => {
+        context.censorController.censorMessage().then((censored) => {
+          // No money for censored messages
           if (censored) {
             return;
           }
-          return this.payoutMessage(message);
+          return context.currencyController.payoutMessage();
         });
       }
     });
 
-    this.client.on("guildMemberAdd", (member) => {
+    this.client.on("guildMemberAdd", async (member) => {
       const welcomeChannel = member.guild.systemChannel;
       if (!welcomeChannel) {
         return;
       }
-      this.getDeleteTime(welcomeChannel).then((deleteTime) => {
-        const textChannel = (<any>{
-          ...welcomeChannel,
-          autodelete: deleteTime >= 0,
-          deleteMessageDelay: 2,
-        }) as RTextChannel;
+      const deleteTime = await this.getDeleteTime(welcomeChannel);
 
-        new OnBoarder(this.db, member.guild, member, textChannel).onBoard();
-      });
+      const context = new ExecutionContext(
+        new ChannelHelper(welcomeChannel, deleteTime),
+        this.db,
+        this.client
+      );
+
+      new OnBoarder(context, member).onBoard();
     });
 
     this.client.on("guildMemberRemove", (member) => {
@@ -135,7 +150,7 @@ class Raphtalia {
 
     this.client.on("guildMemberUpdate", (oldMember, newMember) => {
       // Check if roles changed
-      const differentSize = oldMember.roles.size !== newMember.roles.size;
+      const differentSize = oldMember.roles.cache.size !== newMember.roles.cache.size;
       for (const [id, role] of oldMember.roles.cache) {
         if (differentSize || !newMember.roles.cache.has(id)) {
           return new RoleStatusController(this.db, newMember.guild).update();
@@ -149,129 +164,115 @@ class Raphtalia {
     });
 
     this.client.on("messageReactionAdd", (messageReaction, user) => {
-      if (!user) {
-        return;
-      }
       const message = messageReaction.message;
-      // Only pay users for their first reaction to a message
-      if (message.reactions.cache.filter((e) => e.users.cache.get(user.id)).size > 1) {
+      if (!user || !(message.channel instanceof TextChannel)) {
         return;
       }
-      this.payoutReaction(message, user);
+      // Only pay users for their first reaction to a message
+      if (message.reactions.cache.filter((e) => !!e.users.cache.get(user.id)).size > 1) {
+        return;
+      }
+      const context = new ExecutionContext(
+        new ChannelHelper(message.channel, -1),
+        this.db,
+        this.client
+      ).setMessage(message);
+      const guildMember = context.guild.members.cache.get(user.id);
+      if (!guildMember) {
+        return;
+      }
+      context.initiator = guildMember;
+      this.payoutReaction(context);
     });
 
     this.client.on("messageReactionRemove", (messageReaction, user) => {
-      if (!user) {
+      const message = messageReaction.message;
+      if (!user || !(message.channel instanceof TextChannel)) {
         return;
-      }
-      // It's possible that the message wasn't cached. If so, the raw event processor will pass in
-      // the message instead
-      let message = messageReaction;
-      if (messageReaction instanceof Discord.MessageReaction) {
-        message = messageReaction.message;
       }
       // Only subtract money for removing the user's only remaining reaction
-      if (message.reactions.cache.filter((r) => r.users.cache.get(user.id)).size > 0) {
+      if (message.reactions.cache.filter((r) => !!r.users.cache.get(user.id)).size > 0) {
         return;
       }
-      this.payoutReaction(message, user, true);
+      const context = new ExecutionContext(
+        new ChannelHelper(message.channel, -1),
+        this.db,
+        this.client
+      ).setMessage(messageReaction.message);
+      const guildMember = context.guild.members.cache.get(user.id);
+      if (!guildMember) {
+        return;
+      }
+      context.initiator = guildMember;
+      this.payoutReaction(context, true);
     });
 
     /**
      * "raw" has to be used since "messageReactionAdd" only applies to cached messages. This will make sure that all
      * reactions emit an event
-     * Copied from https://github.com/AnIdiotsGuide/discordjs-bot-guide/blob/master/coding-guides/raw-events.md
+     * Derived from https://github.com/AnIdiotsGuide/discordjs-bot-guide/blob/master/coding-guides/raw-events.md
      */
-    this.client.on("raw", (packet) => {
+    this.client.on("raw", async (packet) => {
       if (!["MESSAGE_REACTION_ADD", "MESSAGE_REACTION_REMOVE"].includes(packet.t)) return;
       const channel = this.client.channels.cache.get(packet.d.channel_id);
-      if (channel.messages.cache.has(packet.d.message_id)) {
+      if (
+        !channel ||
+        !(channel instanceof TextChannel) ||
+        channel.messages.cache.has(packet.d.message_id)
+      ) {
         return;
       }
-      channel.messages.fetch(packet.d.message_id).then((message) => {
-        const emoji = packet.d.emoji.id
-          ? `${packet.d.emoji.name}:${packet.d.emoji.id}`
-          : packet.d.emoji.name;
-        const reaction = message.reactions.cache.get(emoji);
-        if (reaction) {
-          reaction.users.cache.set(packet.d.user_id, this.client.users.cache.get(packet.d.user_id));
-        } else {
-          console.log();
-        }
-        if (packet.t === "MESSAGE_REACTION_ADD") {
-          this.client.emit(
-            "messageReactionAdd",
-            reaction,
-            this.client.users.cache.get(packet.d.user_id)
-          );
-        }
-        // If the message reactions weren't cached, pass in the message instead
-        if (packet.t === "MESSAGE_REACTION_REMOVE") {
-          this.client.emit(
-            "messageReactionRemove",
-            reaction ?? message,
-            this.client.users.cache.get(packet.d.user_id)
-          );
-        }
-      });
+      const message = await channel.messages.fetch(packet.d.message_id);
+      const emoji = packet.d.emoji.id
+        ? `${packet.d.emoji.name}:${packet.d.emoji.id}`
+        : packet.d.emoji.name;
+      const reaction = message.reactions.cache.get(emoji);
+      const user = await this.client.users.cache.get(packet.d.user_id);
+      if (!reaction || !user) {
+        return;
+      }
+      reaction.users.cache.set(packet.d.user_id, user);
+      if (packet.t === "MESSAGE_REACTION_ADD") {
+        this.client.emit("messageReactionAdd", reaction, user);
+      }
+      // If the message reactions weren't cached, pass in the message instead
+      else if (packet.t === "MESSAGE_REACTION_REMOVE") {
+        this.client.emit("messageReactionRemove", reaction, user);
+      }
     });
   }
 
-  handleCommand(context: Context) {
+  private handleCommand(context: ExecutionContext) {
     context.messageHelper = CommandParser.parse(context);
-    return this.selectCommand(messageHelper).then((command) =>
-      this.executeCommand(command, messageHelper)
-    );
+    return this.selectCommand(context).then((command) => this.executeCommand(context, command));
   }
 
-  censorMessage(message) {
-    const censorManager = new CensorController(this.db, message.guild);
-    return censorManager.censorMessage(message);
-  }
-
-  payoutMessage(message) {
-    const currencyController = new CurrencyController(this.db, message.guild);
-    return currencyController.payoutMessage(message);
-  }
-
-  /**
-   * @param {Discord.Message} message
-   * @param {Discord.User} user
-   * @param {Boolean} undo
-   */
-  payoutReaction(message, user, undo = false) {
-    if (message.author.id === user.id) {
+  private payoutReaction(context: ExecutionContext, undo = false) {
+    if (context.message.author.id === context.initiator.id) {
       return;
     }
     const expiration = dayjs.duration({ hours: 48 });
-    if (new Date() - message.createdAt > expiration.asMilliseconds()) {
-      // Ignore reactions to messages older than 48 hours
+    // Ignore reactions to messages older than 48 hours
+    if (new Date().getTime() - context.message.createdAt.getTime() > expiration.asMilliseconds()) {
       return;
     }
-
-    const member = message.guild.members.cache.get(user.id);
-    const currencyController = new CurrencyController(this.db, message.guild);
-
-    return currencyController.payoutReaction(message, member, undo);
+    context.currencyController.payoutReaction(context.initiator);
   }
 
   /**
    * Delete a message after the given interval. Nothing happens for negative time intervals
-   * @param {Discord.Message} message
-   * @param {Number} timeMs
    */
-  delayedDelete(message, timeMs) {
+  private async delayedDelete(context: ExecutionContext, timeMs: number) {
     if (timeMs < 0) {
       return;
     }
-
-    return delay(timeMs).then(() => {
-      message.delete().catch((error) => {
-        if (error.name === "DiscordAPIError" && error.message === "Unknown Message") {
-          return; // Message was manually deleted
-        }
-        throw error;
-      });
+    await delay(timeMs);
+    context.message.delete().catch((error) => {
+      // Message was manually deleted
+      if (error.name === "DiscordAPIError" && error.message === "Unknown Message") {
+        return;
+      }
+      throw error;
     });
   }
 
@@ -282,7 +283,7 @@ class Raphtalia {
    * @param {Discord.TextChannel} channel
    * @returns {Number} Milliseconds before messages in this channel should be deleted
    */
-  getDeleteTime(channel: Discord.TextChannel) {
+  getDeleteTime(channel: TextChannel) {
     return this.db.channels.get(channel.id).then((dbChannel) => {
       let deleteTime = -1;
       if (dbChannel && dbChannel.delete_ms >= 0) {
@@ -293,7 +294,7 @@ class Raphtalia {
     });
   }
 
-  selectCommand(context: Context) {
+  private async selectCommand(context: ExecutionContext): Promise<Command> {
     // Check for exile
     const exileRole = context.guild.roles.cache.find((r) => r.name === "Exile");
     if (exileRole && context.message.member?.roles.cache.find((r) => r.id === exileRole.id)) {
@@ -303,12 +304,7 @@ class Raphtalia {
     }
 
     // Get the command
-    let command = Raphtalia.getCommandByName(
-      context.messageHelper.command,
-      context.message,
-      this.db,
-      this.client
-    );
+    let command = Raphtalia.getCommandByName(context, context.messageHelper.command);
     if (!command) {
       command = new NullCommand(
         context.message,
@@ -320,36 +316,31 @@ class Raphtalia {
     }
 
     // Check if member has the correct item
-    const inventoryController = new InventoryController(this.db, context.message.guild);
-    command.setInventoryController(inventoryController);
-
-    return inventoryController
-      .getItemForCommand(context.message.member, command.constructor.name)
-      .then((item) =>
-        item
-          ? command.setItem(item)
-          : new NullCommand(context.message, `You do not have the correct item to use this command`)
-      );
+    const item = await context.inventoryController.getItemForCommand(
+      context.initiator,
+      command.constructor.name
+    );
+    if (item) {
+      command.item = item;
+      return command;
+    }
+    return new NullCommand(context.message, `You do not have the correct item to use this command`);
   }
 
-  /**
-   * @param {Command} command
-   * @param {Discord.Message} message
-   */
-  executeCommand(command, message) {
-    message.channel.startTyping();
+  private executeCommand(context: ExecutionContext, command: Command) {
+    context.message.channel.startTyping();
     return command
       .execute()
       .catch((error) => {
         console.error(error);
-        return message.react("🛑");
+        return context.message.react("🛑");
       })
       .then((storeNeedsUpdate) => {
-        message.channel.stopTyping(true);
+        context.message.channel.stopTyping(true);
         return storeNeedsUpdate;
       })
       .then((storeNeedsUpdate) => {
-        storeNeedsUpdate === true && new StoreStatusController(this.db, message.guild).update();
+        storeNeedsUpdate === true && new StoreStatusController(context).update();
       });
   }
 
@@ -359,117 +350,75 @@ class Raphtalia {
    * @param {Discord.Client} client
    * @returns {Command}
    */
-  static getCommandByName(name, message, db, client) {
+  static getCommandByName(context: ExecutionContext, name: string): Command {
     // Keep alphabetical by primary command word
     // The primary command keyword should be listed first
-    const guild = message.guild;
-    const channel = message.channel;
-
     switch (name) {
       case "allowword":
       case "allowwords":
-        return new AllowWord(
-          message,
-          new CensorController(db, guild),
-          new BanListStatusController(db, guild)
-        );
+        return new AllowWord(context);
       case "autodelete":
-        return new AutoDelete(message, new ChannelController(db, channel));
+        return new AutoDelete(context);
       case "balance":
       case "wallet":
-        return new Balance(message, new CurrencyController(db, guild));
+        return new Balance(context);
       case "banlist":
       case "bannedwords":
-        return new BanList(message, new BanListStatusController(db, guild));
+        return new BanList(context);
       case "banword":
       case "banwords":
-        return new BanWord(
-          message,
-          new CensorController(db, guild),
-          new BanListStatusController(db, guild)
-        );
+        return new BanWord(context);
       case "buy":
-        return new Buy(
-          message,
-          new CurrencyController(db, guild),
-          new StoreStatusController(db, guild),
-          client
-        );
+        return new Buy(context);
       case "censorship":
-        return new Censorship(
-          message,
-          new GuildController(db, guild),
-          new BanListStatusController(db, guild)
-        );
+        return new Censorship(context);
       case "delivercheck":
-        return new DeliverCheck(message, new CurrencyController(db, guild));
+        return new DeliverCheck(context);
       case "demote":
-        return new Demote(message, new MemberController(db, guild));
+        return new Demote(context);
       case "exile":
-        return new Exile(message, new MemberController(db, guild));
+        return new Exile(context);
       case "fine":
-        return new Fine(
-          message,
-          new CurrencyController(db, guild),
-          new MemberController(db, guild)
-        );
+        return new Fine(context);
       case "give":
-        return new Give(
-          message,
-          new CurrencyController(db, guild),
-          new MemberController(db, guild),
-          client
-        );
+        return new Give(context);
       case "headpat":
-        return new Headpat(message);
+        return new Headpat(context);
       case "help":
-        return new Help(message);
+        return new Help(context);
       case "holdvote":
-        return new HoldVote(message);
+        return new HoldVote(context);
       case "infractions":
-        return new Infractions(message, new MemberController(db, guild));
+        return new Infractions(context);
       case "kick":
-        return new Kick(message, new MemberController(db, guild));
+        return new Kick(context);
       case "pardon":
-        return new Pardon(message, new MemberController(db, guild));
+        return new Pardon(context);
       case "play":
-        return new Play(message);
+        return new Play(context);
       case "promote":
-        return new Promote(message, new MemberController(db, guild));
+        return new Promote(context);
       case "register":
-        return new Register(message, new MemberController(db, guild));
+        return new Register(context);
       case "report":
-        return new Report(message, new MemberController(db, guild));
+        return new Report(context);
       case "roles":
-        return new Roles(message, new RoleStatusController(db, guild));
+        return new Roles(context);
       case "screening":
-        return new Screening(message, new GuildController(db, guild));
+        return new Screening(context);
       case "serverstatus":
-        return new ServerStatus(
-          message,
-          new RoleStatusController(db, guild),
-          new StoreStatusController(db, guild),
-          new BanListStatusController(db, guild)
-        );
+        return new ServerStatus(context);
       case "softkick":
-        return new SoftKick(message, new MemberController(db, guild));
+        return new SoftKick(context);
       case "status":
-        return new Status(
-          message,
-          new CurrencyController(db, guild),
-          new MemberController(db, guild)
-        );
+        return new Status(context);
       case "store":
-        return new Store(message, new StoreStatusController(db, guild));
+        return new Store(context);
       case "take":
-        return new Take(
-          message,
-          new CurrencyController(db, guild),
-          new MemberController(db, guild)
-        );
+        return new Take(context);
       case "debug":
         if (process.env.NODE_ENV === "dev") {
-          return new Debug(message, new MemberController(db, guild));
+          return new Debug(context);
         }
       default:
         return new NullCommand(message, `Unknown command "${message.command}"`);

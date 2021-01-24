@@ -1,11 +1,9 @@
+import { Client } from "discord.js";
+import { CronJob } from "cron";
 import Database from "./db/Database.js";
-import Discord from "discord.js";
 import MemberController from "./controllers/MemberController.js";
 import StoreStatusController from "./controllers/message/StoreStatusController.js";
-import cron from "cron";
 import dayjs from "dayjs";
-
-const { CronJob } = cron;
 
 /**
   CRON Quick Refernce
@@ -18,18 +16,18 @@ const { CronJob } = cron;
     
     @yearly, @monthly, @weekly, @daily, @hourly,
   */
-class JobScheduler {
-  /**
-   * @param {Database} db
-   * @param {Discord.Client} client
-   */
-  constructor(db, client) {
+export default class JobScheduler {
+  private db: Database;
+  private client: Client;
+  private timezone: string;
+
+  public constructor(db: Database, client: Client) {
     this.db = db;
     this.client = client;
     this.timezone = "America/Los_Angeles";
   }
 
-  start() {
+  public start() {
     // Every day at 08:00 PM
     new CronJob("0 20 * * *", () => this.resolveRoleContests(), null, true, this.timezone);
 
@@ -37,19 +35,23 @@ class JobScheduler {
     new CronJob("30 6 * * *", () => this.dropStorePrices(), null, true, this.timezone);
   }
 
-  resolveRoleContests() {
+  private resolveRoleContests() {
     const guildContests = this.client.guilds.cache.map((guild) =>
       new MemberController(this.db, guild)
         .resolveRoleContests()
-        .then((feedback) => feedback && guild.systemChannel.send(feedback))
+        .then((feedback) => feedback && guild.systemChannel?.send(feedback))
     );
 
     return Promise.all(guildContests);
   }
 
-  dropStorePrices() {
+  private dropStorePrices() {
     const guildStoreUpdates = this.client.guilds.cache.map(async (guild) => {
       const dbGuild = await this.db.guilds.get(guild.id);
+
+      if (!dbGuild) {
+        return;
+      }
 
       return this.db.inventory
         .getGuildStock(guild.id)
@@ -81,5 +83,3 @@ class JobScheduler {
     return Promise.all(guildStoreUpdates);
   }
 }
-
-export default JobScheduler;

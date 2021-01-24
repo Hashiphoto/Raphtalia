@@ -1,6 +1,6 @@
 import Command from "./Command.js";
-import links from "../../resources/links.js";
 import MemberController from "../controllers/MemberController.js";
+import links from "../../resources/links.js";
 
 class Kick extends Command {
   /**
@@ -14,14 +14,14 @@ class Kick extends Command {
     this.usage = "Usage: `Kick @member`";
   }
 
-  execute() {
+  execute(): Promise<any> {
     const targets = this.message.mentionedMembers;
     if (targets.length === 0) {
       return this.sendHelpMessage();
     }
 
     if (!this.item.unlimitedUses && targets.length > this.item.remainingUses) {
-      return this.inputChannel.watchSend(
+      return this.ec.channelHelper.watchSend(
         `Your ${this.item.name} does not have enough charges. ` +
           `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
       );
@@ -31,7 +31,7 @@ class Kick extends Command {
       return this.memberController
         .addInfractions(this.sender)
         .then((feedback) =>
-          this.inputChannel.watchSend(
+          this.ec.channelHelper.watchSend(
             `You must hold a higher rank than the members you are kicking\n` + feedback
           )
         );
@@ -52,7 +52,7 @@ class Kick extends Command {
 
     return Promise.all(kickPromises)
       .then((messages) => messages.reduce(this.sum))
-      .then((response) => this.inputChannel.watchSend(response))
+      .then((response) => this.ec.channelHelper.watchSend(response))
       .then(() => this.useItem(targets.length));
   }
 

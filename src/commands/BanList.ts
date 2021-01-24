@@ -1,33 +1,24 @@
-import Command from "./Command.js";
 import BanListStatusController from "../controllers/message/BanListStatusController.js";
+import Command from "./Command.js";
+import ExecutionContext from "../structures/ExecutionContext.js";
 
-class BanList extends Command {
-  /**
-   * @param {Discord.Message} message
-   * @param {BanListStatusController} banListStatusCtlr
-   */
-  constructor(message, banListStatusCtlr) {
-    super(message);
-    this.banListStatusCtlr = banListStatusCtlr;
+export default class BanList extends Command {
+  constructor(context: ExecutionContext) {
+    super(context);
     this.instructions = "**BanList**\nPost the Banned Words List in this channel";
     this.usage = "Usage: `BanList`";
   }
 
-  execute() {
-    return this.banListStatusCtlr
-      .removeMessage()
-      .then(() => {
-        return this.banListStatusCtlr.generateEmbed();
-      })
-      .then((embed) => {
-        return this.inputChannel.send({ embed: embed });
-      })
+  async execute(): Promise<any> {
+    await this.ec.banListStatusController.removeMessage();
+    const embed = await this.ec.banListStatusController.generateEmbed();
+
+    this.ec.channel
+      .send({ embed: embed })
       .then((message) => {
         message.pin();
-        return this.banListStatusCtlr.setMessage(message.id);
+        this.ec.banListStatusController.setMessage(message.id);
       })
       .then(() => this.useItem());
   }
 }
-
-export default BanList;

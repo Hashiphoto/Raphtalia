@@ -1,27 +1,27 @@
-import Discord from "discord.js";
-import sendTimedMessage from "./timedMessage.js";
-import discordConfig from "../config/discord.config.js";
-import Question from "./structures/Question.js";
-import MemberController from "./controllers/MemberController.js";
+import Discord, { Guild, GuildMember, TextChannel } from "discord.js";
+
 import Database from "./db/Database.js";
-import delay from "delay";
+import ExecutionContext from "./structures/ExecutionContext.js";
 import GuildController from "./controllers/GuildController.js";
 import InventoryController from "./controllers/InventoryController.js";
+import MemberController from "./controllers/MemberController.js";
+import Question from "./structures/Question.js";
+import delay from "delay";
+import discordConfig from "../config/discord.config.js";
+import sendTimedMessage from "./TimedMessage";
 
 const messageSpacing = 800;
 
-class OnBoarder {
-  /**
-   * @param {Database} db
-   * @param {Discord.Guild} guild
-   * @param {Discord.GuildMember} member
-   * @param {Discord.TextChannel} channel
-   */
-  constructor(db, guild, member, channel) {
-    this.db = db;
-    this.guild = guild;
+export default class OnBoarder {
+  private db: Database;
+  private guild: Discord.Guild;
+  private member: Discord.GuildMember;
+  private channel: Discord.TextChannel;
+  private _context: ExecutionContext;
+
+  public constructor(context: ExecutionContext, member: GuildMember) {
+    this._context = context;
     this.member = member;
-    this.channel = channel;
   }
 
   /**
@@ -31,7 +31,7 @@ class OnBoarder {
    * If they do, they are made a comrade. If they don't, they are softkicked
    */
   async onBoard() {
-    const memberController = new MemberController(this.db, this.guild);
+    const memberController = new MemberController(_context);
     await memberController.setHoistedRole(this.member, discordConfig().roles.immigrant);
 
     this.channel.watchSend(
@@ -156,5 +156,3 @@ class OnBoarder {
     }
   }
 }
-
-export default OnBoarder;

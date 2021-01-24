@@ -13,7 +13,7 @@ class Store extends Command {
     this.usage = "Usage: `Store`";
   }
 
-  execute() {
+  execute(): Promise<any> {
     // Remove the current message and post the new one
     return this.storeStatusCtlr
       .removeMessage()

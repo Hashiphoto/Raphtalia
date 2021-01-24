@@ -1,6 +1,5 @@
-import Discord from "discord.js";
-
 import Command from "./Command.js";
+import Discord from "discord.js";
 import MemberController from "../controllers/MemberController.js";
 import MemberLimitError from "../structures/errors/MemberLimitError.js";
 
@@ -16,7 +15,7 @@ class Promote extends Command {
     this.usage = "Usage: `Promote`";
   }
 
-  execute() {
+  execute(): Promise<any> {
     return this.memberController
       .nextRoleAvailable(this.message.member)
       .then(({ available, role }) => {
@@ -40,14 +39,14 @@ class Promote extends Command {
           return contestMessage;
         }
       })
-      .then((response) => this.inputChannel.watchSend(response))
+      .then((response) => this.ec.channelHelper.watchSend(response))
       .then(() => this.useItem())
       .catch((error) => {
         if (error instanceof MemberLimitError) {
-          return this.inputChannel.watchSend(error.message);
+          return this.ec.channelHelper.watchSend(error.message);
         }
         if (error instanceof RangeError) {
-          return this.inputChannel.watchSend(error.message);
+          return this.ec.channelHelper.watchSend(error.message);
         }
         throw error;
       });

@@ -1,9 +1,8 @@
-import Discord from "discord.js";
-import dayjs from "dayjs";
-
 import Command from "./Command.js";
-import Util from "../Util.js";
+import Discord from "discord.js";
 import MemberController from "../controllers/MemberController.js";
+import Util from "../Util.js";
+import dayjs from "dayjs";
 
 class Exile extends Command {
   /**
@@ -19,7 +18,7 @@ class Exile extends Command {
     this.usage = "Usage: `Exile @member [1h 1m 1s]`";
   }
 
-  async execute() {
+  async execute(): Promise<any> {
     const targets = this.message.mentionedMembers;
 
     if (targets.length === 0) {
@@ -27,7 +26,7 @@ class Exile extends Command {
     }
 
     if (!this.item.unlimitedUses && targets.length > this.item.remainingUses) {
-      return this.inputChannel.watchSend(
+      return this.ec.channelHelper.watchSend(
         `Your ${this.item.name} does not have enough charges. ` +
           `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
       );
@@ -53,7 +52,7 @@ class Exile extends Command {
     //   return this.memberController
     //     .addInfractions(this.sender)
     //     .then((feedback) =>
-    //       this.inputChannel.watchSend(
+    //       this.ec.channelHelper.watchSend(
     //         `You must hold a higher rank than the members you are exiling\n` + feedback
     //       )
     //     );
@@ -67,14 +66,14 @@ class Exile extends Command {
     const exilePromises = targets.map((target) =>
       this.memberController.exileMember(target, duration).then((released) => {
         if (released) {
-          return this.inputChannel.watchSend(`${target} has been released from exile!`);
+          return this.ec.channelHelper.watchSend(`${target} has been released from exile!`);
         }
       })
     );
 
     Promise.all(exilePromises);
 
-    return this.inputChannel.watchSend(response).then(() => this.useItem(targets.length));
+    return this.ec.channelHelper.watchSend(response).then(() => this.useItem(targets.length));
   }
 }
 

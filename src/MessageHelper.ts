@@ -2,12 +2,12 @@ import { GuildMember, Role } from "discord.js";
 
 import CommandParser from "./CommandParser";
 
-export class MessageHelper {
+export default class MessageHelper {
   private _args: string[];
   public command: string;
   public mentionedMembers: GuildMember[];
   public mentionedRoles: Role[];
-  public content: string;
+  public parsedContent: string;
 
   public get args(): string[] {
     return this._args;

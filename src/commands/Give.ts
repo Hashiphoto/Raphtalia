@@ -1,9 +1,8 @@
-import Discord from "discord.js";
-
 import Command from "./Command.js";
-import RNumber from "../structures/RNumber.js";
 import CurrencyController from "../controllers/CurrencyController.js";
+import Discord from "discord.js";
 import MemberController from "../controllers/MemberController.js";
+import RNumber from "../structures/RNumber.js";
 import UserItem from "../structures/UserItem.js";
 
 class Give extends Command {
@@ -25,14 +24,14 @@ class Give extends Command {
     this.usage = "Usage: `Give @member ($1|item name)`";
   }
 
-  execute() {
+  execute(): Promise<any> {
     const targets = this.message.mentionedMembers;
     if (this.message.args.length === 0 || targets.length === 0) {
       return this.sendHelpMessage();
     }
 
     if (!this.item.unlimitedUses && targets.length > this.item.remainingUses) {
-      return this.inputChannel.watchSend(
+      return this.ec.channelHelper.watchSend(
         `Your ${this.item.name} does not have enough charges. ` +
           `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
       );
@@ -70,13 +69,13 @@ class Give extends Command {
    */
   giveMoney(rNumber, targets) {
     if (rNumber.amount < 0) {
-      return this.inputChannel.watchSend("You cannot send a negative amount of money\n");
+      return this.ec.channelHelper.watchSend("You cannot send a negative amount of money\n");
     }
 
     let totalAmount = rNumber.amount * targets.length;
     return this.currencyController.getCurrency(this.sender).then((balance) => {
       if (balance < totalAmount) {
-        return this.inputChannel.watchSend(
+        return this.ec.channelHelper.watchSend(
           `You do not have enough money for that. ` +
             `Funds needed: ${RNumber.formatDollar(totalAmount)}`
         );
@@ -107,7 +106,7 @@ class Give extends Command {
 
       return Promise.all(givePromises)
         .then((messages) => messages.reduce(this.sum))
-        .then((response) => this.inputChannel.watchSend(response));
+        .then((response) => this.ec.channelHelper.watchSend(response));
     });
   }
 
@@ -118,7 +117,7 @@ class Give extends Command {
   giveItem(item, targets) {
     const unusedItems = Math.floor(item.remainingUses / item.maxUses);
     if (unusedItems < targets.length) {
-      return this.inputChannel.watchSend(
+      return this.ec.channelHelper.watchSend(
         `You need ${targets.length - unusedItems} more unused items for that. ` +
           `Unused ${item.name} in inventory: ${unusedItems}`
       );
@@ -132,7 +131,7 @@ class Give extends Command {
 
     return Promise.all(givePromises)
       .then((messages) => messages.reduce(this.sum))
-      .then((response) => this.inputChannel.watchSend(response));
+      .then((response) => this.ec.channelHelper.watchSend(response));
   }
 }
 

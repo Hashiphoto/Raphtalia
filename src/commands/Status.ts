@@ -18,7 +18,7 @@ class Status extends Command {
     this.usage = "Usage: `Status`";
   }
 
-  async execute() {
+  async execute(): Promise<any> {
     const balanceMessage = await this.currencyController
       .getCurrency(this.sender)
       .then((balance) => {

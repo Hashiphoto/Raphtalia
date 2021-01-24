@@ -7,8 +7,8 @@ class NullCommand extends Command {
     this.text = text;
   }
 
-  execute() {
-    return this.inputChannel.watchSend(this.text);
+  execute(): Promise<any> {
+    return this.ec.channelHelper.watchSend(this.text);
   }
 }
 

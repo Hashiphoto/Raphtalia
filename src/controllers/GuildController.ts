@@ -1,6 +1,6 @@
 import Discord from "discord.js";
+import GuildBasedController from "./Controller.js";
 import ScreeningQuestion from "../structures/ScreeningQuestion.js";
-import GuildBasedController from "./GuildBasedController.js";
 
 class GuildController extends GuildBasedController {
   // TODO: Move to a ChannelController class?

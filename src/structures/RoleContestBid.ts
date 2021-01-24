@@ -1,21 +1,14 @@
-class RoleContestBid {
+export default class RoleContestBid {
+  public userId: string;
+  public amount: number;
+  public member: any;
+
   /**
    * @param {String} userId
    * @param {Number} amount
    */
-  constructor(userId, amount) {
+  public constructor(userId: string, amount: number) {
     this.userId = userId;
     this.amount = amount;
-    this._member;
-  }
-
-  get member() {
-    return this._member;
-  }
-
-  set member(member) {
-    this._member = member;
   }
 }
-
-export default RoleContestBid;

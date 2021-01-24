@@ -13,14 +13,14 @@ class Report extends Command {
     this.usage = "Usage: `Report @member`";
   }
 
-  async execute() {
+  async execute(): Promise<any> {
     const targets = this.message.mentionedMembers;
     if (targets.length === 0) {
       return this.sendHelpMessage();
     }
 
     if (!this.item.unlimitedUses && targets.length > this.item.remainingUses) {
-      return this.inputChannel.watchSend(
+      return this.ec.channelHelper.watchSend(
         `Your ${this.item.name} does not have enough charges. ` +
           `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
       );
@@ -30,7 +30,7 @@ class Report extends Command {
       return this.memberController
         .addInfractions(this.sender)
         .then((feedback) =>
-          this.inputChannel.watchSend(
+          this.ec.channelHelper.watchSend(
             `You must hold a higher rank than the members you are reporting\n` + feedback
           )
         );
@@ -42,7 +42,7 @@ class Report extends Command {
 
     return Promise.all(reportPromises)
       .then((messages) => messages.reduce(this.sum))
-      .then((response) => this.inputChannel.watchSend(response))
+      .then((response) => this.ec.channelHelper.watchSend(response))
       .then(() => this.useItem(targets.length));
   }
 }

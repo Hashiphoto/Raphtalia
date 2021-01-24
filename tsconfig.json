@@ -6,10 +6,12 @@
     "allowJs": true,
     "moduleResolution": "node",
     "noImplicitAny": true,
-    "strictNullChecks": true ,
+    "strictNullChecks": true,
     "skipLibCheck": true,
     "sourceMap": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "downlevelIteration": true,
+    "lib": ["ES2020"]
   },
   "include": ["./src/**/*"]
 }

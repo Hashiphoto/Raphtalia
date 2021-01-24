@@ -1,30 +1,27 @@
-import Discord from "discord.js";
-
 import Command from "./Command.js";
+import Discord from "discord.js";
+import ExecutionContext from "../structures/ExecutionContext.js";
 import MemberController from "../controllers/MemberController.js";
 
-class Demote extends Command {
+export default class Demote extends Command {
   /**
    * @deprecated
-   * @param {Discord.Message} message
-   * @param {MemberController} memberController
    */
-  constructor(message, memberController) {
-    super(message);
-    this.memberController = memberController;
+  public constructor(context: ExecutionContext) {
+    super(context);
     this.instructions = "**Demote**\nReduce the rank of the specified member(s) by one";
     this.usage = "Usage: `Demote @member`";
   }
 
-  execute() {
-    const targets = this.message.mentionedMembers;
+  async execute(): Promise<any> {
+    const targets = this.ec.messageHelper.mentionedMembers;
 
     if (targets.length === 0) {
       return this.sendHelpMessage();
     }
 
     if (!this.item.unlimitedUses && targets.length > this.item.remainingUses) {
-      return this.inputChannel.watchSend(
+      return this.ec.channelHelper.watchSend(
         `Your ${this.item.name} does not have enough charges. ` +
           `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
       );
@@ -34,7 +31,7 @@ class Demote extends Command {
       return this.memberController
         .addInfractions(this.sender)
         .then((feedback) =>
-          this.inputChannel.watchSend(
+          this.ec.channelHelper.watchSend(
             `You must hold a higher rank than the members you are demoting\n` + feedback
           )
         );
@@ -44,9 +41,7 @@ class Demote extends Command {
 
     return Promise.all(demotePromises)
       .then((messages) => messages.reduce(this.sum))
-      .then((response) => this.inputChannel.watchSend(response))
+      .then((response) => this.ec.channelHelper.watchSend(response))
       .then(() => this.useItem(targets.length));
   }
 }
-
-export default Demote;
