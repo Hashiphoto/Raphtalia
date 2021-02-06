@@ -1,26 +1,17 @@
 import Command from "./Command.js";
-import CurrencyController from "../controllers/CurrencyController.js";
-import Discord from "discord.js";
-import MemberController from "../controllers/MemberController.js";
+import ExecutionContext from "../structures/ExecutionContext.js";
 import RNumber from "../structures/RNumber.js";
 
-class Fine extends Command {
-  /**
-   * @param {Discord.Message} message
-   * @param {CurrencyController} currencyController
-   * @param {MemberController} memberController
-   */
-  constructor(message, currencyController, memberController) {
-    super(message);
-    this.currencyController = currencyController;
-    this.memberController = memberController;
+export default class Fine extends Command {
+  public constructor(context: ExecutionContext) {
+    super(context);
     this.instructions =
       "**Fine**\nSubtract an amount of money from the member(s) specified and give it to yourself";
     this.usage = "Usage: `Fine @member $1`";
   }
 
-  execute(): Promise<any> {
-    const targets = this.message.mentionedMembers;
+  public async execute() {
+    const targets = this.ec.messageHelper.mentionedMembers;
 
     if (!targets || targets.length === 0) {
       return this.sendHelpMessage();
@@ -33,9 +24,9 @@ class Fine extends Command {
       );
     }
 
-    if (!this.sender.hasAuthorityOver(targets)) {
-      return this.memberController
-        .addInfractions(this.sender)
+    if (!this.ec.memberController.hasAuthorityOver(this.ec.initiator, targets)) {
+      return this.ec.memberController
+        .addInfractions(this.ec.initiator)
         .then((feedback) =>
           this.ec.channelHelper.watchSend(
             `You must hold a higher rank than the members you are fining\n` + feedback
@@ -43,15 +34,17 @@ class Fine extends Command {
         );
     }
 
-    let rNumber = RNumber.parse(this.message.content);
-    if (!rNumber || (rNumber.type !== RNumber.types.DOLLAR && rNumber.type !== RNumber.types.INT)) {
+    const rNumber = RNumber.parse(this.ec.messageHelper.parsedContent);
+    if (!rNumber || (rNumber.type !== RNumber.Types.DOLLAR && rNumber.type !== RNumber.Types.INT)) {
       return this.sendHelpMessage("Please specify the amount to fine in dollar format");
     }
 
     const finePromises = targets.map((target) =>
-      this.currencyController.transferCurrency(target, this.sender, rNumber.amount).then(() => {
-        return `Fined ${target} ${rNumber.toString()}!\n`;
-      })
+      this.ec.currencyController
+        .transferCurrency(target, this.ec.initiator, rNumber.amount)
+        .then(() => {
+          return `Fined ${target} ${rNumber.toString()}!\n`;
+        })
     );
 
     return Promise.all(finePromises)
@@ -60,5 +53,3 @@ class Fine extends Command {
       .then(() => this.useItem(targets.length));
   }
 }
-
-export default Fine;

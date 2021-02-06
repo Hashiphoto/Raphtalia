@@ -50,10 +50,20 @@ export default class RoleUtil {
    */
   public static getNextLower(role: Role, guild: Guild) {
     return guild.roles.cache
-      .filter((role) => role.comparePositionTo(role) < 0 && role.hoist)
+      .filter((r) => r.comparePositionTo(role) < 0 && r.hoist)
       .array()
       .sort((role1, role2) => {
         return role1.comparePositionTo(role2);
       })[0];
+  }
+
+  public static async ensureExileRole(guild: Guild) {
+    if (!guild.roles.cache.find((r) => r.name === "Exile")) {
+      await guild.roles
+        .create({ data: { name: "Exile", hoist: false, color: "#010000" } })
+        .then((role) => {
+          return role.setPosition(guild.roles.cache.size - 2);
+        });
+    }
   }
 }

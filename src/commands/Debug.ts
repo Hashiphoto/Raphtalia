@@ -1,15 +1,14 @@
 import Command from "./Command.js";
 import ExecutionContext from "../structures/ExecutionContext.js";
-import MemberController from "../controllers/MemberController.js";
 
 export default class Debug extends Command {
-  constructor(context: ExecutionContext) {
+  public constructor(context: ExecutionContext) {
     super(context);
     this.instructions = "For testing in development only";
     this.usage = "Usage: `Debug (options)`";
   }
 
-  async execute(): Promise<any> {
+  public async execute(): Promise<any> {
     const args = this.ec.messageHelper.args;
     if (args.length === 0) {
       return this.sendHelpMessage();

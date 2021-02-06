@@ -1,10 +1,9 @@
-import { FieldPacket, RowDataPacket } from "mysql2/promise";
+import { FieldPacket, Pool, RowDataPacket } from "mysql2/promise";
 
 import AmbiguousInputError from "../structures/errors/AmbiguousInputError.js";
 import CommandItem from "../structures/CommandItem.js";
 import GuildItem from "../structures/GuildItem.js";
 import Item from "../structures/Item.js";
-import { Pool } from "mysql2/promise";
 import UserItem from "../structures/UserItem.js";
 import { escape } from "mysql2";
 
@@ -142,7 +141,7 @@ export default class InventoryTable {
       )
       .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
         if (rows.length === 0) {
-          return null;
+          return;
         }
 
         return this.toUserItem(rows[0]);
@@ -252,7 +251,7 @@ export default class InventoryTable {
 
   private async toUserItem(row: RowDataPacket) {
     if (!row) {
-      return null;
+      return;
     }
     const commands = await this.getCommandsForItem(row.id);
 

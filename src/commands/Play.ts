@@ -1,19 +1,22 @@
+import Discord, { VoiceChannel } from "discord.js";
+
 import Command from "./Command.js";
-import Discord from "discord.js";
+import ExecutionContext from "../structures/ExecutionContext.js";
 import RNumber from "../structures/RNumber.js";
 import links from "../../resources/links.js";
 import ytdl from "ytdl-core";
 
-class Play extends Command {
-  constructor(message) {
-    super(message);
+export default class Play extends Command {
+  public constructor(context: ExecutionContext) {
+    super(context);
     this.instructions =
       "**Play**\nPlay the server theme in the voice channel you are in. " +
       "You can specify which voice channel to play in by voice channel name or channel group and voice channel name. ";
     this.usage = "Usage: `Play [in (Group/VoiceChannel | VoiceChannel)]`";
   }
-  execute(): Promise<any> {
-    let content = this.message.content;
+
+  public async execute(): Promise<any> {
+    let content = this.ec.messageHelper.parsedContent;
     // TODO: fix percentage parsing
     // const lastArg = this.message.args[this.message.args.length - 1];
     // let volume = this.getVolume(lastArg);
@@ -26,7 +29,7 @@ class Play extends Command {
 
     // If no voice channel was specified, play the song in the vc the sender is in
     if (voiceChannel == null) {
-      voiceChannel = this.message.sender.voiceChannel;
+      voiceChannel = this.ec.initiator.voice.channel;
 
       if (!voiceChannel) {
         return this.sendHelpMessage("Join a voice channel or specify which one to play in");
@@ -49,10 +52,10 @@ class Play extends Command {
    * Play a song in the specified VoiceChannel
    *
    * @param {Discord.VoiceChannel} voiceChannel - The voice channel to play the yt song in
-   * @param {String} url - The url of the YouTube video to play
+   * @param {string} url - The url of the YouTube video to play
    * @param {number} vol - The volume to play at (0 to 1)
    */
-  play(voiceChannel, url, vol) {
+  private play(voiceChannel: VoiceChannel, url: string, vol: number) {
     return voiceChannel
       .join()
       .then((connection) => {
@@ -73,20 +76,20 @@ class Play extends Command {
       });
   }
 
-  getVolume(text) {
+  private getVolume(text: string) {
     const rVolume = RNumber.parse(text);
     if (!rVolume) {
       return 0.5;
     }
 
-    if (rVolume.type === RNumber.types.PERCENT) {
+    if (rVolume.type === RNumber.Types.PERCENT) {
       return rVolume.amount;
     } else {
       return null;
     }
   }
 
-  getVoiceChannel(content) {
+  private getVoiceChannel(content: string) {
     let matches = content.match(/in ([\w -]+)(\/([\w -]+))?/i);
 
     if (!matches) {
@@ -111,12 +114,14 @@ class Play extends Command {
       const folderName = matches[1].trim();
       const channelName = matches[3].trim();
 
-      return this.guild.channels.cache.find(
+      return this.ec.guild.channels.cache.find(
         (channel) =>
-          channel.type == "voice" &&
-          channel.name.toLowerCase() === channelName.toLowerCase() &&
-          channel.parent &&
-          channel.parent.name.toLowerCase() === folderName.toLowerCase()
+          !!(
+            channel.type == "voice" &&
+            channel.name.toLowerCase() === channelName.toLowerCase() &&
+            channel.parent &&
+            channel.parent.name.toLowerCase() === folderName.toLowerCase()
+          )
       );
     }
 
@@ -129,5 +134,3 @@ class Play extends Command {
     );
   }
 }
-
-export default Play;

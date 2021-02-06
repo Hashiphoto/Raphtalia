@@ -1,15 +1,15 @@
 import Command from "./Command.js";
+import ExecutionContext from "../structures/ExecutionContext.js";
 
-class NullCommand extends Command {
-  constructor(message, text) {
-    super(message);
+export default class NullCommand extends Command {
+  private _text: string | undefined;
 
-    this.text = text;
+  public constructor(context: ExecutionContext, text?: string) {
+    super(context);
+    this._text = text;
   }
 
-  execute(): Promise<any> {
-    return this.ec.channelHelper.watchSend(this.text);
+  public async execute(): Promise<any> {
+    return this.ec.channelHelper.watchSend(this._text ?? "Error");
   }
 }
-
-export default NullCommand;

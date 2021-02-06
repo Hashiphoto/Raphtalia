@@ -13,13 +13,17 @@ import links from "../../resources/links.js";
 export default class MemberController extends GuildBasedController {
   private infractionLimit = 3;
 
-  /**
-   * TODO: Remove this function and use the authority-checking like Demote has
-   */
-  public hasAuthorityOver(sender: GuildMember, target: GuildMember) {
-    return (
-      sender.id != target.id && sender.roles.highest.comparePositionTo(target.roles.highest) > 0
-    );
+  public hasAuthorityOver(sender: GuildMember, target: GuildMember | GuildMember[]) {
+    const isHigher = (member: GuildMember, otherMember: GuildMember) => {
+      return (
+        member.id != otherMember.id &&
+        member.roles.highest.comparePositionTo(otherMember.roles.highest) > 0
+      );
+    };
+    if (Array.isArray(target)) {
+      return target.every((target) => isHigher(sender, target));
+    }
+    return isHigher(sender, target);
   }
 
   /**

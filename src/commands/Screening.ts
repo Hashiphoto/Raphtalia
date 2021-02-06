@@ -3,7 +3,7 @@ import Command from "./Command.js";
 import Discord from "discord.js";
 import GuildController from "../controllers/GuildController.js";
 import Question from "../structures/Question.js";
-import sendTimedMessage from "../TimedMessage.js";
+import watchSendTimedMessage from "../TimedMessage.js";
 
 class Screening extends Command {
   /**
@@ -69,14 +69,14 @@ class Screening extends Command {
 
   getNewQuestionDetails() {
     let question = new Question();
-    return sendTimedMessage(
+    return watchSendTimedMessage(
       this.inputChannel,
       this.message.member,
       new Question("What is the question they will be asked?", ".*", 120000)
     )
       .then((message) => (question.prompt = message.content))
       .then(() =>
-        sendTimedMessage(
+        watchSendTimedMessage(
           this.inputChannel,
           this.message.member,
           new Question(
@@ -88,7 +88,7 @@ class Screening extends Command {
       )
       .then((message) => (question.answer = "^" + message.content + "$"))
       .then(() =>
-        sendTimedMessage(
+        watchSendTimedMessage(
           this.inputChannel,
           this.message.member,
           new Question(
@@ -106,7 +106,7 @@ class Screening extends Command {
         question.timeout = timeout;
       })
       .then(() =>
-        sendTimedMessage(
+        watchSendTimedMessage(
           this.inputChannel,
           this.message.member,
           new Question(

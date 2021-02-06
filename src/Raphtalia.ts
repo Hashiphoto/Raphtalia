@@ -1,27 +1,15 @@
-import {
-  Client,
-  DMChannel,
-  GuildMember,
-  MessageReaction,
-  NewsChannel,
-  Structures,
-  TextChannel,
-} from "discord.js";
+import { Client, NewsChannel, TextChannel } from "discord.js";
 
 import AllowWord from "./commands/AllowWord.js";
 import AutoDelete from "./commands/AutoDelete.js";
 import Balance from "./commands/Balance.js";
 import BanList from "./commands/BanList.js";
-import BanListStatusController from "./controllers/message/BanListStatusController.js";
 import BanWord from "./commands/BanWord.js";
 import Buy from "./commands/Buy.js";
-import CensorController from "./controllers/CensorController.js";
 import Censorship from "./commands/Censorship.js";
-import ChannelController from "./controllers/ChannelController.js";
 import ChannelHelper from "./ChannelHelper.js";
 import Command from "./commands/Command.js";
 import CommandParser from "./CommandParser.js";
-import CurrencyController from "./controllers/CurrencyController.js";
 import Database from "./db/Database.js";
 import Debug from "./commands/Debug.js";
 import DeliverCheck from "./commands/DeliverCheck.js";
@@ -30,15 +18,12 @@ import ExecutionContext from "./structures/ExecutionContext.js";
 import Exile from "./commands/Exile.js";
 import Fine from "./commands/Fine.js";
 import Give from "./commands/Give.js";
-import GuildController from "./controllers/GuildController.js";
 import Headpat from "./commands/Headpat.js";
 import Help from "./commands/Help.js";
 import HoldVote from "./commands/HoldVote.js";
 import Infractions from "./commands/Infractions.js";
-import InventoryController from "./controllers/InventoryController.js";
 import JobScheduler from "./JobScheduler.js";
 import Kick from "./commands/Kick.js";
-import MemberController from "./controllers/MemberController.js";
 import NullCommand from "./commands/NullCommand.js";
 import OnBoarder from "./Onboarder.js";
 import Pardon from "./commands/Pardon.js";
@@ -53,7 +38,6 @@ import ServerStatus from "./commands/ServerStatus.js";
 import SoftKick from "./commands/SoftKick.js";
 import Status from "./commands/Status.js";
 import Store from "./commands/Store.js";
-import StoreStatusController from "./controllers/message/StoreStatusController.js";
 import Take from "./commands/Take.js";
 import dayjs from "dayjs";
 import delay from "delay";
@@ -335,12 +319,8 @@ class Raphtalia {
         console.error(error);
         return context.message.react("🛑");
       })
-      .then((storeNeedsUpdate) => {
+      .then(() => {
         context.message.channel.stopTyping(true);
-        return storeNeedsUpdate;
-      })
-      .then((storeNeedsUpdate) => {
-        storeNeedsUpdate === true && new StoreStatusController(context).update();
       });
   }
 

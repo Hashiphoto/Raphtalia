@@ -1,31 +1,28 @@
 import Command from "./Command.js";
+import ExecutionContext from "../structures/ExecutionContext.js";
 import NullCommand from "./NullCommand.js";
 import Raphtalia from "../Raphtalia.js";
 
-class Help extends Command {
-  constructor(message) {
-    super(message);
+export default class Help extends Command {
+  public constructor(context: ExecutionContext) {
+    super(context);
     this.instructions = "**Help**\nGet detailed information about how to use any other command";
     this.usage = "Usage: `Help (command name)`";
   }
 
-  execute(): Promise<any> {
-    if (this.message.args.length === 0) {
+  public async execute(): Promise<any> {
+    if (this.ec.messageHelper.args.length === 0) {
       return this.sendHelpMessage(this.instructions);
     }
 
-    const command = Raphtalia.getCommandByName(
-      this.message.args[0].toLowerCase(),
-      this.message,
-      null
-    );
+    const commandName = this.ec.messageHelper.args[0];
+
+    const command = Raphtalia.getCommandByName(this.ec, commandName.toLowerCase());
 
     if (command instanceof NullCommand) {
-      return this.sendHelpMessage(`Unknown command "${this.message.args[0]}"`);
+      return this.sendHelpMessage(`Unknown command "${commandName}"`);
     }
 
-    return command.sendHelpMessage(command.instructions);
+    return command.sendHelpMessage(command.instructions).then(() => this.useItem());
   }
 }
-
-export default Help;

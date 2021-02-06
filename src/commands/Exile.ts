@@ -1,25 +1,20 @@
 import Command from "./Command.js";
-import Discord from "discord.js";
-import MemberController from "../controllers/MemberController.js";
+import ExecutionContext from "../structures/ExecutionContext.js";
+import RoleUtil from "../RoleUtil.js";
 import Util from "../Util.js";
 import dayjs from "dayjs";
 
-class Exile extends Command {
-  /**
-   * @param {Discord.Message} message
-   * @param {MemberController} memberController
-   */
-  constructor(message, memberController) {
-    super(message);
-    this.memberController = memberController;
+export default class Exile extends Command {
+  public constructor(context: ExecutionContext) {
+    super(context);
     this.instructions =
       "**Exile**\nPut a specified member in exile for a period of time. " +
       "Exiled members cannot use any commands. If no time is specified, the maximum value of 6 hours will be used. ";
     this.usage = "Usage: `Exile @member [1h 1m 1s]`";
   }
 
-  async execute(): Promise<any> {
-    const targets = this.message.mentionedMembers;
+  public async execute() {
+    const targets = this.ec.messageHelper.mentionedMembers;
 
     if (targets.length === 0) {
       return this.sendHelpMessage();
@@ -33,17 +28,12 @@ class Exile extends Command {
     }
 
     // Ensure exile role exists
-    if (!this.guild.roles.cache.find((r) => r.name === "Exile")) {
-      await this.guild.roles
-        .create({ data: { name: "Exile", hoist: false, color: "#010000" } })
-        .then((role) => {
-          return role.setPosition(this.guild.roles.cache.size - 2);
-        });
-    }
+    await RoleUtil.ensureExileRole(this.ec.guild);
 
     // Input or default 6 hours
     const duration =
-      Util.parseTime(this.message.content) ?? dayjs.duration({ hours: 6 }).asMilliseconds();
+      Util.parseTime(this.ec.messageHelper.parsedContent) ??
+      dayjs.duration({ hours: 6 }).asMilliseconds();
     // Current time + exile duration
     const releaseDate = dayjs().add(duration);
 
@@ -64,7 +54,7 @@ class Exile extends Command {
     );
 
     const exilePromises = targets.map((target) =>
-      this.memberController.exileMember(target, duration).then((released) => {
+      this.ec.memberController.exileMember(target, duration).then((released) => {
         if (released) {
           return this.ec.channelHelper.watchSend(`${target} has been released from exile!`);
         }
@@ -76,5 +66,3 @@ class Exile extends Command {
     return this.ec.channelHelper.watchSend(response).then(() => this.useItem(targets.length));
   }
 }
-
-export default Exile;

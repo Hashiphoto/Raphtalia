@@ -1,4 +1,4 @@
-import Discord, { Guild, GuildMember, TextChannel } from "discord.js";
+import Discord, { GuildMember } from "discord.js";
 
 import Database from "./db/Database.js";
 import ExecutionContext from "./structures/ExecutionContext.js";
@@ -8,7 +8,7 @@ import MemberController from "./controllers/MemberController.js";
 import Question from "./structures/Question.js";
 import delay from "delay";
 import discordConfig from "../config/discord.config.js";
-import sendTimedMessage from "./TimedMessage";
+import watchSendTimedMessage from "./TimedMessage";
 
 const messageSpacing = 800;
 
@@ -74,7 +74,7 @@ export default class OnBoarder {
    */
   setNickname() {
     // TODO: Disallow banned words in the nickname
-    return sendTimedMessage(
+    return watchSendTimedMessage(
       this.channel,
       this.member,
       new Question("What do you want to be called?", ".*", 60000)
@@ -135,7 +135,7 @@ export default class OnBoarder {
       }
 
       // Wait until they supply an answer matching the question.answer regex
-      let response = (await sendTimedMessage(this.channel, this.member, questionCopy)).content;
+      let response = (await watchSendTimedMessage(this.channel, this.member, questionCopy)).content;
 
       // if (await censorship.containsBannedWords(member.guild.id, response)) {
       //   softkickMember(channel, member, "We don't allow those words here");

@@ -10,7 +10,7 @@ export default class AutoDelete extends Command {
     this.usage = "Usage: `AutoDelete (start|stop) [1ms]`";
   }
 
-  public execute(): Promise<any> {
+  public async execute(): Promise<any> {
     if (!this.ec.messageHelper.args || this.ec.messageHelper.args.length === 0) {
       return this.sendHelpMessage();
     }

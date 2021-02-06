@@ -1,22 +1,12 @@
 import Command from "./Command.js";
-import CurrencyController from "../controllers/CurrencyController.js";
-import Discord from "discord.js";
-import MemberController from "../controllers/MemberController.js";
+import ExecutionContext from "../structures/ExecutionContext.js";
+import { GuildMember } from "discord.js";
 import RNumber from "../structures/RNumber.js";
 import UserItem from "../structures/UserItem.js";
 
-class Give extends Command {
-  /**
-   * @param {Discord.Message} message
-   * @param {CurrencyController} currencyController
-   * @param {MemberController} memberController
-   * @param {Discord.Client} client
-   */
-  constructor(message, currencyController, memberController, client) {
-    super(message);
-    this.currencyController = currencyController;
-    this.memberController = memberController;
-    this.client = client;
+export default class Give extends Command {
+  public constructor(context: ExecutionContext) {
+    super(context);
     this.instructions =
       "**Give**\nGive the specified member(s) either an amount of money or an item. " +
       "If multiple members are listed, each member will be given the amount of money specified. " +
@@ -24,9 +14,9 @@ class Give extends Command {
     this.usage = "Usage: `Give @member ($1|item name)`";
   }
 
-  execute(): Promise<any> {
-    const targets = this.message.mentionedMembers;
-    if (this.message.args.length === 0 || targets.length === 0) {
+  public async execute(): Promise<any> {
+    const targets = this.ec.messageHelper.mentionedMembers;
+    if (this.ec.messageHelper.args.length === 0 || targets.length === 0) {
       return this.sendHelpMessage();
     }
 
@@ -37,43 +27,40 @@ class Give extends Command {
       );
     }
 
-    let rNumber = RNumber.parse(this.message.content);
+    const rNumber = RNumber.parse(this.ec.messageHelper.parsedContent);
     if (rNumber) {
-      rNumber.type = RNumber.types.DOLLAR;
+      rNumber.type = RNumber.Types.DOLLAR;
       return this.giveMoney(rNumber, targets).then(() => this.useItem(targets.length));
     }
 
     // Parse item name
-    const itemName = this.message.content
-      .substring(this.message.content.lastIndexOf(">") + 1)
+    const itemName = this.ec.messageHelper.parsedContent
+      .substring(this.ec.messageHelper.parsedContent.lastIndexOf(">") + 1)
       .trim();
 
     if (itemName === "") {
       return this.sendHelpMessage();
     }
 
-    return this.inventoryController.findUserItem(this.message.sender, itemName).then((item) => {
+    return this.ec.inventoryController.findUserItem(this.ec.initiator, itemName).then((item) => {
       if (!item) {
-        return this.sendHelpMessage(
+        this.sendHelpMessage(
           `You do not have any item named "${itemName}". ` +
             `If you are attempting to send money, make sure to format it as \`$1\``
         );
+        return;
       }
       return this.giveItem(item, targets).then(() => this.useItem(targets.length));
     });
   }
 
-  /**
-   * @param {RNumber} rNumber
-   * @param {Discord.GuildMember[]} targets
-   */
-  giveMoney(rNumber, targets) {
+  private giveMoney(rNumber: RNumber, targets: GuildMember[]) {
     if (rNumber.amount < 0) {
       return this.ec.channelHelper.watchSend("You cannot send a negative amount of money\n");
     }
 
     let totalAmount = rNumber.amount * targets.length;
-    return this.currencyController.getCurrency(this.sender).then((balance) => {
+    return this.ec.currencyController.getCurrency(this.ec.initiator).then((balance) => {
       if (balance < totalAmount) {
         return this.ec.channelHelper.watchSend(
           `You do not have enough money for that. ` +
@@ -82,26 +69,24 @@ class Give extends Command {
       }
 
       const givePromises = targets.map((target) =>
-        this.currencyController.transferCurrency(this.sender, target, rNumber.amount).then(() => {
-          // Giving money to Raphtalia, presumably for a contest
-          if (target.id === this.client.user.id) {
-            return this.currencyController
-              .bidOnRoleContest(
-                this.message.member.roles.hoist,
-                this.message.member,
-                rNumber.amount
-              )
-              .then((roleContest) =>
-                roleContest
-                  ? `Paid ${rNumber.toString()} towards contesting the ${
-                      this.message.guild.roles.cache.get(roleContest.roleId).name
-                    } role!`
-                  : `Thanks for the ${rNumber.toString()}!`
-              );
-          } else {
-            return `Transfered ${rNumber.toString()} to ${target}!`;
-          }
-        })
+        this.ec.currencyController
+          .transferCurrency(this.ec.initiator, target, rNumber.amount)
+          .then(() => {
+            // Giving money to Raphtalia, presumably for a contest
+            if (target.id === this.ec.raphtalia.id && this.ec.initiator.roles.hoist) {
+              return this.ec.currencyController
+                .bidOnRoleContest(this.ec.initiator.roles.hoist, this.ec.initiator, rNumber.amount)
+                .then((roleContest) =>
+                  roleContest
+                    ? `Paid ${rNumber.toString()} towards contesting the ${
+                        this.ec.guild.roles.cache.get(roleContest.roleId)?.name
+                      } role!`
+                    : `Thanks for the ${rNumber.toString()}!`
+                );
+            } else {
+              return `Transfered ${rNumber.toString()} to ${target}!`;
+            }
+          })
       );
 
       return Promise.all(givePromises)
@@ -110,11 +95,7 @@ class Give extends Command {
     });
   }
 
-  /**
-   * @param {UserItem} item
-   * @param {Discord.GuildMember[]} targets
-   */
-  giveItem(item, targets) {
+  private giveItem(item: UserItem, targets: GuildMember[]) {
     const unusedItems = Math.floor(item.remainingUses / item.maxUses);
     if (unusedItems < targets.length) {
       return this.ec.channelHelper.watchSend(
@@ -124,7 +105,7 @@ class Give extends Command {
     }
 
     const givePromises = targets.map((target) => {
-      return this.inventoryController.transferItem(item, this.message.sender, target).then(() => {
+      return this.ec.inventoryController.transferItem(item, this.ec.initiator, target).then(() => {
         return `Transferred one ${item.name} to ${target}\n`;
       });
     });
@@ -134,5 +115,3 @@ class Give extends Command {
       .then((response) => this.ec.channelHelper.watchSend(response));
   }
 }
-
-export default Give;

@@ -1,21 +1,19 @@
 import Command from "./Command.js";
-import MemberController from "../controllers/MemberController.js";
+import ExecutionContext from "../structures/ExecutionContext.js";
 import links from "../../resources/links.js";
 
-class Kick extends Command {
-  /**
-   * @param {Discord.Message} message
-   * @param {MemberController} memberController
-   */
-  constructor(message, memberController) {
-    super(message);
-    this.memberController = memberController;
+/**
+ * @deprecated
+ */
+export default class Kick extends Command {
+  public constructor(context: ExecutionContext) {
+    super(context);
     this.instructions = "**Kick**\nKick the specified member(s) from the server";
     this.usage = "Usage: `Kick @member`";
   }
 
-  execute(): Promise<any> {
-    const targets = this.message.mentionedMembers;
+  public async execute(): Promise<any> {
+    const targets = this.ec.messageHelper.mentionedMembers;
     if (targets.length === 0) {
       return this.sendHelpMessage();
     }
@@ -27,9 +25,9 @@ class Kick extends Command {
       );
     }
 
-    if (!this.sender.hasAuthorityOver(targets)) {
-      return this.memberController
-        .addInfractions(this.sender)
+    if (!this.ec.memberController.hasAuthorityOver(this.ec.initiator, targets)) {
+      return this.ec.memberController
+        .addInfractions(this.ec.initiator)
         .then((feedback) =>
           this.ec.channelHelper.watchSend(
             `You must hold a higher rank than the members you are kicking\n` + feedback
@@ -56,10 +54,8 @@ class Kick extends Command {
       .then(() => this.useItem(targets.length));
   }
 
-  getRandomKickGif() {
+  private getRandomKickGif() {
     let randInt = Math.floor(Math.random() * links.gifs.kicks.length);
     return links.gifs.kicks[randInt];
   }
 }
-
-export default Kick;

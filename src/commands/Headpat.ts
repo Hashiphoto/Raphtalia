@@ -1,15 +1,15 @@
 import Command from "./Command.js";
-import Discord from "discord.js";
+import ExecutionContext from "../structures/ExecutionContext.js";
 
-class Headpat extends Command {
-  constructor(message) {
-    super(message);
+export default class Headpat extends Command {
+  public constructor(context: ExecutionContext) {
+    super(context);
     this.instructions = "**Headpat**\nI will give a headpat to the member(s) is specified";
     this.usage = "Usage: `Headpat @member`";
   }
 
-  execute(): Promise<any> {
-    const targets = this.message.mentionedMembers;
+  public async execute(): Promise<any> {
+    const targets = this.ec.messageHelper.mentionedMembers;
 
     if (targets.length === 0) {
       return this.sendHelpMessage();
@@ -30,5 +30,3 @@ class Headpat extends Command {
     return this.ec.channelHelper.watchSend(response).then(() => this.useItem(targets.length));
   }
 }
-
-export default Headpat;

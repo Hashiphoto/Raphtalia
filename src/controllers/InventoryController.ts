@@ -14,7 +14,7 @@ export default class InventoryController extends GuildBasedController {
     return this.ec.db.inventory.updateGuildItem(this.ec.guild.id, item);
   }
 
-  findUserItem(member: GuildMember, name: string) {
+  findUserItem(member: GuildMember, name: string): Promise<UserItem | undefined> {
     return this.ec.db.inventory.findUserItem(this.ec.guild.id, member.id, name);
   }
 

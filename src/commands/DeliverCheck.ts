@@ -1,18 +1,16 @@
 import Command from "./Command.js";
-import CurrencyController from "../controllers/CurrencyController.js";
-import Discord from "discord.js";
 import ExecutionContext from "../structures/ExecutionContext.js";
 import RNumber from "../structures/RNumber.js";
 
 export default class DeliverCheck extends Command {
-  constructor(context: ExecutionContext) {
+  public constructor(context: ExecutionContext) {
     super(context);
     this.instructions =
       "**DeliverCheck**\nGenerate money out of thin air and give it to the member(s) specified";
     this.usage = "Usage: `DeliverCheck @member $1`";
   }
 
-  async execute(): Promise<any> {
+  public async execute(): Promise<any> {
     const targets = this.ec.messageHelper.mentionedMembers;
     if (targets.length === 0) {
       return this.sendHelpMessage();

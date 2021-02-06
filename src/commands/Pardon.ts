@@ -1,24 +1,18 @@
 import Command from "./Command.js";
-import Discord from "discord.js";
-import MemberController from "../controllers/MemberController.js";
-import dayjs from "dayjs";
+import ExecutionContext from "../structures/ExecutionContext.js";
+import RoleUtil from "../RoleUtil.js";
 
-class Pardon extends Command {
-  /**
-   * @param {Discord.Message} message
-   * @param {MemberController} memberController
-   */
-  constructor(message, memberController) {
-    super(message);
-    this.memberController = memberController;
+export default class Pardon extends Command {
+  public constructor(context: ExecutionContext) {
+    super(context);
     this.instructions =
       "**Pardon**\nRemoves all infractions from the specified member(s). " +
       "If the members are exiled, they are also freed from exile";
     this.usage = "Usage: `Pardon @member`";
   }
 
-  async execute(): Promise<any> {
-    const targets = this.message.mentionedMembers;
+  public async execute(): Promise<any> {
+    const targets = this.ec.messageHelper.mentionedMembers;
     if (targets.length === 0) {
       return this.sendHelpMessage();
     }
@@ -31,16 +25,10 @@ class Pardon extends Command {
     }
 
     // Ensure exile role exists
-    if (!this.guild.roles.find((r) => r.name === "Exile")) {
-      await this.guild
-        .createRole({ name: "Exile", hoist: false, color: "#010000" })
-        .then((role) => {
-          return role.setPosition(this.guild.roles.size - 2);
-        });
-    }
+    await RoleUtil.ensureExileRole(this.ec.guild);
 
     const pardonPromises = targets.map((target) => {
-      return this.memberController.pardonMember(target, this.inputChannel);
+      return this.ec.memberController.pardonMember(target);
     });
 
     return Promise.all(pardonPromises)
@@ -49,5 +37,3 @@ class Pardon extends Command {
       .then(() => this.useItem(targets.length));
   }
 }
-
-export default Pardon;

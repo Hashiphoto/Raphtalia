@@ -1,7 +1,5 @@
 import Command from "./Command.js";
-import Discord from "discord.js";
 import ExecutionContext from "../structures/ExecutionContext.js";
-import MemberController from "../controllers/MemberController.js";
 
 export default class Demote extends Command {
   /**
@@ -13,7 +11,7 @@ export default class Demote extends Command {
     this.usage = "Usage: `Demote @member`";
   }
 
-  async execute(): Promise<any> {
+  public async execute(): Promise<any> {
     const targets = this.ec.messageHelper.mentionedMembers;
 
     if (targets.length === 0) {
@@ -27,9 +25,9 @@ export default class Demote extends Command {
       );
     }
 
-    if (!this.sender.hasAuthorityOver(targets)) {
-      return this.memberController
-        .addInfractions(this.sender)
+    if (!this.ec.memberController.hasAuthorityOver(this.ec.initiator, targets)) {
+      return this.ec.memberController
+        .addInfractions(this.ec.initiator)
         .then((feedback) =>
           this.ec.channelHelper.watchSend(
             `You must hold a higher rank than the members you are demoting\n` + feedback
@@ -37,7 +35,7 @@ export default class Demote extends Command {
         );
     }
 
-    const demotePromises = targets.map((target) => this.memberController.demoteMember(target));
+    const demotePromises = targets.map((target) => this.ec.memberController.demoteMember(target));
 
     return Promise.all(demotePromises)
       .then((messages) => messages.reduce(this.sum))

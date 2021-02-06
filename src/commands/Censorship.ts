@@ -1,9 +1,8 @@
-import BanListStatusController from "../controllers/message/BanListStatusController.js";
 import Command from "./Command.js";
 import ExecutionContext from "../structures/ExecutionContext.js";
 
 export default class Censorship extends Command {
-  constructor(context: ExecutionContext) {
+  public constructor(context: ExecutionContext) {
     super(context);
     this.instructions =
       "**Censorship**\nEnable or disable censorship for the whole server. " +
@@ -12,7 +11,7 @@ export default class Censorship extends Command {
     this.usage = "Usage: `Censorship (start|stop)`";
   }
 
-  execute(): Promise<any> {
+  public async execute(): Promise<any> {
     const start = this.ec.messageHelper.args.includes("start");
     const stop = this.ec.messageHelper.args.includes("stop");
 

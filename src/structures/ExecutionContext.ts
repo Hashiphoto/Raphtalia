@@ -1,4 +1,4 @@
-import { Client, Guild, GuildMember, Message, User } from "discord.js";
+import { Client, Guild, GuildMember, Message } from "discord.js";
 
 import BanListStatusController from "../controllers/message/BanListStatusController";
 import CensorController from "../controllers/CensorController";
@@ -20,7 +20,7 @@ export default class ExecutionContext {
   public command: Command;
   public db: Database;
   public client: Client;
-  public raphtaliaMember: GuildMember;
+  public raphtalia: GuildMember;
   public censorController: CensorController;
   public channelController: ChannelController;
   public currencyController: CurrencyController;
@@ -65,7 +65,7 @@ export default class ExecutionContext {
     if (this.client.user) {
       const temp = this._guild.members.cache.get(this.client.user.id);
       if (temp) {
-        this.raphtaliaMember = temp;
+        this.raphtalia = temp;
       }
     }
   }

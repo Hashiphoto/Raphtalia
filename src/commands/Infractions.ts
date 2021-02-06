@@ -1,30 +1,28 @@
 import Command from "./Command.js";
-import Discord from "discord.js";
-import MemberController from "../controllers/MemberController.js";
+import ExecutionContext from "../structures/ExecutionContext.js";
+import { GuildMember } from "discord.js";
 
-class Infractions extends Command {
-  /**
-   * @param {Discord.Message} message
-   * @param {MemberController} memberController
-   */
-  constructor(message, memberController) {
-    super(message);
-    this.memberController = memberController;
+export default class Infractions extends Command {
+  public constructor(context: ExecutionContext) {
+    super(context);
     this.instructions =
       "**Infractions**\nGet the number of infractions commited by a member. To get your own infraction count, use the command without arguments (`Infractions`)";
     this.usage = "Usage: `Infractions [@member]`";
   }
 
-  async execute(): Promise<any> {
-    if (this.message.mentionedMembers == null || this.message.mentionedMembers.length === 0) {
-      return this.reportInfractions(this.sender);
+  public async execute(): Promise<any> {
+    if (
+      this.ec.messageHelper.mentionedMembers == null ||
+      this.ec.messageHelper.mentionedMembers.length === 0
+    ) {
+      return this.reportInfractions(this.ec.initiator);
     } else {
-      return this.reportInfractions(this.message.mentionedMembers[0]);
+      return this.reportInfractions(this.ec.messageHelper.mentionedMembers[0]);
     }
   }
 
-  reportInfractions(member) {
-    return this.memberController
+  private reportInfractions(member: GuildMember) {
+    return this.ec.memberController
       .getInfractions(member)
       .then((infractCount) =>
         this.ec.channelHelper.watchSend(`${member} has incurred ${infractCount} infractions\n`)
@@ -32,5 +30,3 @@ class Infractions extends Command {
       .then(() => this.useItem());
   }
 }
-
-export default Infractions;
