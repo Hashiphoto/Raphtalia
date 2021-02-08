@@ -1,0 +1,19 @@
+{
+  "apps": [
+    {
+      "name": "raphtalia",
+      "script": "yarn",
+      "args": "start",
+      "instances": "1",
+      "ignore_watch": ["*/node_modules", "*/.git"],
+      "env": {
+        "NODE_ENV": "prod"
+      },
+      "env_dev": {
+        "NODE_ENV": "dev"
+      },
+      "interpreter": "bash",
+      "exec_mode": "cluster"
+    }
+  ]
+}

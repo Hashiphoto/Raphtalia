@@ -1,6 +1,6 @@
+import RNumber from "../../src/structures/RNumber";
+import Util from "../../src/Util";
 import assert from "assert";
-import RNumber from "../../src/structures/RNumber.js";
-import Util from "../../src/Util.js";
 
 describe("Utilting", () => {
   describe("Percent format", () => {

@@ -1,5 +1,5 @@
-import UserItem from "../../src/structures/UserItem.js";
 import Discord from "discord.js";
+import UserItem from "../../src/structures/UserItem";
 
 class TestInventoryController {
   /**

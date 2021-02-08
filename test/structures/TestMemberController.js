@@ -62,7 +62,7 @@ class TestMemberController {
   }
 
   demoteMember(member) {
-    return Promise.resolve(`testing text: ${member} has been demoted\n`);
+    return Promise.resolve(`testing text: ${member.toString()} has been demoted\n`);
   }
 }
 
