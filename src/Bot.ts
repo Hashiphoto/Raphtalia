@@ -1,8 +1,8 @@
-import Raphtalia from "./Raphtalia.js";
+import Database from "./db/Database";
+import Raphtalia from "./Raphtalia";
 import dayjs from "dayjs";
-import duration from "dayjs/plugin/duration.js";
-import Database from "./db/Database.js";
-import secretConfig from "../config/secrets.config.js";
+import duration from "dayjs/plugin/duration";
+import secretConfig from "../config/secrets.config";
 
 dayjs.extend(duration);
 
@@ -30,7 +30,9 @@ dayjs.extend(duration);
             `server with the following powershell command:\n${command}`
         );
       } else {
-        console.error("Can't establish connection to the database\n" + e);
+        console.error(
+          `ENV=${process.env.NODE_ENV}\nCan't establish connection to the database\n` + e
+        );
       }
     });
 })();

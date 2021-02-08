@@ -1,9 +1,7 @@
-class BadParametersError extends Error {
-  constructor(...params) {
+export default class BadParametersError extends Error {
+  constructor(...params: any) {
     super(...params);
 
     this.name = "BadParametersError";
   }
 }
-
-export default BadParametersError;

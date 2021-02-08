@@ -1,4 +1,4 @@
-import ExecutionContext from "../structures/ExecutionContext.js";
+import ExecutionContext from "../structures/ExecutionContext";
 
 export default class GuildBasedController {
   protected ec: ExecutionContext;

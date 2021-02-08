@@ -1,17 +1,12 @@
-import { FieldPacket, Pool, RowDataPacket } from "mysql2/promise";
+import { FieldPacket, RowDataPacket } from "mysql2/promise";
 
-import DbUser from "../structures/DbUser.js";
-import Util from "../Util.js";
+import DbUser from "../structures/DbUser";
+import Repository from "./Repository";
+import Util from "../Util";
 
-export default class UsersTable {
-  private _pool: Pool;
-
-  public constructor(pool: Pool) {
-    this._pool = pool;
-  }
-
+export default class UsersRepository extends Repository {
   public get(id: string, guildId: string) {
-    return this._pool
+    return this.pool
       .query("SELECT * FROM users WHERE id = ? AND guild_id = ?", [id, guildId])
       .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
         if (rows.length === 0) {
@@ -22,7 +17,7 @@ export default class UsersTable {
   }
 
   public incrementInfractions(id: string, guildId: string, count: number) {
-    return this._pool.query(
+    return this.pool.query(
       "INSERT INTO users (id, guild_id, infractions) VALUES (?,?,?) " +
         "ON DUPLICATE KEY UPDATE infractions = infractions + VALUES(infractions)",
       [id, guildId, count]
@@ -30,7 +25,7 @@ export default class UsersTable {
   }
 
   public setInfractions(id: string, guildId: string, count: number) {
-    return this._pool.query(
+    return this.pool.query(
       "INSERT INTO users (id, guild_id, infractions) VALUES (?,?,?) " +
         "ON DUPLICATE KEY UPDATE infractions = VALUES(infractions)",
       [id, guildId, count]
@@ -38,7 +33,7 @@ export default class UsersTable {
   }
 
   public incrementCurrency(id: string, guildId: string, amount: number) {
-    return this._pool.query(
+    return this.pool.query(
       "INSERT INTO users (id, guild_id, currency) VALUES (?,?,?) " +
         "ON DUPLICATE KEY UPDATE currency = currency + VALUES(currency)",
       [id, guildId, Util.round(amount)]
@@ -46,7 +41,7 @@ export default class UsersTable {
   }
 
   public setCurrency(id: string, guildId: string, amount: number) {
-    return this._pool.query(
+    return this.pool.query(
       "INSERT INTO users (id, guild_id, currency) VALUES (?,?,?) " +
         "ON DUPLICATE KEY UPDATE currency = VALUES(currency)",
       [id, guildId, Util.round(amount)]
@@ -54,7 +49,7 @@ export default class UsersTable {
   }
 
   public setCitizenship(id: string, guildId: string, isCitizen: boolean) {
-    return this._pool.query(
+    return this.pool.query(
       "INSERT INTO users (id, guild_id, citizenship) VALUES (?,?,?) " +
         "ON DUPLICATE KEY UPDATE citizenship = VALUES(citizenship)",
       [id, guildId, isCitizen]
@@ -62,7 +57,7 @@ export default class UsersTable {
   }
 
   public setLastMessageDate(id: string, guildId: string, date: Date) {
-    return this._pool.query(
+    return this.pool.query(
       "INSERT INTO users (id, guild_id, last_message_date) VALUES (?,?,?) " +
         "ON DUPLICATE KEY UPDATE last_message_date = VALUES(last_message_date)",
       [id, guildId, date]

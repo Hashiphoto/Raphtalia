@@ -1,5 +1,5 @@
-import Command from "./Command.js";
-import ExecutionContext from "../structures/ExecutionContext.js";
+import Command from "./Command";
+import ExecutionContext from "../structures/ExecutionContext";
 
 export default class Headpat extends Command {
   public constructor(context: ExecutionContext) {
@@ -24,7 +24,7 @@ export default class Headpat extends Command {
 
     let response = "";
     for (const member of targets) {
-      response += `${member} headpat\n`;
+      response += `${member.toString()} headpat\n`;
     }
 
     return this.ec.channelHelper.watchSend(response).then(() => this.useItem(targets.length));

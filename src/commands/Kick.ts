@@ -1,6 +1,6 @@
-import Command from "./Command.js";
-import ExecutionContext from "../structures/ExecutionContext.js";
-import links from "../../resources/links.js";
+import Command from "./Command";
+import ExecutionContext from "../structures/ExecutionContext";
+import links from "../../resources/links";
 
 /**
  * @deprecated

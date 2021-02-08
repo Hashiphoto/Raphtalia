@@ -1,19 +1,13 @@
-import BadParametersError from "../structures/errors/BadParametersError.js";
-import Command from "./Command.js";
-import Discord from "discord.js";
-import GuildController from "../controllers/GuildController.js";
-import Question from "../structures/Question.js";
-import watchSendTimedMessage from "../TimedMessage.js";
+import BadParametersError from "../structures/errors/BadParametersError";
+import Command from "./Command";
+import ExecutionContext from "../structures/ExecutionContext";
+import Question from "../structures/Question";
+import ScreeningQuestion from "../structures/ScreeningQuestion";
+import watchSendTimedMessage from "../TimedMessage";
 
-class Screening extends Command {
-  /**
-   *
-   * @param {Discord.Message} message
-   * @param {GuildController} guildController
-   */
-  constructor(message, guildController) {
-    super(message);
-    this.guildController = guildController;
+export default class Screening extends Command {
+  public constructor(context: ExecutionContext) {
+    super(context);
     this.instructions =
       "**Screening**\nView, edit or delete the guild screening questions. " +
       "To view the current screening questions, use the `list` flag. This does not consume an item use.\n" +
@@ -22,103 +16,130 @@ class Screening extends Command {
     this.usage = "Usage: `Screening (list | add | delete id)`";
   }
 
-  execute(): Promise<any> {
-    if (this.message.args.length === 0) {
+  public async execute(): Promise<any> {
+    if (this.ec.messageHelper.args.length === 0) {
       return this.sendHelpMessage();
     }
 
-    switch (this.message.args[0].toLowerCase()) {
+    switch (this.ec.messageHelper.args[0].toLowerCase()) {
       case "list":
-        return this.guildController.getScreeningQuestions().then((questions) => {
-          if (questions.length === 0) {
-            return this.ec.channelHelper.watchSend("There are currently no screening questions");
-          }
-          const allQuestions = questions.reduce((sum, question) => sum + question, "");
-          return this.ec.channelHelper.watchSend(allQuestions);
-        });
-
+        return await this.list();
       case "add":
-        return this.getNewQuestionDetails()
-          .then((question) => this.guildController.addScreeningQuestion(question))
-          .then(() => this.ec.channelHelper.watchSend("New question added!"))
-          .then(() => this.useItem())
-          .catch((error) => {
-            if (error instanceof BadParametersError) {
-              return this.ec.channelHelper.watchSend(
-                "Invalid input. Adding new screening question aborted"
-              );
-            }
-            throw error;
-          });
-
+        return await this.add();
       case "delete":
-        if (this.message.args.length < 2) {
+        if (this.ec.messageHelper.args.length < 2) {
           return this.sendHelpMessage(
             "Please try again and specify the id of the question to delete"
           );
         }
-        const id = this.message.args[1];
-        return this.guildController.deleteScreeningQuestion(id).then((deleted) => {
-          if (deleted) {
-            return this.ec.channelHelper.watchSend("Question deleted").then(() => this.useItem());
-          }
-          return this.ec.channelHelper.watchSend(`There is no question with id ${id}`);
-        });
+        return this.delete();
+      default:
+        return this.sendHelpMessage("Please specify one of: `list`, `add`, `delete`");
     }
   }
 
-  getNewQuestionDetails() {
-    let question = new Question();
-    return watchSendTimedMessage(
-      this.inputChannel,
-      this.message.member,
-      new Question("What is the question they will be asked?", ".*", 120000)
-    )
-      .then((message) => (question.prompt = message.content))
-      .then(() =>
-        watchSendTimedMessage(
-          this.inputChannel,
-          this.message.member,
-          new Question(
-            "What is the acceptable answer to the question? (case-insensitive)",
-            ".*",
-            120000
-          )
-        )
-      )
-      .then((message) => (question.answer = "^" + message.content + "$"))
-      .then(() =>
-        watchSendTimedMessage(
-          this.inputChannel,
-          this.message.member,
-          new Question(
-            "How many milliseconds (ms) will they have to answer correctly?",
-            ".*",
-            120000
-          )
-        )
-      )
-      .then((message) => {
-        const timeout = parseInt(message.content);
-        if (isNaN(timeout)) {
-          throw new BadParametersError();
+  private async list() {
+    return this.ec.guildController.getScreeningQuestions().then((questions) => {
+      if (questions.length === 0) {
+        return this.ec.channelHelper.watchSend("There are currently no screening questions");
+      }
+      const allQuestions = questions.reduce((sum, question) => sum + question, "");
+      return this.ec.channelHelper.watchSend(allQuestions);
+    });
+  }
+
+  private async add() {
+    const screeningQuestion = await this.getNewQuestionDetails();
+    if (!screeningQuestion) {
+      return this.ec.channelHelper.watchSend(
+        "Invalid input. Adding new screening question aborted"
+      );
+    }
+    return this.ec.guildController
+      .addScreeningQuestion(screeningQuestion)
+      .then(() => this.ec.channelHelper.watchSend("New question added!"))
+      .then(() => this.useItem())
+      .catch((error) => {
+        if (error instanceof BadParametersError) {
+          return this.ec.channelHelper.watchSend(
+            "Invalid input. Adding new screening question aborted"
+          );
         }
-        question.timeout = timeout;
-      })
-      .then(() =>
-        watchSendTimedMessage(
-          this.inputChannel,
-          this.message.member,
-          new Question(
-            "Should the user be ejected immediately after answering incorrectly? (yes/no)",
-            "(yes|no)",
-            120000
-          )
-        )
+        throw error;
+      });
+  }
+
+  private async delete() {
+    const id = parseInt(this.ec.messageHelper.args[1]);
+    if (isNaN(id)) {
+      return this.ec.channelHelper.watchSend(
+        `Deletion canceled. "${this.ec.messageHelper.args[1]}" is not a number`
+      );
+    }
+    return this.ec.guildController.deleteScreeningQuestion(id).then(async (deleted) => {
+      if (deleted) {
+        return this.ec.channelHelper.watchSend("Question deleted").then(() => this.useItem());
+      }
+      return this.ec.channelHelper.watchSend(
+        `Deletion canceled. There is no question with id ${id}`
+      );
+    });
+  }
+
+  private async getNewQuestionDetails() {
+    let question = new ScreeningQuestion();
+    const promptMessage = await watchSendTimedMessage(
+      this.ec,
+      this.ec.initiator,
+      new Question("What is the question they will be asked?", ".*", 120000)
+    );
+    if (!promptMessage) {
+      return;
+    }
+    question.prompt = promptMessage.content;
+
+    const answerMessage = await watchSendTimedMessage(
+      this.ec,
+      this.ec.initiator,
+      new Question(
+        "What is the acceptable answer to the question? (case-insensitive)",
+        ".*",
+        120000
       )
-      .then((message) => (question.strict = message.content.includes("yes")))
-      .then(() => question);
+    );
+    if (!answerMessage) {
+      return;
+    }
+    question.answer = "^" + answerMessage.content + "$";
+
+    const timeoutMessage = await watchSendTimedMessage(
+      this.ec,
+      this.ec.initiator,
+      new Question("How many milliseconds (ms) will they have to answer correctly?", ".*", 120000)
+    );
+    if (!timeoutMessage) {
+      return;
+    }
+    const timeout = parseInt(timeoutMessage.content);
+    if (isNaN(timeout)) {
+      return;
+    }
+    question.timeout = timeout;
+
+    const strictMessage = await watchSendTimedMessage(
+      this.ec,
+      this.ec.initiator,
+      new Question(
+        "Should the user be ejected immediately after answering incorrectly? (yes/no)",
+        "(yes|no)",
+        120000
+      )
+    );
+    if (!strictMessage) {
+      return;
+    }
+    question.strict = strictMessage.content.includes("yes");
+
+    return question;
   }
 }
-
-export default Screening;

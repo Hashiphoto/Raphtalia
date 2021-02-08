@@ -1,7 +1,9 @@
-import Util from "../../Util.js";
+import Util from "../../Util";
 
-class AmbiguousInputError extends Error {
-  constructor(possibleResults, ...params) {
+export default class AmbiguousInputError extends Error {
+  private possibleResults: string[];
+
+  public constructor(possibleResults: string[], ...params: any) {
     super(...params);
 
     this.name = "AmbiguousInputError";
@@ -9,5 +11,3 @@ class AmbiguousInputError extends Error {
     this.message = Util.listFormat(possibleResults, "or");
   }
 }
-
-export default AmbiguousInputError;

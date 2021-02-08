@@ -1,31 +1,25 @@
-import { FieldPacket, Pool, RowDataPacket } from "mysql2/promise";
+import { FieldPacket, RowDataPacket } from "mysql2/promise";
 
-import AmbiguousInputError from "../structures/errors/AmbiguousInputError.js";
-import CommandItem from "../structures/CommandItem.js";
-import GuildItem from "../structures/GuildItem.js";
-import Item from "../structures/Item.js";
-import UserItem from "../structures/UserItem.js";
+import AmbiguousInputError from "../structures/errors/AmbiguousInputError";
+import CommandItem from "../structures/CommandItem";
+import GuildItem from "../structures/GuildItem";
+import Item from "../structures/Item";
+import Repository from "./Repository";
+import UserItem from "../structures/UserItem";
 import { escape } from "mysql2";
 
-export default class InventoryTable {
-  public pool: Pool;
+export default class InventoryRepository extends Repository {
+  private guildSelect: string =
+    "SELECT * FROM guild_inventory gi JOIN items i ON gi.item_id = i.id ";
+  private userSelect: string =
+    "SELECT ui.user_id, ui.guild_id, i.id, ui.quantity, ui.remaining_uses, i.name, gi.max_uses " +
+    "FROM user_inventory ui " +
+    "JOIN items i ON ui.item_id = i.id " +
+    "JOIN guild_inventory gi ON gi.item_id = i.id ";
 
-  private _guildSelect: string;
-  private _userSelect: string;
-
-  public constructor(pool: Pool) {
-    this.pool = pool;
-    this._guildSelect = "SELECT * FROM guild_inventory gi JOIN items i ON gi.item_id = i.id ";
-    this._userSelect =
-      "SELECT ui.user_id, ui.guild_id, i.id, ui.quantity, ui.remaining_uses, i.name, gi.max_uses " +
-      "FROM user_inventory ui " +
-      "JOIN items i ON ui.item_id = i.id " +
-      "JOIN guild_inventory gi ON gi.item_id = i.id ";
-  }
-
-  public getGuildStock(guildId: string, showHidden = false) {
+  public async getGuildStock(guildId: string, showHidden = false) {
     return this.pool
-      .query(this._guildSelect + "WHERE guild_id = ? " + `${showHidden ? "" : "AND hidden = 0"}`, [
+      .query(this.guildSelect + "WHERE guild_id = ? " + `${showHidden ? "" : "AND hidden = 0"}`, [
         guildId,
       ])
       .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
@@ -42,16 +36,16 @@ export default class InventoryTable {
       });
   }
 
-  public findGuildItem(guildId: string, itemName: string) {
+  public async findGuildItem(guildId: string, itemName: string) {
     return this.pool
       .query(
-        this._guildSelect +
+        this.guildSelect +
           `WHERE guild_id = ? AND hidden = 0 AND name LIKE ${escape(`%${itemName}%`)}`,
         [guildId]
       )
       .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
         if (rows.length === 0) {
-          return null;
+          return;
         }
         if (rows.length > 1) {
           throw new AmbiguousInputError(rows.map((r) => r.name));
@@ -61,30 +55,23 @@ export default class InventoryTable {
       });
   }
 
-  public getGuildItem(guildId: string, itemId: string) {
+  public async getGuildItem(guildId: string, itemId: string) {
     return this.pool
-      .query(this._guildSelect + `WHERE guild_id = ? AND id=?`, [guildId, itemId])
+      .query(this.guildSelect + `WHERE guild_id = ? AND id=?`, [guildId, itemId])
       .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
         if (rows.length === 0) {
-          return null;
+          return;
         }
 
         return this.toGuildItem(rows[0]);
       });
   }
 
-  /**
-   * @param {String} guildId
-   * @param {Item} item
-   * @param {Number} quantityChange
-   * @param {Date|null} soldDateTime
-   * @returns {Promise<GuildItem>} The item after updating
-   */
-  public updateGuildItemQuantity(
+  public async updateGuildItemQuantity(
     guildId: string,
     item: Item,
     quantityChange: number,
-    soldDateTime: Date | undefined = undefined
+    soldDateTime?: Date
   ) {
     // If decreasing in quantity, increase sold_in_cycle
     const increaseSoldQuery =
@@ -99,7 +86,12 @@ export default class InventoryTable {
       .then(() => this.getGuildItem(guildId, item.id));
   }
 
-  public updateGuildItemSold(guildId: string, item: Item, soldInCycle: number, soldDateTime: Date) {
+  public async updateGuildItemSold(
+    guildId: string,
+    item: Item,
+    soldInCycle: number,
+    soldDateTime: Date
+  ) {
     return this.pool
       .query(
         `UPDATE guild_inventory SET sold_in_cycle=sold_in_cycle+?, date_last_sold=? WHERE guild_id=? AND item_id=?`,
@@ -108,7 +100,7 @@ export default class InventoryTable {
       .then(() => this.getGuildItem(guildId, item.id));
   }
 
-  public updateGuildItemPrice(guildId: string, item: Item, newPrice: number) {
+  public async updateGuildItemPrice(guildId: string, item: Item, newPrice: number) {
     return this.pool.query("UPDATE guild_inventory SET price=? WHERE guild_id=? and item_id=?", [
       newPrice,
       guildId,
@@ -116,7 +108,7 @@ export default class InventoryTable {
     ]);
   }
 
-  public updateGuildItem(guildId: string, item: GuildItem) {
+  public async updateGuildItem(guildId: string, item: GuildItem) {
     return this.pool
       .query(
         "UPDATE guild_inventory SET price=?, max_uses=?, quantity=?, max_quantity=? WHERE guild_id=? AND item_id=?",
@@ -125,16 +117,16 @@ export default class InventoryTable {
       .then(() => this.pool.query("UPDATE items SET name=? WHERE id=?", [item.name, item.id]));
   }
 
-  public resetStoreCycle(guildId: string) {
+  public async resetStoreCycle(guildId: string) {
     return this.pool.query("UPDATE guild_inventory SET sold_in_cycle=0 WHERE guild_id=?", [
       guildId,
     ]);
   }
 
-  public findUserItem(guildId: string, userId: string, itemName: string, showHidden = false) {
+  public async findUserItem(guildId: string, userId: string, itemName: string, showHidden = false) {
     return this.pool
       .query(
-        this._userSelect +
+        this.userSelect +
           `WHERE ui.guild_id=? AND ui.user_id=? AND i.name LIKE ${escape(`%${itemName}%`)} ` +
           `${showHidden ? "" : "AND hidden = 0"}`,
         [guildId, userId]
@@ -148,19 +140,23 @@ export default class InventoryTable {
       });
   }
 
-  public insertUserItem(guildId: string, userId: string, item: Item) {
+  public async insertUserItem(guildId: string, userId: string, item: Item) {
     return this.pool.query(
-      "INSERT INTO user_inventory " +
+      "INSERT INTO user_inventory (user_id, guild_id, item_id, quantity, remaining_uses)" +
         "VALUES (?,?,?,?,?) " +
         "ON DUPLICATE KEY UPDATE quantity=quantity+?, remaining_uses=remaining_uses+?",
       [userId, guildId, item.id, item.quantity, item.maxUses, item.quantity, item.maxUses]
     );
   }
 
-  public getUserInventory(guildId: string, userId: string, showHidden = false) {
+  public async getUserItems(
+    guildId: string,
+    userId: string,
+    showHidden = false
+  ): Promise<UserItem[]> {
     return this.pool
       .query(
-        this._userSelect +
+        this.userSelect +
           "WHERE ui.guild_id=? AND ui.user_id=?" +
           `${showHidden ? "" : "AND hidden = 0"}`,
         [guildId, userId]
@@ -172,16 +168,19 @@ export default class InventoryTable {
         const items = [];
 
         for (const row of dbRows) {
-          items.push(await this.toUserItem(row));
+          const userItem = await this.toUserItem(row);
+          if (userItem) {
+            items.push(userItem);
+          }
         }
 
         return items;
       });
   }
 
-  public getUserItem(guildId: string, userId: string, itemId: string) {
+  public async getUserItem(guildId: string, userId: string, itemId: string) {
     return this.pool
-      .query(this._userSelect + "WHERE ui.guild_id=? AND ui.user_id=? AND i.id=?", [
+      .query(this.userSelect + "WHERE ui.guild_id=? AND ui.user_id=? AND i.id=?", [
         guildId,
         userId,
         itemId,
@@ -189,7 +188,7 @@ export default class InventoryTable {
       .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => this.toUserItem(rows[0]));
   }
 
-  public getUserItemByCommand(guildId: string, userId: string, commandName: string) {
+  public async getUserItemByCommand(guildId: string, userId: string, commandName: string) {
     return this.pool
       .query(
         "SELECT i.id FROM user_inventory ui " +
@@ -207,7 +206,7 @@ export default class InventoryTable {
       .then((itemId) => (itemId == null ? null : this.getUserItem(guildId, userId, itemId)));
   }
 
-  public updateUserItem(guildId: string, userId: string, item: UserItem) {
+  public async updateUserItem(guildId: string, userId: string, item: UserItem) {
     return this.pool.query(
       "UPDATE user_inventory SET quantity=?, remaining_uses=? " +
         "WHERE guild_id=? AND user_id=? AND item_id=?",
@@ -215,14 +214,14 @@ export default class InventoryTable {
     );
   }
 
-  public deleteUserItem(guildId: string, userId: string, item: UserItem) {
+  public async deleteUserItem(guildId: string, userId: string, item: UserItem) {
     return this.pool.query(
       "DELETE FROM user_inventory WHERE guild_id=? AND user_id=? AND item_id=?",
       [guildId, userId, item.id]
     );
   }
 
-  private getCommandsForItem(itemId: number) {
+  private async getCommandsForItem(itemId: number) {
     return this.pool
       .query(
         "SELECT c.*, i.id as item_id, i.name as item_name FROM commands c JOIN items i ON c.item_id = i.id WHERE c.item_id = ?",

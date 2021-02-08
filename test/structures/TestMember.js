@@ -1,4 +1,4 @@
-import TestChannel from "./TestChannel.js";
+import TestChannel from "./TestChannel";
 
 class TestMember {
   constructor() {}

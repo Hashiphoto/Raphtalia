@@ -1,6 +1,6 @@
 import { GuildMember, MessageEmbed } from "discord.js";
 
-import UserItem from "./UserItem.js";
+import UserItem from "./UserItem";
 
 export default class UserInventory {
   public member: GuildMember;

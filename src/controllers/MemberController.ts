@@ -1,13 +1,13 @@
 import { GuildMember, MessageEmbed, Role, RoleResolvable } from "discord.js";
 
-import GuildBasedController from "./Controller.js";
-import MemberLimitError from "../structures/errors/MemberLimitError.js";
-import RNumber from "../structures/RNumber.js";
-import RoleContestBid from "../structures/RoleContestBid.js";
-import RoleUtil from "../RoleUtil.js";
+import GuildBasedController from "./Controller";
+import MemberLimitError from "../structures/errors/MemberLimitError";
+import RNumber from "../structures/RNumber";
+import RoleContestBid from "../structures/RoleContestBid";
+import RoleUtil from "../RoleUtil";
 import dayjs from "dayjs";
 import delay from "delay";
-import links from "../../resources/links.js";
+import links from "../../resources/links";
 
 export default class MemberController extends GuildBasedController {
   private infractionLimit = 3;
@@ -68,7 +68,7 @@ export default class MemberController extends GuildBasedController {
       let user = await this.ec.db.users.get(member.id, member.guild.id);
       count = user.infractions;
     }
-    let response = `${member} has incurred ${count} infractions\n`;
+    let response = `${member.toString()} has incurred ${count} infractions\n`;
     if (count >= this.infractionLimit) {
       return this.demoteMember(member, response);
     }
@@ -159,7 +159,7 @@ export default class MemberController extends GuildBasedController {
    */
   public pardonMember(member: GuildMember) {
     return this.ec.db.users.setInfractions(member.id, member.guild.id, 0).then(() => {
-      const response = `${member}'s infractions have been reset\n`;
+      const response = `${member.toString()}'s infractions have been reset\n`;
       const exileRole = this.ec.guild.roles.cache.find((r) => r.name === "Exile");
       if (!exileRole) {
         return "";
@@ -168,7 +168,7 @@ export default class MemberController extends GuildBasedController {
       if (inExile) {
         return member.roles
           .remove(exileRole)
-          .then(() => response + `${member}'s exile has ended\n`);
+          .then(() => response + `${member.toString()}'s exile has ended\n`);
       }
 
       return response;
@@ -248,7 +248,7 @@ export default class MemberController extends GuildBasedController {
   public async protectedPromote(member: GuildMember) {
     const nextRole = this.getNextRole(member);
     if (!nextRole) {
-      throw new RangeError(`${member} holds the highest office already\n`);
+      throw new RangeError(`${member.toString()} holds the highest office already\n`);
     }
 
     const dbRole = await this.ec.db.roles.getSingle(nextRole.id);
@@ -257,7 +257,7 @@ export default class MemberController extends GuildBasedController {
     if (dbRole.contested) {
       throw new MemberLimitError(
         dbRole.memberLimit,
-        `Cannot promote ${member} to ${nextRole.name} ` +
+        `Cannot promote ${member.toString()} to ${nextRole.name} ` +
           `since it is currently being contested. Try again after the contest is resolved\n`
       );
     }
@@ -266,8 +266,8 @@ export default class MemberController extends GuildBasedController {
     if (!dbRole.unlimited && nextRole.members.size >= dbRole.memberLimit && member.roles.hoist) {
       await this.startContest(nextRole, member.roles.hoist, member);
       const contestMessage =
-        // `**${this.ec.initiator} is contesting a promotion into the ${nextRole} role!**\n` +
-        `🔸 ${this.ec.initiator} and everyone who currently holds the ${nextRole} role can give me money to keep the role. ` +
+        // `**${this.ec.initiator.toString()} is contesting a promotion into the ${nextRole} role!**\n` +
+        `🔸 ${this.ec.initiator.toString()} and everyone who currently holds the ${nextRole} role can give me money to keep the role. ` +
         `Whoever gives the least amount of money by the end of the contest period will be demoted.\n` +
         `🔸 Contests are resolved at 8PM every day, if at least 24 hours have passed since the start of the contest.\n` +
         `🔸 Use the command \`!Give @Raphtalia $1.00\` to pay me\n`;
@@ -275,8 +275,10 @@ export default class MemberController extends GuildBasedController {
         .setColor(nextRole.color)
         .setTitle(`Role Contest | ${member.displayName} -> ${nextRole.name}`)
         .setTimestamp(new Date())
-        .setDescription(contestMessage)
-        .setThumbnail("https://i.imgur.com/tnMtgLT.png");
+        .setThumbnail("https://i.imgur.com/W5yJcBQ.png")
+        .addFields({ name: "Current Bids", value: "None" });
+
+      return await this.ec.channel.send(contestMessage, statusEmbed);
     }
 
     return this.promoteMember(member, nextRole);
@@ -293,16 +295,18 @@ export default class MemberController extends GuildBasedController {
     if (!role) {
       role = this.getNextRole(member);
       if (!role) {
-        throw new RangeError(`${member} holds the highest office already\n`);
+        throw new RangeError(`${member.toString()} holds the highest office already\n`);
       }
     }
 
     return this.setHoistedRole(member, role).then((roleChanged) => {
       if (roleChanged) {
         this.setInfractions(member, 0);
-        return `${member} has been promoted to **${role?.name}**!\nInfractions have been reset\n`;
+        return `${member.toString()} has been promoted to **${
+          role?.name
+        }**!\nInfractions have been reset\n`;
       } else {
-        return `Could not promote ${member} to ${role?.name}\n`;
+        return `Could not promote ${member.toString()} to ${role?.name}\n`;
       }
     });
   }
@@ -311,7 +315,7 @@ export default class MemberController extends GuildBasedController {
     let nextLowest = this.getPreviousRole(target);
 
     if (!nextLowest) {
-      throw new RangeError(`${response}\n${target} can't get any lower\n`);
+      throw new RangeError(`${response}\n${target.toString()} can't get any lower\n`);
     }
 
     this.setInfractions(target, 0);
@@ -321,7 +325,9 @@ export default class MemberController extends GuildBasedController {
       await this.setHoistedRole(target, nextLowest)
         .then(() => {
           changed = true;
-          response += `${target} has been demoted to **${nextLowest?.name}**!\nInfractions have been reset\n`;
+          response += `${target.toString()} has been demoted to **${
+            nextLowest?.name
+          }**!\nInfractions have been reset\n`;
         })
         .catch((error) => {
           if (error instanceof MemberLimitError) {
@@ -356,12 +362,12 @@ export default class MemberController extends GuildBasedController {
 
     const promises = dueContests.map(async (contest) => {
       const role = RoleUtil.convertToRole(this.ec.guild, contest.roleId);
-      const initiator = this.ec.guild.members.cache.get(contest.initiatorId);
-      if (!role || !initiator) {
+      const contestor = this.ec.guild.members.cache.get(contest.initiatorId);
+      if (!role || !contestor) {
         return "";
       }
       const participants = role.members.array();
-      participants.push(initiator);
+      participants.push(contestor);
 
       // If there are no bids, everyone loses
       const loserBid = contest.getLowestBid(participants);
@@ -370,7 +376,7 @@ export default class MemberController extends GuildBasedController {
       }
 
       await this.ec.db.roles.deleteContest(contest.id);
-      const punishFeedback = await this.punishContestLoser(initiator, loserBid, role);
+      const punishFeedback = await this.punishContestLoser(contestor, loserBid, role);
 
       return (
         `**The contest for the ${role} role is over!**\n` +
@@ -383,14 +389,14 @@ export default class MemberController extends GuildBasedController {
     return Promise.all(promises);
   }
 
-  public punishContestLoser(initiator: GuildMember, loserBid: RoleContestBid, role: Role) {
-    // If the initiator loses, we can just demote him
-    if (loserBid.userId === initiator.id) {
-      return this.demoteMember(initiator);
+  public punishContestLoser(contestor: GuildMember, loserBid: RoleContestBid, role: Role) {
+    // If the contestor loses, we can just demote him
+    if (loserBid.userId === contestor.id) {
+      return this.demoteMember(contestor);
     }
     // Initiator promoted to role. Loser demoted
     else {
-      return this.promoteMember(initiator, role).then((feedback) =>
+      return this.promoteMember(contestor, role).then((feedback) =>
         this.demoteMember(loserBid.member, feedback)
       );
     }

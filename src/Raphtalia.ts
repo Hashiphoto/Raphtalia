@@ -1,47 +1,47 @@
 import { Client, NewsChannel, TextChannel } from "discord.js";
 
-import AllowWord from "./commands/AllowWord.js";
-import AutoDelete from "./commands/AutoDelete.js";
-import Balance from "./commands/Balance.js";
-import BanList from "./commands/BanList.js";
-import BanWord from "./commands/BanWord.js";
-import Buy from "./commands/Buy.js";
-import Censorship from "./commands/Censorship.js";
-import ChannelHelper from "./ChannelHelper.js";
-import Command from "./commands/Command.js";
-import CommandParser from "./CommandParser.js";
-import Database from "./db/Database.js";
-import Debug from "./commands/Debug.js";
-import DeliverCheck from "./commands/DeliverCheck.js";
-import Demote from "./commands/Demote.js";
-import ExecutionContext from "./structures/ExecutionContext.js";
-import Exile from "./commands/Exile.js";
-import Fine from "./commands/Fine.js";
-import Give from "./commands/Give.js";
-import Headpat from "./commands/Headpat.js";
-import Help from "./commands/Help.js";
-import HoldVote from "./commands/HoldVote.js";
-import Infractions from "./commands/Infractions.js";
-import JobScheduler from "./JobScheduler.js";
-import Kick from "./commands/Kick.js";
-import NullCommand from "./commands/NullCommand.js";
-import OnBoarder from "./Onboarder.js";
-import Pardon from "./commands/Pardon.js";
-import Play from "./commands/Play.js";
-import Promote from "./commands/Promote.js";
-import Register from "./commands/Register.js";
-import Report from "./commands/Report.js";
-import RoleStatusController from "./controllers/message/RoleStatusController.js";
-import Roles from "./commands/Roles.js";
-import Screening from "./commands/Screening.js";
-import ServerStatus from "./commands/ServerStatus.js";
-import SoftKick from "./commands/SoftKick.js";
-import Status from "./commands/Status.js";
-import Store from "./commands/Store.js";
-import Take from "./commands/Take.js";
+import AllowWord from "./commands/AllowWord";
+import AutoDelete from "./commands/AutoDelete";
+import Balance from "./commands/Balance";
+import BanList from "./commands/BanList";
+import BanWord from "./commands/BanWord";
+import Buy from "./commands/Buy";
+import Censorship from "./commands/Censorship";
+import ChannelHelper from "./ChannelHelper";
+import Command from "./commands/Command";
+import CommandParser from "./CommandParser";
+import Database from "./db/Database";
+import Debug from "./commands/Debug";
+import DeliverCheck from "./commands/DeliverCheck";
+import Demote from "./commands/Demote";
+import ExecutionContext from "./structures/ExecutionContext";
+import Exile from "./commands/Exile";
+import Fine from "./commands/Fine";
+import Give from "./commands/Give";
+import Headpat from "./commands/Headpat";
+import Help from "./commands/Help";
+import HoldVote from "./commands/HoldVote";
+import Infractions from "./commands/Infractions";
+import JobScheduler from "./JobScheduler";
+import Kick from "./commands/Kick";
+import NullCommand from "./commands/NullCommand";
+import OnBoarder from "./Onboarder";
+import Pardon from "./commands/Pardon";
+import Play from "./commands/Play";
+import Promote from "./commands/Promote";
+import Register from "./commands/Register";
+import Report from "./commands/Report";
+import RoleStatusController from "./controllers/message/RoleStatusController";
+import Roles from "./commands/Roles";
+import Screening from "./commands/Screening";
+import ServerStatus from "./commands/ServerStatus";
+import SoftKick from "./commands/SoftKick";
+import Status from "./commands/Status";
+import Store from "./commands/Store";
+import Take from "./commands/Take";
 import dayjs from "dayjs";
 import delay from "delay";
-import secretConfig from "../config/secrets.config.js";
+import secretConfig from "../config/secrets.config";
 
 class Raphtalia {
   private client: Client;
@@ -51,7 +51,6 @@ class Raphtalia {
   constructor(db: Database) {
     this.db = db;
     this.client = new Client();
-    this.configureDiscordClient();
 
     this.client.once("ready", () => {
       console.log(
@@ -69,7 +68,7 @@ class Raphtalia {
     this.jobScheduler.start();
   }
 
-  private configureDiscordClient() {
+  public configureDiscordClient() {
     this.client.on("message", async (message) => {
       // Delete the "Raphtalia has pinned a message to this channel" message
       if (
@@ -84,17 +83,16 @@ class Raphtalia {
         message.author.bot ||
         message.channel.type === "dm" ||
         message.type !== "DEFAULT" ||
-        message.channel instanceof NewsChannel
+        message.channel instanceof NewsChannel ||
+        !message.guild
       ) {
         return;
       }
 
       const deleteTime = await this.getDeleteTime(message.channel);
-      const context = new ExecutionContext(
-        new ChannelHelper(message.channel, deleteTime),
-        this.db,
-        this.client
-      ).setMessage(message);
+      const context = new ExecutionContext(this.db, this.client, message.guild)
+        .setMessage(message)
+        .setChannelHelper(new ChannelHelper(message.channel, deleteTime));
 
       // Delete the incoming message
       this.delayedDelete(context, deleteTime);
@@ -119,10 +117,8 @@ class Raphtalia {
       }
       const deleteTime = await this.getDeleteTime(welcomeChannel);
 
-      const context = new ExecutionContext(
-        new ChannelHelper(welcomeChannel, deleteTime),
-        this.db,
-        this.client
+      const context = new ExecutionContext(this.db, this.client, member.guild).setChannelHelper(
+        new ChannelHelper(welcomeChannel, deleteTime)
       );
 
       new OnBoarder(context, member).onBoard();
@@ -137,7 +133,8 @@ class Raphtalia {
       const differentSize = oldMember.roles.cache.size !== newMember.roles.cache.size;
       for (const [id, role] of oldMember.roles.cache) {
         if (differentSize || !newMember.roles.cache.has(id)) {
-          return new RoleStatusController(this.db, newMember.guild).update();
+          const context = new ExecutionContext(this.db, this.client, newMember.guild);
+          return new RoleStatusController(context).update();
         }
       }
     });
@@ -149,18 +146,16 @@ class Raphtalia {
 
     this.client.on("messageReactionAdd", (messageReaction, user) => {
       const message = messageReaction.message;
-      if (!user || !(message.channel instanceof TextChannel)) {
+      if (!user || !(message.channel instanceof TextChannel) || !message.guild) {
         return;
       }
       // Only pay users for their first reaction to a message
       if (message.reactions.cache.filter((e) => !!e.users.cache.get(user.id)).size > 1) {
         return;
       }
-      const context = new ExecutionContext(
-        new ChannelHelper(message.channel, -1),
-        this.db,
-        this.client
-      ).setMessage(message);
+      const context = new ExecutionContext(this.db, this.client, message.guild)
+        .setMessage(message)
+        .setChannelHelper(new ChannelHelper(message.channel, -1));
       const guildMember = context.guild.members.cache.get(user.id);
       if (!guildMember) {
         return;
@@ -171,18 +166,16 @@ class Raphtalia {
 
     this.client.on("messageReactionRemove", (messageReaction, user) => {
       const message = messageReaction.message;
-      if (!user || !(message.channel instanceof TextChannel)) {
+      if (!user || !(message.channel instanceof TextChannel) || !message.guild) {
         return;
       }
       // Only subtract money for removing the user's only remaining reaction
       if (message.reactions.cache.filter((r) => !!r.users.cache.get(user.id)).size > 0) {
         return;
       }
-      const context = new ExecutionContext(
-        new ChannelHelper(message.channel, -1),
-        this.db,
-        this.client
-      ).setMessage(messageReaction.message);
+      const context = new ExecutionContext(this.db, this.client, message.guild)
+        .setMessage(messageReaction.message)
+        .setChannelHelper(new ChannelHelper(message.channel, -1));
       const guildMember = context.guild.members.cache.get(user.id);
       if (!guildMember) {
         return;
@@ -282,18 +275,13 @@ class Raphtalia {
     // Check for exile
     const exileRole = context.guild.roles.cache.find((r) => r.name === "Exile");
     if (exileRole && context.message.member?.roles.cache.find((r) => r.id === exileRole.id)) {
-      return Promise.resolve(
-        new NullCommand(context.message, `You cannot use commands while in exile`)
-      );
+      return Promise.resolve(new NullCommand(context, `You cannot use commands while in exile`));
     }
 
     // Get the command
     let command = Raphtalia.getCommandByName(context, context.messageHelper.command);
     if (!command) {
-      command = new NullCommand(
-        context.message,
-        `Unknown command "${context.messageHelper.command}"`
-      );
+      command = new NullCommand(context, `Unknown command "${context.messageHelper.command}"`);
     }
     if (command instanceof NullCommand) {
       return Promise.resolve(command);
@@ -308,7 +296,7 @@ class Raphtalia {
       command.item = item;
       return command;
     }
-    return new NullCommand(context.message, `You do not have the correct item to use this command`);
+    return new NullCommand(context, `You do not have the correct item to use this command`);
   }
 
   private executeCommand(context: ExecutionContext, command: Command) {
@@ -401,7 +389,7 @@ class Raphtalia {
           return new Debug(context);
         }
       default:
-        return new NullCommand(message, `Unknown command "${message.command}"`);
+        return new NullCommand(context, `Unknown command "${name}"`);
     }
   }
 }

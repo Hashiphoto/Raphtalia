@@ -1,19 +1,15 @@
-import CensorController from "../CensorController.js";
 import Discord from "discord.js";
-import ExecutionContext from "../../structures/ExecutionContext.js";
-import SingletonMessageController from "./SingletonMessageController.js";
-import Util from "../../Util.js";
+import ExecutionContext from "../../structures/ExecutionContext";
+import SingletonMessageController from "./SingletonMessageController";
+import Util from "../../Util";
 
 export default class BanListStatusController extends SingletonMessageController {
-  constructor(context: ExecutionContext) {
+  public constructor(context: ExecutionContext) {
     super(context);
     this.guildProperty = "banListMessageId";
   }
 
-  /**
-   * @returns {Promise<Discord.MessageEmbed>}
-   */
-  async generateEmbed() {
+  public async generateEmbed() {
     const enabled = await this.ec.censorController.censorshipEnabled();
     const words = await this.ec.censorController.getAllBannedWords();
     const statusEmbed = new Discord.MessageEmbed()
@@ -26,7 +22,7 @@ export default class BanListStatusController extends SingletonMessageController 
     return statusEmbed;
   }
 
-  setMessage(messageId: string) {
-    return this.db.guilds.setBanListMessage(this.guild.id, messageId);
+  public setMessage(messageId: string) {
+    return this.ec.db.guilds.setBanListMessage(this.ec.guild.id, messageId);
   }
 }

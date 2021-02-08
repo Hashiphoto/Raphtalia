@@ -1,31 +1,28 @@
-import Discord, { GuildMember } from "discord.js";
-
-import GuildBasedController from "./Controller.js";
-import GuildItem from "../structures/GuildItem.js";
-import UserInventory from "../structures/UserInventory.js";
-import UserItem from "../structures/UserItem.js";
+import GuildBasedController from "./Controller";
+import GuildItem from "../structures/GuildItem";
+import { GuildMember } from "discord.js";
+import UserInventory from "../structures/UserInventory";
+import UserItem from "../structures/UserItem";
 
 export default class InventoryController extends GuildBasedController {
-  getGuildItem(name: string) {
+  public async getGuildItem(name: string) {
     return this.ec.db.inventory.findGuildItem(this.ec.guild.id, name);
   }
 
-  updateGuildItem(item: GuildItem) {
+  public async updateGuildItem(item: GuildItem) {
     return this.ec.db.inventory.updateGuildItem(this.ec.guild.id, item);
   }
 
-  findUserItem(member: GuildMember, name: string): Promise<UserItem | undefined> {
+  public async findUserItem(member: GuildMember, name: string): Promise<UserItem | undefined> {
     return this.ec.db.inventory.findUserItem(this.ec.guild.id, member.id, name);
   }
 
-  /**
-   * @param {GuildItem} item
-   * @param {Discord.GuildMember} user
-   * @param {Number} quantity How many of the item is being purchased
-   */
-  async userPurchase(item: GuildItem, user: GuildMember, quantity = 1) {
+  public async userPurchase(item: GuildItem, user: GuildMember, quantity = 1) {
     // Subtract from guild stock
     const updatedItem = await this.subtractGuildStock(item, quantity);
+    if (!updatedItem) {
+      return;
+    }
     if (updatedItem.soldInCycle > 1) {
       await this.increaseGuildItemPrice(updatedItem);
     }
@@ -35,11 +32,7 @@ export default class InventoryController extends GuildBasedController {
     return this.ec.db.inventory.insertUserItem(this.ec.guild.id, user.id, item);
   }
 
-  /**
-   * @param {GuildItem} item
-   * @returns {GuildItem} The guild item after updating
-   */
-  subtractGuildStock(item, quantity) {
+  public async subtractGuildStock(item: GuildItem, quantity: number) {
     if (item.unlimitedQuantity) {
       // Record how many are sold
       return this.ec.db.inventory.updateGuildItemSold(this.ec.guild.id, item, quantity, new Date());
@@ -54,12 +47,13 @@ export default class InventoryController extends GuildBasedController {
     );
   }
 
-  /**
-   * @param {GuildItem} guildItem
-   */
-  increaseGuildItemPrice(guildItem) {
+  public async increaseGuildItemPrice(guildItem: GuildItem) {
     return this.ec.db.guilds.get(this.ec.guild.id).then((dbGuild) => {
+      if (!dbGuild) {
+        return;
+      }
       const priceMultiplier = Math.exp((guildItem.soldInCycle - 1) * dbGuild.priceHikeCoefficient);
+      // No work
       if (priceMultiplier === 1) {
         return;
       }
@@ -72,30 +66,17 @@ export default class InventoryController extends GuildBasedController {
     });
   }
 
-  /**
-   * @param {Discord.GuildMember} user
-   * @returns {Promise<UserInventory>}
-   */
-  getUserInventory(user) {
+  public async getUserInventory(user: GuildMember) {
     return this.ec.db.inventory
-      .getUserInventory(user.guild.id, user.id)
+      .getUserItems(user.guild.id, user.id)
       .then((items) => new UserInventory(user, items));
   }
 
-  /**
-   * @param {Discord.GuildMember} member
-   * @param {String} commandName
-   */
-  getItemForCommand(member: GuildMember, commandName: String) {
+  public async getItemForCommand(member: GuildMember, commandName: string) {
     return this.ec.db.inventory.getUserItemByCommand(this.ec.guild.id, member.id, commandName);
   }
 
-  /**
-   * @param {UserItem} item
-   * @param {Discord.GuildMember} member
-   * @returns {Promise<UserItem|null>}
-   */
-  useItem(item, member, uses) {
+  public async useItem(item: UserItem, member: GuildMember, uses: number) {
     if (item.unlimitedUses) {
       return Promise.resolve();
     }
@@ -114,7 +95,7 @@ export default class InventoryController extends GuildBasedController {
     });
   }
 
-  updateUserItem(item, member) {
+  public async updateUserItem(item: UserItem, member: GuildMember) {
     if (item.quantity === 0) {
       return this.ec.db.inventory.deleteUserItem(this.ec.guild.id, member.id, item);
     }
@@ -122,12 +103,7 @@ export default class InventoryController extends GuildBasedController {
     return this.ec.db.inventory.updateUserItem(this.ec.guild.id, member.id, item);
   }
 
-  /**
-   * @param {UserItem} item
-   * @param {Discord.GuildMember} fromMember
-   * @param {Discord.GuildMember} toMember
-   */
-  transferItem(item, fromMember, toMember) {
+  public async transferItem(item: UserItem, fromMember: GuildMember, toMember: GuildMember) {
     // Remove the item from the owner
     item.quantity -= 1;
     item.remainingUses -= item.maxUses;

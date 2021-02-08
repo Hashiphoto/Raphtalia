@@ -1,20 +1,18 @@
-import Command from "./Command.js";
-import MemberController from "../controllers/MemberController.js";
+import Command from "./Command";
+import ExecutionContext from "../structures/ExecutionContext";
 
-class Report extends Command {
-  /**
-   * @param {Discord.Message} message
-   * @param {MemberController} memberController
-   */
-  constructor(message, memberController) {
-    super(message);
-    this.memberController = memberController;
+/**
+ * @deprecated
+ */
+export default class Report extends Command {
+  public constructor(context: ExecutionContext) {
+    super(context);
     this.instructions = "**Report**\nGive an infraction to the specified member";
     this.usage = "Usage: `Report @member`";
   }
 
-  async execute(): Promise<any> {
-    const targets = this.message.mentionedMembers;
+  public async execute(): Promise<any> {
+    const targets = this.ec.messageHelper.mentionedMembers;
     if (targets.length === 0) {
       return this.sendHelpMessage();
     }
@@ -26,9 +24,9 @@ class Report extends Command {
       );
     }
 
-    if (!this.sender.hasAuthorityOver(targets)) {
-      return this.memberController
-        .addInfractions(this.sender)
+    if (!this.ec.memberController.hasAuthorityOver(this.ec.initiator, targets)) {
+      return this.ec.memberController
+        .addInfractions(this.ec.initiator)
         .then((feedback) =>
           this.ec.channelHelper.watchSend(
             `You must hold a higher rank than the members you are reporting\n` + feedback
@@ -37,7 +35,7 @@ class Report extends Command {
     }
 
     const reportPromises = targets.map((target) => {
-      return this.memberController.addInfractions(target);
+      return this.ec.memberController.addInfractions(target);
     });
 
     return Promise.all(reportPromises)
@@ -46,5 +44,3 @@ class Report extends Command {
       .then(() => this.useItem(targets.length));
   }
 }
-
-export default Report;

@@ -1,14 +1,9 @@
-import Discord from "discord.js";
-import GuildBasedController from "./Controller.js";
-import ScreeningQuestion from "../structures/ScreeningQuestion.js";
+import GuildBasedController from "./Controller";
+import ScreeningQuestion from "../structures/ScreeningQuestion";
+import { TextChannel } from "discord.js";
 
-class GuildController extends GuildBasedController {
-  // TODO: Move to a ChannelController class?
-  /**
-   *
-   * @param {Discord.TextChannel} channel
-   */
-  static async clearChannel(channel) {
+export default class GuildController extends GuildBasedController {
+  public static async clearChannel(channel: TextChannel) {
     let pinnedMessages = await channel.messages.fetchPinned();
     let fetched;
     do {
@@ -17,37 +12,27 @@ class GuildController extends GuildBasedController {
     } while (fetched.size > pinnedMessages.size);
   }
 
-  getLeaderRole(guild) {
-    return guild.roles.cache
+  public async getLeaderRole() {
+    // Sort highest to lowest and get the top
+    return this.ec.guild.roles.cache
       .filter((role) => role.hoist && role.members.size > 0)
-      .sort((a, b) => b.calculatedPosition - a.calculatedPosition)
+      .sort((a, b) => b.comparePositionTo(a))
       .first();
   }
 
-  setCensorship(enable) {
-    return this.db.guilds.setCensorship(this.guild.id, enable);
+  public async setCensorship(enable: boolean) {
+    return this.ec.db.guilds.setCensorship(this.ec.guild.id, enable);
   }
 
-  /**
-   * @returns {Promise<ScreeningQuestion[]>}
-   */
-  getScreeningQuestions() {
-    return this.db.guilds.getScreeningQuestions(this.guild.id);
+  public async getScreeningQuestions() {
+    return this.ec.db.guilds.getScreeningQuestions(this.ec.guild.id);
   }
 
-  /**
-   * @param {ScreeningQuestion} question
-   */
-  addScreeningQuestion(question) {
-    return this.db.guilds.insertScreeningQuestion(this.guild.id, question);
+  public async addScreeningQuestion(question: ScreeningQuestion) {
+    return this.ec.db.guilds.insertScreeningQuestion(this.ec.guild.id, question);
   }
 
-  /**
-   * @param {Number} questionId
-   */
-  deleteScreeningQuestion(questionId) {
-    return this.db.guilds.deleteScreeningQuestion(this.guild.id, questionId);
+  public async deleteScreeningQuestion(questionId: number) {
+    return this.ec.db.guilds.deleteScreeningQuestion(this.ec.guild.id, questionId);
   }
 }
-
-export default GuildController;

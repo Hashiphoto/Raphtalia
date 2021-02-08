@@ -1,21 +1,19 @@
-import Command from "./Command.js";
-import MemberController from "../controllers/MemberController.js";
+import Command from "./Command";
+import ExecutionContext from "../structures/ExecutionContext";
 
-class SoftKick extends Command {
-  /**
-   * @param {Discord.Message} message
-   * @param {MemberController} memberController
-   */
-  constructor(message, memberController) {
-    super(message);
-    this.memberController = memberController;
+/**
+ * @deprecated
+ */
+export default class SoftKick extends Command {
+  public constructor(context: ExecutionContext) {
+    super(context);
     this.instructions =
       "**SoftKick**\nKick the specified member(s) and also send them an invite back to the server";
     this.usage = "Usage: `SoftKick @member [for reason]`";
   }
 
-  async execute(): Promise<any> {
-    const targets = this.message.mentionedMembers;
+  public async execute(): Promise<any> {
+    const targets = this.ec.messageHelper.mentionedMembers;
     if (targets.length === 0) {
       return this.sendHelpMessage();
     }
@@ -27,9 +25,9 @@ class SoftKick extends Command {
       );
     }
 
-    if (!this.sender.hasAuthorityOver(targets)) {
-      return this.memberController
-        .addInfractions(this.sender)
+    if (!this.ec.memberController.hasAuthorityOver(this.ec.initiator, targets)) {
+      return this.ec.memberController
+        .addInfractions(this.ec.initiator)
         .then((feedback) =>
           this.ec.channelHelper.watchSend(
             `You must hold a higher rank than the members you are demoting\n` + feedback
@@ -38,13 +36,13 @@ class SoftKick extends Command {
     }
 
     const softPromises = targets.map((target) => {
-      let reason = null;
-      const matches = this.message.content.match(/for\s+.*/i);
+      let reason = undefined;
+      const matches = this.ec.messageHelper.parsedContent.match(/for\s+.*/i);
       if (matches) {
         reason = matches[0];
       }
 
-      return this.memberController.softKick(target, reason, this.message.author);
+      return this.ec.memberController.softKick(target, reason, this.ec.initiator);
     });
 
     return Promise.all(softPromises)
@@ -53,5 +51,3 @@ class SoftKick extends Command {
       .then(() => this.useItem(targets.length));
   }
 }
-
-export default SoftKick;

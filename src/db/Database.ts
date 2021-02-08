@@ -1,28 +1,28 @@
-import BannedWordsTable from "./BannedWordsTable.js";
-import ChannelsTable from "./ChannelsTable.js";
-import GuildsTable from "./GuildsTable.js";
-import InventoryTable from "./InventoryTable.js";
+import BannedWordsRepository from "./BannedWordsRepository";
+import ChannelsRepository from "./ChannelsRepository";
+import GuildsRepository from "./GuildsRepository";
+import InventoryRepository from "./InventoryRepository";
 import { Pool } from "mysql2/promise";
-import RolesTable from "./RolesTable.js";
-import UsersTable from "./UsersTable.js";
+import RolesRepository from "./RolesRepository";
+import UsersRepository from "./UsersRepository";
 import { createPool } from "mysql2";
-import secretConfig from "../../config/secrets.config.js";
+import secretConfig from "../../config/secrets.config";
 
 export default class Database {
-  public users: UsersTable;
-  public bannedWords: BannedWordsTable;
-  public guilds: GuildsTable;
-  public channels: ChannelsTable;
-  public roles: RolesTable;
-  public inventory: InventoryTable;
+  public users: UsersRepository;
+  public bannedWords: BannedWordsRepository;
+  public guilds: GuildsRepository;
+  public channels: ChannelsRepository;
+  public roles: RolesRepository;
+  public inventory: InventoryRepository;
 
   public constructor(pool: Pool) {
-    this.users = new UsersTable(pool);
-    this.bannedWords = new BannedWordsTable(pool);
-    this.guilds = new GuildsTable(pool);
-    this.channels = new ChannelsTable(pool);
-    this.roles = new RolesTable(pool);
-    this.inventory = new InventoryTable(pool);
+    this.users = new UsersRepository(pool);
+    this.bannedWords = new BannedWordsRepository(pool);
+    this.guilds = new GuildsRepository(pool);
+    this.channels = new ChannelsRepository(pool);
+    this.roles = new RolesRepository(pool);
+    this.inventory = new InventoryRepository(pool);
   }
 
   public static async createPool() {

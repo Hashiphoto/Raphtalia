@@ -1,5 +1,5 @@
-import Command from "./Command.js";
-import ExecutionContext from "../structures/ExecutionContext.js";
+import Command from "./Command";
+import ExecutionContext from "../structures/ExecutionContext";
 
 export default class BanList extends Command {
   public constructor(context: ExecutionContext) {

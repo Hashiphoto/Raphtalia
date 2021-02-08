@@ -1,16 +1,11 @@
-import { FieldPacket, Pool, ResultSetHeader, RowDataPacket } from "mysql2/promise";
+import { FieldPacket, ResultSetHeader, RowDataPacket } from "mysql2/promise";
 
+import Repository from "./Repository";
 import { escape } from "mysql2";
 
-export default class BannedWordsTable {
-  private _pool: Pool;
-
-  public constructor(pool: Pool) {
-    this._pool = pool;
-  }
-
+export default class BannedWordsRepository extends Repository {
   public getAll(guildId: string) {
-    return this._pool
+    return this.pool
       .query("SELECT * FROM banned_words WHERE guild_id = ?", [guildId])
       .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
         return rows.map((r) => r.word as string);
@@ -18,7 +13,7 @@ export default class BannedWordsTable {
   }
 
   public insert(wordList: string[][]) {
-    return this._pool
+    return this.pool
       .query("INSERT IGNORE INTO banned_words (word, guild_id) VALUES ?", [wordList])
       .then(([results, fields]: [ResultSetHeader, FieldPacket[]]) => {
         return results.insertId;
@@ -29,7 +24,7 @@ export default class BannedWordsTable {
   }
 
   public delete(guildId: string, words: string[]) {
-    return this._pool
+    return this.pool
       .query("DELETE FROM banned_words WHERE (word) IN (?) AND guild_id = ?", [words, guildId])
       .catch((e) => {
         console.error(e);
@@ -37,7 +32,7 @@ export default class BannedWordsTable {
   }
 
   public contains(guildId: string, words: string[]) {
-    return this._pool
+    return this.pool
       .query(`SELECT * FROM banned_words WHERE guild_id = ? AND word IN (${escape(words)})`, [
         guildId,
       ])

@@ -1,4 +1,4 @@
-import RNumber from "./RNumber.js";
+import RNumber from "./RNumber";
 
 export default class VotingOption {
   public id: number;

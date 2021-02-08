@@ -1,9 +1,9 @@
-import Discord, { GuildChannel, VoiceChannel } from "discord.js";
+import Discord, { VoiceChannel } from "discord.js";
 
-import Command from "./Command.js";
-import ExecutionContext from "../structures/ExecutionContext.js";
-import RNumber from "../structures/RNumber.js";
-import links from "../../resources/links.js";
+import Command from "./Command";
+import ExecutionContext from "../structures/ExecutionContext";
+import RNumber from "../structures/RNumber";
+import links from "../../resources/links";
 import ytdl from "ytdl-core";
 
 export default class Play extends Command {

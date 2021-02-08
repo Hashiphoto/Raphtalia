@@ -58,12 +58,23 @@ export default class RoleUtil {
   }
 
   public static async ensureExileRole(guild: Guild) {
-    if (!guild.roles.cache.find((r) => r.name === "Exile")) {
-      await guild.roles
-        .create({ data: { name: "Exile", hoist: false, color: "#010000" } })
-        .then((role) => {
-          return role.setPosition(guild.roles.cache.size - 2);
-        });
+    let exileRole = guild.roles.cache.find((r) => r.name === "Exile");
+    if (!exileRole) {
+      exileRole = await guild.roles.create({
+        data: { name: "Exile", hoist: false, color: "#010000" },
+      });
+      exileRole.setPosition(guild.roles.cache.size - 2);
     }
+    return exileRole;
+  }
+
+  public static async ensureVoterRole(guild: Guild) {
+    let voterRole = guild.roles.cache.find((r) => r.name === "Voter");
+    if (!voterRole) {
+      voterRole = await guild.roles.create({
+        data: { name: "Voter", hoist: false, color: "#4cd692" },
+      });
+    }
+    return voterRole;
   }
 }

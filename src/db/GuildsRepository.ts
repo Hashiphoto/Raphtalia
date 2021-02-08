@@ -1,18 +1,12 @@
-import { FieldPacket, Pool, ResultSetHeader, RowDataPacket } from "mysql2/promise";
+import { FieldPacket, ResultSetHeader, RowDataPacket } from "mysql2/promise";
 
 import DbGuild from "../structures/DbGuild";
-import Question from "../structures/ScreeningQuestion.js";
-import ScreeningQuestion from "../structures/ScreeningQuestion.js";
+import Repository from "./Repository";
+import ScreeningQuestion from "../structures/ScreeningQuestion";
 
-export default class GuildsTable {
-  private _pool: Pool;
-
-  public constructor(pool: Pool) {
-    this._pool = pool;
-  }
-
+export default class GuildsRepository extends Repository {
   public get(guildId: String) {
-    return this._pool
+    return this.pool
       .query("SELECT * FROM guilds WHERE id = ?", [guildId])
       .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
         if (rows.length === 0) {
@@ -23,7 +17,7 @@ export default class GuildsTable {
   }
 
   public setMessageRate(guildId: String, messagePayout: Number) {
-    return this._pool
+    return this.pool
       .query(
         "INSERT INTO guilds (id, message_rate) VALUES (?,?) ON DUPLICATE KEY UPDATE message_rate = VALUES(message_rate)",
         [guildId, messagePayout]
@@ -32,7 +26,7 @@ export default class GuildsTable {
   }
 
   public setCensorship(guildId: String, enabled: Boolean) {
-    return this._pool
+    return this.pool
       .query(
         "INSERT INTO guilds (id, censorship_enabled) VALUES (?,?) ON DUPLICATE KEY UPDATE censorship_enabled = VALUES(censorship_enabled)",
         [guildId, enabled]
@@ -41,7 +35,7 @@ export default class GuildsTable {
   }
 
   public updateCensorshipRegex(guildId: String, regex: String) {
-    return this._pool
+    return this.pool
       .query(
         "INSERT INTO guilds (id, censor_regex) VALUES (?,?) ON DUPLICATE KEY UPDATE censor_regex = VALUES(censor_regex)",
         [guildId, regex]
@@ -50,7 +44,7 @@ export default class GuildsTable {
   }
 
   public setRoleMessage(guildId: String, messageId: String) {
-    return this._pool
+    return this.pool
       .query(
         "INSERT INTO guilds (id, role_message_id) VALUES (?,?) ON DUPLICATE KEY UPDATE role_message_id = VALUES(role_message_id)",
         [guildId, messageId]
@@ -59,7 +53,7 @@ export default class GuildsTable {
   }
 
   public setStoreMessage(guildId: String, messageId: String) {
-    return this._pool
+    return this.pool
       .query(
         "INSERT INTO guilds (id, store_message_id) VALUES (?,?) ON DUPLICATE KEY UPDATE store_message_id = VALUES(store_message_id)",
         [guildId, messageId]
@@ -68,7 +62,7 @@ export default class GuildsTable {
   }
 
   public setBanListMessage(guildId: String, messageId: String) {
-    return this._pool
+    return this.pool
       .query(
         "INSERT INTO guilds (id, ban_list_message_id) VALUES (?,?) ON DUPLICATE KEY UPDATE ban_list_message_id = VALUES(ban_list_message_id)",
         [guildId, messageId]
@@ -77,7 +71,7 @@ export default class GuildsTable {
   }
 
   public getScreeningQuestions(guildId: String) {
-    return this._pool
+    return this.pool
       .query("SELECT * FROM screening_questions WHERE guild_id=?", [guildId])
       .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
         return rows.map(
@@ -87,14 +81,14 @@ export default class GuildsTable {
   }
 
   public insertScreeningQuestion(guildId: String, question: ScreeningQuestion) {
-    return this._pool.query(
+    return this.pool.query(
       "INSERT INTO screening_questions (guild_id, prompt, answer, timeout_ms, strict) VALUES(?,?,?,?,?)",
       [guildId, question.prompt, question.answer, question.timeout, question.strict]
     );
   }
 
-  public deleteScreeningQuestion(guildId: String, questionId: String) {
-    return this._pool
+  public deleteScreeningQuestion(guildId: String, questionId: number) {
+    return this.pool
       .query("DELETE FROM screening_questions WHERE guild_id=? AND id=?", [guildId, questionId])
       .then(([header, fields]: [ResultSetHeader, FieldPacket[]]) => {
         return header.affectedRows > 0;

@@ -1,7 +1,7 @@
 import Discord, { EmbedFieldData, MessageEmbed } from "discord.js";
 
-import ExecutionContext from "../../structures/ExecutionContext.js";
-import SingletonMessageController from "./SingletonMessageController.js";
+import ExecutionContext from "../../structures/ExecutionContext";
+import SingletonMessageController from "./SingletonMessageController";
 
 export default class RoleStatusController extends SingletonMessageController {
   public constructor(context: ExecutionContext) {

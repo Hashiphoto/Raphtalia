@@ -1,6 +1,6 @@
-import Command from "./Command.js";
-import ExecutionContext from "../structures/ExecutionContext.js";
-import Util from "../Util.js";
+import Command from "./Command";
+import ExecutionContext from "../structures/ExecutionContext";
+import Util from "../Util";
 
 export default class AutoDelete extends Command {
   public constructor(context: ExecutionContext) {

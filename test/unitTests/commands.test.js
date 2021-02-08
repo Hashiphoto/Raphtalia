@@ -1,32 +1,26 @@
+import AllowWord from "../../src/commands/AllowWord";
+import AutoDelete from "../../src/commands/AutoDelete";
+import Balance from "../../src/commands/Balance";
+import BanList from "../../src/commands/BanList";
+import BanWord from "../../src/commands/BanWord";
+import Censorship from "../../src/commands/Censorship";
+import DeliverCheck from "../../src/commands/DeliverCheck";
+import Demote from "../../src/commands/Demote";
+import Exile from "../../src/commands/Exile";
+import Fine from "../../src/commands/Fine";
+import Give from "../../src/commands/Give";
+import Headpat from "../../src/commands/Headpat";
+import TestCensorController from "../structures/TestCensorController";
+import TestChannelController from "../structures/TestChannelController";
+import TestCurrencyController from "../structures/TestCurrencyController";
+import TestGuildController from "../structures/TestGuildController";
+import TestInventoryController from "../structures/TestInventoryController";
+import TestMemberController from "../structures/TestMemberController";
+import TestMessage from "../structures/TestMessage";
+import UserItem from "../../src/structures/UserItem";
+import Util from "../../src/Util";
 import assert from "assert";
-import TestMessage from "../structures/TestMessage.js";
-import Help from "../../src/commands/Help.js";
-import AllowWord from "../../src/commands/AllowWord.js";
 import sinon from "sinon";
-import TestCensorController from "../structures/TestCensorController.js";
-import AutoDelete from "../../src/commands/AutoDelete.js";
-import TestChannelController from "../structures/TestChannelController.js";
-import TestCurrencyController from "../structures/TestCurrencyController.js";
-import Balance from "../../src/commands/Balance.js";
-import TestChannel from "../structures/TestChannel.js";
-import RNumber from "../../src/structures/RNumber.js";
-import BanList from "../../src/commands/BanList.js";
-import Util from "../../src/Util.js";
-import BanWord from "../../src/commands/BanWord.js";
-import CensorController from "../../src/controllers/CensorController.js";
-import Censorship from "../../src/commands/Censorship.js";
-import TestGuildController from "../structures/TestGuildController.js";
-import Headpat from "../../src/commands/Headpat.js";
-import DeliverCheck from "../../src/commands/DeliverCheck.js";
-import Demote from "../../src/commands/Demote.js";
-import TestMemberController from "../structures/TestMemberController.js";
-import GuildController from "../../src/controllers/GuildController.js";
-import TestGuild from "../structures/TestGuild.js";
-import Exile from "../../src/commands/Exile.js";
-import Fine from "../../src/commands/Fine.js";
-import Give from "../../src/commands/Give.js";
-import UserItem from "../../src/structures/UserItem.js";
-import TestInventoryController from "../structures/TestInventoryController.js";
 
 /**
  * Allows arrays to be compared to other arrays for equality
@@ -62,7 +56,7 @@ describe("Commands", () => {
         .setInventoryController(new TestInventoryController());
       sandbox.spy(allowWord, "sendHelpMessage");
 
-      return allowWord.execute(): Promise<any>.then((text) => assert(allowWord.sendHelpMessage.calledOnce));
+      return allowWord.execute().then((text) => assert(allowWord.sendHelpMessage.calledOnce));
     });
 
     it("deletes the words given", () => {
@@ -73,7 +67,7 @@ describe("Commands", () => {
         .setInventoryController(new TestInventoryController());
       sandbox.spy(censorController, "rebuildCensorshipList");
 
-      return allowWord.execute(): Promise<any>.then((text) => {
+      return allowWord.execute().then((text) => {
         assert(censorController.deletedWords.equals(["apple", "banana", "34%^"]));
         assert(censorController.rebuildCensorshipList.calledOnce);
       });
@@ -87,7 +81,7 @@ describe("Commands", () => {
         .setInventoryController(new TestInventoryController());
       sandbox.spy(autoDelete, "sendHelpMessage");
 
-      return autoDelete.execute(): Promise<any>.then(() => {
+      return autoDelete.execute().then(() => {
         assert(autoDelete.sendHelpMessage.calledOnce);
       });
     });
@@ -98,7 +92,7 @@ describe("Commands", () => {
         .setInventoryController(new TestInventoryController());
       sandbox.spy(autoDelete, "sendHelpMessage");
 
-      return autoDelete.execute(): Promise<any>.then(() => {
+      return autoDelete.execute().then(() => {
         assert(autoDelete.sendHelpMessage.calledOnce);
       });
     });
@@ -109,7 +103,7 @@ describe("Commands", () => {
         .setInventoryController(new TestInventoryController());
       sandbox.spy(autoDelete, "sendHelpMessage");
 
-      return autoDelete.execute(): Promise<any>.then(() => {
+      return autoDelete.execute().then(() => {
         assert(autoDelete.sendHelpMessage.calledOnce);
       });
     });
@@ -120,7 +114,7 @@ describe("Commands", () => {
         .setItem(new UserItem())
         .setInventoryController(new TestInventoryController());
 
-      return autoDelete.execute(): Promise<any>.then(() => {
+      return autoDelete.execute().then(() => {
         assert(channelController.channel.enable === true);
         assert(channelController.channel.deleteDelay === 1234);
       });
@@ -132,7 +126,7 @@ describe("Commands", () => {
         .setItem(new UserItem())
         .setInventoryController(new TestInventoryController());
 
-      return autoDelete.execute(): Promise<any>.then(() => {
+      return autoDelete.execute().then(() => {
         assert(channelController.channel.enable === false);
       });
     });
@@ -151,7 +145,7 @@ describe("Commands", () => {
 
       sandbox.spy(currencyController, "getCurrency");
 
-      return balance.execute(): Promise<any>.then(() => assert(currencyController.getCurrency.calledOnce));
+      return balance.execute().then(() => assert(currencyController.getCurrency.calledOnce));
     });
   });
 
@@ -165,7 +159,7 @@ describe("Commands", () => {
         .setInventoryController(new TestInventoryController());
       sandbox.spy(censorController, "getAllBannedWords");
 
-      return banList.execute(): Promise<any>.then((text) => {
+      return banList.execute().then((text) => {
         assert(censorController.getAllBannedWords.calledOnce);
         assert(
           banList.inputChannel.output ===
@@ -182,7 +176,7 @@ describe("Commands", () => {
         .setInventoryController(new TestInventoryController());
       sandbox.spy(banWord, "sendHelpMessage");
 
-      return banWord.execute(): Promise<any>.then((text) => {
+      return banWord.execute().then((text) => {
         assert(banWord.sendHelpMessage.calledOnce);
       });
     });
@@ -194,7 +188,7 @@ describe("Commands", () => {
         .setInventoryController(new TestInventoryController());
       sandbox.spy(censorController, "rebuildCensorshipList");
 
-      return banWord.execute(): Promise<any>.then((text) => {
+      return banWord.execute().then((text) => {
         assert(censorController.rebuildCensorshipList.calledOnce);
         assert(censorController.insertedWords.equals(["cat", "dog", "apple"]));
       });
@@ -208,7 +202,7 @@ describe("Commands", () => {
         .setInventoryController(new TestInventoryController());
       sandbox.spy(censorship, "sendHelpMessage");
 
-      return censorship.execute(): Promise<any>.then(() => {
+      return censorship.execute().then(() => {
         assert(censorship.sendHelpMessage.calledOnce);
       });
     });
@@ -219,7 +213,7 @@ describe("Commands", () => {
         .setInventoryController(new TestInventoryController());
       sandbox.spy(censorship, "sendHelpMessage");
 
-      return censorship.execute(): Promise<any>.then(() => {
+      return censorship.execute().then(() => {
         assert(censorship.sendHelpMessage.calledOnce);
       });
     });
@@ -230,7 +224,7 @@ describe("Commands", () => {
         .setItem(new UserItem())
         .setInventoryController(new TestInventoryController());
 
-      return censorship.execute(): Promise<any>.then(() => {
+      return censorship.execute().then(() => {
         assert(guildController.isCensoring === true);
       });
     });
@@ -241,7 +235,7 @@ describe("Commands", () => {
         .setItem(new UserItem())
         .setInventoryController(new TestInventoryController());
 
-      return censorship.execute(): Promise<any>.then(() => {
+      return censorship.execute().then(() => {
         assert(guildController.isCensoring === false);
       });
     });
@@ -254,7 +248,7 @@ describe("Commands", () => {
         .setInventoryController(new TestInventoryController());
       sandbox.spy(comfort, "sendHelpMessage");
 
-      return comfort.execute(): Promise<any>.then(() => {
+      return comfort.execute().then(() => {
         assert(comfort.sendHelpMessage.calledOnce);
       });
     });
@@ -265,7 +259,7 @@ describe("Commands", () => {
         .setItem(new UserItem())
         .setInventoryController(new TestInventoryController());
 
-      return comfort.execute(): Promise<any>.then(() => {
+      return comfort.execute().then(() => {
         const text = comfort.inputChannel.output;
         assert(text.includes("TEST1"));
         assert(text.includes("TEST2"));
@@ -281,7 +275,7 @@ describe("Commands", () => {
         .setInventoryController(new TestInventoryController());
       sandbox.spy(deliverCheck, "sendHelpMessage");
 
-      return deliverCheck.execute(): Promise<any>.then(() => {
+      return deliverCheck.execute().then(() => {
         assert(deliverCheck.sendHelpMessage.calledOnce);
       });
     });
@@ -293,7 +287,7 @@ describe("Commands", () => {
         .setInventoryController(new TestInventoryController());
       sandbox.spy(deliverCheck, "sendHelpMessage");
 
-      return deliverCheck.execute(): Promise<any>.then(() => {
+      return deliverCheck.execute().then(() => {
         assert(deliverCheck.sendHelpMessage.calledOnce);
       });
     });
@@ -306,7 +300,7 @@ describe("Commands", () => {
         .setInventoryController(new TestInventoryController());
 
       return deliverCheck
-        .execute(): Promise<any>
+        .execute()
         .then(() => {
           assert(deliverCheck.inputChannel.output);
           assert(deliverCheck.inputChannel.output.length > 0);
@@ -329,7 +323,7 @@ describe("Commands", () => {
         .setInventoryController(new TestInventoryController());
       sandbox.spy(demote, "sendHelpMessage");
 
-      return demote.execute(): Promise<any>.then(() => {
+      return demote.execute().then(() => {
         assert(demote.sendHelpMessage.calledOnce);
       });
     });
@@ -343,7 +337,7 @@ describe("Commands", () => {
       demote.sender.hasAuthorityOver = () => false;
       sandbox.spy(memberController, "addInfractions");
 
-      return demote.execute(): Promise<any>.then(() => {
+      return demote.execute().then(() => {
         assert(memberController.addInfractions.calledOnce);
       });
     });
@@ -357,7 +351,7 @@ describe("Commands", () => {
       demote.sender.hasAuthorityOver = () => true;
       sandbox.spy(memberController, "demoteMember");
 
-      return demote.execute(): Promise<any>.then(() => {
+      return demote.execute().then(() => {
         assert(memberController.demoteMember.calledTwice);
       });
     });
@@ -370,7 +364,7 @@ describe("Commands", () => {
         .setInventoryController(new TestInventoryController());
       sandbox.spy(exile, "sendHelpMessage");
 
-      return exile.execute(): Promise<any>.then(() => {
+      return exile.execute().then(() => {
         assert(exile.sendHelpMessage.calledOnce);
       });
     });
@@ -384,7 +378,7 @@ describe("Commands", () => {
       exile.sender.hasAuthorityOver = () => false;
       sandbox.spy(memberController, "addInfractions");
 
-      return exile.execute(): Promise<any>.then(() => {
+      return exile.execute().then(() => {
         assert(memberController.addInfractions.calledOnce);
       });
     });
@@ -399,7 +393,7 @@ describe("Commands", () => {
       sandbox.spy(exile.inputChannel, "watchSend");
       sandbox.spy(memberController, "exileMember");
 
-      return exile.execute(): Promise<any>.then(() => {
+      return exile.execute().then(() => {
         assert(memberController.exileMember.calledTwice);
         assert(exile.inputChannel.watchSend.calledOnce);
       });
@@ -415,7 +409,7 @@ describe("Commands", () => {
       sandbox.spy(exile.inputChannel, "watchSend");
       sandbox.spy(memberController, "exileMember");
 
-      return exile.execute(): Promise<any>.then(() => {
+      return exile.execute().then(() => {
         assert(memberController.exileMember.calledTwice);
         assert(memberController.exileDuration === 0);
         assert(exile.inputChannel.watchSend.calledThrice);
@@ -430,7 +424,7 @@ describe("Commands", () => {
         .setInventoryController(new TestInventoryController());
       sandbox.spy(fine, "sendHelpMessage");
 
-      return fine.execute(): Promise<any>.then(() => {
+      return fine.execute().then(() => {
         assert(fine.sendHelpMessage.calledOnce);
       });
     });
@@ -444,7 +438,7 @@ describe("Commands", () => {
       fine.sender.hasAuthorityOver = () => false;
       sandbox.spy(memberController, "addInfractions");
 
-      return fine.execute(): Promise<any>.then(() => {
+      return fine.execute().then(() => {
         assert(memberController.addInfractions.calledOnce);
       });
     });
@@ -457,7 +451,7 @@ describe("Commands", () => {
       fine.sender.hasAuthorityOver = () => true;
       sandbox.spy(fine, "sendHelpMessage");
 
-      fine.execute(): Promise<any>.then(() => {
+      fine.execute().then(() => {
         assert(fine.sendHelpMessage.calledOnce);
       });
     });
@@ -473,7 +467,7 @@ describe("Commands", () => {
       sandbox.spy(currencyController, "transferCurrency");
       sandbox.spy(fine.inputChannel, "watchSend");
 
-      fine.execute(): Promise<any>.then(() => {
+      fine.execute().then(() => {
         assert(currencyController.transferCurrency.calledTwice);
         assert(fine.inputChannel.watchSend.calledOnce);
       });
@@ -487,7 +481,7 @@ describe("Commands", () => {
         .setInventoryController(new TestInventoryController());
       sandbox.spy(give, "sendHelpMessage");
 
-      return give.execute(): Promise<any>.then(() => {
+      return give.execute().then(() => {
         assert(give.sendHelpMessage.calledOnce);
       });
     });
@@ -498,7 +492,7 @@ describe("Commands", () => {
         .setInventoryController(new TestInventoryController());
       sandbox.spy(give, "sendHelpMessage");
 
-      return give.execute(): Promise<any>.then(() => {
+      return give.execute().then(() => {
         assert(give.sendHelpMessage.calledOnce);
       });
     });
@@ -514,7 +508,7 @@ describe("Commands", () => {
       sandbox.spy(give, "sendHelpMessage");
       sandbox.spy(currencyController, "transferCurrency");
 
-      return give.execute(): Promise<any>.then(() => {
+      return give.execute().then(() => {
         assert(give.sendHelpMessage.notCalled);
         assert(currencyController.transferCurrency.notCalled);
       });
@@ -531,7 +525,7 @@ describe("Commands", () => {
       sandbox.spy(give, "sendHelpMessage");
       sandbox.spy(currencyController, "transferCurrency");
 
-      return give.execute(): Promise<any>.then(() => {
+      return give.execute().then(() => {
         assert(give.sendHelpMessage.notCalled);
         assert(currencyController.transferCurrency.calledTwice);
       });

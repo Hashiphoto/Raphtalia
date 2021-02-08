@@ -1,7 +1,10 @@
-import Command from "./Command.js";
-import ExecutionContext from "../structures/ExecutionContext.js";
-import RNumber from "../structures/RNumber.js";
+import Command from "./Command";
+import ExecutionContext from "../structures/ExecutionContext";
+import RNumber from "../structures/RNumber";
 
+/**
+ * @deprecated
+ */
 export default class Fine extends Command {
   public constructor(context: ExecutionContext) {
     super(context);
@@ -43,7 +46,7 @@ export default class Fine extends Command {
       this.ec.currencyController
         .transferCurrency(target, this.ec.initiator, rNumber.amount)
         .then(() => {
-          return `Fined ${target} ${rNumber.toString()}!\n`;
+          return `Fined ${target.toString()} ${rNumber.toString()}!\n`;
         })
     );
 

@@ -1,5 +1,4 @@
-import GuildBasedController from "./Controller.js";
-import MemberController from "./MemberController.js";
+import GuildBasedController from "./Controller";
 import { MessageEmbed } from "discord.js";
 
 export default class CensorController extends GuildBasedController {
@@ -38,7 +37,7 @@ export default class CensorController extends GuildBasedController {
     const embed = new MessageEmbed()
       .setColor(13057084)
       .setTitle("Censorship Report")
-      .setDescription(`${this.ec.message.member}\n> ${originalContent}`);
+      .setDescription(`${this.ec.message.member.displayName}\n> ${originalContent}`);
 
     this.ec.message.delete();
 

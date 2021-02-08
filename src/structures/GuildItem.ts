@@ -1,6 +1,6 @@
-import CommandItem from "./CommandItem.js";
-import Item from "./Item.js";
-import RNumber from "./RNumber.js";
+import CommandItem from "./CommandItem";
+import Item from "./Item";
+import RNumber from "./RNumber";
 
 export default class GuildItem extends Item {
   public price: number;

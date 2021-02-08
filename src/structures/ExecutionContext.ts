@@ -11,6 +11,7 @@ import GuildController from "../controllers/GuildController";
 import InventoryController from "../controllers/InventoryController";
 import MemberController from "../controllers/MemberController";
 import MessageHelper from "../MessageHelper";
+import RoleStatusController from "../controllers/message/RoleStatusController";
 import StoreStatusController from "../controllers/message/StoreStatusController";
 
 export default class ExecutionContext {
@@ -29,14 +30,15 @@ export default class ExecutionContext {
   public memberController: MemberController;
   public banListStatusController: BanListStatusController;
   public storeStatusController: StoreStatusController;
+  public roleStatusController: RoleStatusController;
 
   private _guild: Guild;
   private _message: Message;
 
-  public constructor(channelHelper: ChannelHelper, db: Database, client: Client) {
-    this.channelHelper = channelHelper;
+  public constructor(db: Database, client: Client, guild: Guild) {
     this.db = db;
     this.client = client;
+    this.guild = guild;
     this.censorController = new CensorController(this);
     this.channelController = new ChannelController(this);
     this.currencyController = new CurrencyController(this);
@@ -45,6 +47,7 @@ export default class ExecutionContext {
     this.memberController = new MemberController(this);
     this.banListStatusController = new BanListStatusController(this);
     this.storeStatusController = new StoreStatusController(this);
+    this.roleStatusController = new RoleStatusController(this);
     return this;
   }
 
@@ -56,11 +59,14 @@ export default class ExecutionContext {
     return this.channelHelper.channel;
   }
 
-  public get guild() {
+  public get guild(): Guild {
     return this._guild;
   }
 
   public set guild(value: Guild) {
+    if (!value) {
+      return;
+    }
     this._guild = value;
     if (this.client.user) {
       const temp = this._guild.members.cache.get(this.client.user.id);
@@ -72,12 +78,14 @@ export default class ExecutionContext {
 
   public setMessage(value: Message) {
     this._message = value;
-    if (value.guild) {
-      this.guild = value.guild;
-    }
     if (this._message.member) {
       this.initiator = this._message.member;
     }
+    return this;
+  }
+
+  public setChannelHelper(channelHelper: ChannelHelper) {
+    this.channelHelper = channelHelper;
     return this;
   }
 }

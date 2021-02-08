@@ -1,8 +1,8 @@
-import Command from "./Command.js";
-import ExecutionContext from "../structures/ExecutionContext.js";
+import Command from "./Command";
+import ExecutionContext from "../structures/ExecutionContext";
 import { GuildMember } from "discord.js";
-import RNumber from "../structures/RNumber.js";
-import UserItem from "../structures/UserItem.js";
+import RNumber from "../structures/RNumber";
+import UserItem from "../structures/UserItem";
 
 export default class Give extends Command {
   public constructor(context: ExecutionContext) {
@@ -84,7 +84,7 @@ export default class Give extends Command {
                     : `Thanks for the ${rNumber.toString()}!`
                 );
             } else {
-              return `Transfered ${rNumber.toString()} to ${target}!`;
+              return `Transfered ${rNumber.toString()} to ${target.toString()}!`;
             }
           })
       );
@@ -106,7 +106,7 @@ export default class Give extends Command {
 
     const givePromises = targets.map((target) => {
       return this.ec.inventoryController.transferItem(item, this.ec.initiator, target).then(() => {
-        return `Transferred one ${item.name} to ${target}\n`;
+        return `Transferred one ${item.name} to ${target.toString()}\n`;
       });
     });
 

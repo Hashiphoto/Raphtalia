@@ -1,35 +1,24 @@
-import Command from "./Command.js";
-import Discord from "discord.js";
-import MemberController from "../controllers/MemberController.js";
+import Command from "./Command";
+import ExecutionContext from "../structures/ExecutionContext";
+import RoleUtil from "../RoleUtil";
 
-class Register extends Command {
-  /**
-   * @param {Discord.Message} message
-   * @param {MemberController} memberController
-   */
-  constructor(message, memberController) {
-    super(message);
-    this.memberController = memberController;
+export default class Register extends Command {
+  public constructor(context: ExecutionContext) {
+    super(context);
     this.instructions =
       "**Register**\nGive the voter role to yourself. " +
       "This will allow you to vote when anyone uses the HoldVote command";
     this.usage = "Usage: `Register`";
   }
 
-  async execute(): Promise<any> {
-    let voterRole = this.guild.roles.cache.find((r) => r.name === "Voter");
-    if (!voterRole) {
-      // TODO: consolidate this with HoldVote, which also can create the Voter role
-      voterRole = await this.guild.roles.create({
-        data: { name: "Voter", hoist: false, color: "#4cd692" },
-      });
-    }
+  public async execute(): Promise<any> {
+    let voterRole = await RoleUtil.ensureVoterRole(this.ec.guild);
 
-    if (this.message.member.roles.cache.has(voterRole.id)) {
+    if (this.ec.initiator.roles.cache.has(voterRole.id)) {
       return this.ec.channelHelper.watchSend(`You are already a registered voter, dingus`);
     }
 
-    return this.message.member.roles
+    return this.ec.initiator.roles
       .add(voterRole)
       .then(() => {
         this.ec.channelHelper.watchSend(`You are now a registered voter!`);
@@ -37,5 +26,3 @@ class Register extends Command {
       .then(() => this.useItem());
   }
 }
-
-export default Register;

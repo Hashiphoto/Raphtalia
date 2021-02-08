@@ -1,6 +1,6 @@
 import { GuildMember, Role } from "discord.js";
 
-import GuildBasedController from "./Controller.js";
+import GuildBasedController from "./Controller";
 
 export default class CurrencyController extends GuildBasedController {
   public async payoutMessage() {

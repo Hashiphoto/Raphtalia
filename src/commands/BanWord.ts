@@ -1,8 +1,5 @@
-import BanListStatusController from "../controllers/message/BanListStatusController.js";
-import CensorController from "../controllers/CensorController.js";
-import Command from "./Command.js";
-import ExecutionContext from "../structures/ExecutionContext.js";
-import Util from "../Util.js";
+import Command from "./Command";
+import ExecutionContext from "../structures/ExecutionContext";
 
 export default class BanWord extends Command {
   constructor(context: ExecutionContext) {

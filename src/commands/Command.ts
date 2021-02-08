@@ -1,5 +1,5 @@
-import ExecutionContext from "../structures/ExecutionContext.js";
-import UserItem from "../structures/UserItem.js";
+import ExecutionContext from "../structures/ExecutionContext";
+import UserItem from "../structures/UserItem";
 
 export default class Command {
   public item: UserItem;

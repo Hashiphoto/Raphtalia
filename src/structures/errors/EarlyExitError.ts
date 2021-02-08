@@ -1,9 +1,7 @@
-class EarlyExitError extends Error {
-  constructor(...params) {
+export default class EarlyExitError extends Error {
+  constructor(...params: any) {
     super(...params);
 
     this.name = "EarlyExitError";
   }
 }
-
-export default EarlyExitError;

@@ -1,21 +1,15 @@
-import Discord from "discord.js";
-import ExecutionContext from "../../structures/ExecutionContext.js";
-import SingletonMessageController from "./SingletonMessageController.js";
+import Discord, { EmbedFieldData } from "discord.js";
 
-class StoreStatusController extends SingletonMessageController {
-  /**
-   * @param {Database} db
-   * @param {Discord.Guild} guild
-   */
-  constructor(context: ExecutionContext) {
+import ExecutionContext from "../../structures/ExecutionContext";
+import SingletonMessageController from "./SingletonMessageController";
+
+export default class StoreStatusController extends SingletonMessageController {
+  public constructor(context: ExecutionContext) {
     super(context);
     this.guildProperty = "storeMessageId";
   }
 
-  /**
-   * @returns {Promise<Discord.MessageEmbed>}
-   */
-  async generateEmbed() {
+  public async generateEmbed() {
     const storeFields = await this.getStoreFields();
     const statusEmbed = new Discord.MessageEmbed()
       .setColor(0xe3c91e)
@@ -27,13 +21,14 @@ class StoreStatusController extends SingletonMessageController {
     return statusEmbed;
   }
 
-  /**
-   * @returns {Promise<Discord.EmbedFieldData[]>}
-   */
-  async getStoreFields() {
-    const fields = [];
+  public setMessage(messageId: string) {
+    return this.ec.db.guilds.setStoreMessage(this.ec.guild.id, messageId);
+  }
 
-    const items = await this.db.inventory.getGuildStock(this.guild.id);
+  private async getStoreFields() {
+    const fields = new Array<EmbedFieldData>();
+
+    const items = await this.ec.db.inventory.getGuildStock(this.ec.guild.id);
 
     const itemFields = items.map((item) => {
       return {
@@ -45,10 +40,4 @@ class StoreStatusController extends SingletonMessageController {
 
     return fields.concat(itemFields);
   }
-
-  setMessage(messageId) {
-    return this.db.guilds.setStoreMessage(this.guild.id, messageId);
-  }
 }
-
-export default StoreStatusController;

@@ -1,14 +1,10 @@
-import { FieldPacket, Pool, RowDataPacket } from "mysql2/promise";
+import { FieldPacket, RowDataPacket } from "mysql2/promise";
 
-export default class ChannelsTable {
-  private _pool: Pool;
+import Repository from "./Repository";
 
-  public constructor(pool: Pool) {
-    this._pool = pool;
-  }
-
+export default class ChannelsRepository extends Repository {
   public get(channelId: string) {
-    return this._pool
+    return this.pool
       .query("SELECT * FROM channels WHERE id = ?", [channelId])
       .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
         if (rows.length === 0) {
@@ -22,7 +18,7 @@ export default class ChannelsTable {
   }
 
   public setAutoDelete(channelId: string, deleteDelay: number) {
-    return this._pool
+    return this.pool
       .query(
         "INSERT INTO channels (id, delete_ms) VALUES (?,?) ON DUPLICATE KEY UPDATE delete_ms = VALUES(delete_ms)",
         [channelId, deleteDelay]

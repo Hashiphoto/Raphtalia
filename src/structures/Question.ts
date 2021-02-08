@@ -1,7 +1,7 @@
 export default class Question {
-  public prompt: string;
+  public prompt: string | undefined;
   public answer: string;
-  public timeout: number;
+  public timeout: number | undefined;
   public strict: boolean;
 
   /**
@@ -10,7 +10,12 @@ export default class Question {
    * @param {Number} timeoutMs How many milliseconds they have to answer the question
    * @param {Boolean} strict In strict mode, they only get one chance to answer correctly
    */
-  public constructor(prompt: string, answer: string, timeoutMs: number, strict = false) {
+  public constructor(
+    prompt?: string,
+    answer: string = ".*",
+    timeoutMs?: number,
+    strict: boolean = false
+  ) {
     this.prompt = prompt;
     this.answer = answer;
     this.timeout = timeoutMs;

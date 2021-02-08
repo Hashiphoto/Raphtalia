@@ -1,7 +1,7 @@
-import Command from "./Command.js";
-import ExecutionContext from "../structures/ExecutionContext.js";
-import NullCommand from "./NullCommand.js";
-import Raphtalia from "../Raphtalia.js";
+import Command from "./Command";
+import ExecutionContext from "../structures/ExecutionContext";
+import NullCommand from "./NullCommand";
+import Raphtalia from "../Raphtalia";
 
 export default class Help extends Command {
   public constructor(context: ExecutionContext) {

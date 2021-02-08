@@ -1,8 +1,8 @@
-import Discord, { MessageEmbed, TextChannel } from "discord.js";
+import { MessageEmbed, TextChannel } from "discord.js";
 
-import DbGuild from "../../structures/DbGuild.js";
-import ExecutionContext from "../../structures/ExecutionContext.js";
-import GuildBasedController from "../Controller.js";
+import DbGuild from "../../structures/DbGuild";
+import ExecutionContext from "../../structures/ExecutionContext";
+import GuildBasedController from "../Controller";
 
 export default class SingletonMessageController extends GuildBasedController {
   public guildProperty: string;
@@ -27,9 +27,6 @@ export default class SingletonMessageController extends GuildBasedController {
     });
   }
 
-  /**
-   * @returns {Promise<Discord.MessageEmbed>}
-   */
   public async generateEmbed(): Promise<MessageEmbed> {
     throw new Error("This function must be overriden");
   }
@@ -46,9 +43,9 @@ export default class SingletonMessageController extends GuildBasedController {
           if (!message) {
             return;
           }
-          if (!message.deleted) {
-            await message.delete();
-          }
+          await message.delete().catch((error) => {
+            console.log(`Could not delete message ${message.id}: ${error.name}`);
+          });
         }
       );
     });

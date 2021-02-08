@@ -1,5 +1,5 @@
-import Command from "./Command.js";
-import ExecutionContext from "../structures/ExecutionContext.js";
+import Command from "./Command";
+import ExecutionContext from "../structures/ExecutionContext";
 import { GuildMember } from "discord.js";
 
 export default class Infractions extends Command {
@@ -25,7 +25,9 @@ export default class Infractions extends Command {
     return this.ec.memberController
       .getInfractions(member)
       .then((infractCount) =>
-        this.ec.channelHelper.watchSend(`${member} has incurred ${infractCount} infractions\n`)
+        this.ec.channelHelper.watchSend(
+          `${member.toString()} has incurred ${infractCount} infractions\n`
+        )
       )
       .then(() => this.useItem());
   }

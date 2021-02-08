@@ -1,5 +1,5 @@
-import CommandItem from "./CommandItem.js";
-import Item from "./Item.js";
+import CommandItem from "./CommandItem";
+import Item from "./Item";
 
 export default class UserItem extends Item {
   public remainingUses: number;

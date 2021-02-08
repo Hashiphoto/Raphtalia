@@ -1,8 +1,9 @@
 import { Client } from "discord.js";
 import { CronJob } from "cron";
-import Database from "./db/Database.js";
-import MemberController from "./controllers/MemberController.js";
-import StoreStatusController from "./controllers/message/StoreStatusController.js";
+import Database from "./db/Database";
+import ExecutionContext from "./structures/ExecutionContext";
+import MemberController from "./controllers/MemberController";
+import StoreStatusController from "./controllers/message/StoreStatusController";
 import dayjs from "dayjs";
 
 /**
@@ -35,17 +36,18 @@ export default class JobScheduler {
     new CronJob("30 6 * * *", () => this.dropStorePrices(), null, true, this.timezone);
   }
 
-  private resolveRoleContests() {
-    const guildContests = this.client.guilds.cache.map((guild) =>
-      new MemberController(this.db, guild)
+  private async resolveRoleContests() {
+    const guildContests = this.client.guilds.cache.map((guild) => {
+      const context = new ExecutionContext(this.db, this.client, guild);
+      new MemberController(context)
         .resolveRoleContests()
-        .then((feedback) => feedback && guild.systemChannel?.send(feedback))
-    );
+        .then((feedback) => feedback && guild.systemChannel?.send(feedback));
+    });
 
     return Promise.all(guildContests);
   }
 
-  private dropStorePrices() {
+  private async dropStorePrices() {
     const guildStoreUpdates = this.client.guilds.cache.map(async (guild) => {
       const dbGuild = await this.db.guilds.get(guild.id);
 
@@ -77,7 +79,10 @@ export default class JobScheduler {
           }
         })
         .then(() => this.db.inventory.resetStoreCycle(guild.id))
-        .then(() => new StoreStatusController(this.db, guild).update());
+        .then(() => {
+          const context = new ExecutionContext(this.db, this.client, guild);
+          new StoreStatusController(context).update();
+        });
     });
 
     return Promise.all(guildStoreUpdates);

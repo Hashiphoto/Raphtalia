@@ -1,7 +1,7 @@
-import Command from "./Command.js";
-import ExecutionContext from "../structures/ExecutionContext.js";
-import RoleUtil from "../RoleUtil.js";
-import Util from "../Util.js";
+import Command from "./Command";
+import ExecutionContext from "../structures/ExecutionContext";
+import RoleUtil from "../RoleUtil";
+import Util from "../Util";
 import dayjs from "dayjs";
 
 export default class Exile extends Command {
@@ -49,14 +49,17 @@ export default class Exile extends Command {
     // }
 
     const response = targets.reduce(
-      (sum, target) => sum + `${target} has been exiled until ${Util.formatDate(releaseDate)}`,
+      (sum, target) =>
+        sum + `${target.toString()} has been exiled until ${Util.formatDate(releaseDate)}`,
       ""
     );
 
     const exilePromises = targets.map((target) =>
       this.ec.memberController.exileMember(target, duration).then((released) => {
         if (released) {
-          return this.ec.channelHelper.watchSend(`${target} has been released from exile!`);
+          return this.ec.channelHelper.watchSend(
+            `${target.toString()} has been released from exile!`
+          );
         }
       })
     );

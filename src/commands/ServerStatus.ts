@@ -1,47 +1,26 @@
-import Command from "./Command.js";
-import Discord from "discord.js";
-import RoleStatusController from "../controllers/message/RoleStatusController.js";
-import StoreStatusController from "../controllers/message/StoreStatusController.js";
-import Store from "./Store.js";
-import Roles from "./Roles.js";
-import BanList from "./BanList.js";
-import BanListStatusController from "../controllers/message/BanListStatusController.js";
+import BanList from "./BanList";
+import Command from "./Command";
+import ExecutionContext from "../structures/ExecutionContext";
+import Roles from "./Roles";
+import Store from "./Store";
 
-class ServerStatus extends Command {
-  /**
-   *
-   * @param {Discord.Message} message
-   * @param {RoleStatusController} roleStatusCtlr
-   * @param {StoreStatusController} storeStatusCtlr
-   * @param {BanListStatusController} banlistStatusCtlr
-   */
-  constructor(message, roleStatusCtlr, storeStatusCtlr, banlistStatusCtlr) {
-    super(message);
-    this.roleStatusCtlr = roleStatusCtlr;
-    this.storeStatusCtlr = storeStatusCtlr;
-    this.banlistStatusCtlr = banlistStatusCtlr;
+export default class ServerStatus extends Command {
+  public constructor(context: ExecutionContext) {
+    super(context);
     this.instructions =
       "**ServerStatus**\nPosts the ban list, role list, and store in this channel. " +
       "Equivalent to using the BanList, Roles, and Store commands consecutively.";
     this.usage = "Usage: `ServerStatus`";
   }
 
-  async execute(): Promise<any> {
-    const banList = new BanList(this.message, this.banlistStatusCtlr)
-      .setItem(this.item)
-      .setInventoryController(this.inventoryController);
-    const store = new Store(this.message, this.storeStatusCtlr)
-      .setItem(this.item)
-      .setInventoryController(this.inventoryController);
-    const roles = new Roles(this.message, this.roleStatusCtlr)
-      .setItem(this.item)
-      .setInventoryController(this.inventoryController);
+  public async execute(): Promise<any> {
+    const banList = new BanList(this.ec);
+    banList.item = this.item;
+    const store = new Store(this.ec);
+    store.item = this.item;
+    const roles = new Roles(this.ec);
+    roles.item = this.item;
 
-    return banList
-      .execute(): Promise<any>
-      .then(() => roles.execute(): Promise<any>)
-      .then(() => store.execute(): Promise<any>);
+    return Promise.all([banList.execute(), roles.execute(), store.execute()]);
   }
 }
-
-export default ServerStatus;

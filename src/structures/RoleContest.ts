@@ -1,6 +1,5 @@
-import Discord, { GuildMember } from "discord.js";
-
-import RoleContestBid from "./RoleContestBid.js";
+import { GuildMember } from "discord.js";
+import RoleContestBid from "./RoleContestBid";
 
 export default class RoleContest {
   public id: number;

@@ -1,13 +1,13 @@
-import Question from "./Question.js";
+import Question from "./Question";
 
 export default class ScreeningQuestion extends Question {
-  public id: string;
+  public id: string | undefined;
 
   public constructor(
-    id: string,
-    prompt: string,
-    answer: string,
-    timeoutMs: number,
+    id?: string,
+    prompt?: string,
+    answer?: string,
+    timeoutMs?: number,
     strict = false
   ) {
     super(prompt, answer, timeoutMs, strict);
@@ -20,7 +20,7 @@ export default class ScreeningQuestion extends Question {
     return (
       `**ID: ${this.id}** | Time Limit: ${this.timeout}ms ` +
       `${this.strict ? " | strict" : ""}\n${this.prompt} \n` +
-      `*${this.answer.slice(1, this.answer.length - 1)}*\n\n`
+      `*${this.answer?.slice(1, this.answer.length - 1)}*\n\n`
     );
   }
 }

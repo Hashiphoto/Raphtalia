@@ -1,6 +1,6 @@
-import Command from "./Command.js";
-import ExecutionContext from "../structures/ExecutionContext.js";
-import RoleUtil from "../RoleUtil.js";
+import Command from "./Command";
+import ExecutionContext from "../structures/ExecutionContext";
+import RoleUtil from "../RoleUtil";
 
 export default class Pardon extends Command {
   public constructor(context: ExecutionContext) {
