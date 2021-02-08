@@ -3,7 +3,7 @@ import Command from "./Command";
 import ExecutionContext from "../structures/ExecutionContext";
 import Question from "../structures/Question";
 import ScreeningQuestion from "../structures/ScreeningQuestion";
-import watchSendTimedMessage from "../TimedMessage";
+import watchSendTimedMessage from "../timedMessage";
 
 export default class Screening extends Command {
   public constructor(context: ExecutionContext) {

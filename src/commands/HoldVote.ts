@@ -1,5 +1,5 @@
 import { Collection, GuildMember, Message } from "discord.js";
-import watchSendTimedMessage, { sendTimedMessageInChannel } from "../TimedMessage";
+import watchSendTimedMessage, { sendTimedMessageInChannel } from "../timedMessage";
 
 import Command from "./Command";
 import ExecutionContext from "../structures/ExecutionContext";
