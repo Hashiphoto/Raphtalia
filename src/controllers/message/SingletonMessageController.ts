@@ -1,29 +1,27 @@
-import Discord, { MessageEmbed } from "discord.js";
+import Discord, { MessageEmbed, TextChannel } from "discord.js";
 
-import Database from "../../db/Database.js";
+import DbGuild from "../../structures/DbGuild.js";
 import ExecutionContext from "../../structures/ExecutionContext.js";
 import GuildBasedController from "../Controller.js";
 
-class SingletonMessageController extends GuildBasedController {
+export default class SingletonMessageController extends GuildBasedController {
   public guildProperty: string;
-  public db: any;
-  public guild: any;
 
-  constructor(context: ExecutionContext) {
+  public constructor(context: ExecutionContext) {
     super(context);
     this.guildProperty = "";
   }
 
-  async update() {
+  public async update() {
     const statusEmbed = await this.generateEmbed();
 
-    return this.db.guilds.get(this.guild.id).then(async (dbGuild) => {
+    return this.ec.db.guilds.get(this.ec.guild.id).then(async (dbGuild) => {
       // Exit if no message to update
-      if (!dbGuild || !dbGuild[this.guildProperty]) {
+      if (!dbGuild || !dbGuild[this.guildProperty as keyof DbGuild]) {
         return;
       }
 
-      return this.fetchMessage(dbGuild[this.guildProperty]).then(
+      return this.fetchMessage(dbGuild[this.guildProperty as keyof DbGuild] as string).then(
         (message) => message && message.edit({ embed: statusEmbed })
       );
     });
@@ -32,31 +30,38 @@ class SingletonMessageController extends GuildBasedController {
   /**
    * @returns {Promise<Discord.MessageEmbed>}
    */
-  async generateEmbed(): Promise<MessageEmbed> {
+  public async generateEmbed(): Promise<MessageEmbed> {
     throw new Error("This function must be overriden");
   }
 
-  removeMessage() {
-    return this.db.guilds.get(this.guild.id).then(async (dbGuild) => {
+  public async removeMessage() {
+    return this.ec.db.guilds.get(this.ec.guild.id).then(async (dbGuild) => {
       // Delete the existing status message, if it exists
-      if (!dbGuild || !dbGuild[this.guildProperty]) {
+      if (!dbGuild || !dbGuild[this.guildProperty as keyof DbGuild]) {
         return;
       }
 
-      return this.fetchMessage(dbGuild[this.guildProperty]).then((message) => {
-        return message && !message.deleted && message.delete();
-      });
+      return this.fetchMessage(dbGuild[this.guildProperty as keyof DbGuild] as string).then(
+        async (message) => {
+          if (!message) {
+            return;
+          }
+          if (!message.deleted) {
+            await message.delete();
+          }
+        }
+      );
     });
   }
 
-  setMessage(messageId) {
+  public setMessage(messageId: string) {
     throw new Error("This function must be overriden");
   }
 
-  async fetchMessage(messageId) {
-    let textChannels = this.guild.channels.cache
+  public async fetchMessage(messageId: string) {
+    let textChannels = this.ec.guild.channels.cache
       .filter((channel) => channel.type === "text" && !channel.deleted)
-      .array();
+      .array() as Array<TextChannel>;
 
     for (const channel of textChannels) {
       try {
@@ -74,5 +79,3 @@ class SingletonMessageController extends GuildBasedController {
     }
   }
 }
-
-export default SingletonMessageController;

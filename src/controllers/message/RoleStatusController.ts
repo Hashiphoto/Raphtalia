@@ -1,21 +1,15 @@
-import Discord from "discord.js";
+import Discord, { EmbedFieldData, MessageEmbed } from "discord.js";
 
+import ExecutionContext from "../../structures/ExecutionContext.js";
 import SingletonMessageController from "./SingletonMessageController.js";
 
-class RoleStatusController extends SingletonMessageController {
-  /**
-   * @param {Database} db
-   * @param {Discord.Guild} guild
-   */
-  constructor(db, guild) {
-    super(db, guild);
+export default class RoleStatusController extends SingletonMessageController {
+  public constructor(context: ExecutionContext) {
+    super(context);
     this.guildProperty = "roleMessageId";
   }
 
-  /**
-   * @returns {Promise<Discord.MessageEmbed>}
-   */
-  async generateEmbed() {
+  public async generateEmbed(): Promise<MessageEmbed> {
     const roleFields = await this.getFields();
     const statusEmbed = new Discord.MessageEmbed()
       .setColor(0x73f094)
@@ -27,18 +21,19 @@ class RoleStatusController extends SingletonMessageController {
     return statusEmbed;
   }
 
-  /**
-   * @returns {Promise<Discord.EmbedFieldData[]>}
-   */
-  async getFields() {
+  public setMessage(messageId: string) {
+    return this.ec.db.guilds.setRoleMessage(this.ec.guild.id, messageId);
+  }
+
+  private async getFields(): Promise<EmbedFieldData[]> {
     let fields = [];
-    let discordRoles = this.guild.roles.cache
+    let discordRoles = this.ec.guild.roles.cache
       .filter((role) => role.hoist)
       .sort((a, b) => b.comparePositionTo(a))
       .array();
 
     for (let i = 0; i < discordRoles.length; i++) {
-      let dbRole = await this.db.roles.getSingle(discordRoles[i].id);
+      let dbRole = await this.ec.db.roles.getSingle(discordRoles[i].id);
       let roleInfo = `Members: ${discordRoles[i].members.size}`;
       if (dbRole.memberLimit >= 0) {
         roleInfo += `/${dbRole.memberLimit}`;
@@ -52,10 +47,4 @@ class RoleStatusController extends SingletonMessageController {
 
     return fields;
   }
-
-  setMessage(messageId) {
-    return this.db.guilds.setRoleMessage(this.guild.id, messageId);
-  }
 }
-
-export default RoleStatusController;

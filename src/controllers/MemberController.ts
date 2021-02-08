@@ -1,4 +1,4 @@
-import { GuildMember, Role, RoleResolvable } from "discord.js";
+import { GuildMember, MessageEmbed, Role, RoleResolvable } from "discord.js";
 
 import GuildBasedController from "./Controller.js";
 import MemberLimitError from "../structures/errors/MemberLimitError.js";
@@ -6,7 +6,6 @@ import RNumber from "../structures/RNumber.js";
 import RoleContestBid from "../structures/RoleContestBid.js";
 import RoleUtil from "../RoleUtil.js";
 import dayjs from "dayjs";
-import db from "../db/Database.js";
 import delay from "delay";
 import links from "../../resources/links.js";
 
@@ -243,7 +242,10 @@ export default class MemberController extends GuildBasedController {
     return member.roles.add(discordRoles);
   }
 
-  public async nextRoleAvailable(member: GuildMember) {
+  /**
+   * Promote member, respecting role limits. Starts a contest if the role is full
+   */
+  public async protectedPromote(member: GuildMember) {
     const nextRole = this.getNextRole(member);
     if (!nextRole) {
       throw new RangeError(`${member} holds the highest office already\n`);
@@ -263,11 +265,21 @@ export default class MemberController extends GuildBasedController {
     // If it's full, but not contested, start a new contest
     if (!dbRole.unlimited && nextRole.members.size >= dbRole.memberLimit && member.roles.hoist) {
       await this.startContest(nextRole, member.roles.hoist, member);
-      // TODO: Turn this object into a type
-      return { available: false, role: nextRole };
+      const contestMessage =
+        // `**${this.ec.initiator} is contesting a promotion into the ${nextRole} role!**\n` +
+        `🔸 ${this.ec.initiator} and everyone who currently holds the ${nextRole} role can give me money to keep the role. ` +
+        `Whoever gives the least amount of money by the end of the contest period will be demoted.\n` +
+        `🔸 Contests are resolved at 8PM every day, if at least 24 hours have passed since the start of the contest.\n` +
+        `🔸 Use the command \`!Give @Raphtalia $1.00\` to pay me\n`;
+      const statusEmbed = new MessageEmbed()
+        .setColor(nextRole.color)
+        .setTitle(`Role Contest | ${member.displayName} -> ${nextRole.name}`)
+        .setTimestamp(new Date())
+        .setDescription(contestMessage)
+        .setThumbnail("https://i.imgur.com/tnMtgLT.png");
     }
 
-    return { available: true, role: nextRole };
+    return this.promoteMember(member, nextRole);
   }
 
   /**
@@ -277,7 +289,7 @@ export default class MemberController extends GuildBasedController {
    * @param {Discord.Role} role - If left empty, the next highest role will be used
    * @throws {RangeError}
    */
-  public promoteMember(member: GuildMember, role?: Role) {
+  public async promoteMember(member: GuildMember, role?: Role) {
     if (!role) {
       role = this.getNextRole(member);
       if (!role) {

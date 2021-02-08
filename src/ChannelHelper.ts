@@ -1,13 +1,16 @@
-import { DMChannel, StringResolvable, TextChannel } from "discord.js";
+import { StringResolvable, TextChannel } from "discord.js";
 
 export default class ChannelHelper {
   public deleteMessageDelay: number;
-
   public channel: TextChannel;
 
   public constructor(channel: TextChannel, deleteMessageDelay: number) {
     this.channel = channel;
     this.deleteMessageDelay = deleteMessageDelay;
+  }
+
+  public get autoDelete() {
+    return this.deleteMessageDelay >= 0;
   }
 
   public watchSend = (content: StringResolvable, options: any = undefined) => {

@@ -1,4 +1,4 @@
-import Discord, { VoiceChannel } from "discord.js";
+import Discord, { GuildChannel, VoiceChannel } from "discord.js";
 
 import Command from "./Command.js";
 import ExecutionContext from "../structures/ExecutionContext.js";
@@ -28,24 +28,25 @@ export default class Play extends Command {
     let voiceChannel = this.getVoiceChannel(content);
 
     // If no voice channel was specified, play the song in the vc the sender is in
-    if (voiceChannel == null) {
-      voiceChannel = this.ec.initiator.voice.channel;
+    if (!voiceChannel) {
+      voiceChannel = this.ec.initiator.voice.channel ?? undefined;
 
       if (!voiceChannel) {
         return this.sendHelpMessage("Join a voice channel or specify which one to play in");
       }
     }
 
-    const permissions = voiceChannel.permissionsFor(this.message.sender.client.user);
+    const permissions = voiceChannel.permissionsFor(this.ec.raphtalia);
     if (
-      !permissions.has("VIEW_CHANNEL") ||
-      !permissions.has("CONNECT") ||
-      !permissions.has("SPEAK")
+      permissions &&
+      permissions.has("VIEW_CHANNEL") &&
+      permissions.has("SPEAK") &&
+      permissions.has("CONNECT")
     ) {
-      return this.sendHelpMessage(`I don't have permission to join ${voiceChannel.name}`);
+      return this.play(voiceChannel, links.youtube.anthem, volume).then(() => this.useItem());
     }
 
-    return this.play(voiceChannel, links.youtube.anthem, volume).then(() => this.useItem());
+    return this.sendHelpMessage(`I don't have permission to join ${voiceChannel.name}`);
   }
 
   /**
@@ -89,11 +90,11 @@ export default class Play extends Command {
     }
   }
 
-  private getVoiceChannel(content: string) {
+  private getVoiceChannel(content: string): VoiceChannel | undefined {
     let matches = content.match(/in ([\w -]+)(\/([\w -]+))?/i);
 
     if (!matches) {
-      return null;
+      return;
     }
 
     /**
@@ -122,15 +123,15 @@ export default class Play extends Command {
             channel.parent &&
             channel.parent.name.toLowerCase() === folderName.toLowerCase()
           )
-      );
+      ) as VoiceChannel;
     }
 
     // Just channel name
     const channelName = matches[1].trim();
 
-    return this.guild.channels.cache.find(
+    return this.ec.guild.channels.cache.find(
       (channel) =>
         channel.type == "voice" && channel.name.toLowerCase() === channelName.toLowerCase()
-    );
+    ) as VoiceChannel;
   }
 }
