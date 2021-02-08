@@ -3,3 +3,5 @@
 /.nyc_output
 /coverage
 /build
+yarn-error.log
+yarn.lock
