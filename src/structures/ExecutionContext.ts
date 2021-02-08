@@ -11,6 +11,7 @@ import GuildController from "../controllers/GuildController";
 import InventoryController from "../controllers/InventoryController";
 import MemberController from "../controllers/MemberController";
 import MessageHelper from "../MessageHelper";
+import RoleContestController from "../controllers/RoleContestController";
 import RoleStatusController from "../controllers/message/RoleStatusController";
 import StoreStatusController from "../controllers/message/StoreStatusController";
 
@@ -31,6 +32,7 @@ export default class ExecutionContext {
   public banListStatusController: BanListStatusController;
   public storeStatusController: StoreStatusController;
   public roleStatusController: RoleStatusController;
+  public roleContestController: RoleContestController;
 
   private _guild: Guild;
   private _message: Message;
@@ -48,6 +50,7 @@ export default class ExecutionContext {
     this.banListStatusController = new BanListStatusController(this);
     this.storeStatusController = new StoreStatusController(this);
     this.roleStatusController = new RoleStatusController(this);
+    this.roleContestController = new RoleContestController(this);
     return this;
   }
 

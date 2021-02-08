@@ -15,10 +15,22 @@ export default class Debug extends Command {
     }
     switch (args[0].toLowerCase()) {
       case "resolvecontests":
-        return this.ec.memberController
+        return this.ec.roleContestController
           .resolveRoleContests(true)
           .then((responses) => responses.reduce(this.sum))
-          .then((feedback) => this.ec.channelHelper.watchSend(feedback));
+          .then(async (feedback) => {
+            if (feedback.length === 0) {
+              return;
+            }
+            const outputChannel = await this.ec.guildController.getOutputChannel();
+            if (!outputChannel) {
+              return;
+            }
+
+            for (const f of feedback) {
+              outputChannel.send(feedback);
+            }
+          });
       case "store":
         const itemArgs = this.ec.messageHelper.parsedContent
           .slice(this.ec.messageHelper.parsedContent.indexOf("store") + 5)

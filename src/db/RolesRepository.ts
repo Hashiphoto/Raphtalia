@@ -37,14 +37,15 @@ export default class RolesRepository extends Repository {
     roleId: string,
     fromRoleId: string,
     initiatorId: string,
-    startDate: Date
+    startDate: Date,
+    messageId: string
   ) {
     return this.pool
       .query("INSERT IGNORE INTO roles (id) VALUES (?), (?)", [roleId, fromRoleId])
       .then(() =>
         this.pool.query(
-          "INSERT INTO role_contests (role_id, from_role_id, initiator_id, start_date) VALUES (?,?,?,?)",
-          [roleId, fromRoleId, initiatorId, startDate]
+          "INSERT INTO role_contests (role_id, from_role_id, initiator_id, start_date, message_id) VALUES (?,?,?,?,?)",
+          [roleId, fromRoleId, initiatorId, startDate, messageId]
         )
       )
       .then(([result, fields]: [ResultSetHeader, FieldPacket[]]) => {
@@ -52,15 +53,33 @@ export default class RolesRepository extends Repository {
       });
   }
 
-  public findRoleContest(roleId = "", userId = "") {
+  public async getRoleContest(roleContestId: number, getBids = false) {
+    return this.pool
+      .query(this.contestSelect + "WHERE rc.id = ?", [roleContestId])
+      .then(async ([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
+        if (rows.length === 0) {
+          return;
+        }
+        const contest = this.toRoleContest(rows[0]);
+        if (getBids) {
+          contest.bids = await this.getContestBids(contest.id);
+        }
+        return contest;
+      });
+  }
+
+  public async findRoleContest(roleId = "", userId = "", getBids = false) {
     return this.pool
       .query(this.contestSelect + "WHERE role_id=? OR initiator_id=?", [roleId, userId])
-      .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
+      .then(async ([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
         if (rows.length === 0) {
-          return null;
+          return;
         }
-
-        return this.toRoleContest(rows[0]);
+        const contest = this.toRoleContest(rows[0]);
+        if (getBids) {
+          contest.bids = await this.getContestBids(contest.id);
+        }
+        return contest;
       });
   }
 
@@ -87,7 +106,9 @@ export default class RolesRepository extends Repository {
 
   public getContestBids(contestId: number) {
     return this.pool
-      .query("SELECT * FROM role_contest_bids WHERE contest_id=?", [contestId])
+      .query("SELECT * FROM role_contest_bids WHERE contest_id=? ORDER BY bid_amount DESC", [
+        contestId,
+      ])
       .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) =>
         rows.map((r) => new RoleContestBid(r.user_id, parseFloat(r.bid_amount)))
       );
@@ -110,7 +131,8 @@ export default class RolesRepository extends Repository {
       row.role_id,
       row.from_role_id,
       row.initiator_id,
-      row.start_date
+      row.start_date,
+      row.message_id
     );
   }
 }

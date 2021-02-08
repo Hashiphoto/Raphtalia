@@ -35,4 +35,12 @@ export default class GuildController extends GuildBasedController {
   public async deleteScreeningQuestion(questionId: number) {
     return this.ec.db.guilds.deleteScreeningQuestion(this.ec.guild.id, questionId);
   }
+
+  public async getOutputChannel() {
+    const dbGuild = await this.ec.db.guilds.get(this.ec.guild.id);
+    if (!dbGuild || !dbGuild.outputChannelId) {
+      return;
+    }
+    return (this.ec.guild.channels.resolve(dbGuild.outputChannelId) as TextChannel) ?? undefined;
+  }
 }

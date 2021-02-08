@@ -74,7 +74,7 @@ export default class Give extends Command {
           .then(() => {
             // Giving money to Raphtalia, presumably for a contest
             if (target.id === this.ec.raphtalia.id && this.ec.initiator.roles.hoist) {
-              return this.ec.currencyController
+              return this.ec.roleContestController
                 .bidOnRoleContest(this.ec.initiator.roles.hoist, this.ec.initiator, rNumber.amount)
                 .then((roleContest) =>
                   roleContest

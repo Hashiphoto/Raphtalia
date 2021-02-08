@@ -8,13 +8,15 @@ export default class RoleContest {
   public initiatorId: string;
   public startDate: Date;
   public bids: RoleContestBid[];
+  public messageId: string;
 
   public constructor(
     id: number,
     roleId: string,
     subRoleId: string,
     initiatorId: string,
-    startDate: Date
+    startDate: Date,
+    messageId: string
   ) {
     this.id = id;
     this.roleId = roleId;
@@ -22,6 +24,7 @@ export default class RoleContest {
     this.initiatorId = initiatorId;
     this.startDate = startDate;
     this.bids;
+    this.messageId = messageId;
   }
 
   public getLowestBid(members?: GuildMember[]) {

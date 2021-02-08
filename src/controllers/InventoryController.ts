@@ -61,7 +61,7 @@ export default class InventoryController extends GuildBasedController {
       return this.ec.db.inventory.updateGuildItemPrice(
         this.ec.guild.id,
         guildItem,
-        priceMultiplier
+        priceMultiplier * guildItem.price
       );
     });
   }

@@ -109,7 +109,8 @@ export default class GuildsRepository extends Repository {
       dbRow.reactee_rate,
       dbRow.price_hike_coefficient,
       dbRow.price_drop_days,
-      dbRow.price_drop_rate
+      dbRow.price_drop_rate,
+      dbRow.output_channel
     );
   }
 }

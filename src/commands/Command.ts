@@ -20,11 +20,7 @@ export default class Command {
     return this.ec.channelHelper.watchSend(pretext + "\n" + this.usage);
   }
 
-  /**
-   * @param {Number} uses
-   * @returns {Boolean} Whether the store needs to be updated or not
-   */
-  public useItem(uses = 1, forceUpdate = false) {
+  public async useItem(uses = 1, forceUpdate = false) {
     const oldQuantity = this.item.quantity;
     return this.ec.inventoryController
       .useItem(this.item, this.ec.initiator, uses)

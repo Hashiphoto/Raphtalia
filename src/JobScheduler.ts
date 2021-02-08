@@ -2,7 +2,7 @@ import { Client } from "discord.js";
 import { CronJob } from "cron";
 import Database from "./db/Database";
 import ExecutionContext from "./structures/ExecutionContext";
-import MemberController from "./controllers/MemberController";
+import RoleContestController from "./controllers/RoleContestController";
 import StoreStatusController from "./controllers/message/StoreStatusController";
 import dayjs from "dayjs";
 
@@ -39,9 +39,19 @@ export default class JobScheduler {
   private async resolveRoleContests() {
     const guildContests = this.client.guilds.cache.map((guild) => {
       const context = new ExecutionContext(this.db, this.client, guild);
-      new MemberController(context)
-        .resolveRoleContests()
-        .then((feedback) => feedback && guild.systemChannel?.send(feedback));
+      new RoleContestController(context).resolveRoleContests().then(async (feedback) => {
+        if (feedback.length === 0) {
+          return;
+        }
+        const outputChannel = await context.guildController.getOutputChannel();
+        if (!outputChannel) {
+          return;
+        }
+
+        for (const f of feedback) {
+          outputChannel.send(feedback);
+        }
+      });
     });
 
     return Promise.all(guildContests);

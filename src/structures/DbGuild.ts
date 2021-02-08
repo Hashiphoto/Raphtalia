@@ -12,6 +12,7 @@ export default class DbGuild {
   public priceHikeCoefficient: number;
   public priceDropDays: number;
   public priceDropRate: number;
+  public outputChannelId?: string;
 
   public constructor(
     id: string,
@@ -26,7 +27,8 @@ export default class DbGuild {
     reacteeRate: number,
     priceHikeCoefficient: number,
     priceDropDays: number,
-    priceDropRate: number
+    priceDropRate: number,
+    outputChannelId: string
   ) {
     this.id = id;
     this.censorshipEnabled = censorshipEnabled;
@@ -41,5 +43,6 @@ export default class DbGuild {
     this.priceHikeCoefficient = priceHikeCoefficient;
     this.priceDropDays = priceDropDays;
     this.priceDropRate = priceDropRate;
+    this.outputChannelId = outputChannelId;
   }
 }

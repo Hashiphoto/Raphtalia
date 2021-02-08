@@ -1,6 +1,5 @@
-import { GuildMember, Role } from "discord.js";
-
 import GuildBasedController from "./Controller";
+import { GuildMember } from "discord.js";
 
 export default class CurrencyController extends GuildBasedController {
   public async payoutMessage() {
@@ -109,18 +108,6 @@ export default class CurrencyController extends GuildBasedController {
   public getCurrency(member: GuildMember) {
     return this.ec.db.users.get(member.id, member.guild.id).then((dbUser) => {
       return dbUser.currency;
-    });
-  }
-
-  public bidOnRoleContest(role: Role, member: GuildMember, amount: number) {
-    return this.ec.db.roles.findRoleContest(role.id, member.id).then((roleContest) => {
-      if (!roleContest) {
-        return null;
-      }
-
-      return this.ec.db.roles
-        .insertContestBid(roleContest.id, member.id, amount)
-        .then(() => roleContest);
     });
   }
 }

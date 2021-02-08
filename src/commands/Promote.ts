@@ -12,7 +12,6 @@ export default class Promote extends Command {
   public async execute(): Promise<any> {
     return this.ec.memberController
       .protectedPromote(this.ec.initiator)
-      .then((feedback) => this.ec.channelHelper.watchSend(feedback))
       .then(() => this.useItem())
       .catch((error) => {
         if (error instanceof MemberLimitError) {
