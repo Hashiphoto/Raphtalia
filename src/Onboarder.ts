@@ -7,7 +7,7 @@ import Question from "./structures/Question";
 import ScreeningQuestion from "./structures/ScreeningQuestion";
 import delay from "delay";
 import discordConfig from "../config/discord.config";
-import watchSendTimedMessage from "./timedMessage";
+import watchSendTimedMessage from "./TimedMessage";
 
 const messageSpacing = 800;
 
