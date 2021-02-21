@@ -17,7 +17,7 @@ export default class RoleContestController extends GuildBasedController {
       `🔸 Use the command \`!Give @Raphtalia $1.00\` to pay me\n`;
     const contestEmbed = await this.getStatusEmbed(contestedRole);
 
-    const message = await this.ec.channelHelper.watchSend(contestMessage, { embed: contestEmbed });
+    const message = await this.ec.channel.send(contestMessage, { embed: contestEmbed });
 
     return this.ec.db.roles.insertRoleContest(
       contestedRole.id,
@@ -71,7 +71,9 @@ export default class RoleContestController extends GuildBasedController {
         return "There are no bids. Roles will remain the same";
       }
 
-      await this.ec.db.roles.deleteContest(contest.id);
+      await this.ec.db.roles.deleteContest(contest.id).catch((e) => {
+        console.log(e);
+      });
       const contestStatusMessage = await this.ec.channelController.fetchMessage(contest.messageId);
       if (contestStatusMessage) {
         await contestStatusMessage.delete();

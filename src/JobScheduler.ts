@@ -37,21 +37,19 @@ export default class JobScheduler {
   }
 
   private async resolveRoleContests() {
-    const guildContests = this.client.guilds.cache.map((guild) => {
+    const guildContests = this.client.guilds.cache.map(async (guild) => {
       const context = new ExecutionContext(this.db, this.client, guild);
-      new RoleContestController(context).resolveRoleContests().then(async (feedback) => {
-        if (feedback.length === 0) {
-          return;
-        }
-        const outputChannel = await context.guildController.getOutputChannel();
-        if (!outputChannel) {
-          return;
-        }
-
-        for (const f of feedback) {
-          outputChannel.send(feedback);
-        }
-      });
+      const feedback = await new RoleContestController(context)
+        .resolveRoleContests(true)
+        .then((responses) => responses.reduce((prev, current) => prev + current, ""));
+      if (feedback.length === 0) {
+        return;
+      }
+      const outputChannel = await context.guildController.getOutputChannel();
+      if (!outputChannel) {
+        return;
+      }
+      outputChannel.send(feedback);
     });
 
     return Promise.all(guildContests);

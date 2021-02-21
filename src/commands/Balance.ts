@@ -10,11 +10,20 @@ export default class Balance extends Command {
   }
 
   public async execute(): Promise<any> {
-    const dmChannel = await this.ec.initiator.createDM();
-    const balance = await this.ec.currencyController.getCurrency(this.ec.initiator);
+    const showPublic =
+      this.ec.messageHelper.args.length > 0 &&
+      this.ec.messageHelper.args[0].toLowerCase() === "show";
 
-    dmChannel
-      .send(`You have ${RNumber.formatDollar(balance)} in ${this.ec.guild.name}`)
-      .then(() => this.useItem());
+    const balance = await this.ec.currencyController.getCurrency(this.ec.initiator);
+    const messageText = `You have ${RNumber.formatDollar(balance)} in ${this.ec.guild.name}`;
+
+    if (showPublic) {
+      this.ec.channelHelper.watchSend(messageText);
+    } else {
+      const dmChannel = await this.ec.initiator.createDM();
+      dmChannel.send(messageText);
+    }
+
+    await this.useItem();
   }
 }

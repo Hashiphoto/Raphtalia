@@ -10,6 +10,10 @@ export default class Status extends Command {
   }
 
   public async execute(): Promise<any> {
+    const showPublic =
+      this.ec.messageHelper.args.length > 0 &&
+      this.ec.messageHelper.args[0].toLowerCase() === "show";
+
     const balanceMessage = await this.ec.currencyController
       .getCurrency(this.ec.initiator)
       .then((balance) => {
@@ -28,9 +32,12 @@ export default class Status extends Command {
         return userInventory.toEmbed();
       });
 
-    const dmChannel = await this.ec.initiator.createDM();
-    return dmChannel
-      .send(balanceMessage + infractionMessage, inventoryEmbed)
-      .then(() => this.useItem());
+    if (showPublic) {
+      this.ec.channelHelper.watchSend(balanceMessage + infractionMessage, inventoryEmbed);
+    } else {
+      const dmChannel = await this.ec.initiator.createDM();
+      return dmChannel.send(balanceMessage + infractionMessage, inventoryEmbed);
+    }
+    await this.useItem();
   }
 }

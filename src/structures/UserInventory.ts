@@ -14,7 +14,7 @@ export default class UserInventory {
   public toEmbed() {
     const fields = this.items.map((item) => {
       return {
-        name: item.name,
+        name: item.getFormattedName(),
         value: item.getDetails(),
         inline: true,
       };

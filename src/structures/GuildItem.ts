@@ -14,12 +14,13 @@ export default class GuildItem extends Item {
     maxUses: number,
     quantity: number,
     commands: CommandItem[],
+    isStealProtected: boolean,
     price: number,
     maxQuantity: number,
     soldInCycle: number,
     dateLastSold: Date
   ) {
-    super(id, name, maxUses, quantity, commands);
+    super(id, name, maxUses, quantity, commands, isStealProtected);
 
     this.price = price;
     this.maxQuantity = maxQuantity;
