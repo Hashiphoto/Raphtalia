@@ -17,6 +17,10 @@ export default class Util {
     return date.format("h:mm A on MMM D, YYYY");
   }
 
+  public static random(max: number) {
+    return Math.floor(Math.random() * max);
+  }
+
   /**
    * Add a specified amount of time to the current time and return a dayjs date that equals
    * the sum of the current time and the parameter "duration"

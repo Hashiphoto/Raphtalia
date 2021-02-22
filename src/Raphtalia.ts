@@ -37,6 +37,7 @@ import Screening from "./commands/Screening";
 import ServerStatus from "./commands/ServerStatus";
 import SoftKick from "./commands/zSoftKick";
 import Status from "./commands/Status";
+import Steal from "./commands/Steal";
 import Store from "./commands/Store";
 import Take from "./commands/Take";
 import dayjs from "dayjs";
@@ -380,6 +381,8 @@ class Raphtalia {
         return new SoftKick(context);
       case "status":
         return new Status(context);
+      case "steal":
+        return new Steal(context);
       case "store":
         return new Store(context);
       case "take":
