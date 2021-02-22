@@ -23,7 +23,7 @@ export default class InventoryController extends GuildBasedController {
     if (!updatedItem) {
       return;
     }
-    if (updatedItem.soldInCycle > 1) {
+    if (updatedItem.soldInCycle > 0) {
       await this.increaseGuildItemPrice(updatedItem);
     }
 

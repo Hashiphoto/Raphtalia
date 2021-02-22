@@ -12,10 +12,11 @@ export default class InventoryRepository extends Repository {
   private guildSelect: string =
     "SELECT * FROM guild_inventory gi JOIN items i ON gi.item_id = i.id ";
   private userSelect: string =
-    "SELECT ui.user_id, ui.guild_id, i.id, ui.quantity, ui.remaining_uses, i.name, gi.max_uses " +
+    "SELECT ui.user_id, ui.guild_id, i.id, ui.quantity, ui.remaining_uses, i.name, gi.max_uses, ui.date_purchased, g.item_decay_coefficient, gi.steal_protected " +
     "FROM user_inventory ui " +
     "JOIN items i ON ui.item_id = i.id " +
-    "JOIN guild_inventory gi ON gi.item_id = i.id ";
+    "JOIN guild_inventory gi ON gi.item_id = i.id " +
+    "JOIN guilds g on g.id = ui.guild_id ";
 
   public async getGuildStock(guildId: string, showHidden = false) {
     return this.pool
@@ -144,7 +145,7 @@ export default class InventoryRepository extends Repository {
     return this.pool.query(
       "INSERT INTO user_inventory (user_id, guild_id, item_id, quantity, remaining_uses)" +
         "VALUES (?,?,?,?,?) " +
-        "ON DUPLICATE KEY UPDATE quantity=quantity+?, remaining_uses=remaining_uses+?",
+        "ON DUPLICATE KEY UPDATE quantity=quantity+?, remaining_uses=remaining_uses+?, date_purchased=CURRENT_TIMESTAMP",
       [userId, guildId, item.id, item.quantity, item.maxUses, item.quantity, item.maxUses]
     );
   }
@@ -241,6 +242,7 @@ export default class InventoryRepository extends Repository {
       row.max_uses,
       row.quantity,
       commands,
+      row.steal_protected,
       parseFloat(row.price),
       row.max_quantity,
       row.sold_in_cycle,
@@ -254,7 +256,17 @@ export default class InventoryRepository extends Repository {
     }
     const commands = await this.getCommandsForItem(row.id);
 
-    return new UserItem(row.id, row.name, row.max_uses, row.quantity, commands, row.remaining_uses);
+    return new UserItem(
+      row.id,
+      row.name,
+      row.max_uses,
+      row.quantity,
+      commands,
+      row.steal_protected,
+      row.remaining_uses,
+      row.date_purchased,
+      row.item_decay_coefficient
+    );
   }
 
   private toCommandItem(row: RowDataPacket) {

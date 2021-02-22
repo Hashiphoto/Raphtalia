@@ -1,8 +1,12 @@
 import CommandItem from "./CommandItem";
 import Item from "./Item";
+import RNumber from "./RNumber";
+import dayjs from "dayjs";
 
 export default class UserItem extends Item {
   public remainingUses: number;
+  public datePurchased: Date;
+  public itemDecayCoefficient: number;
 
   public constructor(
     id: string,
@@ -10,15 +14,31 @@ export default class UserItem extends Item {
     maxUses: number,
     quantity: number,
     commands: CommandItem[],
-    remainingUses: number
+    isStealProtected: boolean,
+    remainingUses: number,
+    datePurchased: Date,
+    itemDecayCoefficient: number
   ) {
-    super(id, name, maxUses, quantity, commands);
+    super(id, name, maxUses, quantity, commands, isStealProtected);
 
     this.remainingUses = remainingUses;
+    this.datePurchased = datePurchased;
+    this.itemDecayCoefficient = itemDecayCoefficient;
+  }
+
+  public get integrity() {
+    const hoursSincePurchase = Math.abs(
+      dayjs.duration(dayjs().diff(dayjs(this.datePurchased))).asHours()
+    );
+    // Cap the decay at 75% after a week. The function will pass through this point on the graph
+    if (hoursSincePurchase >= 168) {
+      return 0.75;
+    }
+    return 1 - Math.pow(hoursSincePurchase, 2) / 113000;
   }
 
   /**
-   * Returns a deep-copied clone of this item
+   * Returns a deep-copy of this item
    */
   public copy() {
     return new UserItem(
@@ -27,14 +47,20 @@ export default class UserItem extends Item {
       this.maxUses,
       this.quantity,
       this.commands,
-      this.remainingUses
+      this.isStealProtected,
+      this.remainingUses,
+      this.datePurchased,
+      this.itemDecayCoefficient
     );
   }
 
   public getDetails() {
-    const uses = `Uses: ${this.unlimitedUses ? "∞" : `${this.remainingUses}/${this.maxUses}\n`}`;
     const quantity = `Quantity: ${this.quantity}\n`;
+    const uses = `Uses: ${this.unlimitedUses ? "∞" : `${this.remainingUses}/${this.maxUses}`}\n`;
+    const integrity = this.isStealProtected
+      ? ""
+      : `Integrity: ${RNumber.formatPercent(this.integrity)}\n`;
 
-    return quantity + uses + this.getCommands();
+    return quantity + uses + integrity + this.getCommands();
   }
 }

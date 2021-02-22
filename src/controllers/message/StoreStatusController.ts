@@ -32,7 +32,7 @@ export default class StoreStatusController extends SingletonMessageController {
 
     const itemFields = items.map((item) => {
       return {
-        name: item.name,
+        name: item.getFormattedName(),
         value: item.getDetails(),
         inline: true,
       };

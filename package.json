@@ -5,7 +5,7 @@
   "main": "Bot.ts",
   "scripts": {
     "test": "set NODE_ENV=test&& nyc node_modules/mocha/bin/_mocha './test/**/*.test.js' --exit",
-    "start": "yarn build && env HOME=/var/git pm2 start raphtalia.pm2.json",
+    "start": "yarn install && tsc && env HOME=/var/git pm2 start raphtalia.pm2.json",
     "build": "yarn install && tsc"
   },
   "repository": {
