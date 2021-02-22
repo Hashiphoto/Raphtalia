@@ -21,6 +21,8 @@ export default class ServerStatus extends Command {
     const roles = new Roles(this.ec);
     roles.item = this.item;
 
-    return Promise.all([banList.execute(), roles.execute(), store.execute()]);
+    await banList.execute();
+    await roles.execute();
+    await store.execute();
   }
 }
