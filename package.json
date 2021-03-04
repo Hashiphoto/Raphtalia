@@ -19,8 +19,7 @@
   },
   "homepage": "https://github.com/Hashiphoto/Raphtalia#readme",
   "dependencies": {
-    "@discordjs/opus": "^0.3.3",
-    "@types/cron": "^1.7.2",
+    "@discordjs/opus": "^0.4.0",
     "cron": "1.7.2",
     "dayjs": "^1.9.7",
     "delay": "^4.4.0",
@@ -33,6 +32,7 @@
   "devDependencies": {
     "@types/mysql2": "types/mysql2",
     "@types/node": "^14.14.21",
+    "@types/cron": "^1.7.2",
     "mocha": "^8.2.1",
     "nyc": "^15.1.0",
     "sinon": "^9.2.2",
