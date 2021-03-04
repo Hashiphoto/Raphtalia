@@ -27,7 +27,7 @@
     "discord.js": "^12.4.1",
     "minimist": "^1.2.3",
     "mysql2": "^2.1.0",
-    "ytdl-core": "^4.1.4"
+    "ytdl-core": "^4.5.0"
   },
   "devDependencies": {
     "@types/mysql2": "types/mysql2",
