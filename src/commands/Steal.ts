@@ -5,6 +5,8 @@ import RNumber from "../structures/RNumber";
 import UserItem from "../structures/UserItem";
 import Util from "../Util";
 
+const serviceFee = 100;
+
 export default class Steal extends Command {
   public constructor(context: ExecutionContext) {
     super(context);
@@ -36,16 +38,17 @@ export default class Steal extends Command {
 
     const targetItem = await this.ec.inventoryController.findUserItem(target, itemName);
 
-    if (!targetItem) {
-      const serviceFee = 100;
+    if (!targetItem || targetItem.isStealProtected) {
       await this.ec.currencyController.transferCurrency(
         this.ec.initiator,
         this.ec.raphtalia,
         serviceFee
       );
+      const message = targetItem
+        ? `${targetItem.printName()} cannot be stolen.`
+        : `${target.toString()} does not have any item named "${itemName}".`;
       return this.sendHelpMessage(
-        `${target.toString()} does not have any item named "${itemName}". ` +
-          `Charged a ${RNumber.formatDollar(serviceFee)} service fee.`
+        `${message} Charged a ${RNumber.formatDollar(serviceFee)} service fee.`
       );
     }
 

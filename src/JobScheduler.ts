@@ -40,7 +40,7 @@ export default class JobScheduler {
     const guildContests = this.client.guilds.cache.map(async (guild) => {
       const context = new ExecutionContext(this.db, this.client, guild);
       const feedback = await new RoleContestController(context)
-        .resolveRoleContests(true)
+        .resolveRoleContests()
         .then((responses) => responses.reduce((prev, current) => prev + current, ""));
       if (feedback.length === 0) {
         return;

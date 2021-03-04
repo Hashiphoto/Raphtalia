@@ -30,11 +30,11 @@ export default class UserItem extends Item {
     const hoursSincePurchase = Math.abs(
       dayjs.duration(dayjs().diff(dayjs(this.datePurchased))).asHours()
     );
-    // Cap the decay at 75% after a week. The function will pass through this point on the graph
+    // Cap the decay at 90% after a week. The function will pass through this point on the graph
     if (hoursSincePurchase >= 168) {
-      return 0.75;
+      return 0.9;
     }
-    return 1 - Math.pow(hoursSincePurchase, 2) / 113000;
+    return 1 - Math.pow(hoursSincePurchase, 1.4) / 13200;
   }
 
   /**
