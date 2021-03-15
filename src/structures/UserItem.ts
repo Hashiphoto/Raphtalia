@@ -1,12 +1,11 @@
 import CommandItem from "./CommandItem";
 import Item from "./Item";
-import RNumber from "./RNumber";
 import dayjs from "dayjs";
 
 export default class UserItem extends Item {
   public remainingUses: number;
   public datePurchased: Date;
-  public itemDecayCoefficient: number;
+  public userId: string;
 
   public constructor(
     id: string,
@@ -17,24 +16,24 @@ export default class UserItem extends Item {
     isStealProtected: boolean,
     remainingUses: number,
     datePurchased: Date,
-    itemDecayCoefficient: number
+    userId: string
   ) {
     super(id, name, maxUses, quantity, commands, isStealProtected);
 
     this.remainingUses = remainingUses;
     this.datePurchased = datePurchased;
-    this.itemDecayCoefficient = itemDecayCoefficient;
+    this.userId = userId;
   }
 
-  public get integrity() {
-    const hoursSincePurchase = Math.abs(
-      dayjs.duration(dayjs().diff(dayjs(this.datePurchased))).asHours()
+  public get stealDc() {
+    const daysSincePurchase = Math.abs(
+      dayjs.duration(dayjs().diff(dayjs(this.datePurchased))).asDays()
     );
-    // Cap the decay at 90% after a week. The function will pass through this point on the graph
-    if (hoursSincePurchase >= 168) {
-      return 0.9;
+
+    if (daysSincePurchase > 3) {
+      return 19;
     }
-    return 1 - Math.pow(hoursSincePurchase, 1.4) / 13200;
+    return 20;
   }
 
   /**
@@ -50,17 +49,14 @@ export default class UserItem extends Item {
       this.isStealProtected,
       this.remainingUses,
       this.datePurchased,
-      this.itemDecayCoefficient
+      this.userId
     );
   }
 
   public getDetails() {
     const quantity = `Quantity: ${this.quantity}\n`;
     const uses = `Uses: ${this.unlimitedUses ? "∞" : `${this.remainingUses}/${this.maxUses}`}\n`;
-    const integrity = this.isStealProtected
-      ? ""
-      : `Integrity: ${RNumber.formatPercent(this.integrity)}\n`;
 
-    return quantity + uses + integrity + this.getCommands();
+    return quantity + uses + this.getCommands();
   }
 }

@@ -1,5 +1,7 @@
+import AmbiguousInputError from "../structures/errors/AmbiguousInputError";
 import Command from "./Command";
 import ExecutionContext from "../structures/ExecutionContext";
+import GuildItem from "../structures/GuildItem";
 import RNumber from "../structures/RNumber";
 
 export default class Buy extends Command {
@@ -15,17 +17,21 @@ export default class Buy extends Command {
       return this.sendHelpMessage();
     }
 
-    const item = await this.ec.inventoryController.getGuildItem(
-      this.ec.messageHelper.parsedContent
-    );
-    // .catch((error) => {
-    //   if (error instanceof AmbiguousInputError) {
-    //     return this.ec.channelHelper.watchSend(
-    //       `There is more than one item with that name. Did you mean ${error.message}?`
-    //     );
-    //   }
-    //   throw error;
-    // });
+    let tempItem: GuildItem | undefined;
+    try {
+      tempItem = await this.ec.inventoryController.findGuildItem(
+        this.ec.messageHelper.parsedContent
+      );
+    } catch (error) {
+      if (error instanceof AmbiguousInputError) {
+        return this.ec.channelHelper.watchSend(
+          `There is more than one item with that name. Did you mean ${error.message}?`
+        );
+      }
+      throw error;
+    }
+
+    const item = tempItem;
 
     if (!item) {
       return this.ec.channelHelper.watchSend(

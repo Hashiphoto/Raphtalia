@@ -17,6 +17,9 @@ export default class Util {
     return date.format("h:mm A on MMM D, YYYY");
   }
 
+  /**
+   * Generates a number from 0 up to, but not including, max;
+   */
   public static random(max: number) {
     return Math.floor(Math.random() * max);
   }

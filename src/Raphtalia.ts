@@ -33,6 +33,7 @@ import Register from "./commands/Register";
 import Report from "./commands/Report";
 import RoleStatusController from "./controllers/message/RoleStatusController";
 import Roles from "./commands/Roles";
+import Scan from "./commands/Scan";
 import Screening from "./commands/Screening";
 import ServerStatus from "./commands/ServerStatus";
 import SoftKick from "./commands/zSoftKick";
@@ -373,6 +374,8 @@ class Raphtalia {
         return new Report(context);
       case "roles":
         return new Roles(context);
+      case "scan":
+        return new Scan(context);
       case "screening":
         return new Screening(context);
       case "serverstatus":
