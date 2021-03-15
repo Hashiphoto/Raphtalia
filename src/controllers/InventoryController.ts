@@ -1,11 +1,12 @@
 import GuildBasedController from "./Controller";
 import GuildItem from "../structures/GuildItem";
 import { GuildMember } from "discord.js";
+import Item from "../structures/Item";
 import UserInventory from "../structures/UserInventory";
 import UserItem from "../structures/UserItem";
 
 export default class InventoryController extends GuildBasedController {
-  public async getGuildItem(name: string) {
+  public async findGuildItem(name: string) {
     return this.ec.db.inventory.findGuildItem(this.ec.guild.id, name);
   }
 
@@ -114,5 +115,9 @@ export default class InventoryController extends GuildBasedController {
     givenItem.quantity = 1;
     givenItem.remainingUses = givenItem.maxUses;
     return this.ec.db.inventory.insertUserItem(this.ec.guild.id, toMember.id, givenItem);
+  }
+
+  public async findUsersWithItem(item: Item) {
+    return this.ec.db.inventory.findUsersWithItem(this.ec.guild.id, item.id);
   }
 }

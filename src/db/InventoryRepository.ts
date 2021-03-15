@@ -12,7 +12,7 @@ export default class InventoryRepository extends Repository {
   private guildSelect: string =
     "SELECT * FROM guild_inventory gi JOIN items i ON gi.item_id = i.id ";
   private userSelect: string =
-    "SELECT ui.user_id, ui.guild_id, i.id, ui.quantity, ui.remaining_uses, i.name, gi.max_uses, ui.date_purchased, g.item_decay_coefficient, gi.steal_protected " +
+    "SELECT ui.user_id, ui.guild_id, i.id, ui.quantity, ui.remaining_uses, i.name, gi.max_uses, ui.date_purchased, gi.steal_protected " +
     "FROM user_inventory ui " +
     "JOIN items i ON ui.item_id = i.id " +
     "JOIN guild_inventory gi ON gi.item_id = i.id " +
@@ -222,6 +222,18 @@ export default class InventoryRepository extends Repository {
     );
   }
 
+  public async findUsersWithItem(guildId: string, itemId: string) {
+    return this.pool
+      .query(`${this.userSelect} WHERE ui.guild_id=? AND i.id=?`, [guildId, itemId])
+      .then(async ([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
+        const items = [];
+        for (const r of rows) {
+          items.push(await this.toUserItem(r));
+        }
+        return items;
+      });
+  }
+
   private async getCommandsForItem(itemId: number) {
     return this.pool
       .query(
@@ -252,7 +264,7 @@ export default class InventoryRepository extends Repository {
 
   private async toUserItem(row: RowDataPacket) {
     if (!row) {
-      return;
+      throw new Error("row is undefined");
     }
     const commands = await this.getCommandsForItem(row.id);
 
@@ -265,7 +277,7 @@ export default class InventoryRepository extends Repository {
       row.steal_protected,
       row.remaining_uses,
       row.date_purchased,
-      row.item_decay_coefficient
+      row.user_id
     );
   }
 

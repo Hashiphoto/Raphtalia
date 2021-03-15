@@ -1,11 +1,13 @@
 import Command from "./Command";
+import Dice from "../Dice";
 import ExecutionContext from "../structures/ExecutionContext";
 import { GuildMember } from "discord.js";
 import RNumber from "../structures/RNumber";
 import UserItem from "../structures/UserItem";
-import Util from "../Util";
 
 const serviceFee = 100;
+const minStealCost = 1000;
+const percentCost = 0.05;
 
 export default class Steal extends Command {
   public constructor(context: ExecutionContext) {
@@ -52,26 +54,31 @@ export default class Steal extends Command {
       );
     }
 
+    // TODO: Simplify code with Scan
     const initiatorBalance = await this.ec.currencyController.getCurrency(this.ec.initiator);
-    const cost = Math.max(initiatorBalance * 0.05, 1000);
+    if (initiatorBalance < minStealCost) {
+      return this.ec.channelHelper.watchSend(
+        `You need at least ${RNumber.formatDollar(minStealCost)} to attempt a steal`
+      );
+    }
+    const cost = Math.max(initiatorBalance * percentCost, minStealCost);
     await this.ec.currencyController.transferCurrency(this.ec.initiator, this.ec.raphtalia, cost);
 
-    // Round to two decimal places and make an integer
-    // e.g. 99.5313% -> 99.5313 -> 99.53 -> 9953
-    const itemIntegrity = targetItem.integrity;
-    const integrityNormalized = Util.round(itemIntegrity * 100) * 100;
-    const roll = Util.random(10000);
+    const roll = Dice.Roll(20);
+    const dc = targetItem.stealDc;
 
-    let response = `Spent ${RNumber.formatDollar(cost)} for a ${RNumber.formatPercent(
-      1 - itemIntegrity
-    )} chance at stealing a ${targetItem.printName()}\n`;
+    let response = "";
 
-    if (roll >= integrityNormalized) {
-      await this.takeItem(targetItem, target);
-      response += `${targetItem.printName()} successfully stolen!\n`;
+    if (roll >= dc) {
+      const takeResponse = await this.takeItem(targetItem, target);
+      response += `**${targetItem.name} successfully stolen!** ${takeResponse}\n`;
     } else {
-      response += `Steal attempt failed!\n`;
+      response += `**Steal attempt failed!**\n`;
     }
+
+    response +=
+      `Rolled a \`<${roll}>\` against \`${dc}\`\n` +
+      `*Charged ${RNumber.formatDollar(cost)} for this attempt*`;
     await this.ec.channelHelper.watchSend(response);
 
     await this.useItem(targets.length);
@@ -79,8 +86,8 @@ export default class Steal extends Command {
 
   private async takeItem(item: UserItem, target: GuildMember) {
     await this.ec.inventoryController.transferItem(item, target, this.ec.initiator);
-    return await this.ec.channelHelper.watchSend(
-      `Transferred one ${item.name} from ${target.toString()} to ${this.ec.initiator.toString()}\n`
-    );
+    return `Transferred one ${
+      item.name
+    } from ${target.toString()} to ${this.ec.initiator.toString()}`;
   }
 }

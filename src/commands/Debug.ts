@@ -39,7 +39,7 @@ export default class Debug extends Command {
         }
 
         const [searchTerm, newName, newPrice, newUses, newQuantity] = itemArgs;
-        const item = await this.ec.inventoryController.getGuildItem(searchTerm);
+        const item = await this.ec.inventoryController.findGuildItem(searchTerm);
 
         if (!item) {
           return this.ec.channelHelper.watchSend("Couldn't find that item");
