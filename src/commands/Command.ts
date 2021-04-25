@@ -12,6 +12,10 @@ export default class Command {
     this.ec = context;
   }
 
+  public get name() {
+    return this.constructor.name;
+  }
+
   public async execute(): Promise<any> {
     throw new Error("Implement this function");
   }

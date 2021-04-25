@@ -28,6 +28,10 @@ export default class GuildItem extends Item {
     this.dateLastSold = dateLastSold;
   }
 
+  public printPrice() {
+    return RNumber.formatDollar(this.price);
+  }
+
   public getDetails() {
     const price = `Price: ${RNumber.formatDollar(this.price)}\n`;
     const uses = `Uses: ${this.unlimitedUses ? "∞" : this.maxUses}\n`;

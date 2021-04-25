@@ -6,31 +6,13 @@ import UserInventory from "../structures/UserInventory";
 import UserItem from "../structures/UserItem";
 
 export default class InventoryController extends GuildBasedController {
+  /** GUILD ITEMS **/
   public async findGuildItem(name: string) {
     return this.ec.db.inventory.findGuildItem(this.ec.guild.id, name);
   }
 
   public async updateGuildItem(item: GuildItem) {
     return this.ec.db.inventory.updateGuildItem(this.ec.guild.id, item);
-  }
-
-  public async findUserItem(member: GuildMember, name: string): Promise<UserItem | undefined> {
-    return this.ec.db.inventory.findUserItem(this.ec.guild.id, member.id, name);
-  }
-
-  public async userPurchase(item: GuildItem, user: GuildMember, quantity = 1) {
-    // Subtract from guild stock
-    const updatedItem = await this.subtractGuildStock(item, quantity);
-    if (!updatedItem) {
-      return;
-    }
-    if (updatedItem.soldInCycle > 0) {
-      await this.increaseGuildItemPrice(updatedItem);
-    }
-
-    // Add it to player stock
-    item.quantity = quantity;
-    return this.ec.db.inventory.insertUserItem(this.ec.guild.id, user.id, item);
   }
 
   public async subtractGuildStock(item: GuildItem, quantity: number) {
@@ -67,13 +49,38 @@ export default class InventoryController extends GuildBasedController {
     });
   }
 
+  public async getGuildItemByCommand(guildId: string, commandName: string) {
+    return this.ec.db.inventory.getGuildItemByCommand(guildId, commandName);
+  }
+
+  /** USER ITEMS **/
+  public async findUserItem(member: GuildMember, name: string): Promise<UserItem | undefined> {
+    return this.ec.db.inventory.findUserItem(this.ec.guild.id, member.id, name);
+  }
+
+  public async userPurchase(item: GuildItem, user: GuildMember, quantity = 1) {
+    // Subtract from guild stock
+    const updatedItem = await this.subtractGuildStock(item, quantity);
+    if (!updatedItem) {
+      return;
+    }
+    if (updatedItem.soldInCycle > 0) {
+      await this.increaseGuildItemPrice(updatedItem);
+    }
+
+    // Add it to player stock
+    item.quantity = quantity;
+    await this.ec.db.inventory.insertUserItem(this.ec.guild.id, user.id, item);
+    return this.ec.db.inventory.getUserItem(this.ec.guild.id, user.id, item.id);
+  }
+
   public async getUserInventory(user: GuildMember) {
     return this.ec.db.inventory
       .getUserItems(user.guild.id, user.id)
       .then((items) => new UserInventory(user, items));
   }
 
-  public async getItemForCommand(member: GuildMember, commandName: string) {
+  public async getUserItemByCommand(member: GuildMember, commandName: string) {
     return this.ec.db.inventory.getUserItemByCommand(this.ec.guild.id, member.id, commandName);
   }
 

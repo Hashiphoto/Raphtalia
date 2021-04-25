@@ -68,6 +68,24 @@ export default class InventoryRepository extends Repository {
       });
   }
 
+  public async getGuildItemByCommand(guildId: string, commandName: string) {
+    return this.pool
+      .query(
+        "SELECT i.id FROM guild_inventory gi " +
+          "JOIN items i ON gi.item_id = i.id " +
+          "JOIN commands c ON c.item_id = i.id " +
+          "WHERE gi.guild_id=? AND c.name LIKE ?",
+        [guildId, commandName]
+      )
+      .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
+        if (rows.length == 0) {
+          return;
+        }
+        return rows[0].id;
+      })
+      .then((itemId) => (itemId ? this.getGuildItem(guildId, itemId) : undefined));
+  }
+
   public async updateGuildItemQuantity(
     guildId: string,
     item: Item,
@@ -200,11 +218,11 @@ export default class InventoryRepository extends Repository {
       )
       .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
         if (rows.length == 0) {
-          return null;
+          return;
         }
         return rows[0].id;
       })
-      .then((itemId) => (itemId == null ? null : this.getUserItem(guildId, userId, itemId)));
+      .then((itemId) => (itemId ? this.getUserItem(guildId, userId, itemId) : undefined));
   }
 
   public async updateUserItem(guildId: string, userId: string, item: UserItem) {

@@ -100,9 +100,9 @@ class Raphtalia {
       this.delayedDelete(context, deleteTime);
 
       if (message.content.startsWith(CommandParser.COMMAND_PREFIX)) {
-        return this.handleCommand(context);
+        return this.handleCommand(context).then(() => context.currencyController.payoutMessage());
       } else {
-        context.censorController.censorMessage().then((censored) => {
+        return context.censorController.censorMessage().then((censored) => {
           // No money for censored messages
           if (censored) {
             return;
@@ -290,18 +290,46 @@ class Raphtalia {
     }
 
     // Check if member has the correct item
-    const item = await context.inventoryController.getItemForCommand(
+    const userItem = await context.inventoryController.getUserItemByCommand(
       context.initiator,
-      command.constructor.name
+      command.name
     );
-    if (item) {
-      command.item = item;
+    if (userItem) {
+      command.item = userItem;
       return command;
     }
-    return new NullCommand(context, `You do not have the correct item to use this command`);
+
+    const guildItem = await context.inventoryController.getGuildItemByCommand(
+      context.guild.id,
+      command.name
+    );
+    if (!guildItem) {
+      return new NullCommand(
+        context,
+        `There is no item associated with the command "${command.name}"`
+      );
+    }
+
+    // If they don't, buy it
+    const purchasedUserItem = await context.inventoryController.userPurchase(
+      guildItem,
+      context.initiator
+    );
+    // Should never happen
+    if (!purchasedUserItem) {
+      return new NullCommand(
+        context,
+        `Auto-purchasing this item failed. Please try "!Buy ${guildItem.name}"`
+      );
+    }
+    await context.channelHelper.watchSend(
+      `*Purchased a ${guildItem.printName()} for ${guildItem.printPrice()}*`
+    );
+    command.item = purchasedUserItem;
+    return command;
   }
 
-  private executeCommand(context: ExecutionContext, command: Command) {
+  private async executeCommand(context: ExecutionContext, command: Command) {
     context.message.channel.startTyping();
     return command
       .execute()
@@ -314,12 +342,6 @@ class Raphtalia {
       });
   }
 
-  /**
-   * @param {Discord.Message} message
-   * @param {Database} db
-   * @param {Discord.Client} client
-   * @returns {Command}
-   */
   static getCommandByName(context: ExecutionContext, name: string): Command {
     // Keep alphabetical by primary command word
     // The primary command keyword should be listed first
