@@ -30,9 +30,12 @@
     "ytdl-core": "^4.5.0"
   },
   "devDependencies": {
+    "@types/cron": "^1.7.2",
     "@types/mysql2": "types/mysql2",
     "@types/node": "^14.14.21",
-    "@types/cron": "^1.7.2",
+    "@typescript-eslint/eslint-plugin": "^4.27.0",
+    "@typescript-eslint/parser": "^4.27.0",
+    "eslint": "^7.28.0",
     "mocha": "^8.2.1",
     "nyc": "^15.1.0",
     "sinon": "^9.2.2",
