@@ -1,6 +1,5 @@
-import Discord, { GuildMember } from "discord.js";
+import Discord, { GuildMember, Message } from "discord.js";
 
-import Database from "./db/Database";
 import ExecutionContext from "./structures/ExecutionContext";
 import MemberController from "./controllers/MemberController";
 import Question from "./structures/Question";
@@ -12,10 +11,7 @@ import watchSendTimedMessage from "./TimedMessage";
 const messageSpacing = 800;
 
 export default class OnBoarder {
-  private db: Database;
-  private guild: Discord.Guild;
   private member: Discord.GuildMember;
-  private channel: Discord.TextChannel;
   private ec: ExecutionContext;
 
   public constructor(context: ExecutionContext, member: GuildMember) {
@@ -29,12 +25,11 @@ export default class OnBoarder {
    * allows them to assign a new one. Fourth, it asks them to recite a pledge (unless they have already given the pledge).
    * If they do, they are made a comrade. If they don't, they are softkicked
    */
-  public async onBoard() {
+  public async onBoard(): Promise<void | string | Message> {
     const memberController = new MemberController(this.ec);
     await memberController.setHoistedRole(this.member, discordConfig().roles.immigrant);
-
-    this.ec.channelHelper.watchSend(
-      `Welcome ${this.member.toString()} to ${this.guild.name}!\n` +
+    await this.ec.channelHelper.watchSend(
+      `Welcome ${this.member.toString()} to ${this.ec.guild.name}!\n` +
         `I have a few questions for you. If you answer correctly, you will be granted citizenship.`
     );
 
@@ -50,15 +45,15 @@ export default class OnBoarder {
     }
 
     // Creates the user in the DB if they didn't exist
-    return this.db.users
-      .setCitizenship(this.member.id, this.guild.id, true)
+    return this.ec.db.users
+      .setCitizenship(this.member.id, this.ec.guild.id, true)
       .then(() =>
         this.ec.channelHelper.watchSend(
-          `Thank you! And welcome loyal citizen to ${this.guild.name}! 🎉🎉🎉`
+          `Thank you! And welcome loyal citizen to ${this.ec.guild.name}! 🎉🎉🎉`
         )
       )
       .then(() => memberController.setHoistedRole(this.member, discordConfig().roles.neutral, true))
-      .then(() => this.db.inventory.findGuildItem(this.guild.id, "Player Badge"))
+      .then(() => this.ec.db.inventory.findGuildItem(this.ec.guild.id, "Player Badge"))
       .then(async (playerBadge) => {
         if (playerBadge) {
           await this.ec.inventoryController.userPurchase(playerBadge, this.member);
@@ -92,14 +87,14 @@ export default class OnBoarder {
             "I don't have high enough permissions to set your nickname"
           );
         }
-        throw error;
+        return this.ec.channelHelper.watchSend("Something went wrong. No nickname for you");
       });
   }
 
   private async screen() {
     return this.ec.guildController.getScreeningQuestions().then(async (questions) => {
       for (let i = 0; i < questions.length; i++) {
-        let answeredCorrect = await delay(messageSpacing).then(() =>
+        const answeredCorrect = await delay(messageSpacing).then(() =>
           this.askGateQuestion(questions[i])
         );
 
@@ -120,7 +115,7 @@ export default class OnBoarder {
   private async askGateQuestion(question: ScreeningQuestion) {
     try {
       // For strict questions, always take the first answer
-      let questionCopy = new Question(
+      const questionCopy = new Question(
         question.prompt,
         question.answer,
         question.timeout,
@@ -131,11 +126,11 @@ export default class OnBoarder {
       }
 
       // Wait until they supply an answer matching the question.answer regex
-      let message = await watchSendTimedMessage(this.ec, this.member, questionCopy);
+      const message = await watchSendTimedMessage(this.ec, this.member, questionCopy);
       if (!message) {
         throw new Error("No response given");
       }
-      let response = message.content;
+      const response = message.content;
 
       // if (await censorship.containsBannedWords(member.guild.id, response)) {
       //   softkickMember(channel, member, "We don't allow those words here");
@@ -144,7 +139,7 @@ export default class OnBoarder {
 
       // For strict questions, kick them if they answer wrong
       if (question.strict) {
-        let answerRe = new RegExp(question.answer, "gi");
+        const answerRe = new RegExp(question.answer, "gi");
         if (response.match(answerRe) == null) {
           throw new Error("Incorrect response given");
         }
