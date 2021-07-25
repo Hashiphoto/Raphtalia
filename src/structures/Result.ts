@@ -1,5 +1,0 @@
-class Result {
-
-}
-
-namespace Result

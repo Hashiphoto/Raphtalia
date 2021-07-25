@@ -1,9 +1,11 @@
-import { GuildMember } from "discord.js";
+import GuildBasedController from "./Controller";
 import GuildItem from "../structures/GuildItem";
+import { GuildMember } from "discord.js";
 import Item from "../structures/Item";
+import RaphError from "../structures/errors/RaphError";
+import { Result } from "../enums/Result";
 import UserInventory from "../structures/UserInventory";
 import UserItem from "../structures/UserItem";
-import GuildBasedController from "./Controller";
 
 export default class InventoryController extends GuildBasedController {
   /** GUILD ITEMS **/
@@ -64,8 +66,20 @@ export default class InventoryController extends GuildBasedController {
   public async userPurchase(item: GuildItem, user: GuildMember, quantity = 1) {
     // Check available stock
     if (!item.inStock()) {
-      throw ;
+      throw new RaphError(Result.OutOfStock);
     }
+    const userCurrency = await this.ec.currencyController.getCurrency(this.ec.initiator);
+    if (userCurrency < item.price) {
+      throw new RaphError(Result.TooPoor);
+    }
+
+    // Transfer money
+    await this.ec.currencyController.transferCurrency(
+      this.ec.initiator,
+      this.ec.raphtalia,
+      item.price
+    );
+
     // Subtract from guild stock
     const updatedItem = await this.subtractGuildStock(item, quantity);
     if (!updatedItem) {
@@ -78,6 +92,8 @@ export default class InventoryController extends GuildBasedController {
     // Add it to player stock
     item.quantity = quantity;
     await this.ec.db.inventory.insertUserItem(this.ec.guild.id, user.id, item);
+
+    // Return the user's new item
     return this.ec.db.inventory.getUserItem(this.ec.guild.id, user.id, item.id);
   }
 
