@@ -3,6 +3,7 @@ import Command from "./Command";
 import ExecutionContext from "../structures/ExecutionContext";
 import GuildItem from "../structures/GuildItem";
 import RNumber from "../structures/RNumber";
+import { Result } from "../enums/Result";
 
 export default class Buy extends Command {
   public constructor(context: ExecutionContext) {
@@ -39,25 +40,28 @@ export default class Buy extends Command {
       );
     }
 
-    if (!item.unlimitedQuantity && item.quantity === 0) {
-      return this.ec.channelHelper.watchSend(`${item.printName()} is currently out of stock`);
+    try {
+      await this.ec.inventoryController.userPurchase(item, this.ec.initiator);
+    } catch (error) {
+      switch (error.result) {
+        case Result.OutOfStock:
+          return this.ec.channelHelper.watchSend(`${item.printName()} is currently out of stock`);
+        case Result.TooPoor:
+          return this.ec.channelHelper.watchSend(
+            `You do not have enough money to buy ${item.printName()}. Current price: ${item.printPrice()}`
+          );
+        default:
+          return this.ec.channelHelper.watchSend(
+            `An error occurred purchasing the ${item.printName()}`
+          );
+      }
     }
 
-    const userCurrency = await this.ec.currencyController.getCurrency(this.ec.initiator);
-
-    if (userCurrency < item.price) {
-      return this.ec.channelHelper.watchSend(`You do not have enough money to buy this item`);
-    }
-
-    return this.ec.currencyController
-      .transferCurrency(this.ec.initiator, this.ec.raphtalia, item.price)
-      .then(() => this.ec.inventoryController.userPurchase(item, this.ec.initiator))
-      .then(() =>
-        this.ec.channelHelper.watchSend(
-          `Thank you for your purchase of ${RNumber.formatDollar(
-            item.price
-          )}!\n>>> ${item.printName()} | Uses: ${item.printMaxUses()}`
-        )
+    return this.ec.channelHelper
+      .watchSend(
+        `Thank you for your purchase of ${RNumber.formatDollar(
+          item.price
+        )}!\n>>> ${item.printName()} | Uses: ${item.printMaxUses()}`
       )
       .then(() => this.useItem(1, true));
   }

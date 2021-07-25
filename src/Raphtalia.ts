@@ -31,6 +31,7 @@ import Play from "./commands/Play";
 import Promote from "./commands/Promote";
 import Register from "./commands/Register";
 import Report from "./commands/Report";
+import { Result } from "./enums/Result";
 import RoleStatusController from "./controllers/message/RoleStatusController";
 import Roles from "./commands/Roles";
 import Scan from "./commands/Scan";
@@ -41,6 +42,7 @@ import Status from "./commands/Status";
 import Steal from "./commands/Steal";
 import Store from "./commands/Store";
 import Take from "./commands/Take";
+import UserItem from "./structures/UserItem";
 import dayjs from "dayjs";
 import delay from "delay";
 import secretConfig from "../config/secrets.config";
@@ -286,7 +288,7 @@ class Raphtalia {
       command = new NullCommand(context, `Unknown command "${context.messageHelper.command}"`);
     }
     if (command instanceof NullCommand) {
-      return Promise.resolve(command);
+      return command;
     }
 
     // Check if member has the correct item
@@ -299,6 +301,14 @@ class Raphtalia {
       return command;
     }
 
+    return this.autoBuyNeededItem(context, command);
+  }
+
+  /**
+   * Buy the item rquired to execute the given command, and return the command with that
+   * item attached
+   */
+  private async autoBuyNeededItem(context: ExecutionContext, command: Command): Promise<Command> {
     const guildItem = await context.inventoryController.getGuildItemByCommand(
       context.guild.id,
       command.name
@@ -310,21 +320,38 @@ class Raphtalia {
       );
     }
 
-    // If they don't, buy it
-    const purchasedUserItem = await context.inventoryController.userPurchase(
-      guildItem,
-      context.initiator
-    );
-    // Should never happen
+    let purchasedUserItem: UserItem | undefined;
+    try {
+      purchasedUserItem = await context.inventoryController.userPurchase(
+        guildItem,
+        context.initiator
+      );
+    } catch (error) {
+      let resultMessage = `An error occurred purchasing the ${guildItem.printName()} automatically`;
+      switch (error.result) {
+        case Result.OutOfStock:
+          resultMessage = `Could not auto-purchase ${guildItem.printName()} because it is currently out of stock`;
+          break;
+        case Result.TooPoor:
+          resultMessage = `Could not auto-purchase ${guildItem.printName()} because you're too poor. Current price: ${guildItem.printPrice()}`;
+          break;
+      }
+      return new NullCommand(context, resultMessage);
+    }
+
     if (!purchasedUserItem) {
       return new NullCommand(
         context,
         `Auto-purchasing this item failed. Please try "!Buy ${guildItem.name}"`
       );
     }
+
     await context.channelHelper.watchSend(
-      `*Purchased a ${guildItem.printName()} for ${guildItem.printPrice()}*`
+      `*${
+        context.initiator.displayName
+      } Auto-purchased a ${guildItem.printName()} for ${guildItem.printPrice()}*`
     );
+
     command.item = purchasedUserItem;
     return command;
   }
@@ -337,7 +364,7 @@ class Raphtalia {
         console.error(error);
         return context.message.react("🛑");
       })
-      .then(() => {
+      .finally(() => {
         context.message.channel.stopTyping(true);
       });
   }
@@ -416,6 +443,7 @@ class Raphtalia {
         if (process.env.NODE_ENV === "dev") {
           return new Debug(context);
         }
+        return new NullCommand(context, `Unknown command "${name}"`);
       default:
         return new NullCommand(context, `Unknown command "${name}"`);
     }
