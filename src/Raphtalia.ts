@@ -1,5 +1,9 @@
+import dayjs from "dayjs";
+import delay from "delay";
 import { Client, NewsChannel, TextChannel } from "discord.js";
-
+import secretConfig from "../config/secrets.config";
+import ChannelHelper from "./ChannelHelper";
+import CommandParser from "./CommandParser";
 import AllowWord from "./commands/AllowWord";
 import AutoDelete from "./commands/AutoDelete";
 import Balance from "./commands/Balance";
@@ -7,43 +11,39 @@ import BanList from "./commands/BanList";
 import BanWord from "./commands/BanWord";
 import Buy from "./commands/Buy";
 import Censorship from "./commands/Censorship";
-import ChannelHelper from "./ChannelHelper";
 import Command from "./commands/Command";
-import CommandParser from "./CommandParser";
-import Database from "./db/Database";
 import Debug from "./commands/Debug";
 import DeliverCheck from "./commands/DeliverCheck";
-import Demote from "./commands/zDemote";
-import ExecutionContext from "./structures/ExecutionContext";
 import Exile from "./commands/Exile";
-import Fine from "./commands/zFine";
 import Give from "./commands/Give";
 import Headpat from "./commands/Headpat";
 import Help from "./commands/Help";
 import HoldVote from "./commands/HoldVote";
 import Infractions from "./commands/Infractions";
-import JobScheduler from "./JobScheduler";
-import Kick from "./commands/zKick";
 import NullCommand from "./commands/NullCommand";
-import OnBoarder from "./Onboarder";
 import Pardon from "./commands/Pardon";
 import Play from "./commands/Play";
 import Promote from "./commands/Promote";
 import Register from "./commands/Register";
 import Report from "./commands/Report";
-import RoleStatusController from "./controllers/message/RoleStatusController";
 import Roles from "./commands/Roles";
 import Scan from "./commands/Scan";
 import Screening from "./commands/Screening";
 import ServerStatus from "./commands/ServerStatus";
-import SoftKick from "./commands/zSoftKick";
 import Status from "./commands/Status";
 import Steal from "./commands/Steal";
 import Store from "./commands/Store";
 import Take from "./commands/Take";
-import dayjs from "dayjs";
-import delay from "delay";
-import secretConfig from "../config/secrets.config";
+import Demote from "./commands/zDemote";
+import Fine from "./commands/zFine";
+import Kick from "./commands/zKick";
+import SoftKick from "./commands/zSoftKick";
+import RoleStatusController from "./controllers/message/RoleStatusController";
+import Database from "./db/Database";
+import JobScheduler from "./JobScheduler";
+import OnBoarder from "./Onboarder";
+import ExecutionContext from "./structures/ExecutionContext";
+
 
 class Raphtalia {
   private client: Client;
@@ -299,6 +299,7 @@ class Raphtalia {
       return command;
     }
 
+    // If they don't have the item, automatically buy it for them
     const guildItem = await context.inventoryController.getGuildItemByCommand(
       context.guild.id,
       command.name
@@ -309,6 +310,10 @@ class Raphtalia {
         `There is no item associated with the command "${command.name}"`
       );
     }
+
+    const buy = new Buy(context);
+    buy.
+    await buy.execute();
 
     // If they don't, buy it
     const purchasedUserItem = await context.inventoryController.userPurchase(
@@ -416,6 +421,7 @@ class Raphtalia {
         if (process.env.NODE_ENV === "dev") {
           return new Debug(context);
         }
+        return new NullCommand(context, `Unknown command "${name}"`);
       default:
         return new NullCommand(context, `Unknown command "${name}"`);
     }

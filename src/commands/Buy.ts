@@ -39,7 +39,7 @@ export default class Buy extends Command {
       );
     }
 
-    if (!item.unlimitedQuantity && item.quantity === 0) {
+    if (!item.inStock()) {
       return this.ec.channelHelper.watchSend(`${item.printName()} is currently out of stock`);
     }
 

@@ -1,9 +1,9 @@
-import GuildBasedController from "./Controller";
-import GuildItem from "../structures/GuildItem";
 import { GuildMember } from "discord.js";
+import GuildItem from "../structures/GuildItem";
 import Item from "../structures/Item";
 import UserInventory from "../structures/UserInventory";
 import UserItem from "../structures/UserItem";
+import GuildBasedController from "./Controller";
 
 export default class InventoryController extends GuildBasedController {
   /** GUILD ITEMS **/
@@ -58,7 +58,14 @@ export default class InventoryController extends GuildBasedController {
     return this.ec.db.inventory.findUserItem(this.ec.guild.id, member.id, name);
   }
 
+  /**
+   * Purchase an item from the store, taking into account cost and available quantity
+   */
   public async userPurchase(item: GuildItem, user: GuildMember, quantity = 1) {
+    // Check available stock
+    if (!item.inStock()) {
+      throw ;
+    }
     // Subtract from guild stock
     const updatedItem = await this.subtractGuildStock(item, quantity);
     if (!updatedItem) {
