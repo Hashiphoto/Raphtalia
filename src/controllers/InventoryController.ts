@@ -7,6 +7,8 @@ import { Result } from "../enums/Result";
 import UserInventory from "../structures/UserInventory";
 import UserItem from "../structures/UserItem";
 
+const MIN_PRICE_HIKE = 0.25;
+
 export default class InventoryController extends GuildBasedController {
   /** GUILD ITEMS **/
   public async findGuildItem(name: string) {
@@ -32,23 +34,21 @@ export default class InventoryController extends GuildBasedController {
     );
   }
 
-  public async increaseGuildItemPrice(guildItem: GuildItem) {
-    return this.ec.db.guilds.get(this.ec.guild.id).then((dbGuild) => {
-      if (!dbGuild) {
-        return;
-      }
-      const priceMultiplier = Math.exp((guildItem.soldInCycle - 1) * dbGuild.priceHikeCoefficient);
-      // No work
-      if (priceMultiplier === 1) {
-        return;
-      }
+  public async increaseGuildItemPrice(guildItem: GuildItem): Promise<void> {
+    const dbGuild = await this.ec.db.guilds.get(this.ec.guild.id);
 
-      return this.ec.db.inventory.updateGuildItemPrice(
-        this.ec.guild.id,
-        guildItem,
-        priceMultiplier * guildItem.price
-      );
-    });
+    if (!dbGuild) {
+      return;
+    }
+    const priceMultiplier = Math.exp((guildItem.soldInCycle - 1) * dbGuild.priceHikeCoefficient);
+    // No work
+    if (priceMultiplier === 1) {
+      return;
+    }
+    // Increase by a minimum of 1 dollar
+    const newPrice = Math.max(priceMultiplier * guildItem.price, guildItem.price + MIN_PRICE_HIKE);
+
+    await this.ec.db.inventory.updateGuildItemPrice(this.ec.guild.id, guildItem, newPrice);
   }
 
   public async getGuildItemByCommand(guildId: string, commandName: string) {
