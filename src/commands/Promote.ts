@@ -1,6 +1,6 @@
 import Command from "./Command";
 import ExecutionContext from "../structures/ExecutionContext";
-import MemberLimitError from "../structures/errors/MemberLimitError";
+import { Result } from "../enums/Result";
 
 export default class Promote extends Command {
   public constructor(context: ExecutionContext) {
@@ -10,17 +10,25 @@ export default class Promote extends Command {
   }
 
   public async execute(): Promise<any> {
-    return this.ec.memberController
-      .protectedPromote(this.ec.initiator)
-      .then(() => this.useItem())
-      .catch((error) => {
-        if (error instanceof MemberLimitError) {
-          return this.ec.channelHelper.watchSend(error.message);
-        }
-        if (error instanceof RangeError) {
-          return this.ec.channelHelper.watchSend(error.message);
-        }
+    try {
+      await this.ec.memberController.protectedPromote(this.ec.initiator);
+    } catch (error) {
+      console.log(typeof error);
+      if (error.name === "MemberLimitError") {
+        console.log(1);
+        return this.ec.channelHelper.watchSend(error.message);
+      } else if (error instanceof RangeError) {
+        console.log(2);
+        return this.ec.channelHelper.watchSend(error.message);
+      } else if (error.result === Result.OnCooldown) {
+        console.log(3);
+        return this.ec.channelHelper.watchSend("No");
+      } else {
+        console.log(4);
         throw error;
-      });
+      }
+    }
+
+    return this.useItem();
   }
 }

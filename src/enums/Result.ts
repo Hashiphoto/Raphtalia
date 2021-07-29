@@ -1,4 +1,5 @@
 enum Result {
+  OnCooldown,
   OutOfStock,
   Success,
   TooPoor,

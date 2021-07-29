@@ -2,6 +2,8 @@ import { GuildMember, Role, RoleResolvable } from "discord.js";
 
 import GuildBasedController from "./Controller";
 import MemberLimitError from "../structures/errors/MemberLimitError";
+import RaphError from "../structures/errors/RaphError";
+import { Result } from "../enums/Result";
 import RoleUtil from "../RoleUtil";
 import delay from "delay";
 import links from "../../resources/links";
@@ -62,10 +64,10 @@ export default class MemberController extends GuildBasedController {
    */
   public async checkInfractionCount(member: GuildMember, count?: number) {
     if (count === undefined) {
-      let user = await this.ec.db.users.get(member.id, member.guild.id);
+      const user = await this.ec.db.users.get(member.id, member.guild.id);
       count = user.infractions;
     }
-    let response = `${member.toString()} has incurred ${count} infractions\n`;
+    const response = `${member.toString()} has incurred ${count} infractions\n`;
     if (count >= this.infractionLimit) {
       return this.demoteMember(member, response);
     }
@@ -73,7 +75,7 @@ export default class MemberController extends GuildBasedController {
   }
 
   public async softKick(member: GuildMember, reason?: string, kicker?: GuildMember) {
-    let inviteChannel = member.guild.systemChannel;
+    const inviteChannel = member.guild.systemChannel;
     if (!inviteChannel) {
       return;
     }
@@ -91,8 +93,8 @@ export default class MemberController extends GuildBasedController {
           .then(() => member.kick())
       )
       .then(() => {
-        let randInt = Math.floor(Math.random() * links.gifs.kicks.length);
-        let kickGif = links.gifs.kicks[randInt];
+        const randInt = Math.floor(Math.random() * links.gifs.kicks.length);
+        const kickGif = links.gifs.kicks[randInt];
 
         return `:wave: ${member.displayName} has been kicked and invited back\n${kickGif}`;
       })
@@ -114,7 +116,7 @@ export default class MemberController extends GuildBasedController {
       return;
     }
 
-    var higherRoles = this.ec.guild.roles.cache
+    const higherRoles = this.ec.guild.roles.cache
       .filter((role) => role.comparePositionTo(curRole) > 0 && role.hoist)
       .array()
       .sort((role1, role2) => {
@@ -137,7 +139,7 @@ export default class MemberController extends GuildBasedController {
       return;
     }
 
-    var lowerRoles = this.ec.guild.roles.cache
+    const lowerRoles = this.ec.guild.roles.cache
       .filter((role) => role.comparePositionTo(curRole) < 0 && role.hoist)
       .array()
       .sort((role1, role2) => {
@@ -221,7 +223,7 @@ export default class MemberController extends GuildBasedController {
     }
 
     // Remove all hoisted roles and add the ones specified
-    let currentRoles = clearAllRoles
+    const currentRoles = clearAllRoles
       ? member.roles.cache
       : member.roles.cache.filter((role) => role.hoist);
 
@@ -235,7 +237,7 @@ export default class MemberController extends GuildBasedController {
   }
 
   public addRoles(member: GuildMember, roles: RoleResolvable[]) {
-    var discordRoles = RoleUtil.parseRoles(member.guild, roles);
+    const discordRoles = RoleUtil.parseRoles(member.guild, roles);
     return member.roles.add(discordRoles);
   }
 
@@ -249,6 +251,10 @@ export default class MemberController extends GuildBasedController {
     }
 
     const dbRole = await this.ec.db.roles.getSingle(nextRole.id);
+
+    if (nextRole.id === "418672465322049546") {
+      throw new RaphError(Result.OnCooldown);
+    }
 
     // If it's contested, no one can move into it
     if (dbRole.contested) {
