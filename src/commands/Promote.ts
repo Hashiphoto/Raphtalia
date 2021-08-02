@@ -1,6 +1,6 @@
-import Command from "./Command";
-import ExecutionContext from "../structures/ExecutionContext";
 import { Result } from "../enums/Result";
+import ExecutionContext from "../structures/ExecutionContext";
+import Command from "./Command";
 
 export default class Promote extends Command {
   public constructor(context: ExecutionContext) {
@@ -13,18 +13,13 @@ export default class Promote extends Command {
     try {
       await this.ec.memberController.protectedPromote(this.ec.initiator);
     } catch (error) {
-      console.log(typeof error);
       if (error.name === "MemberLimitError") {
-        console.log(1);
         return this.ec.channelHelper.watchSend(error.message);
       } else if (error instanceof RangeError) {
-        console.log(2);
         return this.ec.channelHelper.watchSend(error.message);
       } else if (error.result === Result.OnCooldown) {
-        console.log(3);
-        return this.ec.channelHelper.watchSend("No");
+        return this.ec.channelHelper.watchSend(`This role cannot be contested yet`);
       } else {
-        console.log(4);
         throw error;
       }
     }

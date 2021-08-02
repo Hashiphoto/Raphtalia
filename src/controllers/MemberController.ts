@@ -1,12 +1,12 @@
+import dayjs from "dayjs";
+import delay from "delay";
 import { GuildMember, Role, RoleResolvable } from "discord.js";
-
-import GuildBasedController from "./Controller";
-import MemberLimitError from "../structures/errors/MemberLimitError";
-import RaphError from "../structures/errors/RaphError";
+import links from "../../resources/links";
 import { Result } from "../enums/Result";
 import RoleUtil from "../RoleUtil";
-import delay from "delay";
-import links from "../../resources/links";
+import MemberLimitError from "../structures/errors/MemberLimitError";
+import RaphError from "../structures/errors/RaphError";
+import GuildBasedController from "./Controller";
 
 export default class MemberController extends GuildBasedController {
   private infractionLimit = 3;
@@ -250,23 +250,40 @@ export default class MemberController extends GuildBasedController {
       throw new RangeError(`${member.toString()} holds the highest office already\n`);
     }
 
-    const dbRole = await this.ec.db.roles.getSingle(nextRole.id);
+    const nextRoleDb = await this.ec.db.roles.getSingle(nextRole.id);
 
-    if (nextRole.id === "418672465322049546") {
-      throw new RaphError(Result.OnCooldown);
+    // Check promotion CD
+    if (nextRoleDb.lastPromotionOn) {
+      const rolesLowToHigh = this.ec.guild.roles.cache
+        .filter((role) => role.hoist)
+        .sort((a, b) => a.comparePositionTo(b))
+        .array()
+        .map((r) => r.id);
+      const roleHeight = rolesLowToHigh.indexOf(nextRoleDb.id);
+
+      if (roleHeight >= 0) {
+        const promotionAvailableDate = nextRoleDb.lastPromotionOn.add(roleHeight, "days");
+        if (promotionAvailableDate.isAfter(dayjs())) {
+          throw new RaphError(Result.OnCooldown, promotionAvailableDate);
+        }
+      }
     }
 
     // If it's contested, no one can move into it
-    if (dbRole.contested) {
+    if (nextRoleDb.contested) {
       throw new MemberLimitError(
-        dbRole.memberLimit,
+        nextRoleDb.memberLimit,
         `Cannot promote ${member.toString()} to ${nextRole.name} ` +
           `since it is currently being contested. Try again after the contest is resolved\n`
       );
     }
 
     // If it's full, but not contested, start a new contest
-    if (!dbRole.unlimited && nextRole.members.size >= dbRole.memberLimit && member.roles.hoist) {
+    if (
+      !nextRoleDb.unlimited &&
+      nextRole.members.size >= nextRoleDb.memberLimit &&
+      member.roles.hoist
+    ) {
       return this.ec.roleContestController.startContest(nextRole, member.roles.hoist, member);
     }
 
@@ -290,9 +307,12 @@ export default class MemberController extends GuildBasedController {
       }
     }
 
-    return this.setHoistedRole(member, role).then((roleChanged) => {
+    return this.setHoistedRole(member, role).then(async (roleChanged) => {
       if (roleChanged) {
-        this.setInfractions(member, 0);
+        role && (await this.ec.db.roles.updateRolePromotionDate(role.id));
+
+        await this.setInfractions(member, 0);
+
         return `${member.toString()} has been promoted to **${
           role?.name
         }**!\nInfractions have been reset\n`;
