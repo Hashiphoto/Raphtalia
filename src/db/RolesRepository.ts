@@ -1,12 +1,11 @@
 import { FieldPacket, ResultSetHeader, RowDataPacket } from "mysql2/promise";
-
 import DbRole from "../structures/DbRole";
-import Repository from "./Repository";
 import RoleContest from "../structures/RoleContest";
 import RoleContestBid from "../structures/RoleContestBid";
+import Repository from "./Repository";
 
 export default class RolesRepository extends Repository {
-  private contestSelect: string = "SELECT *, rc.id as contestId FROM role_contests rc ";
+  private contestSelect = "SELECT *, rc.id as contestId FROM role_contests rc ";
 
   public getSingle(roleId: string) {
     return this.pool
@@ -16,9 +15,9 @@ export default class RolesRepository extends Repository {
           "WHERE r.id=?",
         [roleId]
       )
-      .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
+      .then(([rows]: [RowDataPacket[], FieldPacket[]]) => {
         if (rows.length === 0) {
-          return new DbRole(roleId, -1);
+          return new DbRole(roleId, -1, false, undefined);
         }
         return this.toRoleObject(rows[0]);
       });
@@ -27,10 +26,16 @@ export default class RolesRepository extends Repository {
   public getMulti(roleIds: string[]) {
     return this.pool
       .query("SELECT * FROM roles WHERE id IN (?)", [roleIds])
-      .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
+      .then(([rows]: [RowDataPacket[], FieldPacket[]]) => {
         return rows.map((r) => this.toRoleObject(r));
       })
       .catch((error) => console.error(error));
+  }
+
+  public async updateRolePromotionDate(roleId: string): Promise<void> {
+    await this.pool.query(`UPDATE roles SET last_promotion_on = CURRENT_TIMESTAMP WHERE id = ?`, [
+      roleId,
+    ]);
   }
 
   public insertRoleContest(
@@ -48,7 +53,7 @@ export default class RolesRepository extends Repository {
           [roleId, fromRoleId, initiatorId, startDate, messageId]
         )
       )
-      .then(([result, fields]: [ResultSetHeader, FieldPacket[]]) => {
+      .then(([result]: [ResultSetHeader, FieldPacket[]]) => {
         return result.affectedRows > 0;
       });
   }
@@ -56,7 +61,7 @@ export default class RolesRepository extends Repository {
   public async getRoleContest(roleContestId: number, getBids = false) {
     return this.pool
       .query(this.contestSelect + "WHERE rc.id = ?", [roleContestId])
-      .then(async ([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
+      .then(async ([rows]: [RowDataPacket[], FieldPacket[]]) => {
         if (rows.length === 0) {
           return;
         }
@@ -71,7 +76,7 @@ export default class RolesRepository extends Repository {
   public async findRoleContest(roleId = "", userId = "", getBids = false) {
     return this.pool
       .query(this.contestSelect + "WHERE role_id=? OR initiator_id=?", [roleId, userId])
-      .then(async ([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
+      .then(async ([rows]: [RowDataPacket[], FieldPacket[]]) => {
         if (rows.length === 0) {
           return;
         }
@@ -88,7 +93,7 @@ export default class RolesRepository extends Repository {
       .query(this.contestSelect + "JOIN users u ON u.id = rc.initiator_id WHERE u.guild_id=?", [
         guildId,
       ])
-      .then(async ([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
+      .then(async ([rows]: [RowDataPacket[], FieldPacket[]]) => {
         const roleContests = rows.map((r) => this.toRoleContest(r));
 
         for (const contest of roleContests) {
@@ -122,7 +127,7 @@ export default class RolesRepository extends Repository {
   }
 
   private toRoleObject(row: RowDataPacket) {
-    return new DbRole(row.role_id, row.member_limit, row.contest_id != null);
+    return new DbRole(row.role_id, row.member_limit, row.contest_id != null, row.last_promotion_on);
   }
 
   private toRoleContest(row: RowDataPacket) {

@@ -1,5 +1,4 @@
 import Discord, { EmbedFieldData, MessageEmbed } from "discord.js";
-
 import ExecutionContext from "../../structures/ExecutionContext";
 import SingletonMessageController from "./SingletonMessageController";
 
@@ -26,14 +25,15 @@ export default class RoleStatusController extends SingletonMessageController {
   }
 
   private async getFields(): Promise<EmbedFieldData[]> {
-    let fields = [];
-    let discordRoles = this.ec.guild.roles.cache
+    const fields = [];
+
+    const discordRoles = this.ec.guild.roles.cache
       .filter((role) => role.hoist)
       .sort((a, b) => b.comparePositionTo(a))
       .array();
 
     for (let i = 0; i < discordRoles.length; i++) {
-      let dbRole = await this.ec.db.roles.getSingle(discordRoles[i].id);
+      const dbRole = await this.ec.db.roles.getSingle(discordRoles[i].id);
       let roleInfo = `Members: ${discordRoles[i].members.size}`;
       if (dbRole.memberLimit >= 0) {
         roleInfo += `/${dbRole.memberLimit}`;

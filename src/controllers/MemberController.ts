@@ -1,10 +1,12 @@
-import { GuildMember, Role, RoleResolvable } from "discord.js";
-
-import GuildBasedController from "./Controller";
-import MemberLimitError from "../structures/errors/MemberLimitError";
-import RoleUtil from "../RoleUtil";
+import dayjs from "dayjs";
 import delay from "delay";
+import { GuildMember, Role, RoleResolvable } from "discord.js";
 import links from "../../resources/links";
+import { Result } from "../enums/Result";
+import RoleUtil from "../RoleUtil";
+import MemberLimitError from "../structures/errors/MemberLimitError";
+import RaphError from "../structures/errors/RaphError";
+import GuildBasedController from "./Controller";
 
 export default class MemberController extends GuildBasedController {
   private infractionLimit = 3;
@@ -62,10 +64,10 @@ export default class MemberController extends GuildBasedController {
    */
   public async checkInfractionCount(member: GuildMember, count?: number) {
     if (count === undefined) {
-      let user = await this.ec.db.users.get(member.id, member.guild.id);
+      const user = await this.ec.db.users.get(member.id, member.guild.id);
       count = user.infractions;
     }
-    let response = `${member.toString()} has incurred ${count} infractions\n`;
+    const response = `${member.toString()} has incurred ${count} infractions\n`;
     if (count >= this.infractionLimit) {
       return this.demoteMember(member, response);
     }
@@ -73,7 +75,7 @@ export default class MemberController extends GuildBasedController {
   }
 
   public async softKick(member: GuildMember, reason?: string, kicker?: GuildMember) {
-    let inviteChannel = member.guild.systemChannel;
+    const inviteChannel = member.guild.systemChannel;
     if (!inviteChannel) {
       return;
     }
@@ -91,8 +93,8 @@ export default class MemberController extends GuildBasedController {
           .then(() => member.kick())
       )
       .then(() => {
-        let randInt = Math.floor(Math.random() * links.gifs.kicks.length);
-        let kickGif = links.gifs.kicks[randInt];
+        const randInt = Math.floor(Math.random() * links.gifs.kicks.length);
+        const kickGif = links.gifs.kicks[randInt];
 
         return `:wave: ${member.displayName} has been kicked and invited back\n${kickGif}`;
       })
@@ -114,7 +116,7 @@ export default class MemberController extends GuildBasedController {
       return;
     }
 
-    var higherRoles = this.ec.guild.roles.cache
+    const higherRoles = this.ec.guild.roles.cache
       .filter((role) => role.comparePositionTo(curRole) > 0 && role.hoist)
       .array()
       .sort((role1, role2) => {
@@ -137,7 +139,7 @@ export default class MemberController extends GuildBasedController {
       return;
     }
 
-    var lowerRoles = this.ec.guild.roles.cache
+    const lowerRoles = this.ec.guild.roles.cache
       .filter((role) => role.comparePositionTo(curRole) < 0 && role.hoist)
       .array()
       .sort((role1, role2) => {
@@ -221,7 +223,7 @@ export default class MemberController extends GuildBasedController {
     }
 
     // Remove all hoisted roles and add the ones specified
-    let currentRoles = clearAllRoles
+    const currentRoles = clearAllRoles
       ? member.roles.cache
       : member.roles.cache.filter((role) => role.hoist);
 
@@ -235,7 +237,7 @@ export default class MemberController extends GuildBasedController {
   }
 
   public addRoles(member: GuildMember, roles: RoleResolvable[]) {
-    var discordRoles = RoleUtil.parseRoles(member.guild, roles);
+    const discordRoles = RoleUtil.parseRoles(member.guild, roles);
     return member.roles.add(discordRoles);
   }
 
@@ -248,19 +250,40 @@ export default class MemberController extends GuildBasedController {
       throw new RangeError(`${member.toString()} holds the highest office already\n`);
     }
 
-    const dbRole = await this.ec.db.roles.getSingle(nextRole.id);
+    const nextRoleDb = await this.ec.db.roles.getSingle(nextRole.id);
+
+    // Check promotion CD
+    if (nextRoleDb.lastPromotionOn) {
+      const rolesLowToHigh = this.ec.guild.roles.cache
+        .filter((role) => role.hoist)
+        .sort((a, b) => a.comparePositionTo(b))
+        .array()
+        .map((r) => r.id);
+      const roleHeight = rolesLowToHigh.indexOf(nextRoleDb.id);
+
+      if (roleHeight >= 0) {
+        const promotionAvailableDate = nextRoleDb.lastPromotionOn.add(roleHeight, "days");
+        if (promotionAvailableDate.isAfter(dayjs())) {
+          throw new RaphError(Result.OnCooldown, promotionAvailableDate);
+        }
+      }
+    }
 
     // If it's contested, no one can move into it
-    if (dbRole.contested) {
+    if (nextRoleDb.contested) {
       throw new MemberLimitError(
-        dbRole.memberLimit,
+        nextRoleDb.memberLimit,
         `Cannot promote ${member.toString()} to ${nextRole.name} ` +
           `since it is currently being contested. Try again after the contest is resolved\n`
       );
     }
 
     // If it's full, but not contested, start a new contest
-    if (!dbRole.unlimited && nextRole.members.size >= dbRole.memberLimit && member.roles.hoist) {
+    if (
+      !nextRoleDb.unlimited &&
+      nextRole.members.size >= nextRoleDb.memberLimit &&
+      member.roles.hoist
+    ) {
       return this.ec.roleContestController.startContest(nextRole, member.roles.hoist, member);
     }
 
@@ -284,9 +307,12 @@ export default class MemberController extends GuildBasedController {
       }
     }
 
-    return this.setHoistedRole(member, role).then((roleChanged) => {
+    return this.setHoistedRole(member, role).then(async (roleChanged) => {
       if (roleChanged) {
-        this.setInfractions(member, 0);
+        role && (await this.ec.db.roles.updateRolePromotionDate(role.id));
+
+        await this.setInfractions(member, 0);
+
         return `${member.toString()} has been promoted to **${
           role?.name
         }**!\nInfractions have been reset\n`;

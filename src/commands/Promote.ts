@@ -1,6 +1,6 @@
-import Command from "./Command";
+import { Result } from "../enums/Result";
 import ExecutionContext from "../structures/ExecutionContext";
-import MemberLimitError from "../structures/errors/MemberLimitError";
+import Command from "./Command";
 
 export default class Promote extends Command {
   public constructor(context: ExecutionContext) {
@@ -10,17 +10,20 @@ export default class Promote extends Command {
   }
 
   public async execute(): Promise<any> {
-    return this.ec.memberController
-      .protectedPromote(this.ec.initiator)
-      .then(() => this.useItem())
-      .catch((error) => {
-        if (error instanceof MemberLimitError) {
-          return this.ec.channelHelper.watchSend(error.message);
-        }
-        if (error instanceof RangeError) {
-          return this.ec.channelHelper.watchSend(error.message);
-        }
+    try {
+      await this.ec.memberController.protectedPromote(this.ec.initiator);
+    } catch (error) {
+      if (error.name === "MemberLimitError") {
+        return this.ec.channelHelper.watchSend(error.message);
+      } else if (error instanceof RangeError) {
+        return this.ec.channelHelper.watchSend(error.message);
+      } else if (error.result === Result.OnCooldown) {
+        return this.ec.channelHelper.watchSend(`This role cannot be contested yet`);
+      } else {
         throw error;
-      });
+      }
+    }
+
+    return this.useItem();
   }
 }
