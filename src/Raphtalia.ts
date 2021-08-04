@@ -1,58 +1,58 @@
 import { Client, NewsChannel, TextChannel } from "discord.js";
 
-import AllowWord from "./commands/AllowWord";
-import AutoDelete from "./commands/AutoDelete";
-import Balance from "./commands/Balance";
-import BanList from "./commands/BanList";
-import BanWord from "./commands/BanWord";
-import Buy from "./commands/Buy";
-import Censorship from "./commands/Censorship";
-import ChannelHelper from "./ChannelHelper";
-import Command from "./commands/Command";
+import AllowWord from "./routes/commands/AllowWord";
+import AutoDelete from "./routes/commands/AutoDelete";
+import Balance from "./routes/commands/Balance";
+import BanList from "./routes/commands/BanList";
+import BanWord from "./routes/commands/BanWord";
+import Buy from "./routes/commands/Buy";
+import Censorship from "./routes/commands/Censorship";
+import ChannelHelper from "./services/ChannelHelper";
+import Command from "./routes/commands/Command";
 import CommandParser from "./CommandParser";
-import Database from "./db/Database";
-import Debug from "./commands/Debug";
-import DeliverCheck from "./commands/DeliverCheck";
-import Demote from "./commands/zDemote";
-import ExecutionContext from "./structures/ExecutionContext";
-import Exile from "./commands/Exile";
-import Fine from "./commands/zFine";
-import Give from "./commands/Give";
-import Headpat from "./commands/Headpat";
-import Help from "./commands/Help";
-import HoldVote from "./commands/HoldVote";
-import Infractions from "./commands/Infractions";
+import DatabaseService from "./services/Database.service";
+import Debug from "./routes/commands/Debug";
+import DeliverCheck from "./routes/commands/DeliverCheck";
+import Demote from "./routes/commands/zDemote";
+import ExecutionContext from "./models/ExecutionContext";
+import Exile from "./routes/commands/Exile";
+import Fine from "./routes/commands/zFine";
+import Give from "./routes/commands/Give";
+import Headpat from "./routes/commands/Headpat";
+import Help from "./routes/commands/Help";
+import HoldVote from "./routes/commands/HoldVote";
+import Infractions from "./routes/commands/Infractions";
 import JobScheduler from "./JobScheduler";
-import Kick from "./commands/zKick";
-import NullCommand from "./commands/NullCommand";
+import Kick from "./routes/commands/zKick";
+import NullCommand from "./routes/commands/NullCommand";
 import OnBoarder from "./Onboarder";
-import Pardon from "./commands/Pardon";
-import Play from "./commands/Play";
-import Promote from "./commands/Promote";
-import Register from "./commands/Register";
-import Report from "./commands/Report";
+import Pardon from "./routes/commands/Pardon";
+import Play from "./routes/commands/Play";
+import Promote from "./routes/commands/Promote";
+import Register from "./routes/commands/Register";
+import Report from "./routes/commands/Report";
 import { Result } from "./enums/Result";
-import RoleStatusController from "./controllers/message/RoleStatusController";
-import Roles from "./commands/Roles";
-import Scan from "./commands/Scan";
-import Screening from "./commands/Screening";
-import ServerStatus from "./commands/ServerStatus";
-import SoftKick from "./commands/zSoftKick";
-import Status from "./commands/Status";
-import Steal from "./commands/Steal";
-import Store from "./commands/Store";
-import Take from "./commands/Take";
-import UserItem from "./structures/UserItem";
+import RoleStatusController from "./services/message/RoleStatusController";
+import Roles from "./routes/commands/Roles";
+import Scan from "./routes/commands/Scan";
+import Screening from "./routes/commands/Screening";
+import ServerStatus from "./routes/commands/ServerStatus";
+import SoftKick from "./routes/commands/zSoftKick";
+import Status from "./routes/commands/Status";
+import Steal from "./routes/commands/Steal";
+import Store from "./routes/commands/Store";
+import Take from "./routes/commands/Take";
+import UserItem from "./models/UserItem";
 import dayjs from "dayjs";
 import delay from "delay";
 import secretConfig from "../config/secrets.config";
 
 class Raphtalia {
   private client: Client;
-  private db: Database;
+  private db: DatabaseService;
   private jobScheduler: JobScheduler;
 
-  constructor(db: Database) {
+  constructor(db: DatabaseService) {
     this.db = db;
     this.client = new Client();
 
@@ -102,14 +102,16 @@ class Raphtalia {
       this.delayedDelete(context, deleteTime);
 
       if (message.content.startsWith(CommandParser.COMMAND_PREFIX)) {
-        return this.handleCommand(context).then(() => context.currencyController.payoutMessage());
+        return this.handleCommand(context).then(() =>
+          context.currencyController.payoutMessageAuthor()
+        );
       } else {
         return context.censorController.censorMessage().then((censored) => {
           // No money for censored messages
           if (censored) {
             return;
           }
-          return context.currencyController.payoutMessage();
+          return context.currencyController.payoutMessageAuthor();
         });
       }
     });
@@ -254,24 +256,6 @@ class Raphtalia {
         return;
       }
       throw error;
-    });
-  }
-
-  /**
-   * Adds the "watchSend" method to the channel to send messages and delete them
-   * after a delay (set in the channel's db entry)
-   *
-   * @param {Discord.TextChannel} channel
-   * @returns {Number} Milliseconds before messages in this channel should be deleted
-   */
-  getDeleteTime(channel: TextChannel) {
-    return this.db.channels.get(channel.id).then((dbChannel) => {
-      let deleteTime = -1;
-      if (dbChannel && dbChannel.delete_ms >= 0) {
-        deleteTime = dbChannel.delete_ms;
-      }
-
-      return deleteTime;
     });
   }
 
