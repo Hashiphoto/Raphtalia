@@ -1,5 +1,5 @@
-import CommandItem from "./CommandItem";
 import Item from "./Item";
+import CommandItem from "./ItemCommand";
 import RNumber from "./RNumber";
 
 export default class GuildItem extends Item {
@@ -10,17 +10,19 @@ export default class GuildItem extends Item {
 
   public constructor(
     id: string,
+    guildId: string,
     name: string,
     maxUses: number,
     quantity: number,
     commands: CommandItem[],
     isStealProtected: boolean,
+    guildId: string,
     price: number,
     maxQuantity: number,
     soldInCycle: number,
     dateLastSold: Date
   ) {
-    super(id, name, maxUses, quantity, commands, isStealProtected);
+    super(id, guildId, name, maxUses, quantity, commands, isStealProtected);
 
     this.price = price;
     this.maxQuantity = maxQuantity;
@@ -42,6 +44,6 @@ export default class GuildItem extends Item {
     const quantity =
       `Quantity: ` + (this.unlimitedQuantity ? "∞" : `${this.quantity}/${this.maxQuantity}`) + `\n`;
 
-    return price + uses + quantity + this.getCommands();
+    return price + uses + quantity + this.printCommands();
   }
 }

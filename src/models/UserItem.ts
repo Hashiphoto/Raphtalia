@@ -1,4 +1,4 @@
-import CommandItem from "./CommandItem";
+import CommandItem from "./ItemCommand";
 import Item from "./Item";
 import dayjs from "dayjs";
 
@@ -9,6 +9,7 @@ export default class UserItem extends Item {
 
   public constructor(
     id: string,
+    guildId: string,
     name: string,
     maxUses: number,
     quantity: number,
@@ -18,14 +19,14 @@ export default class UserItem extends Item {
     datePurchased: Date,
     userId: string
   ) {
-    super(id, name, maxUses, quantity, commands, isStealProtected);
+    super(id, guildId, name, maxUses, quantity, commands, isStealProtected);
 
     this.remainingUses = remainingUses;
     this.datePurchased = datePurchased;
     this.userId = userId;
   }
 
-  public get stealDc() {
+  public get stealDc(): number {
     const daysSincePurchase = Math.abs(
       dayjs.duration(dayjs().diff(dayjs(this.datePurchased))).asDays()
     );
@@ -39,9 +40,10 @@ export default class UserItem extends Item {
   /**
    * Returns a deep-copy of this item
    */
-  public copy() {
+  public copy(): UserItem {
     return new UserItem(
       this.id,
+      this.guildId,
       this.name,
       this.maxUses,
       this.quantity,
@@ -53,10 +55,10 @@ export default class UserItem extends Item {
     );
   }
 
-  public getDetails() {
+  public getDetails(): string {
     const quantity = `Quantity: ${this.quantity}\n`;
     const uses = `Uses: ${this.unlimitedUses ? "∞" : `${this.remainingUses}/${this.maxUses}`}\n`;
 
-    return quantity + uses + this.getCommands();
+    return quantity + uses + this.printCommands();
   }
 }

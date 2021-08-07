@@ -1,8 +1,11 @@
-import { Client } from "discord.js";
+import { Client, Guild as DsGuild, GuildMember } from "discord.js";
+
+import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
 import dayjs from "dayjs";
-import guildMemberRoute from "../routes/client/guildMember.route";
-import messageRoute from "../routes/client/message.route";
-import reactionRoute from "../routes/client/reaction.route";
+import guildMemberRoute from "../routes/guildMember.route";
+import messageRoute from "../routes/message.route";
+import reactionRoute from "../routes/reaction.route";
 import secretConfig from "../../config/secrets.config";
 import { singleton } from "tsyringe";
 
@@ -41,6 +44,17 @@ class ClientService {
     messageRoute(this._client);
     guildMemberRoute(this._client);
     reactionRoute(this._client);
+  }
+
+  public getRaphtaliaMember(guild: DsGuild): GuildMember {
+    if (!this._client.user) {
+      throw new RaphError(Result.NotFound);
+    }
+    const raphtalia = guild.members.cache.get(this._client.user.id);
+    if (!raphtalia) {
+      throw new RaphError(Result.NotFound);
+    }
+    return raphtalia;
   }
 }
 

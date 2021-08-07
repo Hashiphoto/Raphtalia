@@ -1,77 +1,79 @@
-import AllowWord from "../routes/commands/AllowWord";
-import AutoDelete from "../routes/commands/AutoDelete";
-import Balance from "../routes/commands/Balance";
-import BanList from "../routes/commands/BanList";
-import BanWord from "../routes/commands/BanWord";
-import Buy from "../routes/commands/Buy";
-import Censorship from "../routes/commands/Censorship";
-import Command from "../routes/commands/Command";
-import Debug from "../routes/commands/Debug";
-import DeliverCheck from "../routes/commands/DeliverCheck";
-import Demote from "../routes/commands/zDemote";
-import ExecutionContext from "../models/ExecutionContext";
-import Exile from "../routes/commands/Exile";
-import Fine from "../routes/commands/zFine";
-import Give from "../routes/commands/Give";
-import Headpat from "../routes/commands/Headpat";
-import Help from "../routes/commands/Help";
-import HoldVote from "../routes/commands/HoldVote";
-import Infractions from "../routes/commands/Infractions";
-import Kick from "../routes/commands/zKick";
 import { Message } from "discord.js";
-import NullCommand from "../routes/commands/NullCommand";
-import Pardon from "../routes/commands/Pardon";
-import Play from "../routes/commands/Play";
-import Promote from "../routes/commands/Promote";
-import Raphtalia from "../Raphtalia";
-import Register from "../routes/commands/Register";
-import Report from "../routes/commands/Report";
+import { inject, injectable } from "tsyringe";
+import AllowWord from "../commands/AllowWord";
+import AutoDelete from "../commands/AutoDelete";
+import Balance from "../commands/Balance";
+import BanList from "../commands/BanList";
+import BanWord from "../commands/BanWord";
+import Buy from "../commands/Buy";
+import Censorship from "../commands/Censorship";
+import Command from "../commands/Command";
+import Debug from "../commands/Debug";
+import Exile from "../commands/Exile";
+import Give from "../commands/Give";
+import Headpat from "../commands/Headpat";
+import Help from "../commands/Help";
+import HoldVote from "../commands/HoldVote";
+import Infractions from "../commands/Infractions";
+import NullCommand from "../commands/NullCommand";
+import Pardon from "../commands/Pardon";
+import Play from "../commands/Play";
+import Promote from "../commands/Promote";
+import Register from "../commands/Register";
+import Report from "../commands/Report";
+import Roles from "../commands/Roles";
+import Scan from "../commands/Scan";
+import Screening from "../commands/Screening";
+import ServerStatus from "../commands/ServerStatus";
+import Status from "../commands/Status";
+import Steal from "../commands/Steal";
+import Store from "../commands/Store";
+import Take from "../commands/Take";
 import { Result } from "../enums/Result";
-import Roles from "../routes/commands/Roles";
-import Scan from "../routes/commands/Scan";
-import Screening from "../routes/commands/Screening";
-import ServerStatus from "../routes/commands/ServerStatus";
-import SoftKick from "../routes/commands/zSoftKick";
-import Status from "../routes/commands/Status";
-import Steal from "../routes/commands/Steal";
-import Store from "../routes/commands/Store";
-import Take from "../routes/commands/Take";
+import CommmandMessage from "../models/dsExtensions/CommandMessage";
 import UserItem from "../models/UserItem";
-import { injectable } from "tsyringe";
+import RoleService from "./Role.service";
 
 @injectable()
 export default class CommandService {
-  public constructor() {}
+  public constructor(@inject(RoleService) private _roleService: RoleService) {}
 
-  public async processMessage(message: Message): Promise<void> {}
+  public async processMessage(message: Message): Promise<void> {
+    const cmdMessage = message as CommmandMessage;
+    const command = await this.selectCommand(cmdMessage);
+    await this.executeCommand(cmdMessage, command);
+  }
 
-  private async selectCommand(context: ExecutionContext): Promise<Command> {
+  private async selectCommand(cmdMessage: CommmandMessage): Promise<Command> {
     // Check for exile
-    const exileRole = context.guild.roles.cache.find((r) => r.name === "Exile");
-    if (exileRole && context.message.member?.roles.cache.find((r) => r.id === exileRole.id)) {
-      return Promise.resolve(new NullCommand(context, `You cannot use commands while in exile`));
+    if (!cmdMessage.guild) {
+      return new NullCommand("Commands can only be used in a server text channel");
+    }
+    const exileRole = await this._roleService.getCreateExileRole(cmdMessage.guild);
+    if (cmdMessage.member?.roles.cache.find((r) => r.id === exileRole.id)) {
+      return new NullCommand(`You cannot use commands while in exile`);
     }
 
     // Get the command
-    let command = Raphtalia.getCommandByName(context, context.messageHelper.command);
+    const command = this.getCommandByName(cmdMessage.command);
     if (!command) {
-      command = new NullCommand(context, `Unknown command "${context.messageHelper.command}"`);
+      return new NullCommand(`Unknown command "${cmdMessage.command}"`);
     }
     if (command instanceof NullCommand) {
       return command;
     }
 
     // Check if member has the correct item
-    const userItem = await context.inventoryController.getUserItemByCommand(
-      context.initiator,
-      command.name
-    );
-    if (userItem) {
-      command.item = userItem;
-      return command;
-    }
+    // const userItem = await context.inventoryController.getUserItemByCommand(
+    //   context.initiator,
+    //   command.name
+    // );
+    // if (userItem) {
+    //   command.item = userItem;
+    //   return command;
+    // }
 
-    return this.autoBuyNeededItem(context, command);
+    // return this.autoBuyNeededItem(context, command);
   }
 
   /**
@@ -126,96 +128,83 @@ export default class CommandService {
     return command;
   }
 
-  private async executeCommand(context: ExecutionContext, command: Command) {
-    context.message.channel.startTyping();
+  private async executeCommand(cmdMessage: CommmandMessage, command: Command) {
+    cmdMessage.channel.startTyping();
     return command
-      .execute()
+      .executeDefault(cmdMessage)
       .catch((error) => {
         console.error(error);
-        return context.message.react("🛑");
+        return cmdMessage.react("🛑");
       })
       .finally(() => {
-        context.message.channel.stopTyping(true);
+        cmdMessage.channel.stopTyping(true);
       });
   }
 
-  static getCommandByName(context: ExecutionContext, name: string): Command {
+  public getCommandByName(name: string): Command | undefined {
     // Keep alphabetical by primary command word
     // The primary command keyword should be listed first
     switch (name) {
       case "allowword":
       case "allowwords":
-        return new AllowWord(context);
+        return new AllowWord();
       case "autodelete":
-        return new AutoDelete(context);
+        return new AutoDelete();
       case "balance":
       case "wallet":
-        return new Balance(context);
+        return new Balance();
       case "banlist":
       case "bannedwords":
-        return new BanList(context);
+        return new BanList();
       case "banword":
       case "banwords":
-        return new BanWord(context);
+        return new BanWord();
       case "buy":
-        return new Buy(context);
+        return new Buy();
       case "censorship":
-        return new Censorship(context);
-      case "delivercheck":
-        return new DeliverCheck(context);
-      case "demote":
-        return new Demote(context);
+        return new Censorship();
       case "exile":
-        return new Exile(context);
-      case "fine":
-        return new Fine(context);
+        return new Exile();
       case "give":
-        return new Give(context);
+        return new Give();
       case "headpat":
-        return new Headpat(context);
+        return new Headpat();
       case "help":
-        return new Help(context);
+        return new Help();
       case "holdvote":
-        return new HoldVote(context);
+        return new HoldVote();
       case "infractions":
-        return new Infractions(context);
-      case "kick":
-        return new Kick(context);
+        return new Infractions();
       case "pardon":
-        return new Pardon(context);
+        return new Pardon();
       case "play":
-        return new Play(context);
+        return new Play();
       case "promote":
-        return new Promote(context);
+        return new Promote();
       case "register":
-        return new Register(context);
+        return new Register();
       case "report":
-        return new Report(context);
+        return new Report();
       case "roles":
-        return new Roles(context);
+        return new Roles();
       case "scan":
-        return new Scan(context);
+        return new Scan();
       case "screening":
-        return new Screening(context);
+        return new Screening();
       case "serverstatus":
-        return new ServerStatus(context);
-      case "softkick":
-        return new SoftKick(context);
+        return new ServerStatus();
       case "status":
-        return new Status(context);
+        return new Status();
       case "steal":
-        return new Steal(context);
+        return new Steal();
       case "store":
-        return new Store(context);
+        return new Store();
       case "take":
-        return new Take(context);
+        return new Take();
       case "debug":
         if (process.env.NODE_ENV === "dev") {
-          return new Debug(context);
+          return new Debug();
         }
-        return new NullCommand(context, `Unknown command "${name}"`);
-      default:
-        return new NullCommand(context, `Unknown command "${name}"`);
     }
   }
 }

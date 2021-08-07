@@ -1,20 +1,30 @@
-import { TextChannel } from "discord.js";
+import { Guild as DsGuild, Message, TextChannel } from "discord.js";
 import { inject, injectable } from "tsyringe";
 import ChannelRepository from "../repositories/Channel.repository";
 
 @injectable()
 export default class ChannelService {
-  public constructor(@inject(ChannelRepository) private _channelsRepo: ChannelRepository) {}
+  private _guild: DsGuild;
+
+  public constructor(@inject(ChannelRepository) private _channelRepo: ChannelRepository) {}
+
+  public set guild(guild: DsGuild) {
+    this._guild = guild;
+  }
+
   /**
    * A negative number means deletion is off.
    * A zero or greater means messages will be deleted.
    */
-  public setAutoDelete(deleteDelay: number) {
-    return this._channelsRepo.setAutoDelete(this.ec.channel.id, deleteDelay);
+  public async setAutoDelete(channelId: string, deleteDelay: number): Promise<void> {
+    await this._channelRepo.setAutoDelete(channelId, deleteDelay);
   }
 
-  public async fetchMessage(messageId: string) {
-    const textChannels = this.ec.guild.channels.cache
+  /**
+   * Check every channel for the message id
+   */
+  public async fetchMessage(messageId: string): Promise<Message | undefined> {
+    const textChannels = this._guild.channels.cache
       .filter((channel) => channel.type === "text" && !channel.deleted)
       .array() as Array<TextChannel>;
 
@@ -38,8 +48,8 @@ export default class ChannelService {
    * Adds the "watchSend" method to the channel to send messages and delete them
    * after a delay (set in the channel's db entry)=
    */
-  getDeleteTime(channel: TextChannel) {
-    return this.db.channels.get(channel.id).then((dbChannel) => {
+  public async getDeleteTime(channel: TextChannel): Promise<number> {
+    return this._channelRepo.get(channel.id).then((dbChannel) => {
       let deleteTime = -1;
       if (dbChannel && dbChannel.delete_ms >= 0) {
         deleteTime = dbChannel.delete_ms;
@@ -47,5 +57,15 @@ export default class ChannelService {
 
       return deleteTime;
     });
+  }
+
+  public async watchSend(channel: TextChannel, ...content: any[]): Promise<Message> {
+    const message = await channel.send([...content]);
+    const deleteTime = await this.getDeleteTime(channel);
+
+    if (deleteTime >= 0) {
+      message.delete({ timeout: deleteTime });
+    }
+    return message;
   }
 }

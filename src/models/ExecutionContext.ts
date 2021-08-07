@@ -4,16 +4,16 @@ import BanListStatusController from "../services/message/BanListStatusController
 import CensorshipService from "../services/Censorship.service";
 import ChannelHelper from "../services/ChannelHelper";
 import ChannelService from "../services/Channel.service";
-import Command from "../routes/commands/Command";
+import Command from "../commands/Command";
 import CurrencyService from "../services/Currency.service";
 import DatabaseService from "../services/Database.service";
-import GuildController from "../services/GuildController";
-import InventoryController from "../services/InventoryController";
-import MemberController from "../services/MemberController";
+import GuildService from "../services/Guild.service";
+import GuildStoreService from "../services/message/GuildStore.service";
+import InventoryService from "../services/Inventory.service";
+import MemberService from "../services/Member.service";
 import MessageHelper from "../MessageHelper";
-import RoleContestController from "../services/RoleContestController";
-import RoleStatusController from "../services/message/RoleStatusController";
-import StoreStatusController from "../services/message/StoreStatusController";
+import RoleContestService from "../services/RoleContest.service";
+import RoleStatusController from "../services/message/RoleList.service";
 
 class ExecutionContext {
   public initiator: GuildMember;
@@ -26,13 +26,13 @@ class ExecutionContext {
   public censorController: CensorshipService;
   public channelController: ChannelService;
   public currencyController: CurrencyService;
-  public guildController: GuildController;
-  public inventoryController: InventoryController;
-  public memberController: MemberController;
+  public guildController: GuildService;
+  public inventoryController: InventoryService;
+  public memberController: MemberService;
   public banListStatusController: BanListStatusController;
-  public storeStatusController: StoreStatusController;
+  public storeStatusController: GuildStoreService;
   public roleStatusController: RoleStatusController;
-  public roleContestController: RoleContestController;
+  public roleContestController: RoleContestService;
 
   private _guild: Guild;
   private _message: Message;
@@ -44,13 +44,13 @@ class ExecutionContext {
     this.censorController = new CensorshipService(this);
     this.channelController = new ChannelService(this);
     this.currencyController = new CurrencyService(this);
-    this.guildController = new GuildController(this);
-    this.inventoryController = new InventoryController(this);
-    this.memberController = new MemberController(this);
+    this.guildController = new GuildService(this);
+    this.inventoryController = new InventoryService(this);
+    this.memberController = new MemberService(this);
     this.banListStatusController = new BanListStatusController(this);
-    this.storeStatusController = new StoreStatusController(this);
+    this.storeStatusController = new GuildStoreService(this);
     this.roleStatusController = new RoleStatusController(this);
-    this.roleContestController = new RoleContestController(this);
+    this.roleContestController = new RoleContestService(this);
     return this;
   }
 

@@ -1,51 +1,51 @@
-import { Client, NewsChannel, TextChannel } from "discord.js";
-
-import AllowWord from "./routes/commands/AllowWord";
-import AutoDelete from "./routes/commands/AutoDelete";
-import Balance from "./routes/commands/Balance";
-import BanList from "./routes/commands/BanList";
-import BanWord from "./routes/commands/BanWord";
-import Buy from "./routes/commands/Buy";
-import Censorship from "./routes/commands/Censorship";
-import ChannelHelper from "./services/ChannelHelper";
-import Command from "./routes/commands/Command";
-import CommandParser from "./CommandParser";
-import DatabaseService from "./services/Database.service";
-import Debug from "./routes/commands/Debug";
-import DeliverCheck from "./routes/commands/DeliverCheck";
-import Demote from "./routes/commands/zDemote";
-import ExecutionContext from "./models/ExecutionContext";
-import Exile from "./routes/commands/Exile";
-import Fine from "./routes/commands/zFine";
-import Give from "./routes/commands/Give";
-import Headpat from "./routes/commands/Headpat";
-import Help from "./routes/commands/Help";
-import HoldVote from "./routes/commands/HoldVote";
-import Infractions from "./routes/commands/Infractions";
-import JobScheduler from "./JobScheduler";
-import Kick from "./routes/commands/zKick";
-import NullCommand from "./routes/commands/NullCommand";
-import OnBoarder from "./Onboarder";
-import Pardon from "./routes/commands/Pardon";
-import Play from "./routes/commands/Play";
-import Promote from "./routes/commands/Promote";
-import Register from "./routes/commands/Register";
-import Report from "./routes/commands/Report";
-import { Result } from "./enums/Result";
-import RoleStatusController from "./services/message/RoleStatusController";
-import Roles from "./routes/commands/Roles";
-import Scan from "./routes/commands/Scan";
-import Screening from "./routes/commands/Screening";
-import ServerStatus from "./routes/commands/ServerStatus";
-import SoftKick from "./routes/commands/zSoftKick";
-import Status from "./routes/commands/Status";
-import Steal from "./routes/commands/Steal";
-import Store from "./routes/commands/Store";
-import Take from "./routes/commands/Take";
-import UserItem from "./models/UserItem";
 import dayjs from "dayjs";
 import delay from "delay";
+import { Client, NewsChannel, TextChannel } from "discord.js";
 import secretConfig from "../config/secrets.config";
+import CommandParser from "./CommandParser";
+import AllowWord from "./commands/AllowWord";
+import AutoDelete from "./commands/AutoDelete";
+import Balance from "./commands/Balance";
+import BanList from "./commands/BanList";
+import BanWord from "./commands/BanWord";
+import Buy from "./commands/Buy";
+import Censorship from "./commands/Censorship";
+import Command from "./commands/Command";
+import Debug from "./commands/Debug";
+import DeliverCheck from "./commands/DeliverCheck";
+import Exile from "./commands/Exile";
+import Give from "./commands/Give";
+import Headpat from "./commands/Headpat";
+import Help from "./commands/Help";
+import HoldVote from "./commands/HoldVote";
+import Infractions from "./commands/Infractions";
+import NullCommand from "./commands/NullCommand";
+import Pardon from "./commands/Pardon";
+import Play from "./commands/Play";
+import Promote from "./commands/Promote";
+import Register from "./commands/Register";
+import Report from "./commands/Report";
+import Roles from "./commands/Roles";
+import Scan from "./commands/Scan";
+import Screening from "./commands/Screening";
+import ServerStatus from "./commands/ServerStatus";
+import Status from "./commands/Status";
+import Steal from "./commands/Steal";
+import Store from "./commands/Store";
+import Take from "./commands/Take";
+import Demote from "./commands/zDemote";
+import Fine from "./commands/zFine";
+import Kick from "./commands/zKick";
+import SoftKick from "./commands/zSoftKick";
+import { Result } from "./enums/Result";
+import JobScheduler from "./JobScheduler";
+import ExecutionContext from "./models/ExecutionContext";
+import UserItem from "./models/UserItem";
+import OnBoarder from "./Onboarder";
+import ChannelHelper from "./services/ChannelHelper";
+import DatabaseService from "./services/Database.service";
+import RoleStatusController from "./services/message/RoleList.service";
+
 
 class Raphtalia {
   private client: Client;
@@ -225,7 +225,7 @@ class Raphtalia {
     });
   }
 
-  private handleCommand(context: ExecutionContext) {
+  private handleCommand() {
     context.messageHelper = CommandParser.parse(context);
     return this.selectCommand(context).then((command) => this.executeCommand(context, command));
   }
@@ -259,7 +259,7 @@ class Raphtalia {
     });
   }
 
-  private async selectCommand(context: ExecutionContext): Promise<Command> {
+  private async selectCommand(): Promise<Command> {
     // Check for exile
     const exileRole = context.guild.roles.cache.find((r) => r.name === "Exile");
     if (exileRole && context.message.member?.roles.cache.find((r) => r.id === exileRole.id)) {
@@ -343,7 +343,7 @@ class Raphtalia {
   private async executeCommand(context: ExecutionContext, command: Command) {
     context.message.channel.startTyping();
     return command
-      .execute()
+      .execute(initiator: GuildMember)
       .catch((error) => {
         console.error(error);
         return context.message.react("🛑");

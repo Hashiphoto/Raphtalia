@@ -1,16 +1,12 @@
-import DatabaseService from "../services/Database.service";
 import { Pool } from "mysql2/promise";
-import { autoInjectable } from "tsyringe";
+import { inject, injectable } from "tsyringe";
+import DatabaseService from "../services/Database.service";
 
-@autoInjectable()
-class Repository {
+@injectable()
+export default class Repository {
   protected pool: Pool;
 
-  public constructor(private db?: DatabaseService) {
-    if (db) {
-      this.pool = db?.getPool();
-    }
+  public constructor(@inject(DatabaseService) private databaseService: DatabaseService) {
+    this.pool = this.databaseService.getPool();
   }
 }
-
-export default Repository;

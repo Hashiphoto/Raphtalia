@@ -28,7 +28,7 @@ export default class OnBoarder {
   public async onBoard(): Promise<void | string | Message> {
     const memberController = new MemberController(this.ec);
     await memberController.setHoistedRole(this.member, discordConfig().roles.immigrant);
-    await this.ec.channelHelper.watchSend(
+    await this.reply(
       `Welcome ${this.member.toString()} to ${this.ec.guild.name}!\n` +
         `I have a few questions for you. If you answer correctly, you will be granted citizenship.`
     );
@@ -38,25 +38,23 @@ export default class OnBoarder {
     const passedScreening = await this.screen();
     if (!passedScreening) {
       return delay(2100)
-        .then(() => this.ec.channelHelper.watchSend("😠"))
+        .then(() => this.reply("😠"))
         .then(() => delay(300))
         .then(() => memberController.softKick(this.member, "for answering a question wrong"))
-        .then((feedback) => this.ec.channelHelper.watchSend(feedback));
+        .then((feedback) => this.reply(feedback));
     }
 
     // Creates the user in the DB if they didn't exist
     return this.ec.db.users
       .setCitizenship(this.member.id, this.ec.guild.id, true)
       .then(() =>
-        this.ec.channelHelper.watchSend(
-          `Thank you! And welcome loyal citizen to ${this.ec.guild.name}! 🎉🎉🎉`
-        )
+        this.reply(`Thank you! And welcome loyal citizen to ${this.ec.guild.name}! 🎉🎉🎉`)
       )
       .then(() => memberController.setHoistedRole(this.member, discordConfig().roles.neutral, true))
       .then(() => this.ec.db.inventory.findGuildItem(this.ec.guild.id, "Player Badge"))
       .then(async (playerBadge) => {
         if (playerBadge) {
-          await this.ec.inventoryController.userPurchase(playerBadge, this.member);
+          await this._inventoryService.userPurchase(playerBadge, this.member);
         }
       });
   }
@@ -69,25 +67,23 @@ export default class OnBoarder {
       new Question("What do you want to be called?", ".*", 60000)
     ).catch((collectedMessages) => {
       if (collectedMessages.size === 0) {
-        return this.ec.channelHelper.watchSend(`${this.member.toString()} doesn't want a nickname`);
+        return this.reply(`${this.member.toString()} doesn't want a nickname`);
       }
     });
     if (!message) {
-      return this.ec.channelHelper.watchSend(`${this.member.toString()} doesn't want a nickname`);
+      return this.reply(`${this.member.toString()} doesn't want a nickname`);
     }
 
     const nickname = message.content;
     const oldName = this.member.displayName;
     return this.member
       .setNickname(nickname)
-      .then(() => this.ec.channelHelper.watchSend(`${oldName} will be known as ${nickname}!`))
+      .then(() => this.reply(`${oldName} will be known as ${nickname}!`))
       .catch((error) => {
         if (error.name === "DiscordAPIError" && error.message === "Missing Permissions") {
-          return this.ec.channelHelper.watchSend(
-            "I don't have high enough permissions to set your nickname"
-          );
+          return this.reply("I don't have high enough permissions to set your nickname");
         }
-        return this.ec.channelHelper.watchSend("Something went wrong. No nickname for you");
+        return this.reply("Something went wrong. No nickname for you");
       });
   }
 

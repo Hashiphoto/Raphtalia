@@ -1,6 +1,5 @@
 import Discord, { Guild, GuildMember, Role } from "discord.js";
 
-import ExecutionContext from "./models/ExecutionContext";
 import MessageHelper from "./MessageHelper";
 
 export default class CommandParser {
@@ -10,7 +9,7 @@ export default class CommandParser {
    * Separates the message's arguments and finds the mentioned roles/members
    * @param {Discord.Message} message
    */
-  public static parse(context: ExecutionContext): MessageHelper {
+  public static parse(): MessageHelper {
     const message = context.message;
     const messageHelper = new MessageHelper();
     // Every word separated by white space

@@ -47,10 +47,10 @@ export default class CensorshipService {
 
     await this.ec.memberController
       .addInfractions(message.member)
-      .then((feedback) => this.ec.channelHelper.watchSend(feedback, embed))
+      .then((feedback) => this.reply(feedback, embed))
       .catch((error) => {
         if (error instanceof RangeError) {
-          return this.ec.channelHelper.watchSend(error.message, embed);
+          return this.reply(error.message, embed);
         }
         throw error;
       });
