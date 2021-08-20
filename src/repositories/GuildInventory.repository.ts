@@ -1,14 +1,20 @@
+import { escape } from "mysql2";
 import { FieldPacket, RowDataPacket } from "mysql2/promise";
-
+import { inject, injectable } from "tsyringe";
+import { Result } from "../enums/Result";
 import GuildItem from "../models/GuildItem";
 import Item from "../models/Item";
 import RaphError from "../models/RaphError";
+import { listFormat } from "../utilities/Util";
+import CommandRepository from "./Command.repository";
 import Repository from "./Repository";
-import { Result } from "../enums/Result";
-import { escape } from "mysql2";
-import { listFormat } from "../services/Util";
 
+@injectable()
 export default class GuildInventoryRepository extends Repository {
+  public constructor(@inject(CommandRepository) private _commandRepository: CommandRepository) {
+    super();
+  }
+
   private guildSelect = "SELECT * FROM guild_inventory gi JOIN items i ON gi.item_id = i.id ";
 
   public async getGuildStock(guildId: string, showHidden = false): Promise<GuildItem[]> {
@@ -16,7 +22,7 @@ export default class GuildInventoryRepository extends Repository {
       .query(this.guildSelect + "WHERE guild_id = ? " + `${showHidden ? "" : "AND hidden = 0"}`, [
         guildId,
       ])
-      .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
+      .then(([rows]: [RowDataPacket[], FieldPacket[]]) => {
         return rows;
       })
       .then(async (dbRows) => {
@@ -133,15 +139,15 @@ export default class GuildInventoryRepository extends Repository {
   }
 
   private async toGuildItem(row: RowDataPacket) {
+    const commands = await this._commandRepository.getCommandsForItem(row.id);
     return new GuildItem(
       row.id,
       row.guild_id,
       row.name,
       row.max_uses,
       row.quantity,
-      undefined,
       row.steal_protected,
-      row.guild_id,
+      commands,
       parseFloat(row.price),
       row.max_quantity,
       row.sold_in_cycle,

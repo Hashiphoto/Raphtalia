@@ -1,11 +1,16 @@
+import { GuildMember, TextChannel } from "discord.js";
+
 import Command from "./Command";
-import { GuildMember } from "discord.js";
-import RoleService from "../services/Role.service";
+import CommmandMessage from "../models/dsExtensions/CommandMessage";
+import MemberService from "../services/Member.service";
+import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
 import { autoInjectable } from "tsyringe";
+import { sumString } from "../utilities/Util";
 
 @autoInjectable()
 export default class Pardon extends Command {
-  public constructor() {
+  public constructor(private _memberService?: MemberService) {
     super();
     this.instructions =
       "**Pardon**\nRemoves all infractions from the specified member(s). " +
@@ -14,14 +19,14 @@ export default class Pardon extends Command {
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
-    if (!cmdMessage.member) {
+    if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
-    return this.execute(cmdMessage.member, cmdMessage.args);
+    this.channel = cmdMessage.message.channel as TextChannel;
+    return this.execute(cmdMessage.message.member, cmdMessage.memberMentions);
   }
 
-  public async execute(initiator: GuildMember): Promise<any> {
-    const targets = this.ec.messageHelper.mentionedMembers;
+  public async execute(initiator: GuildMember, targets: GuildMember[]): Promise<any> {
     if (targets.length === 0) {
       return this.sendHelpMessage();
     }
@@ -33,16 +38,11 @@ export default class Pardon extends Command {
       );
     }
 
-    // Ensure exile role exists
-    await RoleService.ensureExileRole(this.ec.guild);
+    const pardonPromises = targets.map((target) => this._memberService?.pardonMember(target));
 
-    const pardonPromises = targets.map((target) => {
-      return this.ec.memberController.pardonMember(target);
-    });
-
-    return Promise.all(pardonPromises)
-      .then((messages) => messages.reduce(this.sum))
-      .then((response) => this.reply(response))
-      .then(() => this.useItem(targets.length));
+    await Promise.all(pardonPromises)
+      .then((messages) => messages.reduce(sumString))
+      .then((response) => this.reply(response));
+    await this.useItem(initiator, targets.length);
   }
 }

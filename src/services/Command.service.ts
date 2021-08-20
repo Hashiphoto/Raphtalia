@@ -20,7 +20,6 @@ import Pardon from "../commands/Pardon";
 import Play from "../commands/Play";
 import Promote from "../commands/Promote";
 import Register from "../commands/Register";
-import Report from "../commands/Report";
 import Roles from "../commands/Roles";
 import Scan from "../commands/Scan";
 import Screening from "../commands/Screening";
@@ -29,28 +28,31 @@ import Status from "../commands/Status";
 import Steal from "../commands/Steal";
 import Store from "../commands/Store";
 import Take from "../commands/Take";
-import { Result } from "../enums/Result";
-import CommmandMessage from "../models/dsExtensions/CommandMessage";
-import UserItem from "../models/UserItem";
+import { Env } from "../enums/Environment";
+import CommmandMessageWrapper from "../models/dsExtensions/CommandMessage";
+import InventoryService from "./Inventory.service";
 import RoleService from "./Role.service";
 
 @injectable()
 export default class CommandService {
-  public constructor(@inject(RoleService) private _roleService: RoleService) {}
+  public constructor(
+    @inject(RoleService) private _roleService: RoleService,
+    @inject(InventoryService) private _inventoryService: InventoryService
+  ) {}
 
   public async processMessage(message: Message): Promise<void> {
-    const cmdMessage = message as CommmandMessage;
+    const cmdMessage = new CommmandMessageWrapper(message);
     const command = await this.selectCommand(cmdMessage);
     await this.executeCommand(cmdMessage, command);
   }
 
-  private async selectCommand(cmdMessage: CommmandMessage): Promise<Command> {
+  private async selectCommand(cmdMessage: CommmandMessageWrapper): Promise<Command> {
     // Check for exile
-    if (!cmdMessage.guild) {
+    if (!cmdMessage.message.guild || !cmdMessage.message.member) {
       return new NullCommand("Commands can only be used in a server text channel");
     }
-    const exileRole = await this._roleService.getCreateExileRole(cmdMessage.guild);
-    if (cmdMessage.member?.roles.cache.find((r) => r.id === exileRole.id)) {
+    const exileRole = await this._roleService.getCreateExileRole(cmdMessage.message.guild);
+    if (cmdMessage.message.member?.roles.cache.find((r) => r.id === exileRole.id)) {
       return new NullCommand(`You cannot use commands while in exile`);
     }
 
@@ -64,15 +66,16 @@ export default class CommandService {
     }
 
     // Check if member has the correct item
-    // const userItem = await context.inventoryController.getUserItemByCommand(
-    //   context.initiator,
-    //   command.name
-    // );
-    // if (userItem) {
-    //   command.item = userItem;
-    //   return command;
-    // }
+    const userItem = await this._inventoryService.getUserItemByCommand(
+      cmdMessage.message.member,
+      command.name
+    );
+    if (userItem) {
+      command.item = userItem;
+      return command;
+    }
 
+    return command;
     // return this.autoBuyNeededItem(context, command);
   }
 
@@ -80,64 +83,64 @@ export default class CommandService {
    * Buy the item rquired to execute the given command, and return the command with that
    * item attached
    */
-  private async autoBuyNeededItem(context: ExecutionContext, command: Command): Promise<Command> {
-    const guildItem = await context.inventoryController.getGuildItemByCommand(
-      context.guild.id,
-      command.name
-    );
-    if (!guildItem) {
-      return new NullCommand(
-        context,
-        `There is no item associated with the command "${command.name}"`
-      );
-    }
+  // private async autoBuyNeededItem(command: Command): Promise<Command> {
+  //   const guildItem = await context.inventoryController.getGuildItemByCommand(
+  //     context.guild.id,
+  //     command.name
+  //   );
+  //   if (!guildItem) {
+  //     return new NullCommand(
+  //       context,
+  //       `There is no item associated with the command "${command.name}"`
+  //     );
+  //   }
 
-    let purchasedUserItem: UserItem | undefined;
-    try {
-      purchasedUserItem = await context.inventoryController.userPurchase(
-        guildItem,
-        context.initiator
-      );
-    } catch (error) {
-      let resultMessage = `An error occurred purchasing the ${guildItem.printName()} automatically`;
-      switch (error.result) {
-        case Result.OutOfStock:
-          resultMessage = `Could not auto-purchase ${guildItem.printName()} because it is currently out of stock`;
-          break;
-        case Result.TooPoor:
-          resultMessage = `Could not auto-purchase ${guildItem.printName()} because you're too poor. Current price: ${guildItem.printPrice()}`;
-          break;
-      }
-      return new NullCommand(context, resultMessage);
-    }
+  //   let purchasedUserItem: UserItem | undefined;
+  //   try {
+  //     purchasedUserItem = await context.inventoryController.userPurchase(
+  //       guildItem,
+  //       context.initiator
+  //     );
+  //   } catch (error) {
+  //     let resultMessage = `An error occurred purchasing the ${guildItem.printName()} automatically`;
+  //     switch (error.result) {
+  //       case Result.OutOfStock:
+  //         resultMessage = `Could not auto-purchase ${guildItem.printName()} because it is currently out of stock`;
+  //         break;
+  //       case Result.TooPoor:
+  //         resultMessage = `Could not auto-purchase ${guildItem.printName()} because you're too poor. Current price: ${guildItem.printPrice()}`;
+  //         break;
+  //     }
+  //     return new NullCommand(context, resultMessage);
+  //   }
 
-    if (!purchasedUserItem) {
-      return new NullCommand(
-        context,
-        `Auto-purchasing this item failed. Please try "!Buy ${guildItem.name}"`
-      );
-    }
+  //   if (!purchasedUserItem) {
+  //     return new NullCommand(
+  //       context,
+  //       `Auto-purchasing this item failed. Please try "!Buy ${guildItem.name}"`
+  //     );
+  //   }
 
-    await context.channelHelper.watchSend(
-      `*${
-        context.initiator.displayName
-      } Auto-purchased a ${guildItem.printName()} for ${guildItem.printPrice()}*`
-    );
+  //   await context.channelHelper.watchSend(
+  //     `*${
+  //       context.initiator.displayName
+  //     } Auto-purchased a ${guildItem.printName()} for ${guildItem.printPrice()}*`
+  //   );
 
-    command.item = purchasedUserItem;
-    return command;
-  }
+  //   command.item = purchasedUserItem;
+  //   return command;
+  // }
 
-  private async executeCommand(cmdMessage: CommmandMessage, command: Command) {
-    cmdMessage.channel.startTyping();
+  private async executeCommand(cmdMessage: CommmandMessageWrapper, command: Command) {
+    cmdMessage.message.channel.startTyping();
     return command
       .executeDefault(cmdMessage)
       .catch((error) => {
         console.error(error);
-        return cmdMessage.react("🛑");
+        return cmdMessage.message.react("🛑");
       })
       .finally(() => {
-        cmdMessage.channel.stopTyping(true);
+        cmdMessage.message.channel.stopTyping(true);
       });
   }
 
@@ -183,8 +186,6 @@ export default class CommandService {
         return new Promote();
       case "register":
         return new Register();
-      case "report":
-        return new Report();
       case "roles":
         return new Roles();
       case "scan":
@@ -202,7 +203,7 @@ export default class CommandService {
       case "take":
         return new Take();
       case "debug":
-        if (process.env.NODE_ENV === "dev") {
+        if (process.env.NODE_ENV === Env.Dev) {
           return new Debug();
         }
     }

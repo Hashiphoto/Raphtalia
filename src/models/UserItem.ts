@@ -1,8 +1,8 @@
 import CommandItem from "./ItemCommand";
-import Item from "./Item";
+import GuildItem from "./GuildItem";
 import dayjs from "dayjs";
 
-export default class UserItem extends Item {
+export default class UserItem extends GuildItem {
   public remainingUses: number;
   public datePurchased: Date;
   public userId: string;
@@ -13,13 +13,29 @@ export default class UserItem extends Item {
     name: string,
     maxUses: number,
     quantity: number,
-    commands: CommandItem[],
     isStealProtected: boolean,
+    commands: CommandItem[],
+    price: number,
+    maxQuantity: number,
+    soldInCycle: number,
+    dateLastSold: Date,
     remainingUses: number,
     datePurchased: Date,
     userId: string
   ) {
-    super(id, guildId, name, maxUses, quantity, commands, isStealProtected);
+    super(
+      id,
+      guildId,
+      name,
+      maxUses,
+      quantity,
+      isStealProtected,
+      commands,
+      price,
+      maxQuantity,
+      soldInCycle,
+      dateLastSold
+    );
 
     this.remainingUses = remainingUses;
     this.datePurchased = datePurchased;
@@ -47,8 +63,12 @@ export default class UserItem extends Item {
       this.name,
       this.maxUses,
       this.quantity,
-      this.commands,
       this.isStealProtected,
+      this.commands,
+      this.price,
+      this.maxQuantity,
+      this.soldInCycle,
+      this.dateLastSold,
       this.remainingUses,
       this.datePurchased,
       this.userId

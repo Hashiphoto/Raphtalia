@@ -11,7 +11,7 @@ export default class RoleService {
     return this._roleRepository.getSingle(roleId);
   }
 
-  public parseRoles(guild: Guild, roles: RoleResolvable[]): Array<DsRole> {
+  public parseRoles(guild: Guild, roles: RoleResolvable[]): DsRole[] {
     const discordRoles = [];
     for (let i = 0; i < roles.length; i++) {
       const roleObject = this.convertToRole(guild, roles[i]);

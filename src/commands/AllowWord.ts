@@ -1,8 +1,9 @@
+import { GuildMember, TextChannel } from "discord.js";
+
 import BanListService from "../services/message/BanWordList.service";
 import CensorshipService from "../services/Censorship.service";
 import Command from "./Command";
 import CommmandMessage from "../models/dsExtensions/CommandMessage";
-import { GuildMember } from "discord.js";
 import RaphError from "../models/RaphError";
 import { Result } from "../enums/Result";
 import { autoInjectable } from "tsyringe";
@@ -10,7 +11,7 @@ import { autoInjectable } from "tsyringe";
 @autoInjectable()
 export default class AllowWord extends Command {
   public constructor(
-    private _censorService?: CensorshipService,
+    private _censorshipService?: CensorshipService,
     private _banListService?: BanListService
   ) {
     super();
@@ -19,10 +20,11 @@ export default class AllowWord extends Command {
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
-    if (!cmdMessage.member) {
+    if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
-    return this.execute(cmdMessage.member, cmdMessage.args);
+    this.channel = cmdMessage.message.channel as TextChannel;
+    return this.execute(cmdMessage.message.member, cmdMessage.args);
   }
 
   public async execute(initiator: GuildMember, words: string[]): Promise<void> {
@@ -39,9 +41,9 @@ export default class AllowWord extends Command {
       return;
     }
 
-    await this._censorService
-      ?.deleteWords(words)
-      .then(() => this._banListService?.update())
+    await this._censorshipService
+      ?.deleteWords(initiator.guild, words)
+      .then(() => this._banListService?.update(initiator.guild))
       .then(() => this.reply("Banned words list has been updated"))
       .then(() => this.useItem(initiator, words.length));
   }

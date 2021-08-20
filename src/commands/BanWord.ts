@@ -1,12 +1,13 @@
+import { GuildMember, TextChannel } from "discord.js";
+
 import BanListService from "../services/message/BanWordList.service";
 import CensorshipService from "../services/Censorship.service";
 import Command from "./Command";
 import CommmandMessage from "../models/dsExtensions/CommandMessage";
-import { GuildMember } from "discord.js";
 import RaphError from "../models/RaphError";
 import { Result } from "../enums/Result";
 import { autoInjectable } from "tsyringe";
-import { listFormat } from "../services/Util";
+import { listFormat } from "../utilities/Util";
 
 @autoInjectable()
 export default class BanWord extends Command {
@@ -20,10 +21,11 @@ export default class BanWord extends Command {
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
-    if (!cmdMessage.member) {
+    if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
-    return this.execute(cmdMessage.member, cmdMessage.args);
+    this.channel = cmdMessage.message.channel as TextChannel;
+    return this.execute(cmdMessage.message.member, cmdMessage.args);
   }
 
   public async execute(initiator: GuildMember, words: string[]): Promise<any> {
@@ -38,9 +40,9 @@ export default class BanWord extends Command {
       );
     }
 
-    await this._censorshipService?.insertWords(words);
+    await this._censorshipService?.insertWords(initiator.guild, words);
     await this.useItem(initiator);
     await this.reply(`Banned words: ${listFormat(words)}` + "Ban list will be updated shortly");
-    this._banListService?.update();
+    this._banListService?.update(initiator.guild);
   }
 }

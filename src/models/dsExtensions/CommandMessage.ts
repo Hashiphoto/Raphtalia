@@ -1,17 +1,22 @@
 import { Guild as DsGuild, Role as DsRole, GuildMember, Message } from "discord.js";
 
-export default class CommmandMessage extends Message {
+export default class CommmandMessage {
   public static COMMAND_PREFIX = "!";
+  public message: Message;
 
   private _args: string[] | undefined;
   private _parsedContent: string | undefined;
   private _memberMentions: GuildMember[] | undefined;
   private _mentionedRoles: DsRole[] | undefined;
 
+  public constructor(message: Message) {
+    this.message = message;
+  }
+
   // Every word in the message, separated by whitespace
   public get allArgs(): string[] {
     if (!this._args) {
-      this._args = this.content.split(/\s+/).map((s) => s.toLowerCase());
+      this._args = this.message.content.toLowerCase().split(/\s+/);
     }
     return this._args;
   }
@@ -21,15 +26,15 @@ export default class CommmandMessage extends Message {
     return this.allArgs.slice(1);
   }
 
-  // The command is the first word in the message
+  // The command is the first word in the message minus the prefix
   public get command(): string {
-    return this.allArgs[0];
+    return this.allArgs[0].slice(CommmandMessage.COMMAND_PREFIX.length);
   }
 
   // The content, without the leading command
   public get parsedContent(): string {
     if (!this._parsedContent) {
-      this._parsedContent = this.content
+      this._parsedContent = this.message.content
         .slice(CommmandMessage.COMMAND_PREFIX.length + this.command.length)
         .trim();
     }
@@ -37,13 +42,13 @@ export default class CommmandMessage extends Message {
   }
 
   public get memberMentions(): GuildMember[] {
-    if (!this.guild) {
+    if (!this.message.guild) {
       return [];
     }
     if (!this._memberMentions) {
-      let members = new Array<GuildMember>();
+      let members: GuildMember[] = [];
       for (let i = 0; i < this.allArgs.length; i++) {
-        const member = this.getMemberFromMention(this.guild, this.allArgs[i]);
+        const member = this.getMemberFromMention(this.message.guild, this.allArgs[i]);
         if (!member) {
           continue;
         }
@@ -56,7 +61,7 @@ export default class CommmandMessage extends Message {
   }
 
   public get roleMentions(): DsRole[] {
-    if (!this.guild) {
+    if (!this.message.guild) {
       return [];
     }
     if (!this._mentionedRoles) {
@@ -66,7 +71,7 @@ export default class CommmandMessage extends Message {
         if (!roleMatches) {
           continue;
         }
-        const role = this.guild.roles.cache.get(roleMatches[1]);
+        const role = this.message.guild.roles.cache.get(roleMatches[1]);
         if (role) {
           this._mentionedRoles.push(role);
         }

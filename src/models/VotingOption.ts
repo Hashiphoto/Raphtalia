@@ -1,4 +1,4 @@
-import RNumber from "./RNumber";
+import { Format, print } from "../utilities/Util";
 
 export default class VotingOption {
   public id: number;
@@ -12,14 +12,11 @@ export default class VotingOption {
     this.votes = 0;
   }
 
-  public toString() {
+  public toString(): string {
     return `${this.id}. ${this.body}\n`;
   }
 
-  public getPercentage() {
-    if (this.totalVotes === 0) {
-      return RNumber.formatPercent(0);
-    }
-    return `${RNumber.formatPercent(this.votes / this.totalVotes)}`;
+  public getPercentage(): string {
+    return `${print(this.totalVotes === 0 ? 0 : this.votes / this.totalVotes, Format.Percent)}`;
   }
 }

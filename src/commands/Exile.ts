@@ -1,9 +1,9 @@
-import { formatDate, parseDuration } from "../services/Util";
+import { GuildMember, TextChannel } from "discord.js";
+import { formatDate, parseDuration } from "../utilities/Util";
 
 import Command from "./Command";
 import CommmandMessage from "../models/dsExtensions/CommandMessage";
 import { Duration } from "dayjs/plugin/duration";
-import { GuildMember } from "discord.js";
 import MemberService from "../services/Member.service";
 import RaphError from "../models/RaphError";
 import { Result } from "../enums/Result";
@@ -22,14 +22,15 @@ export default class Exile extends Command {
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
-    if (!cmdMessage.member) {
+    if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
+    this.channel = cmdMessage.message.channel as TextChannel;
 
     // Input or default 6 hours
     const duration = parseDuration(cmdMessage.parsedContent) ?? dayjs.duration({ hours: 6 });
 
-    return this.execute(cmdMessage.member, cmdMessage.memberMentions, duration);
+    return this.execute(cmdMessage.message.member, cmdMessage.memberMentions, duration);
   }
 
   public async execute(

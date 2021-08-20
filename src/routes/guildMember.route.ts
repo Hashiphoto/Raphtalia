@@ -1,32 +1,21 @@
 import { Client } from "discord.js";
+import MemberService from "../services/Member.service";
+import OnboardingService from "../services/Onboarding.service";
+import { container } from "tsyringe";
 
 export default (client: Client): void => {
+  const memberService = container.resolve(MemberService);
+  const onboardingService = container.resolve(OnboardingService);
+
   client.on("guildMemberAdd", async (member) => {
-    const welcomeChannel = member.guild.systemChannel;
-    if (!welcomeChannel) {
-      return;
-    }
-    const deleteTime = await this.getDeleteTime(welcomeChannel);
-
-    const context = new ExecutionContext(this.db, client, member.guild).setChannelHelper(
-      new ChannelHelper(welcomeChannel, deleteTime)
-    );
-
-    new OnBoarder(context, member).onBoard();
+    onboardingService.onBoard(member);
   });
 
   client.on("guildMemberRemove", (member) => {
-    this.db.users.setCitizenship(member.id, member.guild.id, false);
+    onboardingService.offboard(member);
   });
 
   client.on("guildMemberUpdate", (oldMember, newMember) => {
-    // Check if roles changed
-    const differentSize = oldMember.roles.cache.size !== newMember.roles.cache.size;
-    for (const [id, role] of oldMember.roles.cache) {
-      if (differentSize || !newMember.roles.cache.has(id)) {
-        const context = new ExecutionContext(this.db, client, newMember.guild);
-        return new RoleStatusController(context).update();
-      }
-    }
+    memberService.handleMemberUpdate(oldMember, newMember);
   });
 };

@@ -1,24 +1,31 @@
 import { Client } from "discord.js";
-import ExecutionContext from "../models/ExecutionContext";
+import GuildService from "../services/Guild.service";
+import Job from "./Job";
 import RoleContestService from "../services/RoleContest.service";
+import { injectable } from "tsyringe";
 
-const resolveRoleContests = (client: Client) => {
-  const guildContests = client.guilds.cache.map(async (guild) => {
-    const context = new ExecutionContext(this.db, this.client, guild);
-    const feedback = await new RoleContestService(context)
-      .resolveRoleContests()
-      .then((responses) => responses.reduce((prev, current) => prev + current, ""));
-    if (feedback.length === 0) {
-      return;
-    }
-    const outputChannel = await context.guildController.getOutputChannel();
-    if (!outputChannel) {
-      return;
-    }
-    outputChannel.send(feedback);
-  });
+@injectable()
+export default class ResolveContestsJob implements Job {
+  public constructor(
+    private _roleContestService: RoleContestService,
+    private _guildService: GuildService
+  ) {}
 
-  return Promise.all(guildContests);
-};
+  public async run(client: Client): Promise<void> {
+    const guildContests = client.guilds.cache.map(async (guild) => {
+      const feedback = await this._roleContestService
+        .resolveRoleContests(guild)
+        .then((responses) => responses.reduce((prev, current) => prev + current, ""));
+      if (feedback.length === 0) {
+        return;
+      }
+      const outputChannel = await this._guildService.getOutputChannel(guild);
+      if (!outputChannel) {
+        return;
+      }
+      outputChannel.send(feedback);
+    });
 
-export { resolveRoleContests };
+    await Promise.all(guildContests);
+  }
+}

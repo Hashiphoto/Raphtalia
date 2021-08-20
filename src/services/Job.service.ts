@@ -1,11 +1,12 @@
-import { CronJob } from "cron";
+import { container, singleton } from "tsyringe";
+
 import { Client } from "discord.js";
-import { Pool } from "mysql2/promise";
-import { inject, singleton } from "tsyringe";
-import { dropStorePrices } from "../jobs/dropPrices.job";
-import { resolveRoleContests } from "../jobs/resolveContests.job";
 import ClientService from "./Client.service";
+import { CronJob } from "cron";
 import DatabaseService from "./Database.service";
+import DropPricesJob from "../jobs/DropPrices.job";
+import { Pool } from "mysql2/promise";
+import ResolveContestsJob from "../jobs/ResolveContests.job";
 
 /**
   CRON Quick Refernce
@@ -25,10 +26,7 @@ export default class JobService {
   private pool: Pool;
   private client: Client;
 
-  public constructor(
-    @inject(DatabaseService) private dbService: DatabaseService,
-    @inject(ClientService) private clientService: ClientService
-  ) {
+  public constructor(private dbService: DatabaseService, private clientService: ClientService) {
     this.pool = this.dbService.getPool();
     this.client = this.clientService.getClient();
     this.timezone = "America/Los_Angeles";
@@ -36,9 +34,21 @@ export default class JobService {
 
   public start(): void {
     // Every day at 08:00 PM
-    new CronJob("0 20 * * *", () => resolveRoleContests(this.client), null, true, this.timezone);
+    new CronJob(
+      "0 20 * * *",
+      () => container.resolve(ResolveContestsJob).run(this.client),
+      null,
+      true,
+      this.timezone
+    );
 
     // Every day at 06:30 AM
-    new CronJob("30 6 * * *", () => dropStorePrices(this.client), null, true, this.timezone);
+    new CronJob(
+      "30 6 * * *",
+      () => container.resolve(DropPricesJob).run(this.client),
+      null,
+      true,
+      this.timezone
+    );
   }
 }

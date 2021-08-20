@@ -13,7 +13,7 @@ import InventoryService from "../services/Inventory.service";
 import MemberService from "../services/Member.service";
 import MessageHelper from "../MessageHelper";
 import RoleContestService from "../services/RoleContest.service";
-import RoleStatusController from "../services/message/RoleList.service";
+import RoleListService from "../services/message/RoleList.service";
 
 class ExecutionContext {
   public initiator: GuildMember;
@@ -31,7 +31,7 @@ class ExecutionContext {
   public memberController: MemberService;
   public banListStatusController: BanListStatusController;
   public storeStatusController: GuildStoreService;
-  public roleStatusController: RoleStatusController;
+  public roleStatusController: RoleListService;
   public roleContestController: RoleContestService;
 
   private _guild: Guild;
@@ -49,7 +49,7 @@ class ExecutionContext {
     this.memberController = new MemberService(this);
     this.banListStatusController = new BanListStatusController(this);
     this.storeStatusController = new GuildStoreService(this);
-    this.roleStatusController = new RoleStatusController(this);
+    this.roleStatusController = new RoleListService(this);
     this.roleContestController = new RoleContestService(this);
     return this;
   }

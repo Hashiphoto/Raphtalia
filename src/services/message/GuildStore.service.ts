@@ -4,28 +4,27 @@ import GuildInventoryRepository from "../../repositories/GuildInventory.reposito
 import CensorshipService from "../Censorship.service";
 import ChannelService from "../Channel.service";
 import GuildService from "../Guild.service";
-import EmbedMessageService from "./EmbedMessage.service";
+import EmbedMessageManager from "./EmbedMessage.service";
 
 @injectable()
-export default class GuildStoreService extends EmbedMessageService {
+export default class GuildStoreService extends EmbedMessageManager {
   public constructor(
-    protected guild: DsGuild,
     @inject(GuildService) protected guildService: GuildService,
     @inject(ChannelService) protected channelService: ChannelService,
     @inject(CensorshipService) protected censorshipService: CensorshipService,
     @inject(GuildInventoryRepository) private _guildInventoryRepo: GuildInventoryRepository
   ) {
-    super(guild, guildService, channelService, censorshipService);
+    super(guildService, channelService, censorshipService);
 
     this.guildProperty = "storeMessageId";
   }
 
-  protected async setMessage(messageId: string): Promise<void> {
-    await this.guildService.setStoreMessage(this.guild.id, messageId);
+  protected async setMessage(guildId: string, messageId: string): Promise<void> {
+    await this.guildService.setStoreMessage(guildId, messageId);
   }
 
-  protected async generateEmbed(): Promise<MessageEmbed> {
-    const storeFields = await this.getStoreFields();
+  protected async generateEmbed(guild: DsGuild): Promise<MessageEmbed> {
+    const storeFields = await this.getStoreFields(guild.id);
     const statusEmbed = new MessageEmbed()
       .setColor(0xe3c91e)
       .setTitle("Store")
@@ -36,10 +35,10 @@ export default class GuildStoreService extends EmbedMessageService {
     return statusEmbed;
   }
 
-  private async getStoreFields() {
-    const fields = new Array<EmbedFieldData>();
+  private async getStoreFields(guildId: string) {
+    const fields: EmbedFieldData[] = [];
 
-    const items = await this._guildInventoryRepo.getGuildStock(this.guild.id);
+    const items = await this._guildInventoryRepo.getGuildStock(guildId);
 
     const itemFields = items.map((item) => {
       return {

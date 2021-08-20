@@ -1,11 +1,11 @@
 import delay from "delay";
 import { Client, Message } from "discord.js";
-import { inject, injectable } from "tsyringe";
+import { delay as tsDelay, inject, injectable } from "tsyringe";
+import CommmandMessage from "../models/dsExtensions/CommandMessage";
 import CensorshipService from "./Censorship.service";
 import ChannelService from "./Channel.service";
 import ClientService from "./Client.service";
 import CommandService from "./Command.service";
-import CommandParser from "./CommandParser";
 import CurrencyService from "./Currency.service";
 
 @injectable()
@@ -13,7 +13,7 @@ export default class MessageService {
   private _client: Client;
 
   public constructor(
-    @inject(ClientService) private _clientService: ClientService,
+    @inject(tsDelay(() => ClientService)) private _clientService: ClientService,
     @inject(ChannelService) private _channelService: ChannelService,
     @inject(CommandService) private _commandService: CommandService,
     @inject(CurrencyService) private _currencyService: CurrencyService,
@@ -52,7 +52,7 @@ export default class MessageService {
     this.delayedDelete(message, deleteTime);
 
     // Process command
-    if (message.content.startsWith(CommandParser.COMMAND_PREFIX)) {
+    if (message.content.startsWith(CommmandMessage.COMMAND_PREFIX)) {
       await this._commandService.processMessage(message);
       await this._currencyService.payoutMessageAuthor(message);
     }

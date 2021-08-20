@@ -1,8 +1,9 @@
+import { Format, print } from "../utilities/Util";
+import { GuildMember, TextChannel } from "discord.js";
+
 import Command from "./Command";
 import CommmandMessage from "../models/dsExtensions/CommandMessage";
 import CurrencyService from "../services/Currency.service";
-import { GuildMember } from "discord.js";
-import RNumber from "../models/RNumber";
 import RaphError from "../models/RaphError";
 import { Result } from "../enums/Result";
 import { autoInjectable } from "tsyringe";
@@ -20,17 +21,18 @@ export default class Balance extends Command {
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
-    if (!cmdMessage.member) {
+    if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
-    return this.execute(cmdMessage.member, cmdMessage.args);
+    this.channel = cmdMessage.message.channel as TextChannel;
+    return this.execute(cmdMessage.message.member, cmdMessage.args);
   }
 
   public async execute(initiator: GuildMember, args: string[]): Promise<any> {
     const showPublic = args.length > 0 && args[Args.SHOW] === "show";
 
-    const balance = await this._currencyService?.getCurrency(initiator);
-    const messageText = `You have ${RNumber.formatDollar(balance)} in ${initiator.guild.name}`;
+    const balance = (await this._currencyService?.getCurrency(initiator)) as number;
+    const messageText = `You have ${print(balance, Format.Dollar)} in ${initiator.guild.name}`;
 
     if (showPublic) {
       this.reply(messageText);

@@ -12,7 +12,7 @@ import { autoInjectable } from "tsyringe";
 export default class Command {
   public item: UserItem;
   public instructions: string;
-  public channel: TextChannel | undefined;
+  public channel: TextChannel;
   protected usage: string;
 
   public constructor(

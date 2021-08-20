@@ -1,10 +1,11 @@
+import { GuildMember, TextChannel } from "discord.js";
+
 import Command from "./Command";
 import CommmandMessage from "../models/dsExtensions/CommandMessage";
-import { GuildMember } from "discord.js";
 import RaphError from "../models/RaphError";
 import { Result } from "../enums/Result";
 import { autoInjectable } from "tsyringe";
-import { parseDuration } from "../services/Util";
+import { parseDuration } from "../utilities/Util";
 
 enum Args {
   ACTION,
@@ -21,10 +22,11 @@ export default class AutoDelete extends Command {
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
-    if (!cmdMessage.member) {
+    if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
-    return this.execute(cmdMessage.member, cmdMessage.args);
+    this.channel = cmdMessage.message.channel as TextChannel;
+    return this.execute(cmdMessage.message.member, cmdMessage.args);
   }
 
   public async execute(initiator: GuildMember, args: string[]): Promise<void> {

@@ -2,9 +2,9 @@ import { FieldPacket, RowDataPacket } from "mysql2/promise";
 
 import Repository from "./Repository";
 import User from "../models/User";
-import Util from "../Util";
+import { round } from "../utilities/Util";
 
-export default class UsersRepository extends Repository {
+export default class UserRepository extends Repository {
   public get(id: string, guildId: string) {
     return this.pool
       .query("SELECT * FROM users WHERE id = ? AND guild_id = ?", [id, guildId])
@@ -36,7 +36,7 @@ export default class UsersRepository extends Repository {
     return this.pool.query(
       "INSERT INTO users (id, guild_id, currency) VALUES (?,?,?) " +
         "ON DUPLICATE KEY UPDATE currency = currency + VALUES(currency)",
-      [id, guildId, Util.round(amount)]
+      [id, guildId, round(amount)]
     );
   }
 
@@ -44,7 +44,7 @@ export default class UsersRepository extends Repository {
     return this.pool.query(
       "INSERT INTO users (id, guild_id, currency) VALUES (?,?,?) " +
         "ON DUPLICATE KEY UPDATE currency = VALUES(currency)",
-      [id, guildId, Util.round(amount)]
+      [id, guildId, round(amount)]
     );
   }
 

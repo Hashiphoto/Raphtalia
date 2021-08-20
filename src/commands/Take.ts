@@ -1,17 +1,17 @@
-import { GuildMember } from "discord.js";
-import { autoInjectable } from "tsyringe";
-import { Result } from "../enums/Result";
-import CommmandMessage from "../models/dsExtensions/CommandMessage";
-import RaphError from "../models/RaphError";
-import RNumber from "../models/RNumber";
-import UserItem from "../models/UserItem";
-import CurrencyService from "../services/Currency.service";
-import { sumString } from "../services/Util";
+import { parseNumber, sumString } from "../utilities/Util";
+
 import Command from "./Command";
+import CommmandMessage from "../models/dsExtensions/CommandMessage";
+import CurrencyService from "../services/Currency.service";
+import { GuildMember } from "discord.js";
+import Item from "../models/Item";
+import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
+import { autoInjectable } from "tsyringe";
 
 @autoInjectable()
 export default class Take extends Command {
-  public constructor(private _currencyService?: CurrencyService) {
+  public constructor(protected currencyService?: CurrencyService) {
     super();
     this.instructions =
       "**Take**\nTake money or items from the specified user. " +
@@ -20,17 +20,28 @@ export default class Take extends Command {
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
-    if (!cmdMessage.member) {
+    if (!cmdMessage.message.member || !cmdMessage.message.guild) {
       throw new RaphError(Result.NoGuild);
     }
-    return this.execute(cmdMessage.member, cmdMessage.memberMentions);
+
+    const amount = parseNumber(cmdMessage.parsedContent);
+    const itemName = cmdMessage.parsedContent
+      .substring(cmdMessage.parsedContent.lastIndexOf(">") + 1)
+      .trim();
+
+    const guildItem = await this.inventoryService?.findGuildItem(
+      cmdMessage.message.guild.id,
+      itemName
+    );
+
+    return this.execute(cmdMessage.message.member, cmdMessage.memberMentions, amount, guildItem);
   }
 
   public async execute(
     initiator: GuildMember,
     targets: GuildMember[],
     amount?: number,
-    item?: UserItem
+    item?: Item
   ): Promise<any> {
     if (targets.length === 0) {
       return this.sendHelpMessage();
@@ -47,52 +58,30 @@ export default class Take extends Command {
       return this.sendHelpMessage();
     }
 
+    let response = "";
+
     if (amount) {
-      await this.takeMoney(initiator, targets, amount);
+      response += await this.transferMoney(initiator, targets, amount);
     }
     if (item) {
-      await this.takeItem(initiator, targets, item);
+      response += await this.transferItem(initiator, targets, item);
     }
+
     await this.useItem(initiator, targets.length);
-
-    const rNumber = RNumber.parse(this.ec.messageHelper.parsedContent);
-    if (rNumber) {
-      return this.takeMoney(rNumber, targets).then(() => this.useItem(initiator, targets.length));
-    }
-
-    if (targets.length > 1) {
-      return this.sendHelpMessage("You cannot take an item from more than one member at a time");
-    }
-
-    const target = targets[0];
-
-    // Parse item name
-    const itemName = this.ec.messageHelper.parsedContent
-      .substring(this.ec.messageHelper.parsedContent.lastIndexOf(">") + 1)
-      .trim();
-
-    if (itemName === "") {
-      return this.sendHelpMessage();
-    }
-
-    return this._inventoryService.findUserItem(target, itemName).then(async (item) => {
-      if (!item) {
-        return this.sendHelpMessage(
-          `${target.toString()} does not have any item named "${itemName}". ` +
-            `If you are attempting to take money, make sure to format it as \`$1\``
-        );
-      }
-      return this.takeItem(item, target).then(() => this.useItem(targets.length));
-    });
+    await this.reply(response);
   }
 
-  private async takeMoney(initiator: GuildMember, targets: GuildMember[], amount: number) {
+  protected async transferMoney(
+    initiator: GuildMember,
+    targets: GuildMember[],
+    amount: number
+  ): Promise<string> {
     if (amount < 0) {
-      return this.reply("You cannot take a negative amount of money\n");
+      return "You cannot take a negative amount of money\n";
     }
 
     const moneyPromises = targets.map((target) => {
-      return this._currencyService
+      return this.currencyService
         ?.transferCurrency(target, initiator, amount)
         .then(
           () =>
@@ -100,18 +89,27 @@ export default class Take extends Command {
         );
     });
 
-    return Promise.all(moneyPromises)
-      .then((messages) => messages.reduce(sumString))
-      .then((response) => this.reply(response));
+    return Promise.all(moneyPromises).then((messages) => messages.reduce(sumString) ?? "");
   }
 
-  private takeItem(initiator: GuildMember, targets: GuildMember[], item: UserItem) {
-    const itemPromises = 
-
-    return this._inventoryService.transferItem(item, target, initiator).then(() => {
-      return this.reply(
-        `Transferred one ${item.name} from ${target.toString()} to ${initiator.toString()}\n`
-      );
+  protected async transferItem(
+    initiator: GuildMember,
+    targets: GuildMember[],
+    item: Item
+  ): Promise<string> {
+    const itemPromises = targets.map(async (target) => {
+      const targetItem = await this.inventoryService?.getUserItem(target, item);
+      if (!targetItem) {
+        return `${target.displayName} has no ${item.name}`;
+      }
+      return this.inventoryService
+        ?.transferItem(targetItem, target, initiator)
+        .then(
+          () =>
+            `Transferred one ${item.name} from ${target.toString()} to ${initiator.toString()}\n`
+        );
     });
+
+    return Promise.all(itemPromises).then((messages) => messages.reduce(sumString) ?? "");
   }
 }

@@ -1,10 +1,15 @@
 import { GuildMember, Message } from "discord.js";
-
-import { injectable } from "tsyringe";
+import { inject, injectable } from "tsyringe";
+import { Env } from "../enums/Environment";
+import GuildRepository from "../repositories/Guild.repository";
+import UserRepository from "../repositories/User.repository";
 
 @injectable()
 export default class CurrencyService {
-  public constructor() {}
+  public constructor(
+    @inject(UserRepository) private _userRepository: UserRepository,
+    @inject(GuildRepository) private _guildRepository: GuildRepository
+  ) {}
 
   public async payoutMessageAuthor(message: Message): Promise<void> {
     if (!message.member) {
@@ -13,11 +18,11 @@ export default class CurrencyService {
     await this.payoutInteraction(message.member, message.createdAt);
   }
 
-  public async payoutReaction(member: GuildMember, undo = false): Promise<void> {
-    if (!this.ec.message.member) {
+  public async payoutReaction(member: GuildMember, message: Message, undo = false): Promise<void> {
+    if (!message.member) {
       return;
     }
-    const dbGuild = await this.ec.db.guilds.get(this.ec.guild.id);
+    const dbGuild = await this._guildRepository.get(member.guild.id);
     if (!dbGuild) {
       return;
     }
@@ -25,19 +30,19 @@ export default class CurrencyService {
     const reacteeAmount = undo ? -dbGuild.reacteeRate : dbGuild.reacteeRate;
 
     if (!undo) {
-      this.payoutInteraction(member, this.ec.message.createdAt);
+      this.payoutInteraction(member, message.createdAt);
     }
 
-    return this.addCurrency(this.ec.message.member, reacteeAmount);
+    await this.addCurrency(message.member, reacteeAmount);
   }
 
-  public async payoutInteraction(member: GuildMember, interactionDate: Date) {
-    const dbGuild = await this.ec.db.guilds.get(this.ec.guild.id);
+  public async payoutInteraction(member: GuildMember, interactionDate: Date): Promise<void> {
+    const dbGuild = await this._guildRepository.get(member.guild.id);
     if (!dbGuild) {
       return;
     }
 
-    const dbUser = await this.ec.db.users.get(member.id, this.ec.guild.id);
+    const dbUser = await this._userRepository.get(member.id, member.guild.id);
     const roleScalar = this.getRoleScalar(member);
     const timeElapsed = this.getTimeElapsedSeconds(dbUser.lastMessageDate, interactionDate);
 
@@ -46,25 +51,26 @@ export default class CurrencyService {
       timeElapsed == null ? 1 : Math.min(1, timeElapsed / dbGuild.messageResetTime);
     const payout = dbGuild.messageRate * timeScalar * roleScalar;
 
-    // console.log(
-    //   `${member.displayName}\n` +
-    //     `Last interaction: ${
-    //       dbUser.lastMessageDate ? dbUser.lastMessageDate.toLocaleString() : "never"
-    //     }.\n` +
-    //     `This interaction ${interactionDate.toLocaleString()}\n` +
-    //     `Time interval: ${timeElapsed} seconds\n` +
-    //     `Payout: rate (${dbGuild.messageRate}) * time (${timeScalar}) * role (${roleScalar}) = ${payout}\n\n`
-    // );
+    if (process.env.NODE_ENV === Env.Dev) {
+      console.log(
+        `${member.displayName}\n` +
+          `Last interaction: ${
+            dbUser.lastMessageDate ? dbUser.lastMessageDate.toLocaleString() : "never"
+          }.\n` +
+          `This interaction ${interactionDate.toLocaleString()}\n` +
+          `Time interval: ${timeElapsed} seconds\n` +
+          `Payout: rate (${dbGuild.messageRate}) * time (${timeScalar}) * role (${roleScalar}) = ${payout}\n\n`
+      );
+    }
 
-    return this.addCurrency(member, payout).then(() => {
-      return this.ec.db.users.setLastMessageDate(member.id, this.ec.guild.id, interactionDate);
-    });
+    await this.addCurrency(member, payout);
+    await this._userRepository.setLastMessageDate(member.id, member.guild.id, interactionDate);
   }
 
   /**
    * 1.0 for the base role, scaling up to 2.0 for the highest role
    */
-  public getRoleScalar(member: GuildMember) {
+  public getRoleScalar(member: GuildMember): number {
     const role = member.roles.hoist;
     if (!role) {
       return 0;
@@ -87,30 +93,32 @@ export default class CurrencyService {
    * Get the difference between two dates
    * TODO: Move this to a utility class?
    */
-  public getTimeElapsedSeconds(startDate: Date, finishDate: Date) {
+  public getTimeElapsedSeconds(startDate: Date, finishDate: Date): number | undefined {
     if (!startDate || !finishDate) {
-      return null;
+      return;
     }
     const msElapsed = finishDate.getTime() - startDate.getTime();
     return Math.floor(msElapsed / 1000);
   }
 
-  public addCurrency(member: GuildMember, amount = 1) {
-    return this.ec.db.users.incrementCurrency(member.id, member.guild.id, amount);
+  public async addCurrency(member: GuildMember, amount: number): Promise<void> {
+    await this._userRepository.incrementCurrency(member.id, member.guild.id, amount);
   }
 
-  public transferCurrency(
+  public async transferCurrency(
     fromMember: GuildMember,
     toMember: GuildMember,
     amount: number
   ): Promise<void> {
-    return this.ec.db.users.incrementCurrency(fromMember.id, this.ec.guild.id, -amount).then(() => {
-      this.ec.db.users.incrementCurrency(toMember.id, this.ec.guild.id, amount);
-    });
+    await this._userRepository
+      .incrementCurrency(fromMember.id, fromMember.guild.id, -amount)
+      .then(() => {
+        this._userRepository.incrementCurrency(toMember.id, fromMember.guild.id, amount);
+      });
   }
 
-  public getCurrency(member: GuildMember) {
-    return this.ec.db.users.get(member.id, member.guild.id).then((dbUser) => {
+  public async getCurrency(member: GuildMember): Promise<number> {
+    return this._userRepository.get(member.id, member.guild.id).then((dbUser) => {
       return dbUser.currency;
     });
   }

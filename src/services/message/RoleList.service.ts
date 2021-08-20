@@ -4,28 +4,27 @@ import CensorshipService from "../Censorship.service";
 import ChannelService from "../Channel.service";
 import GuildService from "../Guild.service";
 import RoleService from "../Role.service";
-import EmbedMessageService from "./EmbedMessage.service";
+import EmbedMessageManager from "./EmbedMessage.service";
 
 @injectable()
-export default class RoleStatusController extends EmbedMessageService {
+export default class RoleListService extends EmbedMessageManager {
   public constructor(
-    protected guild: DsGuild,
     @inject(GuildService) protected guildService: GuildService,
     @inject(ChannelService) protected channelService: ChannelService,
     @inject(CensorshipService) protected censorshipService: CensorshipService,
     @inject(RoleService) private _roleService: RoleService
   ) {
-    super(guild, guildService, channelService, censorshipService);
+    super(guildService, channelService, censorshipService);
 
     this.guildProperty = "roleMessageId";
   }
 
-  protected async setMessage(messageId: string): Promise<void> {
-    await this.guildService.setRoleMessage(this.guild.id, messageId);
+  protected async setMessage(guildId: string, messageId: string): Promise<void> {
+    await this.guildService.setRoleMessage(guildId, messageId);
   }
 
-  protected async generateEmbed(): Promise<MessageEmbed> {
-    const roleFields = await this.getFields();
+  protected async generateEmbed(guild: DsGuild): Promise<MessageEmbed> {
+    const roleFields = await this.getFields(guild);
     const statusEmbed = new MessageEmbed()
       .setColor(0x73f094)
       .setTitle("Roles")
@@ -36,10 +35,10 @@ export default class RoleStatusController extends EmbedMessageService {
     return statusEmbed;
   }
 
-  private async getFields(): Promise<EmbedFieldData[]> {
+  private async getFields(guild: DsGuild): Promise<EmbedFieldData[]> {
     const fields = [];
 
-    const discordRoles = this.guild.roles.cache
+    const discordRoles = guild.roles.cache
       .filter((role) => role.hoist)
       .sort((a, b) => b.comparePositionTo(a))
       .array();

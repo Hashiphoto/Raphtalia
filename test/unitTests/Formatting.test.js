@@ -11,7 +11,7 @@ describe("Utilting", () => {
     });
     it("dollar format", () => {
       const num = 1.123123;
-      const result = RNumber.formatDollar(num);
+      const result = format(num);
       assert.equal(result, "$1.12");
     });
     it("multiplier format", () => {

@@ -1,22 +1,26 @@
+import { GuildMember, TextChannel } from "discord.js";
+
 import Command from "./Command";
-import ExecutionContext from "../models/ExecutionContext";
-import { GuildMember } from "discord.js";
+import CommmandMessage from "../models/dsExtensions/CommandMessage";
+import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
 import { autoInjectable } from "tsyringe";
 
 @autoInjectable()
 export default class NullCommand extends Command {
   private text: string | undefined;
 
-  public constructor(context: ExecutionContext, text?: string) {
+  public constructor(text?: string) {
     super();
     this.text = text;
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
-    if (!cmdMessage.member) {
+    if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
-    return this.execute(cmdMessage.member, cmdMessage.args);
+    this.channel = cmdMessage.message.channel as TextChannel;
+    return this.execute(cmdMessage.message.member);
   }
 
   public async execute(initiator: GuildMember): Promise<any> {

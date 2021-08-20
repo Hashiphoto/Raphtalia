@@ -1,13 +1,20 @@
 import dayjs from "dayjs";
 import { Duration } from "dayjs/plugin/duration";
 import delay from "delay";
-import { GuildMember, Role as DsRole, RoleResolvable, TextChannel } from "discord.js";
-import { inject, injectable } from "tsyringe";
+import {
+  GuildMember,
+  PartialGuildMember,
+  Role as DsRole,
+  RoleResolvable,
+  TextChannel,
+} from "discord.js";
+import { delay as tsDelay, inject, injectable } from "tsyringe";
 import links from "../../resources/links";
 import { Result } from "../enums/Result";
 import RaphError from "../models/RaphError";
 import RoleRepository from "../repositories/Role.repository";
-import UsersRepository from "../repositories/UsersRepository";
+import UserRepository from "../repositories/User.repository";
+import RoleListService from "./message/RoleList.service";
 import RoleService from "./Role.service";
 import RoleContestService from "./RoleContest.service";
 
@@ -16,10 +23,11 @@ const INFRACTION_LIMIT = 3;
 @injectable()
 export default class MemberService {
   public constructor(
-    @inject(UsersRepository) private _usersRepository: UsersRepository,
+    @inject(UserRepository) private _usersRepository: UserRepository,
     @inject(RoleService) private _roleService: RoleService,
-    @inject(RoleContestService) private _roleContestService: RoleContestService,
-    @inject(RoleRepository) private _roleRepository: RoleRepository
+    @inject(tsDelay(() => RoleContestService)) private _roleContestService: RoleContestService,
+    @inject(RoleRepository) private _roleRepository: RoleRepository,
+    @inject(RoleListService) private _roleListService: RoleListService
   ) {}
 
   public hasAuthorityOver(sender: GuildMember, target: GuildMember | GuildMember[]): boolean {
@@ -33,6 +41,24 @@ export default class MemberService {
       return target.every((target) => isHigher(sender, target));
     }
     return isHigher(sender, target);
+  }
+
+  public async handleMemberUpdate(
+    oldMember: GuildMember | PartialGuildMember,
+    newMember: GuildMember
+  ): Promise<void> {
+    // Check if roles changed
+    if (oldMember.roles.cache.size !== newMember.roles.cache.size) {
+      await this._roleListService.update(newMember.guild);
+      return;
+    }
+
+    for (const [id] of oldMember.roles.cache) {
+      if (!newMember.roles.cache.has(id)) {
+        await this._roleListService.update(newMember.guild);
+        return;
+      }
+    }
   }
 
   /**

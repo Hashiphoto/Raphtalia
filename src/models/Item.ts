@@ -9,8 +9,7 @@ export default class Item {
   public unlimitedUses: boolean;
   public unlimitedQuantity: boolean;
   public isStealProtected: boolean;
-
-  private _commands: CommandItem[] | undefined;
+  public commands: CommandItem[];
 
   public constructor(
     id: string,
@@ -18,25 +17,18 @@ export default class Item {
     name: string,
     maxUses: number,
     quantity: number,
-    commands: CommandItem[] | undefined,
-    isStealProtected: boolean
+    isStealProtected: boolean,
+    commands: CommandItem[]
   ) {
     this.id = id;
     this.guildId = guildId;
     this.name = name;
     this.maxUses = maxUses;
     this.quantity = quantity;
-    this._commands = commands;
     this.unlimitedUses = this.maxUses < 0;
     this.unlimitedQuantity = this.quantity < 0;
     this.isStealProtected = isStealProtected;
-  }
-
-  public async getCommands(): Promise<CommandItem[]> {
-    if (!this._commands) {
-      this._commands = await this.itemRepository.getCommandsForItem(this.id);
-    }
-    return this._commands;
+    this.commands = commands;
   }
 
   public printName(): string {
@@ -51,14 +43,13 @@ export default class Item {
     return this.unlimitedUses ? "∞" : String(this.maxUses);
   }
 
-  public async printCommands(): Promise<string> {
-    const commands = await this.getCommands();
-    if (commands.length === 0) {
+  public printCommands(): string {
+    if (this.commands.length === 0) {
       return "```\nVanity Item\n```";
     }
     return (
       "```fix\n" +
-      commands.reduce((sum: string, value: { name: any }) => sum + `!${value.name}\n`, "") +
+      this.commands.reduce((sum: string, value: { name: any }) => sum + `!${value.name}\n`, "") +
       "```"
     );
   }

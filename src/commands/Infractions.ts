@@ -1,10 +1,16 @@
+import { GuildMember, TextChannel } from "discord.js";
+
 import Command from "./Command";
-import { GuildMember } from "discord.js";
+import CommmandMessage from "../models/dsExtensions/CommandMessage";
+import MemberService from "../services/Member.service";
+import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
 import { autoInjectable } from "tsyringe";
+import { sumString } from "../utilities/Util";
 
 @autoInjectable()
 export default class Infractions extends Command {
-  public constructor() {
+  public constructor(private _memberService?: MemberService) {
     super();
     this.instructions =
       "**Infractions**\nGet the number of infractions commited by a member. To get your own infraction count, use the command without arguments (`Infractions`)";
@@ -12,29 +18,26 @@ export default class Infractions extends Command {
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
-    if (!cmdMessage.member) {
+    if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
-    return this.execute(cmdMessage.member, cmdMessage.args);
+    this.channel = cmdMessage.message.channel as TextChannel;
+
+    return this.execute(
+      cmdMessage.message.member,
+      cmdMessage.memberMentions.length ? cmdMessage.memberMentions : [cmdMessage.message.member]
+    );
   }
 
-  public async execute(initiator: GuildMember): Promise<any> {
-    if (
-      this.ec.messageHelper.mentionedMembers == null ||
-      this.ec.messageHelper.mentionedMembers.length === 0
-    ) {
-      return this.reportInfractions(initiator);
-    } else {
-      return this.reportInfractions(this.ec.messageHelper.mentionedMembers[0]);
-    }
-  }
+  public async execute(initiator: GuildMember, targets: GuildMember[]): Promise<any> {
+    const infractionPromises = targets.map((target) =>
+      this._memberService
+        ?.getInfractions(target)
+        .then((infractCount) => `${target.displayName} has incurred ${infractCount} infractions\n`)
+    );
 
-  private reportInfractions(member: GuildMember) {
-    return this.ec.memberController
-      .getInfractions(member)
-      .then((infractCount) =>
-        this.reply(`${member.toString()} has incurred ${infractCount} infractions\n`)
-      )
-      .then(() => this.useItem(initiator));
+    await Promise.all(infractionPromises).then((messages) => messages.reduce(sumString));
+
+    await this.useItem(initiator);
   }
 }

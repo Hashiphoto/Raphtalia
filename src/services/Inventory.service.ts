@@ -1,11 +1,12 @@
-import { GuildMember } from "discord.js";
-import { inject, injectable } from "tsyringe";
+import { Guild as DsGuild, GuildMember } from "discord.js";
+import { delay, inject, injectable } from "tsyringe";
 import { Result } from "../enums/Result";
 import GuildItem from "../models/GuildItem";
 import Item from "../models/Item";
 import RaphError from "../models/RaphError";
 import UserInventory from "../models/UserInventory";
 import UserItem from "../models/UserItem";
+import CommandRepository from "../repositories/Command.repository";
 import GuildInventoryRepository from "../repositories/GuildInventory.repository";
 import UserInventoryRepository from "../repositories/UserInventory.repository";
 import ClientService from "./Client.service";
@@ -20,9 +21,10 @@ export default class InventoryService {
   public constructor(
     @inject(GuildInventoryRepository) private _guildInventoryRepo: GuildInventoryRepository,
     @inject(UserInventoryRepository) private _userInventoryRepo: UserInventoryRepository,
+    @inject(CommandRepository) private _commandRepository: CommandRepository,
     @inject(GuildService) private _guildService: GuildService,
     @inject(CurrencyService) private _currencyService: CurrencyService,
-    @inject(ClientService) private _clientService: ClientService,
+    @inject(delay(() => ClientService)) private _clientService: ClientService,
     @inject(GuildStoreService) private _guildStoreService: GuildStoreService
   ) {}
 
@@ -31,12 +33,16 @@ export default class InventoryService {
     return this._guildInventoryRepo.findGuildItem(guildId, name);
   }
 
-  public async updateGuildItem(item: GuildItem): Promise<void> {
+  public async updateGuildItem(guild: DsGuild, item: GuildItem): Promise<void> {
     await this._guildInventoryRepo.updateGuildItem(item);
-    this._guildStoreService.update();
+    this._guildStoreService.update(guild);
   }
 
-  public async subtractGuildStock(item: GuildItem, quantity: number): Promise<GuildItem> {
+  public async subtractGuildStock(
+    guild: DsGuild,
+    item: GuildItem,
+    quantity: number
+  ): Promise<GuildItem> {
     if (item.unlimitedQuantity) {
       // Record how many are sold
       await this._guildInventoryRepo.updateGuildItemSold(item.guildId, item, quantity, new Date());
@@ -50,11 +56,11 @@ export default class InventoryService {
       );
     }
 
-    this._guildStoreService.update();
+    this._guildStoreService.update(guild);
     return this._guildInventoryRepo.getGuildItem(item.guildId, item.id);
   }
 
-  public async increaseGuildItemPrice(guildItem: GuildItem): Promise<void> {
+  public async increaseGuildItemPrice(guild: DsGuild, guildItem: GuildItem): Promise<void> {
     const dbGuild = await this._guildService.getGuild(guildItem.guildId);
     if (!dbGuild) {
       return;
@@ -69,7 +75,7 @@ export default class InventoryService {
     const newPrice = Math.max(priceMultiplier * guildItem.price, guildItem.price + MIN_PRICE_HIKE);
 
     await this._guildInventoryRepo.updateGuildItemPrice(guildItem.guildId, guildItem, newPrice);
-    this._guildStoreService.update();
+    this._guildStoreService.update(guild);
   }
 
   public async getGuildItemByCommand(
@@ -81,7 +87,7 @@ export default class InventoryService {
 
   /** USER ITEMS **/
   public async findUserItem(member: GuildMember, name: string): Promise<UserItem | undefined> {
-    return this._userInventoryRepo.findUserItem(member.guild.id, member.id, name);
+    return this._userInventoryRepo.findUserItemByName(member.guild.id, member.id, name);
   }
 
   /**
@@ -106,14 +112,14 @@ export default class InventoryService {
     );
 
     // Subtract from guild stock
-    const updatedItem = await this.subtractGuildStock(item, quantity);
+    const updatedItem = await this.subtractGuildStock(member.guild, item, quantity);
     if (!updatedItem) {
       throw new RaphError(Result.NotFound);
     }
     if (updatedItem.soldInCycle > 0) {
-      await this.increaseGuildItemPrice(updatedItem);
+      await this.increaseGuildItemPrice(member.guild, updatedItem);
     }
-    this._guildStoreService.update();
+    this._guildStoreService.update(member.guild);
 
     // Add it to player stock
     item.quantity = quantity;
@@ -122,16 +128,17 @@ export default class InventoryService {
     return this._userInventoryRepo.getUserItem(guildId, member.id, item.id);
   }
 
-  public async getUserInventory(user: GuildMember): Promise<UserInventory> {
+  public async getUserInventory(member: GuildMember): Promise<UserInventory> {
     return this._userInventoryRepo
-      .getUserItems(user.guild.id, user.id)
-      .then((items) => new UserInventory(user, items));
+      .getUserItems(member.guild.id, member.id)
+      .then((items) => new UserInventory(member, items));
   }
 
-  public async getUserItemByCommand(
-    member: GuildMember,
-    commandName: string
-  ): Promise<UserItem | undefined> {
+  public async getUserItem(member: GuildMember, item: Item): Promise<UserItem> {
+    return this._userInventoryRepo.getUserItem(member.guild.id, member.id, item.id);
+  }
+
+  public async getUserItemByCommand(member: GuildMember, commandName: string): Promise<UserItem> {
     return this._userInventoryRepo.getUserItemByCommand(member.guild.id, member.id, commandName);
   }
 
@@ -149,7 +156,7 @@ export default class InventoryService {
       this._guildInventoryRepo.updateGuildItemQuantity(member.guild.id, item, uses);
     }
 
-    this._guildStoreService.update();
+    this._guildStoreService.update(member.guild);
     return this.updateUserItem(item, member).then(() => {
       return item;
     });

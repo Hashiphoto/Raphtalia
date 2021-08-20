@@ -1,6 +1,7 @@
-import Item from "./Item";
+import { Format, print } from "../utilities/Util";
+
 import CommandItem from "./ItemCommand";
-import RNumber from "./RNumber";
+import Item from "./Item";
 
 export default class GuildItem extends Item {
   public price: number;
@@ -14,15 +15,14 @@ export default class GuildItem extends Item {
     name: string,
     maxUses: number,
     quantity: number,
-    commands: CommandItem[],
     isStealProtected: boolean,
-    guildId: string,
+    commands: CommandItem[],
     price: number,
     maxQuantity: number,
     soldInCycle: number,
     dateLastSold: Date
   ) {
-    super(id, guildId, name, maxUses, quantity, commands, isStealProtected);
+    super(id, guildId, name, maxUses, quantity, isStealProtected, commands);
 
     this.price = price;
     this.maxQuantity = maxQuantity;
@@ -35,11 +35,11 @@ export default class GuildItem extends Item {
   }
 
   public printPrice(): string {
-    return RNumber.formatDollar(this.price);
+    return print(this.price, Format.Dollar);
   }
 
   public getDetails(): string {
-    const price = `Price: ${RNumber.formatDollar(this.price)}\n`;
+    const price = `Price: ${print(this.price, Format.Dollar)}\n`;
     const uses = `Uses: ${this.unlimitedUses ? "∞" : this.maxUses}\n`;
     const quantity =
       `Quantity: ` + (this.unlimitedQuantity ? "∞" : `${this.quantity}/${this.maxQuantity}`) + `\n`;

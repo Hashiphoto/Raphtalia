@@ -1,9 +1,10 @@
+import { Format, print } from "../utilities/Util";
+import { GuildMember, TextChannel } from "discord.js";
+
 import Command from "./Command";
 import CommmandMessage from "../models/dsExtensions/CommandMessage";
 import GuildItem from "../models/GuildItem";
-import { GuildMember } from "discord.js";
 import InventoryService from "../services/Inventory.service";
-import RNumber from "../models/RNumber";
 import RaphError from "../models/RaphError";
 import { Result } from "../enums/Result";
 import { autoInjectable } from "tsyringe";
@@ -18,10 +19,11 @@ export default class Buy extends Command {
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
-    if (!cmdMessage.member) {
+    if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
-    return this.execute(cmdMessage.member, cmdMessage.parsedContent);
+    this.channel = cmdMessage.message.channel as TextChannel;
+    return this.execute(cmdMessage.message.member, cmdMessage.parsedContent);
   }
 
   public async execute(initiator: GuildMember, itemName: string): Promise<any> {
@@ -57,8 +59,9 @@ export default class Buy extends Command {
     this.channel &&
       (await this.channelService?.watchSend(
         this.channel,
-        `Thank you for your purchase of ${RNumber.formatDollar(
-          guildItem.price
+        `Thank you for your purchase of ${print(
+          guildItem.price,
+          Format.Dollar
         )}!\n>>> ${guildItem.printName()} | Uses: ${guildItem.printMaxUses()}`
       ));
     await this.useItem(initiator, 1);

@@ -1,14 +1,25 @@
-import { FieldPacket, RowDataPacket } from "mysql2/promise";
-
-import Item from "../models/Item";
-import Repository from "./Repository";
-import UserItem from "../models/UserItem";
 import { escape } from "mysql2";
+import { FieldPacket, RowDataPacket } from "mysql2/promise";
+import { inject, injectable } from "tsyringe";
+import Item from "../models/Item";
+import UserItem from "../models/UserItem";
+import CommandRepository from "./Command.repository";
+import Repository from "./Repository";
 
+@injectable()
 export default class UserInventoryRepository extends Repository {
-  private selectUserItem = "SELECT * FROM vw_user_inv_complete";
+  public constructor(@inject(CommandRepository) private _commandRepository: CommandRepository) {
+    super();
+  }
 
-  public async findUserItem(guildId: string, userId: string, itemName: string, showHidden = false) {
+  private selectUserItem = "SELECT * FROM vw_user_inv_complete ";
+
+  public async findUserItemByName(
+    guildId: string,
+    userId: string,
+    itemName: string,
+    showHidden = false
+  ): Promise<UserItem | undefined> {
     return this.pool
       .query(
         this.selectUserItem +
@@ -16,7 +27,7 @@ export default class UserInventoryRepository extends Repository {
           `${showHidden ? "" : "AND hidden = 0"}`,
         [guildId, userId]
       )
-      .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
+      .then(([rows]: [RowDataPacket[], FieldPacket[]]) => {
         if (rows.length === 0) {
           return;
         }
@@ -77,20 +88,13 @@ export default class UserInventoryRepository extends Repository {
     guildId: string,
     userId: string,
     commandName: string
-  ): Promise<UserItem | undefined> {
+  ): Promise<UserItem> {
     return this.pool
-      .query(this.selectUserItem + "WHERE guild_id=? AND user_id=? AND name LIKE ?", [
-        guildId,
-        userId,
-        commandName,
-      ])
+      .query("SELECT item_id FROM commands WHERE name LIKE ?", [commandName])
       .then(([rows]: [RowDataPacket[], FieldPacket[]]) => {
-        if (rows.length == 0) {
-          return;
-        }
-        return rows[0].id;
+        return rows[0].item_id;
       })
-      .then((itemId) => (itemId ? this.getUserItem(guildId, userId, itemId) : undefined));
+      .then((itemId) => this.getUserItem(guildId, userId, itemId));
   }
 
   public async updateUserItem(guildId: string, userId: string, item: UserItem): Promise<void> {
@@ -121,18 +125,19 @@ export default class UserInventoryRepository extends Repository {
   }
 
   private async toUserItem(row: RowDataPacket) {
-    if (!row) {
-      throw new Error("row is undefined");
-    }
-
+    const commands = await this._commandRepository.getCommandsForItem(row.item_id);
     return new UserItem(
-      row.id,
+      row.item_id,
       row.guild_id,
       row.name,
       row.max_uses,
       row.quantity,
-      undefined,
       row.steal_protected,
+      commands,
+      row.price,
+      row.maxQuantity,
+      row.soldInCycle,
+      row.dateLastSold,
       row.remaining_uses,
       row.date_purchased,
       row.user_id

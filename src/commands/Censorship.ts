@@ -1,7 +1,8 @@
+import { GuildMember, TextChannel } from "discord.js";
+
 import BanListService from "../services/message/BanWordList.service";
 import Command from "./Command";
 import CommmandMessage from "../models/dsExtensions/CommandMessage";
-import { GuildMember } from "discord.js";
 import GuildService from "../services/Guild.service";
 import RaphError from "../models/RaphError";
 import { Result } from "../enums/Result";
@@ -26,10 +27,11 @@ export default class Censorship extends Command {
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
-    if (!cmdMessage.member) {
+    if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
-    return this.execute(cmdMessage.member, cmdMessage.args);
+    this.channel = cmdMessage.message.channel as TextChannel;
+    return this.execute(cmdMessage.message.member, cmdMessage.args);
   }
 
   public async execute(initiator: GuildMember, args: string[]): Promise<any> {
@@ -53,7 +55,7 @@ export default class Censorship extends Command {
 
     await this._guildService?.setCensorship(initiator.guild.id, start);
     await this.reply(response);
-    this._banListService?.update();
+    this._banListService?.update(initiator.guild);
     this.useItem(initiator);
   }
 }

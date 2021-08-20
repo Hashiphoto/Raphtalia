@@ -9,10 +9,10 @@ import {
 import { inject, injectable } from "tsyringe";
 import { Result } from "../enums/Result";
 import RaphError from "../models/RaphError";
-import RNumber from "../models/RNumber";
 import RoleContest from "../models/RoleContest";
 import RoleContestBid from "../models/RoleContestBid";
 import RoleRepository from "../repositories/Role.repository";
+import { Format, print } from "../utilities/Util";
 import ChannelService from "./Channel.service";
 import MemberService from "./Member.service";
 import RoleService from "./Role.service";
@@ -60,13 +60,10 @@ export default class RoleContestService {
     role: DsRole,
     member: GuildMember,
     amount: number
-  ): Promise<RoleContest> {
+  ): Promise<RoleContest | undefined> {
     const roleContest = await this._roleRepository.findRoleContest(role.id, member.id);
     if (!roleContest) {
-      throw new RaphError(
-        Result.NotFound,
-        `There is no role contest that ${member.displayName} can bid on`
-      );
+      return;
     }
     await this._roleRepository.insertContestBid(roleContest.id, member.id, amount);
     const updatedRoleContest = await this._roleRepository.getRoleContest(roleContest.id, true);
@@ -74,6 +71,7 @@ export default class RoleContestService {
       throw new RaphError(Result.NotFound);
     }
     const contestStatusMessage = await this._channelService.fetchMessage(
+      role.guild,
       updatedRoleContest.messageId
     );
     if (contestStatusMessage) {
@@ -109,7 +107,10 @@ export default class RoleContestService {
       await this._roleRepository.deleteContest(contest.id).catch((e) => {
         console.log(e);
       });
-      const contestStatusMessage = await this._channelService.fetchMessage(contest.messageId);
+      const contestStatusMessage = await this._channelService.fetchMessage(
+        guild,
+        contest.messageId
+      );
       if (contestStatusMessage) {
         await contestStatusMessage.delete();
       }
@@ -118,7 +119,7 @@ export default class RoleContestService {
       return (
         `**The contest for the ${role.toString()} role is over!**\n` +
         `The loser is ${loserBid.member.toString()} with a measly bid of ` +
-        `${RNumber.formatDollar(loserBid.amount)}!\n` +
+        `${print(loserBid.amount, Format.Dollar)}!\n` +
         `${punishFeedback}\n\n`
       );
     });
@@ -150,7 +151,7 @@ export default class RoleContestService {
     if (roleContest) {
       bids = await roleContest.bids.reduce(async (sum, currentBid) => {
         const member = await role.guild.members.fetch(currentBid.userId);
-        return (await sum) + `${member.displayName}: ${RNumber.formatDollar(currentBid.amount)}\n`;
+        return (await sum) + `${member.displayName}: ${print(currentBid.amount, Format.Dollar)}\n`;
       }, Promise.resolve(""));
     }
 
