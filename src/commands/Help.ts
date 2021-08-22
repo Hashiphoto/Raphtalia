@@ -2,7 +2,7 @@ import { GuildMember, TextChannel } from "discord.js";
 
 import Command from "./Command";
 import CommandService from "../services/Command.service";
-import CommmandMessage from "../models/dsExtensions/CommandMessage";
+import CommmandMessage from "../models/CommandMessage";
 import RaphError from "../models/RaphError";
 import { Result } from "../enums/Result";
 import { autoInjectable } from "tsyringe";

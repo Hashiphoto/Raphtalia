@@ -4,7 +4,7 @@ import { GuildMember, TextChannel } from "discord.js";
 
 import ClientService from "../services/Client.service";
 import Command from "./Command";
-import CommmandMessage from "../models/dsExtensions/CommandMessage";
+import CommmandMessage from "../models/CommandMessage";
 import CurrencyService from "../services/Currency.service";
 import GuildItem from "../models/GuildItem";
 import RaphError from "../models/RaphError";

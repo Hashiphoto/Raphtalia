@@ -1,7 +1,7 @@
 import { parseNumber, sumString } from "../utilities/Util";
 
 import Command from "./Command";
-import CommmandMessage from "../models/dsExtensions/CommandMessage";
+import CommmandMessage from "../models/CommandMessage";
 import CurrencyService from "../services/Currency.service";
 import { GuildMember } from "discord.js";
 import Item from "../models/Item";

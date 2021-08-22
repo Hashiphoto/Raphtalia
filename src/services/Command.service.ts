@@ -29,7 +29,7 @@ import Steal from "../commands/Steal";
 import Store from "../commands/Store";
 import Take from "../commands/Take";
 import { Env } from "../enums/Environment";
-import CommmandMessageWrapper from "../models/dsExtensions/CommandMessage";
+import CommmandMessageWrapper from "../models/CommandMessage";
 import InventoryService from "./Inventory.service";
 import RoleService from "./Role.service";
 

@@ -2,7 +2,7 @@ import { GuildMember, TextChannel } from "discord.js";
 import { formatDate, parseDuration } from "../utilities/Util";
 
 import Command from "./Command";
-import CommmandMessage from "../models/dsExtensions/CommandMessage";
+import CommmandMessage from "../models/CommandMessage";
 import { Duration } from "dayjs/plugin/duration";
 import MemberService from "../services/Member.service";
 import RaphError from "../models/RaphError";

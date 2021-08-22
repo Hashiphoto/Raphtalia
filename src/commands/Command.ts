@@ -1,7 +1,7 @@
 import { GuildMember, Message, TextChannel } from "discord.js";
 
 import ChannelService from "../services/Channel.service";
-import CommmandMessage from "../models/dsExtensions/CommandMessage";
+import CommmandMessage from "../models/CommandMessage";
 import InventoryService from "../services/Inventory.service";
 import RaphError from "../models/RaphError";
 import { Result } from "../enums/Result";

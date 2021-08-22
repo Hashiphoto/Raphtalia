@@ -2,7 +2,7 @@ import { Format, print } from "../utilities/Util";
 import { GuildMember, TextChannel } from "discord.js";
 
 import Command from "./Command";
-import CommmandMessage from "../models/dsExtensions/CommandMessage";
+import CommmandMessage from "../models/CommandMessage";
 import GuildItem from "../models/GuildItem";
 import InventoryService from "../services/Inventory.service";
 import RaphError from "../models/RaphError";

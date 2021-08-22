@@ -1,7 +1,7 @@
 import delay from "delay";
 import { Client, Message } from "discord.js";
 import { delay as tsDelay, inject, injectable } from "tsyringe";
-import CommmandMessage from "../models/dsExtensions/CommandMessage";
+import CommmandMessage from "../models/CommandMessage";
 import CensorshipService from "./Censorship.service";
 import ChannelService from "./Channel.service";
 import ClientService from "./Client.service";

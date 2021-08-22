@@ -8,7 +8,7 @@ import {
 
 import ClientService from "../services/Client.service";
 import Command from "./Command";
-import CommmandMessage from "../models/dsExtensions/CommandMessage";
+import CommmandMessage from "../models/CommandMessage";
 import RaphError from "../models/RaphError";
 import { Result } from "../enums/Result";
 import { autoInjectable } from "tsyringe";

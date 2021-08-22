@@ -22,6 +22,11 @@ const random = (max: number) => {
   return Math.floor(Math.random() * max);
 };
 
+enum DurMatches {
+  NumValue = 1,
+  NumType = 2,
+}
+
 /**
  * Add a specified amount of time to the current time and return a dayjs date that equals
  * the sum of the current time and the parameter "duration"
@@ -34,12 +39,10 @@ const parseDuration = (inputText: string): Duration | undefined => {
 
   let duration = dayjs.duration(0);
   for (const match of matches) {
-    // The duration is in capturing group 1
-    const timeSpan = parseInt(match[1]);
-    // The type is in capturing group 2
-    const timeType = match[2];
+    const timeSpan = parseInt(match[DurMatches.NumValue]);
+    const timeType = match[DurMatches.NumType];
 
-    // For some reason, specifying "ms" breaks dayjs?
+    // For some reason, specifying "ms" breaks dayjs
     if (timeType === "ms") {
       duration = duration.add(timeSpan);
       continue;
@@ -65,7 +68,7 @@ const parseNumber = (text: string): number | undefined => {
    * 3        Number              400.00
    * 4        Percent Sign        %
    */
-  const matches = text.match(/^(\+|-)?(\$)?(\d*\.?\d+)(%)?$/i);
+  const matches = text.match(/^(\+|-)?(\$)?(\d+\.?\d*)(%)?$/i);
 
   if (!matches) {
     return;
@@ -133,8 +136,6 @@ const print = (amount: number, format: Format): string => {
       );
     case Format.Percent:
       return (amount * 100).toFixed(2) + "%";
-    default:
-      return amount.toFixed(2);
   }
 };
 

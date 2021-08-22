@@ -2,7 +2,7 @@ import { Collection, Guild as DsGuild, GuildMember, Message, TextChannel } from 
 import { Format, formatDate, parseDuration, print } from "../utilities/Util";
 
 import Command from "./Command";
-import CommmandMessage from "../models/dsExtensions/CommandMessage";
+import CommmandMessage from "../models/CommandMessage";
 import { Duration } from "dayjs/plugin/duration";
 import Question from "../models/Question";
 import RaphError from "../models/RaphError";

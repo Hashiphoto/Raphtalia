@@ -1,7 +1,7 @@
 import { Guild as DsGuild, GuildMember, TextChannel } from "discord.js";
 
 import Command from "./Command";
-import CommmandMessage from "../models/dsExtensions/CommandMessage";
+import CommmandMessage from "../models/CommandMessage";
 import GuildService from "../services/Guild.service";
 import Question from "../models/Question";
 import RaphError from "../models/RaphError";

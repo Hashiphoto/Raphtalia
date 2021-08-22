@@ -1,10 +1,10 @@
 {
   "name": "raphtalia",
-  "version": "0.9.2",
-  "description": "A discord bot to assist with managing the Gulag. Still in development right now, but the planned features are as follows:\r 1. Kick members\r 2. Count infractions\r 3. Detect pro-capitalist or pro-democracy language\r 4. Play the soviet national anthem on a voice channel\r 5. Post the communist manifesto",
+  "version": "1.0.0",
+  "description": "A discord bot to assist with managing the Gulag",
   "main": "Bot.ts",
   "scripts": {
-    "test": "set NODE_ENV=test&& nyc node_modules/mocha/bin/_mocha './test/**/*.test.js' --exit",
+    "test": "jest \"test/.*\\.test.ts\" --coverage",
     "start": "yarn install && tsc && env HOME=/var/git pm2 start raphtalia.pm2.json",
     "build": "yarn install && tsc"
   },
@@ -16,6 +16,9 @@
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/Hashiphoto/Raphtalia/issues"
+  },
+  "engines": {
+    "node": ">=16.7.0"
   },
   "homepage": "https://github.com/Hashiphoto/Raphtalia#readme",
   "dependencies": {
@@ -32,15 +35,17 @@
     "ytdl-core": "^4.5.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.15.0",
+    "@babel/preset-env": "^7.15.0",
+    "@babel/preset-typescript": "^7.15.0",
     "@types/cron": "^1.7.2",
     "@types/mysql2": "types/mysql2",
     "@types/node": "^14.14.21",
     "@typescript-eslint/eslint-plugin": "^4.27.0",
     "@typescript-eslint/parser": "^4.27.0",
+    "babel-jest": "^27.0.6",
     "eslint": "^7.28.0",
-    "mocha": "^8.2.1",
-    "nyc": "^15.1.0",
-    "sinon": "^9.2.2",
+    "jest": "^27.0.6",
     "ts-node": "^9.1.1",
     "typescript": "^4.1.3"
   }

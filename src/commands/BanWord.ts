@@ -3,7 +3,7 @@ import { GuildMember, TextChannel } from "discord.js";
 import BanListService from "../services/message/BanWordList.service";
 import CensorshipService from "../services/Censorship.service";
 import Command from "./Command";
-import CommmandMessage from "../models/dsExtensions/CommandMessage";
+import CommmandMessage from "../models/CommandMessage";
 import RaphError from "../models/RaphError";
 import { Result } from "../enums/Result";
 import { autoInjectable } from "tsyringe";
