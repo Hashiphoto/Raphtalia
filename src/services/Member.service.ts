@@ -14,6 +14,7 @@ import { Result } from "../enums/Result";
 import RaphError from "../models/RaphError";
 import RoleRepository from "../repositories/Role.repository";
 import UserRepository from "../repositories/User.repository";
+import { formatDate } from "../utilities/Util";
 import RoleListService from "./message/RoleList.service";
 import RoleService from "./Role.service";
 import RoleContestService from "./RoleContest.service";
@@ -194,7 +195,8 @@ export default class MemberService {
   public async exileMember(member: GuildMember, duration: Duration): Promise<void> {
     const exileRole = await this._roleService.getCreateExileRole(member.guild);
     await member.roles.add(exileRole);
-    await delay(duration.milliseconds()).then(() => member.roles.remove(exileRole));
+    await delay(duration.asMilliseconds());
+    await member.roles.remove(exileRole);
   }
 
   /**
@@ -212,7 +214,9 @@ export default class MemberService {
 
     const role = await this._roleService.getRole(discordRole.id);
 
-    if (discordRole.members.size >= role.memberLimit) {
+    console.log(discordRole.members.size);
+    console.log(role.memberLimit);
+    if (!role.unlimited && discordRole.members.size >= role.memberLimit) {
       throw new RaphError(Result.Full);
     }
 
@@ -251,7 +255,7 @@ export default class MemberService {
         if (promotionAvailableDate.isAfter(dayjs())) {
           throw new RaphError(
             Result.OnCooldown,
-            `${dsRole.name} will be open for contests on ${promotionAvailableDate.toString()}`
+            `${dsRole.name} will be open for contests at ${formatDate(promotionAvailableDate)}`
           );
         }
       }
@@ -317,7 +321,9 @@ export default class MemberService {
       return `${target.displayName} has been demoted to ${lowestRole.name}!\n`;
     }
 
-    const lowerRoles = allHoistRoles.slice(allHoistRoles.findIndex((r) => r.id === currentRole.id));
+    const lowerRoles = allHoistRoles.slice(
+      allHoistRoles.findIndex((r) => r.id === currentRole.id) + 1
+    );
     if (lowerRoles.length === 0) {
       throw new RaphError(Result.OutOfBounds, `${target.displayName} can't get any lower`);
     }
@@ -329,13 +335,13 @@ export default class MemberService {
         await this.setHoistedRole(target, role);
         response +=
           `${target.displayName} has been demoted to ${role.name}!\n` +
-          "Infractions have been reset";
+          "Infractions have been reset\n";
         await this.resetInfractions(target);
 
-        break;
+        return response;
       } catch (error) {
         if (error.result === Result.Full) {
-          response += `Cannot demote ${target.displayName} to ${role.name} becuase it is full\n`;
+          response += `Cannot demote ${target.displayName} to ${role.name} because it is full\n`;
         }
       }
     }

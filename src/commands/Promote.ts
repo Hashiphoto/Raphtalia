@@ -28,7 +28,10 @@ export default class Promote extends Command {
       throw new RaphError(Result.ProgrammingError, "This command needs a channel");
     }
     try {
-      await this._memberService?.promoteMember(initiator, this.channel);
+      const feedback = await this._memberService?.promoteMember(initiator, this.channel);
+      if (feedback) {
+        this.reply(feedback);
+      }
     } catch (error) {
       if (error.name === "RaphError") {
         return this.reply(error.message);

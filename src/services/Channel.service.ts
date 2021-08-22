@@ -1,4 +1,12 @@
-import { DMChannel, Guild as DsGuild, GuildMember, Message, TextChannel } from "discord.js";
+import {
+  DMChannel,
+  Guild as DsGuild,
+  GuildMember,
+  Message,
+  MessageOptions,
+  StringResolvable,
+  TextChannel,
+} from "discord.js";
 import { inject, injectable } from "tsyringe";
 import Question from "../models/Question";
 import ChannelRepository from "../repositories/Channel.repository";
@@ -54,8 +62,14 @@ export default class ChannelService {
     });
   }
 
-  public async watchSend(channel: TextChannel | DMChannel, ...content: any[]): Promise<Message> {
-    const message = await channel.send([...content]);
+  public async watchSend(
+    channel: TextChannel | DMChannel,
+    content: StringResolvable,
+    options?: MessageOptions
+  ): Promise<Message> {
+    const message = (
+      options ? await channel.send(content, options) : await channel.send(content)
+    ) as Message;
     const deleteTime = await this.getDeleteTime(channel);
 
     if (deleteTime >= 0) {

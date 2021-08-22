@@ -1,4 +1,4 @@
-import Discord, { Collection, Guild, Role as DsRole, RoleResolvable } from "discord.js";
+import Discord, { Collection, Guild as DsGuild, Role as DsRole, RoleResolvable } from "discord.js";
 import { inject, injectable } from "tsyringe";
 import Role from "../models/Role";
 import RoleRepository from "../repositories/Role.repository";
@@ -11,7 +11,7 @@ export default class RoleService {
     return this._roleRepository.getSingle(roleId);
   }
 
-  public parseRoles(guild: Guild, roles: RoleResolvable[]): DsRole[] {
+  public parseRoles(guild: DsGuild, roles: RoleResolvable[]): DsRole[] {
     const discordRoles = [];
     for (let i = 0; i < roles.length; i++) {
       const roleObject = this.convertToRole(guild, roles[i]);
@@ -24,7 +24,7 @@ export default class RoleService {
     return discordRoles;
   }
 
-  public convertToRole(guild: Guild, roleResolvable: RoleResolvable): DsRole | undefined {
+  public convertToRole(guild: DsGuild, roleResolvable: RoleResolvable): DsRole | undefined {
     // Test if it's already a role
     if (roleResolvable instanceof Discord.Role) {
       return roleResolvable;
@@ -54,14 +54,14 @@ export default class RoleService {
   /**
    * Returns all the hoisted roles in the guild, sorted highest to lowest
    */
-  public getHoistedRoles(guild: Guild): Collection<string, DsRole> {
+  public getHoistedRoles(guild: DsGuild): Collection<string, DsRole> {
     return guild.roles.cache.filter((role) => role.hoist).sort((a, b) => b.comparePositionTo(a));
   }
 
   /**
    * Returns the hoisted role one lower than the given role
    */
-  public getNextLower(role: DsRole, guild: Guild): DsRole {
+  public getNextLower(role: DsRole, guild: DsGuild): DsRole {
     return guild.roles.cache
       .filter((r) => r.comparePositionTo(role) < 0 && r.hoist)
       .sort((role1, role2) => {
@@ -70,7 +70,7 @@ export default class RoleService {
       .array()[0];
   }
 
-  public async getCreateExileRole(guild: Guild): Promise<DsRole> {
+  public async getCreateExileRole(guild: DsGuild): Promise<DsRole> {
     let exileRole = guild.roles.cache.find((r) => r.name === "Exile");
     if (!exileRole) {
       exileRole = await guild.roles.create({
@@ -81,7 +81,7 @@ export default class RoleService {
     return exileRole;
   }
 
-  public async getCreateVoterRole(guild: Guild): Promise<DsRole> {
+  public async getCreateVoterRole(guild: DsGuild): Promise<DsRole> {
     let voterRole = guild.roles.cache.find((r) => r.name === "Voter");
     if (!voterRole) {
       voterRole = await guild.roles.create({
@@ -89,5 +89,9 @@ export default class RoleService {
       });
     }
     return voterRole;
+  }
+
+  public async resetRoleDates(role: DsRole): Promise<void> {
+    return this._roleRepository.resetRoleDates(role.id);
   }
 }

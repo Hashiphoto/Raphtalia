@@ -6,7 +6,6 @@ import Item from "../models/Item";
 import RaphError from "../models/RaphError";
 import UserInventory from "../models/UserInventory";
 import UserItem from "../models/UserItem";
-import CommandRepository from "../repositories/Command.repository";
 import GuildInventoryRepository from "../repositories/GuildInventory.repository";
 import UserInventoryRepository from "../repositories/UserInventory.repository";
 import ClientService from "./Client.service";
@@ -21,7 +20,6 @@ export default class InventoryService {
   public constructor(
     @inject(GuildInventoryRepository) private _guildInventoryRepo: GuildInventoryRepository,
     @inject(UserInventoryRepository) private _userInventoryRepo: UserInventoryRepository,
-    @inject(CommandRepository) private _commandRepository: CommandRepository,
     @inject(GuildService) private _guildService: GuildService,
     @inject(CurrencyService) private _currencyService: CurrencyService,
     @inject(delay(() => ClientService)) private _clientService: ClientService,
@@ -125,7 +123,7 @@ export default class InventoryService {
     item.quantity = quantity;
     await this._userInventoryRepo.insertUserItem(guildId, member.id, item);
 
-    return this._userInventoryRepo.getUserItem(guildId, member.id, item.id);
+    return (await this._userInventoryRepo.getUserItem(guildId, member.id, item.id)) as UserItem;
   }
 
   public async getUserInventory(member: GuildMember): Promise<UserInventory> {
@@ -134,11 +132,14 @@ export default class InventoryService {
       .then((items) => new UserInventory(member, items));
   }
 
-  public async getUserItem(member: GuildMember, item: Item): Promise<UserItem> {
+  public async getUserItem(member: GuildMember, item: Item): Promise<UserItem | undefined> {
     return this._userInventoryRepo.getUserItem(member.guild.id, member.id, item.id);
   }
 
-  public async getUserItemByCommand(member: GuildMember, commandName: string): Promise<UserItem> {
+  public async getUserItemByCommand(
+    member: GuildMember,
+    commandName: string
+  ): Promise<UserItem | undefined> {
     return this._userInventoryRepo.getUserItemByCommand(member.guild.id, member.id, commandName);
   }
 

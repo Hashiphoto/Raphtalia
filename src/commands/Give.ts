@@ -1,19 +1,18 @@
-import { Format, print, sumString } from "../utilities/Util";
-
-import ClientService from "../services/Client.service";
 import { GuildMember } from "discord.js";
+import { autoInjectable, delay, inject } from "tsyringe";
+import { Result } from "../enums/Result";
 import Item from "../models/Item";
 import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
+import ClientService from "../services/Client.service";
 import RoleContestService from "../services/RoleContest.service";
+import { Format, print, sumString } from "../utilities/Util";
 import Take from "./Take";
-import { autoInjectable } from "tsyringe";
 
 @autoInjectable()
 export default class Give extends Take {
   public constructor(
-    private _clientService?: ClientService,
-    private _roleContestService?: RoleContestService
+    @inject(delay(() => ClientService)) private _clientService?: ClientService,
+    @inject(delay(() => RoleContestService)) private _roleContestService?: RoleContestService
   ) {
     super();
     this.instructions =
@@ -87,11 +86,15 @@ export default class Give extends Take {
     }
 
     const givePromises = targets.map((target) => {
-      return this.inventoryService?.transferItem(userItem, target, initiator).then(() => {
+      return this.inventoryService?.transferItem(userItem, initiator, target).then(() => {
+        console.log("Transfer");
         return `Transferred one ${item.name} to ${target.toString()}\n`;
       });
     });
 
-    return Promise.all(givePromises).then((messages) => messages.reduce(sumString) ?? "");
+    return Promise.all(givePromises).then((messages) => {
+      console.log(messages);
+      return messages.join("");
+    });
   }
 }

@@ -1,7 +1,9 @@
 import { escape } from "mysql2";
 import { FieldPacket, RowDataPacket } from "mysql2/promise";
 import { inject, injectable } from "tsyringe";
+import { Result } from "../enums/Result";
 import Item from "../models/Item";
+import RaphError from "../models/RaphError";
 import UserItem from "../models/UserItem";
 import CommandRepository from "./Command.repository";
 import Repository from "./Repository";
@@ -74,24 +76,36 @@ export default class UserInventoryRepository extends Repository {
       });
   }
 
-  public async getUserItem(guildId: string, userId: string, itemId: string): Promise<UserItem> {
+  public async getUserItem(
+    guildId: string,
+    userId: string,
+    itemId: string
+  ): Promise<UserItem | undefined> {
     return this.pool
       .query(this.selectUserItem + "WHERE guild_id=? AND user_id=? AND item_id=?", [
         guildId,
         userId,
         itemId,
       ])
-      .then(([rows]: [RowDataPacket[], FieldPacket[]]) => this.toUserItem(rows[0]));
+      .then(async ([rows]: [RowDataPacket[], FieldPacket[]]) => {
+        if (!rows.length) {
+          return;
+        }
+        return (await this.toUserItem(rows[0])) as UserItem;
+      });
   }
 
   public async getUserItemByCommand(
     guildId: string,
     userId: string,
     commandName: string
-  ): Promise<UserItem> {
+  ): Promise<UserItem | undefined> {
     return this.pool
       .query("SELECT item_id FROM commands WHERE name LIKE ?", [commandName])
       .then(([rows]: [RowDataPacket[], FieldPacket[]]) => {
+        if (rows.length === 0) {
+          throw new RaphError(Result.NotFound);
+        }
         return rows[0].item_id;
       })
       .then((itemId) => this.getUserItem(guildId, userId, itemId));
@@ -118,13 +132,19 @@ export default class UserInventoryRepository extends Repository {
       .then(async ([rows]: [RowDataPacket[], FieldPacket[]]) => {
         const items = [];
         for (const r of rows) {
-          items.push(await this.toUserItem(r));
+          const userItem = await this.toUserItem(r);
+          if (userItem) {
+            items.push(userItem);
+          }
         }
         return items;
       });
   }
 
   private async toUserItem(row: RowDataPacket) {
+    if (!row) {
+      return;
+    }
     const commands = await this._commandRepository.getCommandsForItem(row.item_id);
     return new UserItem(
       row.item_id,

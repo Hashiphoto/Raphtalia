@@ -15,7 +15,7 @@ export default class MessageService {
   public constructor(
     @inject(tsDelay(() => ClientService)) private _clientService: ClientService,
     @inject(ChannelService) private _channelService: ChannelService,
-    @inject(CommandService) private _commandService: CommandService,
+    @inject(tsDelay(() => CommandService)) private _commandService: CommandService,
     @inject(CurrencyService) private _currencyService: CurrencyService,
     @inject(CensorshipService) private _censorshipService: CensorshipService
   ) {

@@ -1,4 +1,4 @@
-import { Message } from "discord.js";
+import { Message, TextChannel } from "discord.js";
 import { inject, injectable } from "tsyringe";
 import AllowWord from "../commands/AllowWord";
 import AutoDelete from "../commands/AutoDelete";
@@ -30,6 +30,7 @@ import Store from "../commands/Store";
 import Take from "../commands/Take";
 import { Env } from "../enums/Environment";
 import CommmandMessageWrapper from "../models/CommandMessage";
+import ChannelService from "./Channel.service";
 import InventoryService from "./Inventory.service";
 import RoleService from "./Role.service";
 
@@ -37,7 +38,8 @@ import RoleService from "./Role.service";
 export default class CommandService {
   public constructor(
     @inject(RoleService) private _roleService: RoleService,
-    @inject(InventoryService) private _inventoryService: InventoryService
+    @inject(InventoryService) private _inventoryService: InventoryService,
+    @inject(ChannelService) private _channelService: ChannelService
   ) {}
 
   public async processMessage(message: Message): Promise<void> {
@@ -70,11 +72,13 @@ export default class CommandService {
       cmdMessage.message.member,
       command.name
     );
-    if (userItem) {
-      command.item = userItem;
-      return command;
+    if (!userItem) {
+      return new NullCommand(
+        `${cmdMessage.message.member} doesn't have the correct item to use the **${command.name}** command`
+      );
     }
 
+    command.item = userItem;
     return command;
     // return this.autoBuyNeededItem(context, command);
   }
@@ -133,15 +137,19 @@ export default class CommandService {
 
   private async executeCommand(cmdMessage: CommmandMessageWrapper, command: Command) {
     cmdMessage.message.channel.startTyping();
-    return command
-      .executeDefault(cmdMessage)
-      .catch((error) => {
-        console.error(error);
-        return cmdMessage.message.react("🛑");
-      })
-      .finally(() => {
-        cmdMessage.message.channel.stopTyping(true);
-      });
+    try {
+      await command.executeDefault(cmdMessage);
+    } catch (error) {
+      console.error(error);
+      cmdMessage.message.channel.type === "text" &&
+        (await this._channelService.watchSend(
+          cmdMessage.message.channel as TextChannel,
+          error.message
+        ));
+      return cmdMessage.message.react("🛑");
+    } finally {
+      cmdMessage.message.channel.stopTyping(true);
+    }
   }
 
   public getCommandByName(name: string): Command | undefined {

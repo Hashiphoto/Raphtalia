@@ -1,11 +1,10 @@
 import { GuildMember, TextChannel } from "discord.js";
-
-import Command from "./Command";
-import CommandService from "../services/Command.service";
+import { autoInjectable, delay, inject } from "tsyringe";
+import { Result } from "../enums/Result";
 import CommmandMessage from "../models/CommandMessage";
 import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
-import { autoInjectable } from "tsyringe";
+import CommandService from "../services/Command.service";
+import Command from "./Command";
 
 enum Args {
   COMMAND_NAME,
@@ -13,7 +12,9 @@ enum Args {
 
 @autoInjectable()
 export default class Help extends Command {
-  public constructor(private _commandService?: CommandService) {
+  public constructor(
+    @inject(delay(() => CommandService)) private _commandService?: CommandService
+  ) {
     super();
     this.instructions = "**Help**\nGet detailed information about how to use any other command";
     this.usage = "Usage: `Help (command name)`";

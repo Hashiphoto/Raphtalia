@@ -1,7 +1,7 @@
 import { Client } from "discord.js";
 
 export default (client: Client): void => {
-  client.on("messageReactionAdd", (messageReaction, user) => {
+  // client.on("messageReactionAdd", (messageReaction, user) => {
   //   const message = messageReaction.message;
   //   if (!user || !(message.channel instanceof TextChannel) || !message.guild) {
   //     return;

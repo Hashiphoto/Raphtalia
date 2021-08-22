@@ -1,9 +1,9 @@
+import { GuildMember, TextChannel } from "discord.js";
 import { parseNumber, sumString } from "../utilities/Util";
 
 import Command from "./Command";
 import CommmandMessage from "../models/CommandMessage";
 import CurrencyService from "../services/Currency.service";
-import { GuildMember } from "discord.js";
 import Item from "../models/Item";
 import RaphError from "../models/RaphError";
 import { Result } from "../enums/Result";
@@ -23,6 +23,7 @@ export default class Take extends Command {
     if (!cmdMessage.message.member || !cmdMessage.message.guild) {
       throw new RaphError(Result.NoGuild);
     }
+    this.channel = cmdMessage.message.channel as TextChannel;
 
     const amount = parseNumber(cmdMessage.parsedContent);
     const itemName = cmdMessage.parsedContent
@@ -68,6 +69,7 @@ export default class Take extends Command {
     }
 
     await this.useItem(initiator, targets.length);
+    console.log("Replying" + response);
     await this.reply(response);
   }
 

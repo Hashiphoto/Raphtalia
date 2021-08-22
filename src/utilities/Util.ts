@@ -50,7 +50,7 @@ const parseDuration = (inputText: string): Duration | undefined => {
     duration = duration.add(timeSpan, timeType);
   }
 
-  return duration.milliseconds() === 0 ? undefined : duration;
+  return duration.asMilliseconds() === 0 ? undefined : duration;
 };
 
 const parseNumber = (text: string): number | undefined => {

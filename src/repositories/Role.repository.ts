@@ -1,6 +1,9 @@
 import { FieldPacket, ResultSetHeader, RowDataPacket } from "mysql2/promise";
 
+import { Env } from "../enums/Environment";
+import RaphError from "../models/RaphError";
 import Repository from "./Repository";
+import { Result } from "../enums/Result";
 import Role from "../models/Role";
 import RoleContest from "../models/RoleContest";
 import RoleContestBid from "../models/RoleContestBid";
@@ -120,11 +123,21 @@ export default class RoleRepository extends Repository {
       );
   }
 
-  public insertContestBid(contestId: number, userId: string, amount: number) {
+  public async insertContestBid(contestId: number, userId: string, amount: number) {
     return this.pool.query(
       "INSERT INTO role_contest_bids VALUES (?,?,?) ON DUPLICATE KEY UPDATE bid_amount = bid_amount + VALUES(bid_amount)",
       [contestId, userId, amount]
     );
+  }
+
+  /**
+   * FOR USE IN DEV ONLY
+   */
+  public async resetRoleDates(roleId: string) {
+    if (process.env.NODE_ENV !== Env.Dev) {
+      throw new RaphError(Result.ProgrammingError);
+    }
+    await this.pool.query("UPDATE roles SET last_promotion_on=NULL WHERE id=?", [roleId]);
   }
 
   private toRoleObject(row: RowDataPacket) {
