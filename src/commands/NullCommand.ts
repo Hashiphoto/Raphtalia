@@ -12,6 +12,7 @@ export default class NullCommand extends Command {
 
   public constructor(text?: string) {
     super();
+    this.name = "NullCommand";
     this.text = text;
   }
 

@@ -13,6 +13,7 @@ import { autoInjectable } from "tsyringe";
 export default class Take extends Command {
   public constructor(protected currencyService?: CurrencyService) {
     super();
+    this.name = "Take";
     this.instructions =
       "**Take**\nTake money or items from the specified user. " +
       "You can take money from multiple users at once, but only one item from one user at a time.";
@@ -69,7 +70,6 @@ export default class Take extends Command {
     }
 
     await this.useItem(initiator, targets.length);
-    console.log("Replying" + response);
     await this.reply(response);
   }
 

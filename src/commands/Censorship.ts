@@ -19,6 +19,7 @@ export default class Censorship extends Command {
     private _banListService?: BanListService
   ) {
     super();
+    this.name = "Censorship";
     this.instructions =
       "**Censorship**\nEnable or disable censorship for the whole server. " +
       "When censorship is enabled, anyone who uses a word from the banned " +

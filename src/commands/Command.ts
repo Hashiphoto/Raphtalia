@@ -13,15 +13,14 @@ export default class Command {
   public item: UserItem;
   public instructions: string;
   public channel: TextChannel;
+  public name: string;
   protected usage: string;
 
   public constructor(
     protected inventoryService?: InventoryService,
     protected channelService?: ChannelService
-  ) {}
-
-  public get name(): string {
-    return this.constructor.name;
+  ) {
+    this.name = "Command";
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {

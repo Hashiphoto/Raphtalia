@@ -15,6 +15,7 @@ export default class Give extends Take {
     @inject(delay(() => RoleContestService)) private _roleContestService?: RoleContestService
   ) {
     super();
+    this.name = "Give";
     this.instructions =
       "**Give**\nGive the specified member(s) either an amount of money or an item. " +
       "If multiple members are listed, each member will be given the amount of money specified. " +
@@ -87,13 +88,11 @@ export default class Give extends Take {
 
     const givePromises = targets.map((target) => {
       return this.inventoryService?.transferItem(userItem, initiator, target).then(() => {
-        console.log("Transfer");
         return `Transferred one ${item.name} to ${target.toString()}\n`;
       });
     });
 
     return Promise.all(givePromises).then((messages) => {
-      console.log(messages);
       return messages.join("");
     });
   }

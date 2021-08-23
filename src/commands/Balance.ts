@@ -16,6 +16,7 @@ enum Args {
 export default class Balance extends Command {
   public constructor(private _currencyService?: CurrencyService) {
     super();
+    this.name = "Balance";
     this.instructions = "**Balance**\nGet your current balance sent to you in a direct message";
     this.usage = "Usage: `Balance`";
   }

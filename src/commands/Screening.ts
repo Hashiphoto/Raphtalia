@@ -19,6 +19,7 @@ enum Action {
 export default class Screening extends Command {
   public constructor(private _guildService?: GuildService) {
     super();
+    this.name = "Screening";
     this.instructions =
       "**Screening**\nView, edit or delete the guild screening questions. " +
       "To view the current screening questions, use the `list` flag. This does not consume an item use.\n" +

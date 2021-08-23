@@ -12,6 +12,7 @@ import { sumString } from "../utilities/Util";
 export default class Pardon extends Command {
   public constructor(private _memberService?: MemberService) {
     super();
+    this.name = "Pardon";
     this.instructions =
       "**Pardon**\nRemoves all infractions from the specified member(s). " +
       "If the members are exiled, they are also freed from exile";

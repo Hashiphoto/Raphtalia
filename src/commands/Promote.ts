@@ -11,6 +11,7 @@ import { autoInjectable } from "tsyringe";
 export default class Promote extends Command {
   public constructor(private _memberService?: MemberService) {
     super();
+    this.name = "Promote";
     this.instructions = "**Promote**\nIncrease your rank by one";
     this.usage = "Usage: `Promote`";
   }

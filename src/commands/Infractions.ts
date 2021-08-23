@@ -12,6 +12,7 @@ import { sumString } from "../utilities/Util";
 export default class Infractions extends Command {
   public constructor(private _memberService?: MemberService) {
     super();
+    this.name = "Infractions";
     this.instructions =
       "**Infractions**\nGet the number of infractions commited by a member. To get your own infraction count, use the command without arguments (`Infractions`)";
     this.usage = "Usage: `Infractions [@member]`";
@@ -36,8 +37,11 @@ export default class Infractions extends Command {
         .then((infractCount) => `${target.displayName} has incurred ${infractCount} infractions\n`)
     );
 
-    await Promise.all(infractionPromises).then((messages) => messages.reduce(sumString));
+    const feedback = await Promise.all(infractionPromises).then((messages) =>
+      messages.reduce(sumString)
+    );
 
+    await this.reply(feedback);
     await this.useItem(initiator);
   }
 }

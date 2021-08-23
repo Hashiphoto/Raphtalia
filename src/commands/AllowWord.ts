@@ -15,6 +15,7 @@ export default class AllowWord extends Command {
     private _banListService?: BanListService
   ) {
     super();
+    this.name = "AllowWord";
     this.instructions = "**AllowWord**\nRemove a word from the ban list";
     this.usage = "Usage: `AllowWord word1 word2 etc`";
   }

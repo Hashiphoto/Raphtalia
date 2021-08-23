@@ -1,26 +1,23 @@
+import { GuildMember, TextChannel } from "discord.js";
+import { autoInjectable, delay, inject } from "tsyringe";
+import { Result } from "../enums/Result";
+import CommmandMessage from "../models/CommandMessage";
+import RaphError from "../models/RaphError";
+import UserItem from "../models/UserItem";
+import ClientService from "../services/Client.service";
+import CurrencyService from "../services/Currency.service";
 import { Dice, roll } from "../utilities/Rng";
 import { Format, print } from "../utilities/Util";
-import { GuildMember, TextChannel } from "discord.js";
-
-import ClientService from "../services/Client.service";
 import Command from "./Command";
-import CommmandMessage from "../models/CommandMessage";
-import CurrencyService from "../services/Currency.service";
-import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
-import UserItem from "../models/UserItem";
-import { autoInjectable } from "tsyringe";
 
 @autoInjectable()
 export default class Steal extends Command {
   public constructor(
-    private _currencyService?: CurrencyService,
-    private _clientService?: ClientService
+    @inject(CurrencyService) private _currencyService?: CurrencyService,
+    @inject(delay(() => ClientService)) private _clientService?: ClientService
   ) {
     super();
-    if (!_currencyService || !_clientService) {
-      throw new RaphError(Result.ProgrammingError, "DI Failed");
-    }
+    this.name = "Steal";
     this.instructions =
       "**Steal**\nAttempt to take an item from another user. " +
       "Odds of success are 1/20, or 2/20 if the user has had the item for more than 3 days. Cost of steal attempt = `odds * item price * 110%`";
@@ -50,12 +47,11 @@ export default class Steal extends Command {
     if (!userItem) {
       const guildItem = await this.inventoryService?.findGuildItem(target.guild.id, itemName);
       if (!guildItem) {
-        throw new RaphError(Result.NotFound, `Item "${itemName}" does not exist`);
+        this.reply(`Item "${itemName}" does not exist`);
+        return;
       }
-      throw new RaphError(
-        Result.NotFound,
-        `${target.displayName} does not have any ${guildItem.printName()} to steal`
-      );
+      this.reply(`${target.displayName} does not have any ${guildItem.printName()} to steal`);
+      return;
     }
 
     return this.execute(cmdMessage.message.member, target, userItem);

@@ -13,6 +13,7 @@ import { autoInjectable } from "tsyringe";
 export default class ServerStatus extends Command {
   public constructor() {
     super();
+    this.name = "ServerStatus";
     this.instructions =
       "**ServerStatus**\nPosts the ban list, role list, and store in this channel. " +
       "Equivalent to using the BanList, Roles, and Store commands consecutively.";

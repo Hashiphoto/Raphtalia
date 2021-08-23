@@ -1,24 +1,24 @@
 import {
   Guild as DsGuild,
-  User as DsUser,
   GuildMember,
   TextChannel,
+  User as DsUser,
   VoiceChannel,
 } from "discord.js";
-
-import ClientService from "../services/Client.service";
-import Command from "./Command";
+import { autoInjectable, delay, inject } from "tsyringe";
+import ytdl from "ytdl-core";
+import links from "../../resources/links";
+import { Result } from "../enums/Result";
 import CommmandMessage from "../models/CommandMessage";
 import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
-import { autoInjectable } from "tsyringe";
-import links from "../../resources/links";
-import ytdl from "ytdl-core";
+import ClientService from "../services/Client.service";
+import Command from "./Command";
 
 @autoInjectable()
 export default class Play extends Command {
-  public constructor(private clientService?: ClientService) {
+  public constructor(@inject(delay(() => ClientService)) private clientService?: ClientService) {
     super();
+    this.name = "Play";
     this.instructions =
       "**Play**\nPlay the server theme in the voice channel you are in. " +
       "You can specify which voice channel to play in by voice channel name or channel group and voice channel name. ";
@@ -83,32 +83,24 @@ export default class Play extends Command {
    * @param {number} vol - The volume to play at (0 to 1)
    */
   private async play(voiceChannel: VoiceChannel, url: string, vol: number): Promise<void> {
-    const connection = await voiceChannel.join();
-    const stream = ytdl(url, {
-      filter: "audioonly",
-      quality: "lowestaudio",
-      highWaterMark: 1 << 20,
-    });
-    const dispatcher = connection.play(stream, {
-      volume: vol,
-      highWaterMark: 1,
-    });
-
-    dispatcher.on("finish", () => voiceChannel.leave());
+    try {
+      const connection = await voiceChannel.join();
+      const stream = ytdl(url, {
+        filter: "audioonly",
+        quality: "lowestaudio",
+        highWaterMark: 1 << 20,
+      });
+      const dispatcher = connection.play(stream, {
+        volume: vol,
+        highWaterMark: 1,
+      });
+      dispatcher.on("finish", () => voiceChannel.leave());
+    } catch (e) {
+      console.error(e);
+      voiceChannel.leave();
+      throw e;
+    }
   }
-
-  // private getVolume(text: string) {
-  //   const rVolume = RNumber.parse(text);
-  //   if (!rVolume) {
-  //     return 0.5;
-  //   }
-
-  //   if (rVolume.type === RNumber.Types.PERCENT) {
-  //     return rVolume.amount;
-  //   } else {
-  //     return null;
-  //   }
-  // }
 
   /**
    * There are two accepted formats. If the parent and voice channel are both

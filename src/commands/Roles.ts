@@ -11,6 +11,7 @@ import { autoInjectable } from "tsyringe";
 export default class Roles extends Command {
   public constructor(private _roleListService?: RoleListService) {
     super();
+    this.name = "Roles";
     this.instructions = "**Roles**\nPost the roles list for this server in this channel";
     this.usage = "Usage: `Roles`";
   }

@@ -16,6 +16,7 @@ export default class Help extends Command {
     @inject(delay(() => CommandService)) private _commandService?: CommandService
   ) {
     super();
+    this.name = "Help";
     this.instructions = "**Help**\nGet detailed information about how to use any other command";
     this.usage = "Usage: `Help (command name)`";
   }
@@ -40,7 +41,7 @@ export default class Help extends Command {
     if (!command) {
       return this.sendHelpMessage();
     }
-
+    command.channel = this.channel;
     await command.sendHelpMessage(command.instructions);
     await this.useItem(initiator);
   }

@@ -1,6 +1,5 @@
 import { GuildMember, Message } from "discord.js";
 import { inject, injectable } from "tsyringe";
-import { Env } from "../enums/Environment";
 import GuildRepository from "../repositories/Guild.repository";
 import UserRepository from "../repositories/User.repository";
 
@@ -51,17 +50,17 @@ export default class CurrencyService {
       timeElapsed == null ? 1 : Math.min(1, timeElapsed / dbGuild.messageResetTime);
     const payout = dbGuild.messageRate * timeScalar * roleScalar;
 
-    if (process.env.NODE_ENV === Env.Dev) {
-      console.log(
-        `${member.displayName}\n` +
-          `Last interaction: ${
-            dbUser.lastMessageDate ? dbUser.lastMessageDate.toLocaleString() : "never"
-          }.\n` +
-          `This interaction ${interactionDate.toLocaleString()}\n` +
-          `Time interval: ${timeElapsed} seconds\n` +
-          `Payout: rate (${dbGuild.messageRate}) * time (${timeScalar}) * role (${roleScalar}) = ${payout}\n\n`
-      );
-    }
+    // if (process.env.NODE_ENV === Env.Dev) {
+    //   console.log(
+    //     `${member.displayName}\n` +
+    //       `Last interaction: ${
+    //         dbUser.lastMessageDate ? dbUser.lastMessageDate.toLocaleString() : "never"
+    //       }.\n` +
+    //       `This interaction ${interactionDate.toLocaleString()}\n` +
+    //       `Time interval: ${timeElapsed} seconds\n` +
+    //       `Payout: rate (${dbGuild.messageRate}) * time (${timeScalar}) * role (${roleScalar}) = ${payout}\n\n`
+    //   );
+    // }
 
     await this.addCurrency(member, payout);
     await this._userRepository.setLastMessageDate(member.id, member.guild.id, interactionDate);

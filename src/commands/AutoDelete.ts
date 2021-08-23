@@ -16,6 +16,7 @@ enum Args {
 export default class AutoDelete extends Command {
   public constructor() {
     super();
+    this.name = "AutoDelete";
     this.instructions =
       "**AutoDelete**\nEnable or disable automatic message deletion in this channel. If deletion delay is not specified, default 2000ms will be used";
     this.usage = "Usage: `AutoDelete (start|stop) [1ms]`";
@@ -26,14 +27,16 @@ export default class AutoDelete extends Command {
       throw new RaphError(Result.NoGuild);
     }
     this.channel = cmdMessage.message.channel as TextChannel;
+
+    if (cmdMessage.args.length === 0) {
+      await this.sendHelpMessage();
+      return;
+    }
+
     return this.execute(cmdMessage.message.member, cmdMessage.args);
   }
 
   public async execute(initiator: GuildMember, args: string[]): Promise<void> {
-    if (args.length === 0) {
-      await this.sendHelpMessage();
-      return;
-    }
     if (!this.channel) {
       throw new RaphError(Result.ProgrammingError, "The channel is undefined");
     }
@@ -41,21 +44,23 @@ export default class AutoDelete extends Command {
     let response: string;
     // AUTO DELETE ON
     if (args[Args.ACTION] === "start") {
-      if (args.length < 3) {
+      if (args.length < 2) {
         await this.sendHelpMessage(
           "Please use a time format to specify how long to wait before deleting messages in this channel. E.g.: `3s` or `1500ms`"
         );
         return;
       }
+      console.log(args, args[Args.DELAY_MS]);
       const delayMs = parseDuration(args[Args.DELAY_MS]);
-      if (!delayMs) {
+      console.log(delayMs);
+      if (delayMs === undefined) {
         await this.sendHelpMessage(
           "Please use a time format to specify how long to wait before deleting messages in this channel. E.g.: `3s` or `1500ms`"
         );
         return;
       }
-      await this.channelService?.setAutoDelete(this.channel.id, delayMs.milliseconds());
-      response = `Messages are deleted after ${delayMs}ms`;
+      await this.channelService?.setAutoDelete(this.channel.id, delayMs.asMilliseconds());
+      response = `Messages are deleted after ${delayMs.asMilliseconds()}ms`;
     }
     // AUTO DELETE OFF
     else if (args[Args.ACTION] === "stop") {
@@ -68,8 +73,8 @@ export default class AutoDelete extends Command {
       return;
     }
 
-    await this.channel.setTopic(response);
-    await this.reply(response);
-    await this.useItem(initiator);
+    this.channel.setTopic(response);
+    this.reply(response);
+    this.useItem(initiator);
   }
 }

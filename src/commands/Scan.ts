@@ -1,29 +1,30 @@
-import { Dice, roll } from "../utilities/Rng";
-import { Format, print } from "../utilities/Util";
 import { GuildMember, TextChannel } from "discord.js";
-
-import ClientService from "../services/Client.service";
-import Command from "./Command";
+import { autoInjectable, delay, inject } from "tsyringe";
+import { Result } from "../enums/Result";
 import CommmandMessage from "../models/CommandMessage";
-import CurrencyService from "../services/Currency.service";
 import GuildItem from "../models/GuildItem";
 import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
 import UserItem from "../models/UserItem";
-import { autoInjectable } from "tsyringe";
+import ClientService from "../services/Client.service";
+import CurrencyService from "../services/Currency.service";
+import { Dice, roll } from "../utilities/Rng";
+import { Format, print } from "../utilities/Util";
+import Command from "./Command";
 
-const serviceFee = 50;
-const minScanCost = 250;
 const percentCost = 0.05;
 
 @autoInjectable()
 export default class Scan extends Command {
   public constructor(
-    private _currencyService?: CurrencyService,
-    private _clientService?: ClientService
+    @inject(CurrencyService) private _currencyService?: CurrencyService,
+    @inject(delay(() => ClientService)) private _clientService?: ClientService
   ) {
     super();
-    this.instructions = "**Scan**\nSearch other users' inventories for a specified item. ";
+    this.name = "Scan";
+    this.instructions = `**Scan**\nSearch other users' inventories for a specified item. Costs ${print(
+      percentCost,
+      Format.Percent
+    )} of the item's store price. DC10 to reveal the user's name`;
     this.usage = "Usage: `Scan (item name)`";
   }
 
@@ -32,6 +33,10 @@ export default class Scan extends Command {
       throw new RaphError(Result.NoGuild);
     }
     this.channel = cmdMessage.message.channel as TextChannel;
+    if (cmdMessage.args.length === 0) {
+      await this.sendHelpMessage();
+      return;
+    }
     return this.execute(cmdMessage.message.member, cmdMessage.parsedContent);
   }
 
@@ -51,20 +56,27 @@ export default class Scan extends Command {
 
     // TODO: Simplify code with Steal
     const initiatorBalance = await this._currencyService?.getCurrency(initiator);
-    if (!initiatorBalance || initiatorBalance < minScanCost) {
+    const cost = guildItem.price * percentCost;
+    if (!initiatorBalance || initiatorBalance < cost) {
       return this.reply(
-        `You need at least ${print(minScanCost, Format.Dollar)} to attempt a scan.`
+        `${
+          initiator.displayName
+        } does not have enough money. Scanning for a ${guildItem.printName()} costs ${print(
+          cost,
+          Format.Dollar
+        )} (${print(percentCost, Format.Percent)} of the store price)`
       );
     }
 
-    const cost = Math.max(initiatorBalance * percentCost, minScanCost);
     await this._currencyService?.transferCurrency(
       initiator,
       this._clientService?.getRaphtaliaMember(initiator.guild) as GuildMember,
       cost
     );
 
-    const usersWithItem = (await this.inventoryService?.findUsersWithItem(guildItem)) as UserItem[];
+    const usersWithItem = (
+      (await this.inventoryService?.findUsersWithItem(guildItem)) as UserItem[]
+    ).filter((item) => item.userId !== initiator.user.id);
     const members = await initiator.guild.members.fetch({
       user: usersWithItem.map((ui) => ui.userId),
     });

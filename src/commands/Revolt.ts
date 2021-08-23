@@ -14,6 +14,7 @@ import { autoInjectable } from "tsyringe";
 export default class Revolt extends Command {
   public constructor() {
     super();
+    this.name = "Revolt";
     this.instructions = "**Revolt**\nDoesn't do anything";
     this.usage = "Usage: `Revolt`";
   }

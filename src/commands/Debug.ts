@@ -13,6 +13,7 @@ import { sumString } from "../utilities/Util";
 export default class Debug extends Command {
   public constructor() {
     super();
+    this.name = "Debug";
     this.instructions = "For testing in development only";
     this.usage = "Usage: `Debug (options)`";
   }

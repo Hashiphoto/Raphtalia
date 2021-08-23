@@ -20,6 +20,7 @@ export default class Status extends Command {
     private _memberService?: MemberService
   ) {
     super();
+    this.name = "Status";
     this.instructions = "**Status**\nPost your current balance and inventory in this channel";
     this.usage = "Usage: `Status`";
   }

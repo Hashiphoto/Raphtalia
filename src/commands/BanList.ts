@@ -11,6 +11,7 @@ import { autoInjectable } from "tsyringe";
 export default class BanList extends Command {
   public constructor(private _banListService?: BanListService) {
     super();
+    this.name = "BanList";
     this.instructions = "**BanList**\nPost the Banned Words List in this channel";
     this.usage = "Usage: `BanList`";
   }

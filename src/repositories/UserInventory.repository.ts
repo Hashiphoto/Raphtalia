@@ -1,9 +1,7 @@
 import { escape } from "mysql2";
 import { FieldPacket, RowDataPacket } from "mysql2/promise";
 import { inject, injectable } from "tsyringe";
-import { Result } from "../enums/Result";
 import Item from "../models/Item";
-import RaphError from "../models/RaphError";
 import UserItem from "../models/UserItem";
 import CommandRepository from "./Command.repository";
 import Repository from "./Repository";
@@ -100,15 +98,18 @@ export default class UserInventoryRepository extends Repository {
     userId: string,
     commandName: string
   ): Promise<UserItem | undefined> {
-    return this.pool
+    const itemId = await this.pool
       .query("SELECT item_id FROM commands WHERE name LIKE ?", [commandName])
       .then(([rows]: [RowDataPacket[], FieldPacket[]]) => {
         if (rows.length === 0) {
-          throw new RaphError(Result.NotFound);
+          return;
         }
         return rows[0].item_id;
-      })
-      .then((itemId) => this.getUserItem(guildId, userId, itemId));
+      });
+    if (!itemId) {
+      return;
+    }
+    return this.getUserItem(guildId, userId, itemId);
   }
 
   public async updateUserItem(guildId: string, userId: string, item: UserItem): Promise<void> {
@@ -128,7 +129,7 @@ export default class UserInventoryRepository extends Repository {
 
   public async findUsersWithItem(guildId: string, itemId: string): Promise<UserItem[]> {
     return this.pool
-      .query(`${this.selectUserItem} WHERE guild_id=? AND i.id=?`, [guildId, itemId])
+      .query(`${this.selectUserItem} WHERE guild_id=? AND item_id=?`, [guildId, itemId])
       .then(async ([rows]: [RowDataPacket[], FieldPacket[]]) => {
         const items = [];
         for (const r of rows) {

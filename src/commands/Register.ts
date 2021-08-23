@@ -11,6 +11,7 @@ import { autoInjectable } from "tsyringe";
 export default class Register extends Command {
   public constructor(private _roleService?: RoleService) {
     super();
+    this.name = "Register";
     this.instructions =
       "**Register**\nGive the voter role to yourself. " +
       "This will allow you to vote when anyone uses the HoldVote command";

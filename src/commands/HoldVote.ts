@@ -16,6 +16,7 @@ import delay from "delay";
 export default class HoldVote extends Command {
   public constructor() {
     super();
+    this.name = "HoldVote";
     this.instructions =
       "**HoldVote**\nSet up a vote for all registered voters. " +
       'Ballots will be sent to anyone with the "voter" role when the voting period starts. ' +

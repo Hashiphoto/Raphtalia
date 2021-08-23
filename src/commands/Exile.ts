@@ -15,6 +15,7 @@ import dayjs from "dayjs";
 export default class Exile extends Command {
   public constructor(private _roleService?: RoleService, private _memberService?: MemberService) {
     super();
+    this.name = "Exile";
     this.instructions =
       "**Exile**\nPut a specified member in exile for a period of time. " +
       "Exiled members cannot use any commands. If no time is specified, the maximum value of 6 hours will be used. ";

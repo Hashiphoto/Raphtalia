@@ -45,6 +45,7 @@ export default class CommandService {
   public async processMessage(message: Message): Promise<void> {
     const cmdMessage = new CommmandMessageWrapper(message);
     const command = await this.selectCommand(cmdMessage);
+    console.log(message.author.username, message.author.id, command.name, cmdMessage.args);
     await this.executeCommand(cmdMessage, command);
   }
 
@@ -59,10 +60,9 @@ export default class CommandService {
     }
 
     // Get the command
-    const command = this.getCommandByName(cmdMessage.command);
-    if (!command) {
-      return new NullCommand(`Unknown command "${cmdMessage.command}"`);
-    }
+    const command =
+      this.getCommandByName(cmdMessage.command) ??
+      new NullCommand(`Unknown command "${cmdMessage.command}"`);
     if (command instanceof NullCommand) {
       return command;
     }
@@ -74,7 +74,7 @@ export default class CommandService {
     );
     if (!userItem) {
       return new NullCommand(
-        `${cmdMessage.message.member} doesn't have the correct item to use the **${command.name}** command`
+        `${cmdMessage.message.member.displayName} doesn't have the correct item to use the **${cmdMessage.command}** command`
       );
     }
 
