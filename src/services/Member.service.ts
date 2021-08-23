@@ -251,7 +251,7 @@ export default class MemberService {
       const roleHeight = rolesLowToHigh.indexOf(role.id);
 
       if (roleHeight >= 0) {
-        const promotionAvailableDate = role.lastPromotionOn.add(roleHeight, "days");
+        const promotionAvailableDate = role.lastPromotionOn.add(roleHeight * 1.5, "days");
         if (promotionAvailableDate.isAfter(dayjs())) {
           throw new RaphError(
             Result.OnCooldown,

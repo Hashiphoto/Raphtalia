@@ -30,7 +30,7 @@ export default class Promote extends Command {
     }
     try {
       const feedback = await this._memberService?.promoteMember(initiator, this.channel);
-      if (feedback) {
+      if (feedback && feedback.length > 0) {
         this.reply(feedback);
       }
     } catch (error) {

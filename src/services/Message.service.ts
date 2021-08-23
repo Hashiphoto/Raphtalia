@@ -36,9 +36,8 @@ export default class MessageService {
       return;
     }
 
-    // Unhanlded cases
+    // Unhandlded cases
     if (
-      message.author.bot ||
       message.channel.type === "dm" ||
       message.type !== "DEFAULT" ||
       message.channel.type === "news" ||
@@ -48,7 +47,10 @@ export default class MessageService {
     }
 
     // Delete the incoming message
-    const deleteTime = await this._channelService.getDeleteTime(message.channel);
+    let deleteTime = await this._channelService.getDeleteTime(message.channel);
+    if (message.author.bot) {
+      deleteTime *= 2;
+    }
     this.delayedDelete(message, deleteTime);
 
     // Process command

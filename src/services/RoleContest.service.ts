@@ -6,13 +6,13 @@ import {
   Role as DsRole,
   TextChannel,
 } from "discord.js";
-import { inject, injectable } from "tsyringe";
+import { delay, inject, injectable } from "tsyringe";
 import { Result } from "../enums/Result";
 import RaphError from "../models/RaphError";
 import RoleContest from "../models/RoleContest";
 import RoleContestBid from "../models/RoleContestBid";
 import RoleRepository from "../repositories/Role.repository";
-import { Format, print } from "../utilities/Util";
+import { Format, formatDate, print } from "../utilities/Util";
 import ChannelService from "./Channel.service";
 import MemberService from "./Member.service";
 import RoleService from "./Role.service";
@@ -23,7 +23,7 @@ export default class RoleContestService {
     @inject(RoleRepository) private _roleRepository: RoleRepository,
     @inject(RoleService) private _roleService: RoleService,
     @inject(ChannelService) private _channelService: ChannelService,
-    @inject(MemberService) private _memberService: MemberService
+    @inject(delay(() => MemberService)) private _memberService: MemberService
   ) {}
 
   public async startContest(
@@ -32,6 +32,13 @@ export default class RoleContestService {
     initiator: GuildMember,
     channel: TextChannel
   ): Promise<void> {
+    const eightPmToday = dayjs().set("h", 20).startOf("h");
+    const now = dayjs();
+    console.log(formatDate(eightPmToday));
+    const contestEnd = eightPmToday.isAfter(now)
+      ? eightPmToday.add(24, "h")
+      : eightPmToday.add(48, "h");
+
     const content =
       `**${
         initiator.displayName
@@ -40,8 +47,8 @@ export default class RoleContestService {
         initiator.displayName
       } and everyone who currently holds the ${contestedRole.toString()} role can give me money to keep the role.\n` +
       `🔸 Whoever gives the least amount of money by the end of the contest period will be demoted.\n` +
-      `🔸 Contests are resolved at 8PM every day, if at least 24 hours have passed since the start of the contest.\n` +
-      `🔸 Use the command \`!Give @Raphtalia $1.00\` to pay me\n`;
+      `🔸 Use the command \`!Give @Raphtalia $1.00\` to pay me\n` +
+      `🔸 This contest will end at ${formatDate(contestEnd)}`;
 
     const embed = await this.getStatusEmbed(contestedRole);
 
