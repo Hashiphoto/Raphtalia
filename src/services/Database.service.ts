@@ -1,6 +1,6 @@
 import { Pool } from "mysql2/promise";
 import { createPool } from "mysql2";
-import secretConfig from "../../config/secrets.config";
+import secretConfig from "../config/secrets.config";
 import { singleton } from "tsyringe";
 
 @singleton()

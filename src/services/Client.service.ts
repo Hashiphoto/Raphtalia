@@ -6,7 +6,7 @@ import dayjs from "dayjs";
 import guildMemberRoute from "../routes/guildMember.route";
 import messageRoute from "../routes/message.route";
 import reactionRoute from "../routes/reaction.route";
-import secretConfig from "../../config/secrets.config";
+import secretConfig from "../config/secrets.config";
 import { singleton } from "tsyringe";
 
 @singleton()

@@ -9,11 +9,11 @@ import {
   TextChannel,
 } from "discord.js";
 import { delay as tsDelay, inject, injectable } from "tsyringe";
-import links from "../../resources/links";
 import { Result } from "../enums/Result";
 import RaphError from "../models/RaphError";
 import RoleRepository from "../repositories/Role.repository";
 import UserRepository from "../repositories/User.repository";
+import links from "../resources/links";
 import { formatDate } from "../utilities/Util";
 import RoleListService from "./message/RoleList.service";
 import RoleService from "./Role.service";

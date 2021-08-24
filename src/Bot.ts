@@ -6,7 +6,7 @@ import JobService from "./services/Job.service";
 import { container } from "tsyringe";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
-import secretConfig from "../config/secrets.config";
+import secretConfig from "./config/secrets.config";
 
 dayjs.extend(duration);
 

@@ -2,7 +2,8 @@
   "compilerOptions": {
     "target": "es6",
     "module": "commonjs",
-    "outDir": "./build",
+    "outDir": "build",
+    "rootDir": "src",
     "allowJs": true,
     "moduleResolution": "node",
     "noImplicitAny": true,
@@ -15,5 +16,6 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["build/**/*", "src/**/*.js"]
 }

@@ -7,10 +7,10 @@ import {
 } from "discord.js";
 import { autoInjectable, delay, inject } from "tsyringe";
 import ytdl from "ytdl-core";
-import links from "../../resources/links";
 import { Result } from "../enums/Result";
 import CommmandMessage from "../models/CommandMessage";
 import RaphError from "../models/RaphError";
+import links from "../resources/links";
 import ClientService from "../services/Client.service";
 import Command from "./Command";
 

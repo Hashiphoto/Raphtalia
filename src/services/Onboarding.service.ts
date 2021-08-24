@@ -1,7 +1,7 @@
 import delay from "delay";
 import { GuildMember, Message, PartialGuildMember, TextChannel } from "discord.js";
 import { inject, injectable } from "tsyringe";
-import discordConfig from "../../config/discord.config";
+import discordConfig from "../config/discord.config";
 import { Result } from "../enums/Result";
 import Question from "../models/Question";
 import RaphError from "../models/RaphError";
