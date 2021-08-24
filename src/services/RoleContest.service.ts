@@ -48,7 +48,7 @@ export default class RoleContestService {
       } and everyone who currently holds the ${contestedRole.toString()} role can give me money to keep the role.\n` +
       `🔸 Whoever gives the least amount of money by the end of the contest period will be demoted.\n` +
       `🔸 Use the command \`!Give @Raphtalia $1.00\` to pay me\n` +
-      `🔸 This contest will end at ${formatDate(contestEnd)}`;
+      `🔸 This contest will end at **${formatDate(contestEnd)}**`;
 
     const embed = await this.getStatusEmbed(contestedRole);
 
