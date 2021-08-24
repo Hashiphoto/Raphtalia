@@ -2,7 +2,7 @@
   "apps": [
     {
       "name": "raphtalia",
-      "script": "./build/src/Bot.js",
+      "script": "./build/Bot.js",
       "args": "",
       "instances": "1",
       "ignore_watch": ["*/node_modules", "*/.git"],
