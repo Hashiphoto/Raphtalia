@@ -1,23 +1,39 @@
-import Command from "./Command";
-import ExecutionContext from "../structures/ExecutionContext";
+import { GuildMember, TextChannel } from "discord.js";
 
+import BanListService from "../services/message/BanWordList.service";
+import Command from "./Command";
+import CommmandMessage from "../models/CommandMessage";
+import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
+import { autoInjectable } from "tsyringe";
+
+@autoInjectable()
 export default class BanList extends Command {
-  public constructor(context: ExecutionContext) {
-    super(context);
+  public constructor(private _banListService?: BanListService) {
+    super();
+    this.name = "BanList";
     this.instructions = "**BanList**\nPost the Banned Words List in this channel";
     this.usage = "Usage: `BanList`";
   }
 
-  public async execute(): Promise<any> {
-    await this.ec.banListStatusController.removeMessage();
-    const embed = await this.ec.banListStatusController.generateEmbed();
+  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+    if (!cmdMessage.message.member) {
+      throw new RaphError(Result.NoGuild);
+    }
+    this.channel = cmdMessage.message.channel as TextChannel;
+    return this.execute(cmdMessage.message.member);
+  }
 
-    this.ec.channel
-      .send({ embed: embed })
-      .then((message) => {
-        message.pin();
-        this.ec.banListStatusController.setMessage(message.id);
-      })
-      .then(() => this.useItem());
+  public async execute(initiator: GuildMember): Promise<void> {
+    if (!this.channel) {
+      throw new RaphError(Result.ProgrammingError, "The channel is undefined");
+    }
+
+    await this._banListService?.removeMessage(initiator.guild);
+
+    // Do asyncrhonously
+    this._banListService?.postEmbed(this.channel);
+
+    await this.useItem(initiator);
   }
 }

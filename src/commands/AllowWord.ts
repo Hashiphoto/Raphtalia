@@ -1,31 +1,51 @@
-import Command from "./Command";
-import ExecutionContext from "../structures/ExecutionContext";
+import { GuildMember, TextChannel } from "discord.js";
 
+import BanListService from "../services/message/BanWordList.service";
+import CensorshipService from "../services/Censorship.service";
+import Command from "./Command";
+import CommmandMessage from "../models/CommandMessage";
+import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
+import { autoInjectable } from "tsyringe";
+
+@autoInjectable()
 export default class AllowWord extends Command {
-  public constructor(context: ExecutionContext) {
-    super(context);
+  public constructor(
+    private _censorshipService?: CensorshipService,
+    private _banListService?: BanListService
+  ) {
+    super();
+    this.name = "AllowWord";
     this.instructions = "**AllowWord**\nRemove a word from the ban list";
     this.usage = "Usage: `AllowWord word1 word2 etc`";
   }
 
-  public async execute(): Promise<any> {
-    // TODO: Check if censorship is enabled at all
-    let words = this.ec.messageHelper.args;
+  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+    if (!cmdMessage.message.member) {
+      throw new RaphError(Result.NoGuild);
+    }
+    this.channel = cmdMessage.message.channel as TextChannel;
+    return this.execute(cmdMessage.message.member, cmdMessage.args);
+  }
+
+  public async execute(initiator: GuildMember, words: string[]): Promise<void> {
     if (words.length === 0) {
-      return this.sendHelpMessage();
+      await this.sendHelpMessage();
+      return;
     }
 
     if (!this.item.unlimitedUses && words.length > this.item.remainingUses) {
-      return this.ec.channelHelper.watchSend(
+      await this.reply(
         `Your ${this.item.name} does not have enough charges. ` +
           `Attempting to use ${words.length}/${this.item.remainingUses} remaining uses`
       );
+      return;
     }
 
-    return this.ec.censorController
-      .deleteWords(words)
-      .then(() => this.ec.banListStatusController.update())
-      .then(() => this.ec.channelHelper.watchSend("Banned words list has been updated"))
-      .then(() => this.useItem(words.length));
+    await this._censorshipService
+      ?.deleteWords(initiator.guild, words)
+      .then(() => this._banListService?.update(initiator.guild))
+      .then(() => this.reply("Banned words list has been updated"))
+      .then(() => this.useItem(initiator, words.length));
   }
 }

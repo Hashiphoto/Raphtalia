@@ -1,67 +1,55 @@
-import Command from "./Command";
-import ExecutionContext from "../structures/ExecutionContext";
+import { GuildMember, TextChannel } from "discord.js";
+import { autoInjectable, container } from "tsyringe";
 
+import Command from "./Command";
+import CommmandMessage from "../models/CommandMessage";
+import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
+import RoleContestService from "../services/RoleContest.service";
+import RoleService from "../services/Role.service";
+import { sumString } from "../utilities/Util";
+
+@autoInjectable()
 export default class Debug extends Command {
-  public constructor(context: ExecutionContext) {
-    super(context);
+  public constructor() {
+    super();
+    this.name = "Debug";
     this.instructions = "For testing in development only";
     this.usage = "Usage: `Debug (options)`";
   }
 
-  public async execute(): Promise<any> {
-    const args = this.ec.messageHelper.args;
-    if (args.length === 0) {
-      return this.sendHelpMessage();
+  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+    if (!cmdMessage.message.member) {
+      throw new RaphError(Result.NoGuild);
     }
+    this.channel = cmdMessage.message.channel as TextChannel;
+    return this.execute(cmdMessage.message.member, cmdMessage.args);
+  }
+
+  public async execute(initiator: GuildMember, args: string[]): Promise<any> {
     switch (args[0].toLowerCase()) {
-      case "resolvecontests":
-        const feedback = await this.ec.roleContestController
-          .resolveRoleContests(true)
-          .then((responses) => responses.reduce(this.sum));
+      case "resolvecontests": {
+        const roleContestService = container.resolve(RoleContestService);
+        const feedback = await roleContestService
+          .resolveRoleContests(initiator.guild, true)
+          .then((responses) => responses.reduce(sumString));
         if (feedback.length === 0) {
           return;
         }
-        const outputChannel = await this.ec.guildController.getOutputChannel();
-        if (!outputChannel) {
+        this.reply(feedback);
+        break;
+      }
+      case "resetrole": {
+        const roleService = container.resolve(RoleService);
+        const role = roleService.convertToRole(initiator.guild, args[1]);
+        if (!role) {
+          this.reply(`Cannot find role ${args[1]}`);
           return;
         }
-        outputChannel.send(feedback);
+        await roleService.resetRoleDates(role);
+        this.reply("Completed");
         break;
-      case "store":
-        const itemArgs = this.ec.messageHelper.parsedContent
-          .slice(this.ec.messageHelper.parsedContent.indexOf("store") + 5)
-          .split(",")
-          .map((arg) => arg.trim());
-        if (itemArgs.length < 5) {
-          return this.ec.channelHelper.watchSend(
-            "Please provide all 5 arguments (search, name, price, uses, quantity)"
-          );
-        }
-
-        const [searchTerm, newName, newPrice, newUses, newQuantity] = itemArgs;
-        const item = await this.ec.inventoryController.findGuildItem(searchTerm);
-
-        if (!item) {
-          return this.ec.channelHelper.watchSend("Couldn't find that item");
-        }
-        if (newName !== "") {
-          item.name = newName;
-        }
-        if (newPrice !== "") {
-          item.price = Number(newPrice);
-        }
-        if (newUses !== "") {
-          item.maxUses = Number(newUses);
-        }
-        if (newQuantity !== "") {
-          const newQuantityNumber = Number(newQuantity);
-          item.quantity += newQuantityNumber - item.maxQuantity;
-          item.maxQuantity = newQuantityNumber;
-        }
-
-        return this.ec.inventoryController.updateGuildItem(item).then(() => {
-          return this.ec.channelHelper.watchSend("Item updated").then(() => true);
-        });
+      }
       default:
         return this.sendHelpMessage();
     }

@@ -1,29 +1,45 @@
-import { Result } from "../enums/Result";
-import ExecutionContext from "../structures/ExecutionContext";
-import Command from "./Command";
+import { GuildMember, TextChannel } from "discord.js";
 
+import Command from "./Command";
+import CommmandMessage from "../models/CommandMessage";
+import MemberService from "../services/Member.service";
+import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
+import { autoInjectable } from "tsyringe";
+
+@autoInjectable()
 export default class Promote extends Command {
-  public constructor(context: ExecutionContext) {
-    super(context);
+  public constructor(private _memberService?: MemberService) {
+    super();
+    this.name = "Promote";
     this.instructions = "**Promote**\nIncrease your rank by one";
     this.usage = "Usage: `Promote`";
   }
 
-  public async execute(): Promise<any> {
+  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+    if (!cmdMessage.message.member) {
+      throw new RaphError(Result.NoGuild);
+    }
+    this.channel = cmdMessage.message.channel as TextChannel;
+    return this.execute(cmdMessage.message.member);
+  }
+
+  public async execute(initiator: GuildMember): Promise<any> {
+    if (!this.channel) {
+      throw new RaphError(Result.ProgrammingError, "This command needs a channel");
+    }
     try {
-      await this.ec.memberController.protectedPromote(this.ec.initiator);
-    } catch (error) {
-      if (error.name === "MemberLimitError") {
-        return this.ec.channelHelper.watchSend(error.message);
-      } else if (error instanceof RangeError) {
-        return this.ec.channelHelper.watchSend(error.message);
-      } else if (error.result === Result.OnCooldown) {
-        return this.ec.channelHelper.watchSend(`This role cannot be contested yet`);
-      } else {
-        throw error;
+      const feedback = await this._memberService?.promoteMember(initiator, this.channel);
+      if (feedback && feedback.length > 0) {
+        this.reply(feedback);
       }
+    } catch (error) {
+      if (error.name === "RaphError") {
+        return this.reply(error.message);
+      }
+      throw error;
     }
 
-    return this.useItem();
+    return this.useItem(initiator);
   }
 }

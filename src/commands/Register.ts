@@ -1,28 +1,43 @@
-import Command from "./Command";
-import ExecutionContext from "../structures/ExecutionContext";
-import RoleUtil from "../RoleUtil";
+import { GuildMember, TextChannel } from "discord.js";
 
+import Command from "./Command";
+import CommmandMessage from "../models/CommandMessage";
+import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
+import RoleService from "../services/Role.service";
+import { autoInjectable } from "tsyringe";
+
+@autoInjectable()
 export default class Register extends Command {
-  public constructor(context: ExecutionContext) {
-    super(context);
+  public constructor(private _roleService?: RoleService) {
+    super();
+    this.name = "Register";
     this.instructions =
       "**Register**\nGive the voter role to yourself. " +
       "This will allow you to vote when anyone uses the HoldVote command";
     this.usage = "Usage: `Register`";
   }
 
-  public async execute(): Promise<any> {
-    let voterRole = await RoleUtil.ensureVoterRole(this.ec.guild);
+  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+    if (!cmdMessage.message.member) {
+      throw new RaphError(Result.NoGuild);
+    }
+    this.channel = cmdMessage.message.channel as TextChannel;
+    return this.execute(cmdMessage.message.member);
+  }
 
-    if (this.ec.initiator.roles.cache.has(voterRole.id)) {
-      return this.ec.channelHelper.watchSend(`You are already a registered voter, dingus`);
+  public async execute(initiator: GuildMember): Promise<any> {
+    if (!this._roleService) {
+      throw new RaphError(Result.ProgrammingError);
+    }
+    const voterRole = await this._roleService?.getCreateVoterRole(initiator.guild);
+
+    if (initiator.roles.cache.has(voterRole.id)) {
+      return this.reply(`You are already a registered voter`);
     }
 
-    return this.ec.initiator.roles
-      .add(voterRole)
-      .then(() => {
-        this.ec.channelHelper.watchSend(`You are now a registered voter!`);
-      })
-      .then(() => this.useItem());
+    await initiator.roles.add(voterRole);
+    await this.reply(`You are now a registered voter!`);
+    await this.useItem(initiator);
   }
 }

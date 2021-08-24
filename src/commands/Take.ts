@@ -1,88 +1,117 @@
-import Command from "./Command";
-import ExecutionContext from "../structures/ExecutionContext";
-import { GuildMember } from "discord.js";
-import RNumber from "../structures/RNumber";
-import UserItem from "../structures/UserItem";
+import { GuildMember, TextChannel } from "discord.js";
+import { parseNumber, sumString } from "../utilities/Util";
 
+import Command from "./Command";
+import CommmandMessage from "../models/CommandMessage";
+import CurrencyService from "../services/Currency.service";
+import Item from "../models/Item";
+import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
+import { autoInjectable } from "tsyringe";
+
+@autoInjectable()
 export default class Take extends Command {
-  public constructor(context: ExecutionContext) {
-    super(context);
+  public constructor(protected currencyService?: CurrencyService) {
+    super();
+    this.name = "Take";
     this.instructions =
       "**Take**\nTake money or items from the specified user. " +
       "You can take money from multiple users at once, but only one item from one user at a time.";
     this.usage = "Usage: `Take @member ($1|item name)`";
   }
 
-  public async execute(): Promise<any> {
-    const targets = this.ec.messageHelper.mentionedMembers;
-    if (this.ec.messageHelper.args.length === 0 || targets.length === 0) {
+  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+    if (!cmdMessage.message.member || !cmdMessage.message.guild) {
+      throw new RaphError(Result.NoGuild);
+    }
+    this.channel = cmdMessage.message.channel as TextChannel;
+
+    const amount = parseNumber(cmdMessage.parsedContent);
+    const itemName = cmdMessage.parsedContent
+      .substring(cmdMessage.parsedContent.lastIndexOf(">") + 1)
+      .trim();
+
+    const guildItem = await this.inventoryService?.findGuildItem(
+      cmdMessage.message.guild.id,
+      itemName
+    );
+
+    return this.execute(cmdMessage.message.member, cmdMessage.memberMentions, amount, guildItem);
+  }
+
+  public async execute(
+    initiator: GuildMember,
+    targets: GuildMember[],
+    amount?: number,
+    item?: Item
+  ): Promise<any> {
+    if (targets.length === 0) {
       return this.sendHelpMessage();
     }
 
     if (!this.item.unlimitedUses && targets.length > this.item.remainingUses) {
-      return this.ec.channelHelper.watchSend(
+      return this.reply(
         `Your ${this.item.name} does not have enough charges. ` +
           `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
       );
     }
 
-    let rNumber = RNumber.parse(this.ec.messageHelper.parsedContent);
-    if (rNumber) {
-      return this.takeMoney(rNumber, targets).then(() => this.useItem(targets.length));
-    }
-
-    if (targets.length > 1) {
-      return this.sendHelpMessage("You cannot take an item from more than one member at a time");
-    }
-
-    const target = targets[0];
-
-    // Parse item name
-    const itemName = this.ec.messageHelper.parsedContent
-      .substring(this.ec.messageHelper.parsedContent.lastIndexOf(">") + 1)
-      .trim();
-
-    if (itemName === "") {
+    if (!amount && !item) {
       return this.sendHelpMessage();
     }
 
-    return this.ec.inventoryController.findUserItem(target, itemName).then(async (item) => {
-      if (!item) {
-        return this.sendHelpMessage(
-          `${target.toString()} does not have any item named "${itemName}". ` +
-            `If you are attempting to take money, make sure to format it as \`$1\``
-        );
-      }
-      return this.takeItem(item, target).then(() => this.useItem(targets.length));
-    });
-  }
+    let response = "";
 
-  private takeMoney(rNumber: RNumber, targets: GuildMember[]) {
-    if (rNumber.amount < 0) {
-      return this.ec.channelHelper.watchSend("You cannot take a negative amount of money\n");
+    if (amount) {
+      response += await this.transferMoney(initiator, targets, amount);
+    }
+    if (item) {
+      response += await this.transferItem(initiator, targets, item);
     }
 
-    const givePromises = targets.map((target) => {
-      return this.ec.currencyController
-        .transferCurrency(target, this.ec.initiator, rNumber.amount)
+    await this.useItem(initiator, targets.length);
+    await this.reply(response);
+  }
+
+  protected async transferMoney(
+    initiator: GuildMember,
+    targets: GuildMember[],
+    amount: number
+  ): Promise<string> {
+    if (amount < 0) {
+      return "You cannot take a negative amount of money\n";
+    }
+
+    const moneyPromises = targets.map((target) => {
+      return this.currencyService
+        ?.transferCurrency(target, initiator, amount)
         .then(
           () =>
-            `Transfered ${rNumber.toString()} from ${target.toString()} to ${this.ec.initiator.toString()}!`
+            `Transfered ${amount.toString()} from ${target.toString()} to ${initiator.toString()}!\n`
         );
     });
 
-    return Promise.all(givePromises)
-      .then((messages) => messages.reduce(this.sum))
-      .then((response) => this.ec.channelHelper.watchSend(response));
+    return Promise.all(moneyPromises).then((messages) => messages.reduce(sumString) ?? "");
   }
 
-  private takeItem(item: UserItem, target: GuildMember) {
-    return this.ec.inventoryController.transferItem(item, target, this.ec.initiator).then(() => {
-      return this.ec.channelHelper.watchSend(
-        `Transferred one ${
-          item.name
-        } from ${target.toString()} to ${this.ec.initiator.toString()}\n`
-      );
+  protected async transferItem(
+    initiator: GuildMember,
+    targets: GuildMember[],
+    item: Item
+  ): Promise<string> {
+    const itemPromises = targets.map(async (target) => {
+      const targetItem = await this.inventoryService?.getUserItem(target, item);
+      if (!targetItem) {
+        return `${target.displayName} has no ${item.name}`;
+      }
+      return this.inventoryService
+        ?.transferItem(targetItem, target, initiator)
+        .then(
+          () =>
+            `Transferred one ${item.name} from ${target.toString()} to ${initiator.toString()}\n`
+        );
     });
+
+    return Promise.all(itemPromises).then((messages) => messages.reduce(sumString) ?? "");
   }
 }

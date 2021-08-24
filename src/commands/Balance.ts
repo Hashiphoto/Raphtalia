@@ -1,29 +1,47 @@
-import Command from "./Command";
-import ExecutionContext from "../structures/ExecutionContext";
-import RNumber from "../structures/RNumber";
+import { Format, print } from "../utilities/Util";
+import { GuildMember, TextChannel } from "discord.js";
 
+import Command from "./Command";
+import CommmandMessage from "../models/CommandMessage";
+import CurrencyService from "../services/Currency.service";
+import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
+import { autoInjectable } from "tsyringe";
+
+enum Args {
+  SHOW,
+}
+
+@autoInjectable()
 export default class Balance extends Command {
-  public constructor(context: ExecutionContext) {
-    super(context);
+  public constructor(private _currencyService?: CurrencyService) {
+    super();
+    this.name = "Balance";
     this.instructions = "**Balance**\nGet your current balance sent to you in a direct message";
     this.usage = "Usage: `Balance`";
   }
 
-  public async execute(): Promise<any> {
-    const showPublic =
-      this.ec.messageHelper.args.length > 0 &&
-      this.ec.messageHelper.args[0].toLowerCase() === "show";
+  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+    if (!cmdMessage.message.member) {
+      throw new RaphError(Result.NoGuild);
+    }
+    this.channel = cmdMessage.message.channel as TextChannel;
+    return this.execute(cmdMessage.message.member, cmdMessage.args);
+  }
 
-    const balance = await this.ec.currencyController.getCurrency(this.ec.initiator);
-    const messageText = `You have ${RNumber.formatDollar(balance)} in ${this.ec.guild.name}`;
+  public async execute(initiator: GuildMember, args: string[]): Promise<any> {
+    const showPublic = args.length > 0 && args[Args.SHOW] === "show";
+
+    const balance = (await this._currencyService?.getCurrency(initiator)) as number;
+    const messageText = `You have ${print(balance, Format.Dollar)} in ${initiator.guild.name}`;
 
     if (showPublic) {
-      this.ec.channelHelper.watchSend(messageText);
+      this.reply(messageText);
     } else {
-      const dmChannel = await this.ec.initiator.createDM();
+      const dmChannel = await initiator.createDM();
       dmChannel.send(messageText);
     }
 
-    await this.useItem();
+    await this.useItem(initiator);
   }
 }

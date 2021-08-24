@@ -1,28 +1,46 @@
+import { GuildMember, TextChannel } from "discord.js";
+
 import BanList from "./BanList";
 import Command from "./Command";
-import ExecutionContext from "../structures/ExecutionContext";
+import CommmandMessage from "../models/CommandMessage";
+import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
 import Roles from "./Roles";
 import Store from "./Store";
+import { autoInjectable } from "tsyringe";
 
+@autoInjectable()
 export default class ServerStatus extends Command {
-  public constructor(context: ExecutionContext) {
-    super(context);
+  public constructor() {
+    super();
+    this.name = "ServerStatus";
     this.instructions =
       "**ServerStatus**\nPosts the ban list, role list, and store in this channel. " +
       "Equivalent to using the BanList, Roles, and Store commands consecutively.";
     this.usage = "Usage: `ServerStatus`";
   }
 
-  public async execute(): Promise<any> {
-    const banList = new BanList(this.ec);
+  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+    if (!cmdMessage.message.member) {
+      throw new RaphError(Result.NoGuild);
+    }
+    this.channel = cmdMessage.message.channel as TextChannel;
+    return this.execute(cmdMessage.message.member);
+  }
+
+  public async execute(initiator: GuildMember): Promise<void> {
+    const banList = new BanList();
+    const store = new Store();
+    const roles = new Roles();
+    banList.channel = this.channel;
+    store.channel = this.channel;
+    roles.channel = this.channel;
     banList.item = this.item;
-    const store = new Store(this.ec);
     store.item = this.item;
-    const roles = new Roles(this.ec);
     roles.item = this.item;
 
-    await banList.execute();
-    await roles.execute();
-    await store.execute();
+    await banList.execute(initiator);
+    await roles.execute(initiator);
+    await store.execute(initiator);
   }
 }

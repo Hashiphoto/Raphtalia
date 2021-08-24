@@ -1,18 +1,22 @@
-import { Collection, GuildMember, Message } from "discord.js";
-import watchSendTimedMessage, { sendTimedMessageInChannel } from "../TimedMessage";
+import { Collection, Guild as DsGuild, GuildMember, Message, TextChannel } from "discord.js";
+import { Format, formatDate, parseDuration, print } from "../utilities/Util";
 
 import Command from "./Command";
-import ExecutionContext from "../structures/ExecutionContext";
-import Question from "../structures/Question";
-import RNumber from "../structures/RNumber";
-import Util from "../Util";
-import VotingOption from "../structures/VotingOption";
+import CommmandMessage from "../models/CommandMessage";
+import { Duration } from "dayjs/plugin/duration";
+import Question from "../models/Question";
+import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
+import VotingOption from "../models/VotingOption";
+import { autoInjectable } from "tsyringe";
 import dayjs from "dayjs";
 import delay from "delay";
 
+@autoInjectable()
 export default class HoldVote extends Command {
-  public constructor(context: ExecutionContext) {
-    super(context);
+  public constructor() {
+    super();
+    this.name = "HoldVote";
     this.instructions =
       "**HoldVote**\nSet up a vote for all registered voters. " +
       'Ballots will be sent to anyone with the "voter" role when the voting period starts. ' +
@@ -20,17 +24,24 @@ export default class HoldVote extends Command {
     this.usage = "Usage: `HoldVote (Ask your question here)`";
   }
 
-  public async execute(): Promise<any> {
-    let voters = await this.getVoters();
-    if (voters.size === 0) {
-      return this.ec.channelHelper.watchSend(
-        `There are no registered voters. Use the Register command first.`
-      );
+  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+    if (!cmdMessage.message.member) {
+      throw new RaphError(Result.NoGuild);
+    }
+    this.channel = cmdMessage.message.channel as TextChannel;
+    const votePrompt = cmdMessage.parsedContent;
+    if (votePrompt.length === 0) {
+      await this.sendHelpMessage("Vote canceled. No question was specified");
+      return;
     }
 
-    const votePrompt = this.ec.messageHelper.parsedContent.trim();
-    if (votePrompt.length === 0) {
-      return this.sendHelpMessage("Vote canceled. No question was specified");
+    return this.execute(cmdMessage.message.member, votePrompt);
+  }
+
+  public async execute(initiator: GuildMember, votePrompt: string): Promise<any> {
+    const voters = await this.getVoters(initiator.guild);
+    if (voters.size === 0) {
+      return this.reply(`There are no registered voters. Use the Register command first.`);
     }
 
     // Get the voting options
@@ -39,9 +50,9 @@ export default class HoldVote extends Command {
       ".*",
       60000
     );
-    let optionsMessage = await watchSendTimedMessage(
-      this.ec,
-      this.ec.initiator,
+    const optionsMessage = await this.channelService?.sendTimedMessage(
+      this.channel,
+      initiator,
       optionsQuestion,
       true
     );
@@ -49,9 +60,9 @@ export default class HoldVote extends Command {
       return this.sendHelpMessage("Vote canceled. No options given");
     }
 
-    let options = this.removeMentions(optionsMessage).split(",");
-    let votingOptions = new Array<VotingOption>();
-    for (var i = 0; i < options.length; i++) {
+    const options = this.removeMentions(initiator.guild, optionsMessage).split(",");
+    const votingOptions: VotingOption[] = [];
+    for (let i = 0; i < options.length; i++) {
       options[i] = options[i].trim();
       if (options[i].length == 0) {
         continue;
@@ -65,42 +76,55 @@ export default class HoldVote extends Command {
 
     // Get the time
     const timeQuestion = new Question("How long will voting be open? (e.g. `1h 30m`)", ".*", 60000);
-    const message = await watchSendTimedMessage(this.ec, this.ec.initiator, timeQuestion, true);
+    const message = await this.channelService?.sendTimedMessage(
+      this.channel,
+      initiator,
+      timeQuestion,
+      true
+    );
     if (!message) {
-      return this.ec.channelHelper.watchSend(`No response. Vote canceled`);
+      return this.reply(`No response. Vote canceled`);
     }
-    let timeContent = message.content;
+    const timeContent = message.content;
 
-    let duration = Util.parseTime(timeContent);
+    let duration = parseDuration(timeContent);
     if (!duration) {
-      return this.ec.channelHelper.watchSend(`Could not understand time format. Vote canceled`);
+      return this.reply(`Could not understand time format. Vote canceled`);
     }
-    let endDate = dayjs().add(duration);
+    const endDate = dayjs().add(duration);
     // Don't allow the time (in ms) to exceed Integer max value (a little more than 24 days)
-    if (duration > 0x7fffffff) {
-      duration = 0x7fffffff;
+    if (duration.days() > 24) {
+      duration = dayjs.duration(24, "days");
     }
 
     // Send out the voting ballots asyncrhonously
-    const ballot = this.constructBallot(votePrompt, votingOptions, endDate, duration);
-    this.distributeBallots(voters, votingOptions, ballot);
+    const ballot = this.constructBallot(
+      initiator.guild,
+      votePrompt,
+      votingOptions,
+      endDate,
+      duration
+    );
+    this.distributeBallots(initiator.guild, voters, votingOptions, ballot);
 
     // Announce results asynchronously
-    delay(duration).then(() => this.announceResults(votingOptions));
+    delay(duration.asMilliseconds()).then(() => this.announceResults(votingOptions));
 
-    return this.ec.channelHelper
-      .watchSend(`Voting begins now and ends at ${Util.formatDate(endDate)}`)
-      .then(() => this.useItem());
+    await this.channelService
+      ?.watchSend(this.channel, `Voting begins now and ends at ${formatDate(endDate)}`)
+      .then(() => this.useItem(initiator));
   }
 
-  private distributeBallots(
+  private async distributeBallots(
+    guild: DsGuild,
     voters: Collection<string, GuildMember>,
     votingOptions: VotingOption[],
     ballot: Question
   ) {
-    voters.forEach(async (voter) => {
+    const distributePromises = voters.map(async (voter) => {
       const dmChannel = await voter.createDM();
-      sendTimedMessageInChannel(dmChannel, voter, ballot, false)
+      return this.channelService
+        ?.sendTimedMessage(dmChannel, voter, ballot, false)
         .then((choice) => {
           if (!choice) {
             throw Error;
@@ -108,7 +132,7 @@ export default class HoldVote extends Command {
           const selected = votingOptions.find((v) => v.id === parseInt(choice.content));
           if (selected) {
             dmChannel.send(
-              `Thank you for your vote!\nResults will be announced in **${this.ec.guild.name}/#${this.ec.channel.name}** when voting is closed`
+              `Thank you for your vote!\nResults will be announced in **${guild.name}/#${this.channel.name}** when voting is closed`
             );
             selected.votes++;
             console.log(`${voter.displayName} voted for ${selected.body}`);
@@ -121,6 +145,7 @@ export default class HoldVote extends Command {
           dmChannel.send(`Voting has closed.`);
         });
     });
+    return Promise.all(distributePromises);
   }
 
   private announceResults(votingOptions: VotingOption[]) {
@@ -142,27 +167,29 @@ export default class HoldVote extends Command {
     const resultsTable = this.buildTable(votingOptions);
 
     // Announce final results
-    let winners = this.getWinners(votingOptions);
+    const winners = this.getWinners(votingOptions);
     let finalResults = "Voting is done!\n";
 
     if (winners.length > 1) {
-      let tieList = this.formatTieList(votingOptions);
+      const tieList = this.formatTieList(votingOptions);
       finalResults += `**There is a ${winners.length}-way tie between ${tieList}** `;
     } else {
       finalResults += `**The winner is ${votingOptions[0].body.toUpperCase()}** `;
     }
-    finalResults += `with ${RNumber.formatPercent(
-      totalVotes ? winners[0].votes / totalVotes : 0
+    finalResults += `with ${print(
+      totalVotes ? winners[0].votes / totalVotes : 0,
+      Format.Percent
     )} of the vote \n${resultsTable}`;
 
-    this.ec.channelHelper.watchSend(finalResults);
+    this.reply(finalResults);
   }
 
   private constructBallot(
+    guild: DsGuild,
     prompt: string,
     votingOptions: VotingOption[],
     endDate: dayjs.Dayjs,
-    duration: number
+    duration: Duration
   ) {
     let textOptions = "";
     let answersRegEx = "^(";
@@ -177,22 +204,22 @@ export default class HoldVote extends Command {
     answersRegEx += ")$";
 
     let ballotText =
-      `**A vote is being held in ${this.ec.guild.name}!**\n` +
+      `**A vote is being held in ${guild.name}!**\n` +
       `Please vote for one of the options below by replying with the number of the choice.\n` +
-      `Voting ends at ${Util.formatDate(endDate)}\n\n`;
+      `Voting ends at ${formatDate(endDate)}\n\n`;
     ballotText += `${prompt}\n-------------------------\n`;
     ballotText += textOptions;
 
-    return new Question(ballotText, answersRegEx, duration);
+    return new Question(ballotText, answersRegEx, duration.asMilliseconds());
   }
 
-  private removeMentions(optionsMessage: Message) {
+  private removeMentions(guild: DsGuild, optionsMessage: Message) {
     // Replace the mentions with their nicknames and tags
     let content = optionsMessage.content;
     for (const [id, user] of optionsMessage.mentions.users) {
-      let re = new RegExp(`<@!?${id}>`);
+      const re = new RegExp(`<@!?${id}>`);
       let plainText = user.tag;
-      const member = this.ec.guild.members.cache.get(user.id);
+      const member = guild.members.cache.get(user.id);
       if (member && member.nickname) {
         plainText += ` (${member.nickname})`;
       }
@@ -202,18 +229,18 @@ export default class HoldVote extends Command {
     return content;
   }
 
-  private async getVoters(): Promise<Collection<string, GuildMember>> {
-    const voterRole = this.ec.guild.roles.cache.find((r) => r.name === "Voter");
+  private async getVoters(guild: DsGuild): Promise<Collection<string, GuildMember>> {
+    const voterRole = guild.roles.cache.find((r) => r.name === "Voter");
     if (!voterRole) {
       // Create it asyncrhonously
-      await this.ec.guild.roles.create({ data: { name: "Voter", hoist: false, color: "#4cd692" } });
+      await guild.roles.create({ data: { name: "Voter", hoist: false, color: "#4cd692" } });
       return new Collection();
     }
     return voterRole.members;
   }
 
   private findLongest(input: string[]) {
-    var longest = 0;
+    let longest = 0;
     input.forEach((str) => {
       if (str.length > longest) {
         longest = str.length;
@@ -244,7 +271,7 @@ export default class HoldVote extends Command {
   }
 
   private getWinners(votingOptions: VotingOption[]) {
-    let winners = [];
+    const winners = [];
     winners.push(votingOptions[0]);
     for (let i = 1; i < votingOptions.length; i++) {
       if (votingOptions[i].votes == winners[0].votes) {

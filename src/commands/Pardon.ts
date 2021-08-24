@@ -1,39 +1,49 @@
-import Command from "./Command";
-import ExecutionContext from "../structures/ExecutionContext";
-import RoleUtil from "../RoleUtil";
+import { GuildMember, TextChannel } from "discord.js";
 
+import Command from "./Command";
+import CommmandMessage from "../models/CommandMessage";
+import MemberService from "../services/Member.service";
+import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
+import { autoInjectable } from "tsyringe";
+import { sumString } from "../utilities/Util";
+
+@autoInjectable()
 export default class Pardon extends Command {
-  public constructor(context: ExecutionContext) {
-    super(context);
+  public constructor(private _memberService?: MemberService) {
+    super();
+    this.name = "Pardon";
     this.instructions =
       "**Pardon**\nRemoves all infractions from the specified member(s). " +
       "If the members are exiled, they are also freed from exile";
     this.usage = "Usage: `Pardon @member`";
   }
 
-  public async execute(): Promise<any> {
-    const targets = this.ec.messageHelper.mentionedMembers;
+  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+    if (!cmdMessage.message.member) {
+      throw new RaphError(Result.NoGuild);
+    }
+    this.channel = cmdMessage.message.channel as TextChannel;
+    return this.execute(cmdMessage.message.member, cmdMessage.memberMentions);
+  }
+
+  public async execute(initiator: GuildMember, targets: GuildMember[]): Promise<any> {
     if (targets.length === 0) {
       return this.sendHelpMessage();
     }
 
     if (!this.item.unlimitedUses && targets.length > this.item.remainingUses) {
-      return this.ec.channelHelper.watchSend(
+      return this.reply(
         `Your ${this.item.name} does not have enough charges. ` +
           `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
       );
     }
 
-    // Ensure exile role exists
-    await RoleUtil.ensureExileRole(this.ec.guild);
+    const pardonPromises = targets.map((target) => this._memberService?.pardonMember(target));
 
-    const pardonPromises = targets.map((target) => {
-      return this.ec.memberController.pardonMember(target);
-    });
-
-    return Promise.all(pardonPromises)
-      .then((messages) => messages.reduce(this.sum))
-      .then((response) => this.ec.channelHelper.watchSend(response))
-      .then(() => this.useItem(targets.length));
+    await Promise.all(pardonPromises)
+      .then((messages) => messages.reduce(sumString))
+      .then((response) => this.reply(response));
+    await this.useItem(initiator, targets.length);
   }
 }

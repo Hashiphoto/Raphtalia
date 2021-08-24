@@ -1,49 +1,80 @@
-import Command from "./Command";
-import ExecutionContext from "../structures/ExecutionContext";
-import Util from "../Util";
+import { GuildMember, TextChannel } from "discord.js";
 
+import Command from "./Command";
+import CommmandMessage from "../models/CommandMessage";
+import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
+import { autoInjectable } from "tsyringe";
+import { parseDuration } from "../utilities/Util";
+
+enum Args {
+  ACTION,
+  DELAY_MS,
+}
+
+@autoInjectable()
 export default class AutoDelete extends Command {
-  public constructor(context: ExecutionContext) {
-    super(context);
+  public constructor() {
+    super();
+    this.name = "AutoDelete";
     this.instructions =
       "**AutoDelete**\nEnable or disable automatic message deletion in this channel. If deletion delay is not specified, default 2000ms will be used";
     this.usage = "Usage: `AutoDelete (start|stop) [1ms]`";
   }
 
-  public async execute(): Promise<any> {
-    if (!this.ec.messageHelper.args || this.ec.messageHelper.args.length === 0) {
-      return this.sendHelpMessage();
+  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+    if (!cmdMessage.message.member) {
+      throw new RaphError(Result.NoGuild);
+    }
+    this.channel = cmdMessage.message.channel as TextChannel;
+
+    if (cmdMessage.args.length === 0) {
+      await this.sendHelpMessage();
+      return;
     }
 
-    const start = this.ec.messageHelper.args.includes("start");
-    const stop = this.ec.messageHelper.args.includes("stop");
-    let durationMs = Util.parseTime(this.ec.messageHelper.parsedContent);
+    return this.execute(cmdMessage.message.member, cmdMessage.args);
+  }
 
-    // Ensure start or stop is specified but not both
-    if (start && stop) {
-      return this.sendHelpMessage("Please specify only one of `start` or `stop`");
-    }
-    if (!start && !stop) {
-      return this.sendHelpMessage("Please specify `start` or `stop`");
-    }
-    if (start && durationMs === undefined) {
-      return this.sendHelpMessage(
-        "Please use a time format to specify how long to wait before deleting messages in this channel. E.g.: `3s` or `1500ms`"
-      );
-    }
-    if (durationMs === undefined) {
-      durationMs = -1;
+  public async execute(initiator: GuildMember, args: string[]): Promise<void> {
+    if (!this.channel) {
+      throw new RaphError(Result.ProgrammingError, "The channel is undefined");
     }
 
-    return this.ec.channelController
-      .setAutoDelete(durationMs)
-      .then(() => {
-        var response = start
-          ? `Messages are deleted after ${durationMs}ms`
-          : "Messages are no longer deleted";
-        this.ec.channel.setTopic(response);
-        return this.ec.channelHelper.watchSend(response);
-      })
-      .then(() => this.useItem());
+    let response: string;
+    // AUTO DELETE ON
+    if (args[Args.ACTION] === "start") {
+      if (args.length < 2) {
+        await this.sendHelpMessage(
+          "Please use a time format to specify how long to wait before deleting messages in this channel. E.g.: `3s` or `1500ms`"
+        );
+        return;
+      }
+      console.log(args, args[Args.DELAY_MS]);
+      const delayMs = parseDuration(args[Args.DELAY_MS]);
+      console.log(delayMs);
+      if (delayMs === undefined) {
+        await this.sendHelpMessage(
+          "Please use a time format to specify how long to wait before deleting messages in this channel. E.g.: `3s` or `1500ms`"
+        );
+        return;
+      }
+      await this.channelService?.setAutoDelete(this.channel.id, delayMs.asMilliseconds());
+      response = `Messages are deleted after ${delayMs.asMilliseconds()}ms`;
+    }
+    // AUTO DELETE OFF
+    else if (args[Args.ACTION] === "stop") {
+      await this.channelService?.setAutoDelete(this.channel.id, -1);
+      response = "Messages are no longer deleted";
+    }
+    // ERROR
+    else {
+      await this.sendHelpMessage();
+      return;
+    }
+
+    this.channel.setTopic(response);
+    this.reply(response);
+    this.useItem(initiator);
   }
 }

@@ -1,68 +1,70 @@
-import AmbiguousInputError from "../structures/errors/AmbiguousInputError";
-import Command from "./Command";
-import ExecutionContext from "../structures/ExecutionContext";
-import GuildItem from "../structures/GuildItem";
-import RNumber from "../structures/RNumber";
-import { Result } from "../enums/Result";
+import { Format, print } from "../utilities/Util";
+import { GuildMember, TextChannel } from "discord.js";
 
+import Command from "./Command";
+import CommmandMessage from "../models/CommandMessage";
+import GuildItem from "../models/GuildItem";
+import InventoryService from "../services/Inventory.service";
+import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
+import { autoInjectable } from "tsyringe";
+
+@autoInjectable()
 export default class Buy extends Command {
-  public constructor(context: ExecutionContext) {
-    super(context);
+  public constructor(private _inventoryService?: InventoryService) {
+    super();
+    this.name = "Buy";
     this.instructions =
       "**Buy**\nPurchase an item from the server store. The item will be added to your inventory, if there is adequate quantity in the store";
     this.usage = "Usage: `Buy (item name)`";
   }
 
-  public async execute(): Promise<any> {
-    if (!this.ec.messageHelper.args || this.ec.messageHelper.args.length === 0) {
-      return this.sendHelpMessage();
+  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+    if (!cmdMessage.message.member) {
+      throw new RaphError(Result.NoGuild);
     }
+    this.channel = cmdMessage.message.channel as TextChannel;
+    return this.execute(cmdMessage.message.member, cmdMessage.parsedContent);
+  }
 
-    let tempItem: GuildItem | undefined;
+  public async execute(initiator: GuildMember, itemName: string): Promise<any> {
+    // Get the guild item they are buying
+    let guildItem: GuildItem | undefined;
     try {
-      tempItem = await this.ec.inventoryController.findGuildItem(
-        this.ec.messageHelper.parsedContent
-      );
+      guildItem = await this._inventoryService?.findGuildItem(initiator.guild.id, itemName);
     } catch (error) {
-      if (error instanceof AmbiguousInputError) {
-        return this.ec.channelHelper.watchSend(
-          `There is more than one item with that name. Did you mean ${error.message}?`
-        );
+      if (error.result === Result.AmbiguousInput) {
+        return this.reply(`There is more than one item with that name. Matches: ${error.message}`);
       }
       throw error;
     }
-
-    const item = tempItem;
-
-    if (!item) {
-      return this.ec.channelHelper.watchSend(
-        `There are no items named "${this.ec.messageHelper.parsedContent}"`
-      );
+    if (!guildItem) {
+      return this.reply(`There are no items named "${itemName}"`);
     }
 
     try {
-      await this.ec.inventoryController.userPurchase(item, this.ec.initiator);
+      await this._inventoryService?.userPurchase(initiator, guildItem);
     } catch (error) {
       switch (error.result) {
         case Result.OutOfStock:
-          return this.ec.channelHelper.watchSend(`${item.printName()} is currently out of stock`);
+          return this.reply(`${guildItem.printName()} is currently out of stock`);
         case Result.TooPoor:
-          return this.ec.channelHelper.watchSend(
-            `You do not have enough money to buy ${item.printName()}. Current price: ${item.printPrice()}`
+          return this.reply(
+            `You do not have enough money to buy ${guildItem.printName()}. Current price: ${guildItem.printPrice()}`
           );
         default:
-          return this.ec.channelHelper.watchSend(
-            `An error occurred purchasing the ${item.printName()}`
-          );
+          return this.reply(`An error occurred purchasing the ${guildItem.printName()}`);
       }
     }
 
-    return this.ec.channelHelper
-      .watchSend(
-        `Thank you for your purchase of ${RNumber.formatDollar(
-          item.price
-        )}!\n>>> ${item.printName()} | Uses: ${item.printMaxUses()}`
-      )
-      .then(() => this.useItem(1, true));
+    this.channel &&
+      (await this.channelService?.watchSend(
+        this.channel,
+        `Thank you for your purchase of ${print(
+          guildItem.price,
+          Format.Dollar
+        )}!\n>>> ${guildItem.printName()} | Uses: ${guildItem.printMaxUses()}`
+      ));
+    await this.useItem(initiator, 1);
   }
 }

@@ -1,12 +1,21 @@
-import Command from "./Command";
-import ExecutionContext from "../structures/ExecutionContext";
 import { GuildMember } from "discord.js";
-import RNumber from "../structures/RNumber";
-import UserItem from "../structures/UserItem";
+import { autoInjectable, delay, inject } from "tsyringe";
+import { Result } from "../enums/Result";
+import Item from "../models/Item";
+import RaphError from "../models/RaphError";
+import ClientService from "../services/Client.service";
+import RoleContestService from "../services/RoleContest.service";
+import { Format, print, sumString } from "../utilities/Util";
+import Take from "./Take";
 
-export default class Give extends Command {
-  public constructor(context: ExecutionContext) {
-    super(context);
+@autoInjectable()
+export default class Give extends Take {
+  public constructor(
+    @inject(delay(() => ClientService)) private _clientService?: ClientService,
+    @inject(delay(() => RoleContestService)) private _roleContestService?: RoleContestService
+  ) {
+    super();
+    this.name = "Give";
     this.instructions =
       "**Give**\nGive the specified member(s) either an amount of money or an item. " +
       "If multiple members are listed, each member will be given the amount of money specified. " +
@@ -14,104 +23,77 @@ export default class Give extends Command {
     this.usage = "Usage: `Give @member ($1|item name)`";
   }
 
-  public async execute(): Promise<any> {
-    const targets = this.ec.messageHelper.mentionedMembers;
-    if (this.ec.messageHelper.args.length === 0 || targets.length === 0) {
-      return this.sendHelpMessage();
+  protected async transferMoney(
+    initiator: GuildMember,
+    targets: GuildMember[],
+    amount: number
+  ): Promise<string> {
+    if (amount < 0) {
+      return "You cannot send a negative amount of money\n";
     }
-
-    if (!this.item.unlimitedUses && targets.length > this.item.remainingUses) {
-      return this.ec.channelHelper.watchSend(
-        `Your ${this.item.name} does not have enough charges. ` +
-          `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
+    const totalAmount = amount * targets.length;
+    const balance = (await this.currencyService?.getCurrency(initiator)) as number;
+    if (balance < totalAmount) {
+      return `You do not have enough money for that. Funds needed: ${print(
+        totalAmount,
+        Format.Dollar
+      )}`;
+    }
+    const raphtalia = this._clientService?.getRaphtaliaMember(initiator.guild);
+    if (!raphtalia) {
+      throw new RaphError(
+        Result.NoGuild,
+        `Raphtalia is not a member of the ${initiator.guild.name} server`
       );
     }
-
-    const rNumber = RNumber.parse(this.ec.messageHelper.parsedContent);
-    if (rNumber) {
-      rNumber.type = RNumber.Types.DOLLAR;
-      return this.giveMoney(rNumber, targets).then(() => this.useItem(targets.length));
-    }
-
-    // Parse item name
-    const itemName = this.ec.messageHelper.parsedContent
-      .substring(this.ec.messageHelper.parsedContent.lastIndexOf(">") + 1)
-      .trim();
-
-    if (itemName === "") {
-      return this.sendHelpMessage();
-    }
-
-    return this.ec.inventoryController.findUserItem(this.ec.initiator, itemName).then((item) => {
-      if (!item) {
-        this.sendHelpMessage(
-          `You do not have any item named "${itemName}". ` +
-            `If you are attempting to send money, make sure to format it as \`$1\``
+    const givePromises = targets.map(async (target) => {
+      await this.currencyService?.transferCurrency(initiator, target, amount);
+      // Giving money to Raphtalia, presumably for a contest
+      if (target.id === raphtalia.id && initiator.roles.hoist) {
+        const existingContest = await this._roleContestService?.bidOnRoleContest(
+          initiator.roles.hoist,
+          initiator,
+          amount
         );
-        return;
+        return existingContest
+          ? `Paid ${print(amount, Format.Dollar)} towards contesting the ${
+              initiator.guild.roles.cache.get(existingContest.roleId)?.name
+            } role!`
+          : `Thanks for the ${print(amount, Format.Dollar)}!`;
+      } else {
+        return `Transfered ${print(amount, Format.Dollar)} to ${target.displayName}!`;
       }
-      return this.giveItem(item, targets).then(() => this.useItem(targets.length));
     });
+
+    return Promise.all(givePromises).then((messages) => messages.reduce(sumString) ?? "");
   }
 
-  private giveMoney(rNumber: RNumber, targets: GuildMember[]) {
-    if (rNumber.amount < 0) {
-      return this.ec.channelHelper.watchSend("You cannot send a negative amount of money\n");
+  protected async transferItem(
+    initiator: GuildMember,
+    targets: GuildMember[],
+    item: Item
+  ): Promise<string> {
+    const userItem = await this.inventoryService?.getUserItem(initiator, item);
+    if (!userItem) {
+      return `${initiator.displayName} does not have any ${item.name} to give away`;
     }
 
-    let totalAmount = rNumber.amount * targets.length;
-    return this.ec.currencyController.getCurrency(this.ec.initiator).then((balance) => {
-      if (balance < totalAmount) {
-        return this.ec.channelHelper.watchSend(
-          `You do not have enough money for that. ` +
-            `Funds needed: ${RNumber.formatDollar(totalAmount)}`
-        );
-      }
-
-      const givePromises = targets.map((target) =>
-        this.ec.currencyController
-          .transferCurrency(this.ec.initiator, target, rNumber.amount)
-          .then(() => {
-            // Giving money to Raphtalia, presumably for a contest
-            if (target.id === this.ec.raphtalia.id && this.ec.initiator.roles.hoist) {
-              return this.ec.roleContestController
-                .bidOnRoleContest(this.ec.initiator.roles.hoist, this.ec.initiator, rNumber.amount)
-                .then((roleContest) =>
-                  roleContest
-                    ? `Paid ${rNumber.toString()} towards contesting the ${
-                        this.ec.guild.roles.cache.get(roleContest.roleId)?.name
-                      } role!`
-                    : `Thanks for the ${rNumber.toString()}!`
-                );
-            } else {
-              return `Transfered ${rNumber.toString()} to ${target.toString()}!`;
-            }
-          })
-      );
-
-      return Promise.all(givePromises)
-        .then((messages) => messages.reduce(this.sum))
-        .then((response) => this.ec.channelHelper.watchSend(response));
-    });
-  }
-
-  private giveItem(item: UserItem, targets: GuildMember[]) {
-    const unusedItems = Math.floor(item.remainingUses / item.maxUses);
-    if (unusedItems < targets.length) {
-      return this.ec.channelHelper.watchSend(
-        `You need ${targets.length - unusedItems} more unused items for that. ` +
-          `Unused ${item.name} in inventory: ${unusedItems}`
+    const unusedItemCount = Math.floor(userItem.remainingUses / userItem.maxUses);
+    if (unusedItemCount < targets.length) {
+      return (
+        `You need ${targets.length - unusedItemCount} more unused items for that. ` +
+        `Unused ${userItem.name} in inventory: ${unusedItemCount}`
       );
     }
 
     const givePromises = targets.map((target) => {
-      return this.ec.inventoryController.transferItem(item, this.ec.initiator, target).then(() => {
+      return this.inventoryService?.transferItem(userItem, initiator, target).then(() => {
         return `Transferred one ${item.name} to ${target.toString()}\n`;
       });
     });
 
-    return Promise.all(givePromises)
-      .then((messages) => messages.reduce(this.sum))
-      .then((response) => this.ec.channelHelper.watchSend(response));
+    return Promise.all(givePromises).then((messages) => {
+      return messages.join("");
+    });
   }
 }

@@ -1,13 +1,25 @@
-import BadParametersError from "../structures/errors/BadParametersError";
-import Command from "./Command";
-import ExecutionContext from "../structures/ExecutionContext";
-import Question from "../structures/Question";
-import ScreeningQuestion from "../structures/ScreeningQuestion";
-import watchSendTimedMessage from "../TimedMessage";
+import { Guild as DsGuild, GuildMember, TextChannel } from "discord.js";
 
+import Command from "./Command";
+import CommmandMessage from "../models/CommandMessage";
+import GuildService from "../services/Guild.service";
+import Question from "../models/Question";
+import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
+import ScreeningQuestion from "../models/ScreeningQuestion";
+import { autoInjectable } from "tsyringe";
+
+enum Action {
+  List,
+  Add,
+  Delete,
+}
+
+@autoInjectable()
 export default class Screening extends Command {
-  public constructor(context: ExecutionContext) {
-    super(context);
+  public constructor(private _guildService?: GuildService) {
+    super();
+    this.name = "Screening";
     this.instructions =
       "**Screening**\nView, edit or delete the guild screening questions. " +
       "To view the current screening questions, use the `list` flag. This does not consume an item use.\n" +
@@ -16,81 +28,103 @@ export default class Screening extends Command {
     this.usage = "Usage: `Screening (list | add | delete id)`";
   }
 
-  public async execute(): Promise<any> {
-    if (this.ec.messageHelper.args.length === 0) {
-      return this.sendHelpMessage();
+  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+    if (!cmdMessage.message.member) {
+      throw new RaphError(Result.NoGuild);
+    }
+    this.channel = cmdMessage.message.channel as TextChannel;
+
+    if (cmdMessage.args.length === 0) {
+      await this.sendHelpMessage();
+      return;
     }
 
-    switch (this.ec.messageHelper.args[0].toLowerCase()) {
+    let action: Action;
+    let questionId: number | undefined;
+
+    switch (cmdMessage.args[0].toLowerCase()) {
       case "list":
-        return await this.list();
+        action = Action.List;
+        break;
       case "add":
-        return await this.add();
-      case "delete":
-        if (this.ec.messageHelper.args.length < 2) {
-          return this.sendHelpMessage(
+        action = Action.Add;
+        break;
+      case "delete": {
+        if (cmdMessage.args.length < 2) {
+          await this.sendHelpMessage(
             "Please try again and specify the id of the question to delete"
           );
+          return;
         }
-        return this.delete();
+        questionId = parseInt(cmdMessage.args[1]);
+        if (isNaN(questionId)) {
+          await this.reply(`Deletion canceled. "${cmdMessage.args[1]}" is not a number`);
+          return;
+        }
+        action = Action.Delete;
+        break;
+      }
       default:
-        return this.sendHelpMessage("Please specify one of: `list`, `add`, `delete`");
+        await this.sendHelpMessage("Please specify one of: `list`, `add`, `delete`");
+        return;
+    }
+
+    return this.execute(cmdMessage.message.member, action, questionId);
+  }
+
+  public async execute(initiator: GuildMember, action: Action, questionId?: number): Promise<void> {
+    switch (action) {
+      case Action.List:
+        await this.list(initiator.guild);
+        break;
+      case Action.Add:
+        await this.add(initiator);
+        break;
+      case Action.Delete:
+        await this.delete(initiator, questionId);
+        break;
     }
   }
 
-  private async list() {
-    return this.ec.guildController.getScreeningQuestions().then((questions) => {
+  private async list(guild: DsGuild) {
+    return this._guildService?.getScreeningQuestions(guild.id).then((questions) => {
       if (questions.length === 0) {
-        return this.ec.channelHelper.watchSend("There are currently no screening questions");
+        return this.reply("There are currently no screening questions");
       }
       const allQuestions = questions.reduce((sum, question) => sum + question, "");
-      return this.ec.channelHelper.watchSend(allQuestions);
+      return this.reply(allQuestions);
     });
   }
 
-  private async add() {
-    const screeningQuestion = await this.getNewQuestionDetails();
+  private async add(initiator: GuildMember) {
+    const screeningQuestion = await this.getNewQuestionDetails(initiator);
     if (!screeningQuestion) {
-      return this.ec.channelHelper.watchSend(
-        "Invalid input. Adding new screening question aborted"
-      );
+      return this.reply("Invalid input. Adding new screening question aborted");
     }
-    return this.ec.guildController
-      .addScreeningQuestion(screeningQuestion)
-      .then(() => this.ec.channelHelper.watchSend("New question added!"))
-      .then(() => this.useItem())
-      .catch((error) => {
-        if (error instanceof BadParametersError) {
-          return this.ec.channelHelper.watchSend(
-            "Invalid input. Adding new screening question aborted"
-          );
-        }
-        throw error;
-      });
+    await this._guildService?.addScreeningQuestion(initiator.guild.id, screeningQuestion);
+    await this.reply("New question added!");
+    await this.useItem(initiator);
   }
 
-  private async delete() {
-    const id = parseInt(this.ec.messageHelper.args[1]);
-    if (isNaN(id)) {
-      return this.ec.channelHelper.watchSend(
-        `Deletion canceled. "${this.ec.messageHelper.args[1]}" is not a number`
-      );
+  private async delete(initiator: GuildMember, questionId?: number) {
+    if (questionId === undefined) {
+      return this.sendHelpMessage("Please specify the ID of the question to delete");
     }
-    return this.ec.guildController.deleteScreeningQuestion(id).then(async (deleted) => {
-      if (deleted) {
-        return this.ec.channelHelper.watchSend("Question deleted").then(() => this.useItem());
-      }
-      return this.ec.channelHelper.watchSend(
-        `Deletion canceled. There is no question with id ${id}`
-      );
-    });
+    const deleted = await this._guildService?.deleteScreeningQuestion(
+      initiator.guild.id,
+      questionId
+    );
+    if (deleted) {
+      return this.reply("Question deleted").then(() => this.useItem(initiator));
+    }
+    return this.reply(`Deletion canceled. There is no question with id ${questionId}`);
   }
 
-  private async getNewQuestionDetails() {
-    let question = new ScreeningQuestion();
-    const promptMessage = await watchSendTimedMessage(
-      this.ec,
-      this.ec.initiator,
+  private async getNewQuestionDetails(initiator: GuildMember) {
+    const question = new ScreeningQuestion();
+    const promptMessage = await this.channelService?.sendTimedMessage(
+      this.channel,
+      initiator,
       new Question("What is the question they will be asked?", ".*", 120000)
     );
     if (!promptMessage) {
@@ -98,9 +132,9 @@ export default class Screening extends Command {
     }
     question.prompt = promptMessage.content;
 
-    const answerMessage = await watchSendTimedMessage(
-      this.ec,
-      this.ec.initiator,
+    const answerMessage = await this.channelService?.sendTimedMessage(
+      this.channel,
+      initiator,
       new Question(
         "What is the acceptable answer to the question? (case-insensitive)",
         ".*",
@@ -112,9 +146,9 @@ export default class Screening extends Command {
     }
     question.answer = "^" + answerMessage.content + "$";
 
-    const timeoutMessage = await watchSendTimedMessage(
-      this.ec,
-      this.ec.initiator,
+    const timeoutMessage = await this.channelService?.sendTimedMessage(
+      this.channel,
+      initiator,
       new Question("How many milliseconds (ms) will they have to answer correctly?", ".*", 120000)
     );
     if (!timeoutMessage) {
@@ -126,9 +160,9 @@ export default class Screening extends Command {
     }
     question.timeout = timeout;
 
-    const strictMessage = await watchSendTimedMessage(
-      this.ec,
-      this.ec.initiator,
+    const strictMessage = await this.channelService?.sendTimedMessage(
+      this.channel,
+      initiator,
       new Question(
         "Should the user be ejected immediately after answering incorrectly? (yes/no)",
         "(yes|no)",

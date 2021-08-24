@@ -1,78 +1,89 @@
-import AmbiguousInputError from "../structures/errors/AmbiguousInputError";
+import { GuildMember, TextChannel } from "discord.js";
+import { autoInjectable, delay, inject } from "tsyringe";
+import { Result } from "../enums/Result";
+import CommmandMessage from "../models/CommandMessage";
+import GuildItem from "../models/GuildItem";
+import RaphError from "../models/RaphError";
+import UserItem from "../models/UserItem";
+import ClientService from "../services/Client.service";
+import CurrencyService from "../services/Currency.service";
+import { Dice, roll } from "../utilities/Rng";
+import { Format, print } from "../utilities/Util";
 import Command from "./Command";
-import Dice from "../Dice";
-import ExecutionContext from "../structures/ExecutionContext";
-import RNumber from "../structures/RNumber";
 
-const serviceFee = 50;
-const minScanCost = 250;
 const percentCost = 0.05;
 
+@autoInjectable()
 export default class Scan extends Command {
-  public constructor(context: ExecutionContext) {
-    super(context);
-    this.instructions = "**Scan**\nSearch other users' inventories for a specified item. ";
+  public constructor(
+    @inject(CurrencyService) private _currencyService?: CurrencyService,
+    @inject(delay(() => ClientService)) private _clientService?: ClientService
+  ) {
+    super();
+    this.name = "Scan";
+    this.instructions = `**Scan**\nSearch other users' inventories for a specified item. Costs ${print(
+      percentCost,
+      Format.Percent
+    )} of the item's store price. DC10 to reveal the user's name`;
     this.usage = "Usage: `Scan (item name)`";
   }
 
-  public async execute(): Promise<any> {
-    const targets = this.ec.messageHelper.mentionedMembers;
-    // if (this.ec.messageHelper.args.length === 0 && targets.length === 0) {
-    //   return this.sendHelpMessage();
-    // }
-
-    // if (targets.length > 1) {
-    //   return this.sendHelpMessage("You cannot scan more than one person at a time");
-    // }
-
-    // // Scan person
-    // if (targets.length) {
-    //   const target = targets[0];
-    // }
-
-    if (targets.length > 0) {
-      return this.sendHelpMessage("You can only search for items");
+  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+    if (!cmdMessage.message.member) {
+      throw new RaphError(Result.NoGuild);
     }
-
-    // Scan for item
-    const itemName = this.ec.messageHelper.parsedContent;
-    if (itemName === "") {
-      return this.sendHelpMessage();
+    this.channel = cmdMessage.message.channel as TextChannel;
+    if (cmdMessage.args.length === 0) {
+      await this.sendHelpMessage();
+      return;
     }
+    return this.execute(cmdMessage.message.member, cmdMessage.parsedContent);
+  }
 
-    let targetItem;
+  public async execute(initiator: GuildMember, itemName: string): Promise<any> {
+    let guildItem: GuildItem | undefined;
     try {
-      targetItem = await this.ec.inventoryController.findGuildItem(itemName);
-    } catch (e) {
-      if (e.name === AmbiguousInputError.name) {
-        return this.ec.channelHelper.watchSend(`Scan canceled. Did you mean ${e.message}?`);
+      guildItem = await this.inventoryService?.findGuildItem(initiator.guild.id, itemName);
+    } catch (error) {
+      if (error.result === Result.AmbiguousInput) {
+        return this.reply(`There is more than one item with that name. Matches: ${error.message}`);
       }
-      throw e;
+      throw error;
     }
-    if (!targetItem) {
-      return this.sendHelpMessage(`Could not find any item named "${itemName}"`);
+    if (!guildItem) {
+      return this.reply(`There are no items named "${itemName}"`);
     }
 
     // TODO: Simplify code with Steal
-    const initiatorBalance = await this.ec.currencyController.getCurrency(this.ec.initiator);
-    if (initiatorBalance < minScanCost) {
-      return this.ec.channelHelper.watchSend(
-        `You need at least ${RNumber.formatDollar(minScanCost)} to attempt a scan.`
+    const initiatorBalance = await this._currencyService?.getCurrency(initiator);
+    const cost = guildItem.price * percentCost;
+    if (!initiatorBalance || initiatorBalance < cost) {
+      return this.reply(
+        `${
+          initiator.displayName
+        } does not have enough money. Scanning for a ${guildItem.printName()} costs ${print(
+          cost,
+          Format.Dollar
+        )} (${print(percentCost, Format.Percent)} of the store price)`
       );
     }
 
-    const cost = Math.max(initiatorBalance * percentCost, minScanCost);
-    await this.ec.currencyController.transferCurrency(this.ec.initiator, this.ec.raphtalia, cost);
-
-    const usersWithItem = await this.ec.inventoryController.findUsersWithItem(targetItem);
-    const members = await Promise.all(
-      usersWithItem.map(async (next) => this.ec.guild.members.fetch(next.userId))
+    await this._currencyService?.transferCurrency(
+      initiator,
+      this._clientService?.getRaphtaliaMember(initiator.guild) as GuildMember,
+      cost
     );
+
+    const usersWithItem = (
+      (await this.inventoryService?.findUsersWithItem(guildItem)) as UserItem[]
+    ).filter((item) => item.userId !== initiator.user.id);
+    const members = await initiator.guild.members.fetch({
+      user: usersWithItem.map((ui) => ui.userId),
+    });
 
     let deciphered = 0;
     const memberNames = members.reduce((sum, member) => {
-      const roll = Dice.Roll(20);
-      if (roll >= 10) {
+      if (roll(Dice.D20).against(10)) {
         deciphered++;
         return sum + `\t- ${member.displayName}\n`;
       }
@@ -80,11 +91,11 @@ export default class Scan extends Command {
     }, "");
 
     let response = `Deciphered ${deciphered}/${
-      usersWithItem.length
-    } members with a ${targetItem.printName()}:\n${memberNames}`;
+      usersWithItem?.length
+    } members with a ${guildItem.printName()}:\n${memberNames}`;
 
-    response += `*Charged ${RNumber.formatDollar(cost)} for this scan*`;
+    response += `*Charged ${print(cost, Format.Dollar)} for this scan*`;
 
-    await this.ec.channelHelper.watchSend(response);
+    await this.reply(response);
   }
 }

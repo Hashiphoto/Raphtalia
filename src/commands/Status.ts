@@ -1,43 +1,67 @@
-import Command from "./Command";
-import ExecutionContext from "../structures/ExecutionContext";
-import RNumber from "../structures/RNumber";
+import { Format, print } from "../utilities/Util";
+import { GuildMember, MessageEmbed, TextChannel } from "discord.js";
 
+import Command from "./Command";
+import CommmandMessage from "../models/CommandMessage";
+import CurrencyService from "../services/Currency.service";
+import MemberService from "../services/Member.service";
+import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
+import { autoInjectable } from "tsyringe";
+
+enum Args {
+  SHOW,
+}
+
+@autoInjectable()
 export default class Status extends Command {
-  public constructor(context: ExecutionContext) {
-    super(context);
+  public constructor(
+    private _currencyService?: CurrencyService,
+    private _memberService?: MemberService
+  ) {
+    super();
+    this.name = "Status";
     this.instructions = "**Status**\nPost your current balance and inventory in this channel";
     this.usage = "Usage: `Status`";
   }
 
-  public async execute(): Promise<any> {
-    const showPublic =
-      this.ec.messageHelper.args.length > 0 &&
-      this.ec.messageHelper.args[0].toLowerCase() === "show";
+  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+    if (!cmdMessage.message.member) {
+      throw new RaphError(Result.NoGuild);
+    }
+    this.channel = cmdMessage.message.channel as TextChannel;
 
-    const balanceMessage = await this.ec.currencyController
-      .getCurrency(this.ec.initiator)
-      .then((balance) => {
-        return `**Balance**: ${RNumber.formatDollar(balance)}\n`;
-      });
+    return this.execute(
+      cmdMessage.message.member,
+      cmdMessage.args.length > 0 ? cmdMessage.args[Args.SHOW].toLowerCase() === "show" : false
+    );
+  }
 
-    const infractionMessage = await this.ec.memberController
-      .getInfractions(this.ec.initiator)
+  public async execute(initiator: GuildMember, show = false): Promise<any> {
+    const balanceMessage = await this._currencyService?.getCurrency(initiator).then((balance) => {
+      return `**Balance**: ${print(balance, Format.Dollar)}\n`;
+    });
+
+    const infractionMessage = await this._memberService
+      ?.getInfractions(initiator)
       .then((infractions) => {
         return `**Infractions**: ${infractions}\n`;
       });
 
-    const inventoryEmbed = await this.ec.inventoryController
-      .getUserInventory(this.ec.initiator)
+    const inventoryEmbed = (await this.inventoryService
+      ?.getUserInventory(initiator)
       .then((userInventory) => {
         return userInventory.toEmbed();
-      });
+      })) as MessageEmbed;
 
-    if (showPublic) {
-      this.ec.channelHelper.watchSend(balanceMessage + infractionMessage, inventoryEmbed);
+    const message = `${balanceMessage}${infractionMessage}`;
+
+    if (show) {
+      await this.reply(message, inventoryEmbed);
     } else {
-      const dmChannel = await this.ec.initiator.createDM();
-      return dmChannel.send(balanceMessage + infractionMessage, inventoryEmbed);
+      const dmChannel = await initiator.createDM();
+      await dmChannel.send(message, inventoryEmbed);
     }
-    await this.useItem();
+    await this.useItem(initiator);
   }
 }
