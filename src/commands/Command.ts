@@ -1,4 +1,4 @@
-import { GuildMember, Message, MessageOptions, StringResolvable, TextChannel } from "discord.js";
+import { GuildMember, Message, MessageOptions, TextChannel } from "discord.js";
 
 import ChannelService from "../services/Channel.service";
 import CommmandMessage from "../models/CommandMessage";
@@ -46,13 +46,10 @@ export default class Command {
     }
   }
 
-  protected async reply(
-    content: StringResolvable,
-    options?: MessageOptions
-  ): Promise<Message | undefined> {
+  protected async reply(content: string, options?: MessageOptions): Promise<Message | undefined> {
     if (!this.channel) {
       return;
     }
-    return this.channelService?.watchSend(this.channel, content, options);
+    return this.channelService?.watchSend(this.channel, { ...options, content });
   }
 }

@@ -1,21 +1,20 @@
-import { GuildMember, TextChannel } from "discord.js";
+import { GuildMember, MessageActionRow, MessageButton, TextChannel } from "discord.js";
 
 import Command from "./Command";
 import CommmandMessage from "../models/CommandMessage";
-import MemberService from "../services/Member.service";
 import RaphError from "../models/RaphError";
 import { Result } from "../enums/Result";
 import { autoInjectable } from "tsyringe";
 
 @autoInjectable()
-export default class Pardon extends Command {
-  public constructor(private _memberService?: MemberService) {
+export default class Poke extends Command {
+  public static POKE_BACK_CMD = "Command.Poke.Back";
+
+  public constructor() {
     super();
-    this.name = "Pardon";
-    this.instructions =
-      "**Pardon**\nRemoves all infractions from the specified member(s). " +
-      "If the members are exiled, they are also freed from exile";
-    this.usage = "Usage: `Pardon @member`";
+    this.name = "Poke";
+    this.instructions = "**Poke**\nI will poke the targeted member for you";
+    this.usage = "Usage: `Poke @member`";
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
@@ -38,11 +37,26 @@ export default class Pardon extends Command {
       );
     }
 
-    const pardonPromises = targets.map((target) => this._memberService?.pardonMember(target));
+    let successes = 0;
 
-    await Promise.all(pardonPromises)
-      .then((messages) => messages.join(""))
-      .then((response) => this.reply(response));
-    await this.useItem(initiator, targets.length);
+    await Promise.all(
+      targets.map((target) =>
+        target.createDM().then((dmChannel) => {
+          const row = new MessageActionRow().addComponents(
+            new MessageButton().setLabel("Poke Back").setStyle(1).setCustomId(Poke.POKE_BACK_CMD)
+          );
+          return dmChannel
+            .send({
+              content: `${initiator.displayName} poked you!`,
+              components: [row],
+            })
+            .then(() => successes++);
+        })
+      )
+    );
+
+    return this.reply(`Sent ${successes} poke${successes > 1 ? "s" : ""}!`).then(() =>
+      this.useItem(initiator, targets.length)
+    );
   }
 }

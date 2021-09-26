@@ -57,14 +57,13 @@ export default class Buy extends Command {
       }
     }
 
-    this.channel &&
-      (await this.channelService?.watchSend(
-        this.channel,
-        `Thank you for your purchase of ${print(
-          guildItem.price,
-          Format.Dollar
-        )}!\n>>> ${guildItem.printName()} | Uses: ${guildItem.printMaxUses()}`
-      ));
+    this.reply(
+      `Thank you for your purchase of ${print(
+        guildItem.price,
+        Format.Dollar
+      )}!\n>>> ${guildItem.printName()} | Uses: ${guildItem.printMaxUses()}`
+    );
+
     await this.useItem(initiator, 1);
   }
 }

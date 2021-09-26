@@ -1,10 +1,11 @@
+import delay from "delay";
 import {
   DMChannel,
   Guild as DsGuild,
   GuildMember,
   Message,
   MessageOptions,
-  StringResolvable,
+  TextBasedChannels,
   TextChannel,
 } from "discord.js";
 import { inject, injectable } from "tsyringe";
@@ -27,13 +28,13 @@ export default class ChannelService {
    * Check every channel for the message id
    */
   public async fetchMessage(guild: DsGuild, messageId: string): Promise<Message | undefined> {
-    const textChannels = guild.channels.cache
-      .filter((channel) => channel.type === "text" && !channel.deleted)
-      .array() as TextChannel[];
+    const textChannels = guild.channels.cache.filter(
+      (channel) => channel.isText() && !channel.deleted
+    );
 
-    for (const channel of textChannels) {
+    for (const [, channel] of textChannels) {
       try {
-        const message = await channel.messages.fetch(messageId);
+        const message = await (channel as TextBasedChannels).messages.fetch(messageId);
         return message;
       } catch (error) {
         if (
@@ -51,7 +52,7 @@ export default class ChannelService {
    * Adds the "watchSend" method to the channel to send messages and delete them
    * after a delay (set in the channel's db entry)=
    */
-  public async getDeleteTime(channel: TextChannel | DMChannel): Promise<number> {
+  public async getDeleteTime(channel: TextBasedChannels): Promise<number> {
     return this._channelRepo.get(channel.id).then((dbChannel) => {
       let deleteTime = -1;
       if (dbChannel && dbChannel.delete_ms >= 0) {
@@ -64,16 +65,13 @@ export default class ChannelService {
 
   public async watchSend(
     channel: TextChannel | DMChannel,
-    content: StringResolvable,
-    options?: MessageOptions
+    options: MessageOptions
   ): Promise<Message> {
-    const message = (
-      options ? await channel.send(content, options) : await channel.send(content)
-    ) as Message;
+    const message = await channel.send(options);
     const deleteTime = await this.getDeleteTime(channel);
 
     if (deleteTime >= 0) {
-      message.delete({ timeout: deleteTime });
+      delay(deleteTime).then(() => message.delete());
     }
     return message;
   }
@@ -88,13 +86,9 @@ export default class ChannelService {
     const re = new RegExp(question.answer ?? ".*", "gi");
     const filter = (message: Message) =>
       message.content.match(re) != null && message.author.id === member.id;
-    return this.watchSend(channel, text)
+    return this.watchSend(channel, { content: text })
       .then(() => {
-        return channel.awaitMessages(filter, {
-          max: 1,
-          time: question.timeout,
-          errors: ["time"],
-        });
+        return channel.awaitMessages({ filter, max: 1, time: question.timeout, errors: ["time"] });
       })
       .then((collected) => {
         return collected.first();

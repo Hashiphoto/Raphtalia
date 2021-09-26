@@ -54,13 +54,13 @@ export default class Status extends Command {
         return userInventory.toEmbed();
       })) as MessageEmbed;
 
-    const message = `${balanceMessage}${infractionMessage}`;
+    const content = `${balanceMessage}${infractionMessage}`;
 
     if (show) {
-      await this.reply(message, inventoryEmbed);
+      await this.reply(content, { embeds: [inventoryEmbed] });
     } else {
       const dmChannel = await initiator.createDM();
-      await dmChannel.send(message, inventoryEmbed);
+      await dmChannel.send({ content, embeds: [inventoryEmbed] });
     }
     await this.useItem(initiator);
   }

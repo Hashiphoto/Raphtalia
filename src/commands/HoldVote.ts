@@ -111,7 +111,7 @@ export default class HoldVote extends Command {
     delay(duration.asMilliseconds()).then(() => this.announceResults(votingOptions));
 
     await this.channelService
-      ?.watchSend(this.channel, `Voting begins now and ends at ${formatDate(endDate)}`)
+      ?.watchSend(this.channel, { content: `Voting begins now and ends at ${formatDate(endDate)}` })
       .then(() => this.useItem(initiator));
   }
 
@@ -233,7 +233,7 @@ export default class HoldVote extends Command {
     const voterRole = guild.roles.cache.find((r) => r.name === "Voter");
     if (!voterRole) {
       // Create it asyncrhonously
-      await guild.roles.create({ data: { name: "Voter", hoist: false, color: "#4cd692" } });
+      await guild.roles.create({ name: "Voter", hoist: false, color: "#4cd692" });
       return new Collection();
     }
     return voterRole.members;

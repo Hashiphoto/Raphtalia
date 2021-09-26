@@ -37,7 +37,7 @@ export default class EmbedMessageService {
       dbGuild[this.guildProperty as keyof Guild] as string
     );
     if (statusMessage) {
-      await statusMessage.edit({ embed: statusEmbed });
+      await statusMessage.edit({ embeds: [statusEmbed] });
     }
   }
 
@@ -67,7 +67,7 @@ export default class EmbedMessageService {
    */
   public async postEmbed(channel: TextChannel): Promise<Message> {
     const embed = await this.generateEmbed(channel.guild);
-    const message = await channel.send({ embed });
+    const message = await channel.send({ embeds: [embed] });
 
     await message.pin();
     await this.setMessage(channel.guild.id, message.id);

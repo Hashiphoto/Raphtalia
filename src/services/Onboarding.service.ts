@@ -38,31 +38,30 @@ export default class OnboardingService {
     }
 
     await this._memberService.setHoistedRole(member, discordConfig().roles.immigrant);
-    await this._channelService.watchSend(
-      channel,
-      `Welcome ${member.toString()} to ${member.guild.name}!\n` +
-        `I have a few questions for you. If you answer correctly, you will be granted citizenship.`
-    );
+    await this._channelService.watchSend(channel, {
+      content:
+        `Welcome ${member.toString()} to ${member.guild.name}!\n` +
+        `I have a few questions for you. If you answer correctly, you will be granted citizenship.`,
+    });
 
     await this.setNickname(member, channel);
 
     const passedScreening = await this.screen(member, channel);
     if (!passedScreening) {
       return delay(2100)
-        .then(() => this._channelService.watchSend(channel, "😠"))
+        .then(() => this._channelService.watchSend(channel, { content: "😠" }))
         .then(() => delay(300))
         .then(() => this._memberService.softKick(member, "for answering a question wrong"))
-        .then((feedback) => this._channelService.watchSend(channel, feedback));
+        .then((feedback) => this._channelService.watchSend(channel, { content: feedback }));
     }
 
     // Creates the user in the DB if they didn't exist
     return this._userRepository
       .setCitizenship(member.id, member.guild.id, true)
       .then(() =>
-        this._channelService.watchSend(
-          channel,
-          `Thank you! And welcome loyal citizen to ${member.guild.name}! 🎉🎉🎉`
-        )
+        this._channelService.watchSend(channel, {
+          content: `Thank you! And welcome loyal citizen to ${member.guild.name}! 🎉🎉🎉`,
+        })
       )
       .then(() => this._memberService.setHoistedRole(member, discordConfig().roles.neutral))
       .then(() => this._inventoryService.findGuildItem(member.guild.id, "Player Badge"))
@@ -87,17 +86,15 @@ export default class OnboardingService {
       )
       .catch((collectedMessages) => {
         if (collectedMessages.size === 0) {
-          return this._channelService.watchSend(
-            channel,
-            `${member.toString()} doesn't want a nickname`
-          );
+          return this._channelService.watchSend(channel, {
+            content: `${member.toString()} doesn't want a nickname`,
+          });
         }
       });
     if (!message) {
-      return this._channelService.watchSend(
-        channel,
-        `${member.toString()} doesn't want a nickname`
-      );
+      return this._channelService.watchSend(channel, {
+        content: `${member.toString()} doesn't want a nickname`,
+      });
     }
 
     const nickname = message.content;
@@ -105,16 +102,19 @@ export default class OnboardingService {
     return member
       .setNickname(nickname)
       .then(() =>
-        this._channelService.watchSend(channel, `${oldName} will be known as ${nickname}!`)
+        this._channelService.watchSend(channel, {
+          content: `${oldName} will be known as ${nickname}!`,
+        })
       )
       .catch((error) => {
         if (error.name === "DiscordAPIError" && error.message === "Missing Permissions") {
-          return this._channelService.watchSend(
-            channel,
-            "I don't have high enough permissions to set your nickname"
-          );
+          return this._channelService.watchSend(channel, {
+            content: "I don't have high enough permissions to set your nickname",
+          });
         }
-        return this._channelService.watchSend(channel, "Something went wrong. No nickname for you");
+        return this._channelService.watchSend(channel, {
+          content: "Something went wrong. No nickname for you",
+        });
       });
   }
 

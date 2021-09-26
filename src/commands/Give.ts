@@ -5,7 +5,7 @@ import Item from "../models/Item";
 import RaphError from "../models/RaphError";
 import ClientService from "../services/Client.service";
 import RoleContestService from "../services/RoleContest.service";
-import { Format, print, sumString } from "../utilities/Util";
+import { Format, print } from "../utilities/Util";
 import Take from "./Take";
 
 @autoInjectable()
@@ -65,7 +65,7 @@ export default class Give extends Take {
       }
     });
 
-    return Promise.all(givePromises).then((messages) => messages.reduce(sumString) ?? "");
+    return Promise.all(givePromises).then((messages) => messages.join(""));
   }
 
   protected async transferItem(

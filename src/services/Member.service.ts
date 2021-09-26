@@ -134,7 +134,7 @@ export default class MemberService {
    */
   public getNextHighestRole(member: GuildMember): DsRole | undefined {
     const currentRole = member.roles.hoist;
-    const hoistRoles = this._roleService.getHoistedRoles(member.guild).array();
+    const hoistRoles = [...this._roleService.getHoistedRoles(member.guild).values()];
 
     if (!currentRole) {
       // Return the lowest role
@@ -157,7 +157,7 @@ export default class MemberService {
    */
   public getNextLowerRole(member: GuildMember): DsRole | undefined {
     const currentRole = member.roles.hoist;
-    const hoistRoles = this._roleService.getHoistedRoles(member.guild).array();
+    const hoistRoles = [...this._roleService.getHoistedRoles(member.guild).values()];
 
     if (!currentRole) {
       // Return the lowest role
@@ -242,9 +242,7 @@ export default class MemberService {
 
     // Check promotion CD
     if (role.lastPromotionOn) {
-      const rolesLowToHigh = this._roleService
-        .getHoistedRoles(member.guild)
-        .array()
+      const rolesLowToHigh = [...this._roleService.getHoistedRoles(member.guild).values()]
         .reverse()
         .map((r) => r.id);
 
@@ -308,7 +306,7 @@ export default class MemberService {
    * Decrease the member's hoisted role to the next one with room
    */
   public async demoteMember(target: GuildMember): Promise<string> {
-    const allHoistRoles = this._roleService.getHoistedRoles(target.guild).array();
+    const allHoistRoles = [...this._roleService.getHoistedRoles(target.guild).values()];
     const currentRole = target.roles.hoist;
 
     if (!allHoistRoles.length) {

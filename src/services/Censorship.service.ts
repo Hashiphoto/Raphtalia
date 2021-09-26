@@ -59,7 +59,10 @@ export default class CensorshipService {
     message.delete();
 
     const infractionFeedback = await this._memberService.addInfractions(message.member);
-    await this._channelService.watchSend(channel as TextChannel, infractionFeedback, embed);
+    await this._channelService.watchSend(channel as TextChannel, {
+      content: infractionFeedback,
+      embeds: [embed],
+    });
 
     return true;
   }

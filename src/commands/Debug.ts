@@ -7,7 +7,6 @@ import RaphError from "../models/RaphError";
 import { Result } from "../enums/Result";
 import RoleContestService from "../services/RoleContest.service";
 import RoleService from "../services/Role.service";
-import { sumString } from "../utilities/Util";
 
 @autoInjectable()
 export default class Debug extends Command {
@@ -32,7 +31,7 @@ export default class Debug extends Command {
         const roleContestService = container.resolve(RoleContestService);
         const feedback = await roleContestService
           .resolveRoleContests(initiator.guild, true)
-          .then((responses) => responses.reduce(sumString));
+          .then((responses) => responses.join(""));
         if (feedback.length === 0) {
           return;
         }

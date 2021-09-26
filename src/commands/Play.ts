@@ -1,19 +1,14 @@
-import {
-  Guild as DsGuild,
-  GuildMember,
-  TextChannel,
-  User as DsUser,
-  VoiceChannel,
-} from "discord.js";
+import { GuildMember, StageChannel, TextChannel, User as DsUser, VoiceChannel } from "discord.js";
 import { autoInjectable, delay, inject } from "tsyringe";
-import ytdl from "ytdl-core";
 import { Result } from "../enums/Result";
 import CommmandMessage from "../models/CommandMessage";
 import RaphError from "../models/RaphError";
-import links from "../resources/links";
 import ClientService from "../services/Client.service";
 import Command from "./Command";
 
+/**
+ * TODO: https://github.com/discordjs/voice/blob/main/examples/music-bot/src/bot.ts
+ */
 @autoInjectable()
 export default class Play extends Command {
   public constructor(@inject(delay(() => ClientService)) private clientService?: ClientService) {
@@ -31,15 +26,19 @@ export default class Play extends Command {
     }
     this.channel = cmdMessage.message.channel as TextChannel;
 
-    const voiceChannel = this.parseVoiceChannel(
-      cmdMessage.message.member.guild,
-      cmdMessage.parsedContent
-    );
+    this.reply("This command is broken right now. Blame the developer");
+    // const voiceChannel = this.parseVoiceChannel(
+    //   cmdMessage.message.member.guild,
+    //   cmdMessage.parsedContent
+    // );
 
-    return this.execute(cmdMessage.message.member, voiceChannel);
+    // return this.execute(cmdMessage.message.member, voiceChannel);
   }
 
-  public async execute(initiator: GuildMember, voiceChannel?: VoiceChannel): Promise<any> {
+  public async execute(
+    initiator: GuildMember,
+    voiceChannel?: VoiceChannel | StageChannel
+  ): Promise<any> {
     // const content = this.ec.messageHelper.parsedContent;
     // TODO: fix percentage parsing
     // const lastArg = this.message.args[this.message.args.length - 1];
@@ -70,79 +69,79 @@ export default class Play extends Command {
       return this.sendHelpMessage(`I don't have permission to join ${voiceChannel.name}`);
     }
 
-    return this.play(voiceChannel, links.youtube.anthem, volume).then(() =>
-      this.useItem(initiator)
-    );
+    // return this.play(voiceChannel, links.youtube.anthem, volume).then(() =>
+    //   this.useItem(initiator)
+    // );
   }
 
-  /**
-   * Play a song in the specified VoiceChannel
-   *
-   * @param {Discord.VoiceChannel} voiceChannel - The voice channel to play the yt song in
-   * @param {string} url - The url of the YouTube video to play
-   * @param {number} vol - The volume to play at (0 to 1)
-   */
-  private async play(voiceChannel: VoiceChannel, url: string, vol: number): Promise<void> {
-    try {
-      const connection = await voiceChannel.join();
-      const stream = ytdl(url, {
-        filter: "audioonly",
-        quality: "lowestaudio",
-        highWaterMark: 1 << 20,
-      });
-      const dispatcher = connection.play(stream, {
-        volume: vol,
-        highWaterMark: 1,
-      });
-      dispatcher.on("finish", () => voiceChannel.leave());
-    } catch (e) {
-      console.error(e);
-      voiceChannel.leave();
-      throw e;
-    }
-  }
+  //   /**
+  //    * Play a song in the specified VoiceChannel
+  //    */
+  //   private async play(
+  //     voiceChannel: VoiceChannel | StageChannel,
+  //     url: string,
+  //     vol: number
+  //   ): Promise<void> {
+  //     try {
+  //       const connection = await joinVoiceChannel({guildId: voiceChannel.guildId, channelId: voiceChannel.id})
+  //       const stream = ytdl(url, {
+  //         filter: "audioonly",
+  //         quality: "lowestaudio",
+  //         highWaterMark: 1 << 20,
+  //       });
+  //       const dispatcher = connection.play(stream, {
+  //         volume: vol,
+  //         highWaterMark: 1,
+  //       });
+  //       dispatcher.on("finish", () => voiceChannel.leave());
+  //     } catch (e) {
+  //       console.error(e);
+  //       voiceChannel.leave();
+  //       throw e;
+  //     }
+  //   }
 
-  /**
-   * There are two accepted formats. If the parent and voice channel are both
-   * included, it should look like:
-   *    FOLDER / CHANNEL NAME
-   * Where the folder is index 1 and channel name is index 3
-   *
-   * If only the voice channel is included, it should look like:
-   *    CHANNEL NAME
-   * Where the channel name is index 1
-   *
-   * We test which format is given by the length of the match array
-   */
-  private parseVoiceChannel(guild: DsGuild, content: string): VoiceChannel | undefined {
-    const matches = content.match(/in ([\w -]+)(\/([\w -]+))?/i);
+  //   /**
+  //    * There are two accepted formats. If the parent and voice channel are both
+  //    * included, it should look like:
+  //    *    FOLDER / CHANNEL NAME
+  //    * Where the folder is index 1 and channel name is index 3
+  //    *
+  //    * If only the voice channel is included, it should look like:
+  //    *    CHANNEL NAME
+  //    * Where the channel name is index 1
+  //    *
+  //    * We test which format is given by the length of the match array
+  //    */
+  //   private parseVoiceChannel(guild: DsGuild, content: string): VoiceChannel | undefined {
+  //     const matches = content.match(/in ([\w -]+)(\/([\w -]+))?/i);
 
-    if (!matches) {
-      return;
-    }
+  //     if (!matches) {
+  //       return;
+  //     }
 
-    // Folder and channel name
-    if (matches[2]) {
-      const folderName = matches[1].trim();
-      const channelName = matches[3].trim();
+  //     // Folder and channel name
+  //     if (matches[2]) {
+  //       const folderName = matches[1].trim();
+  //       const channelName = matches[3].trim();
 
-      return guild.channels.cache.find(
-        (channel) =>
-          !!(
-            channel.type == "voice" &&
-            channel.name.toLowerCase() === channelName.toLowerCase() &&
-            channel.parent &&
-            channel.parent.name.toLowerCase() === folderName.toLowerCase()
-          )
-      ) as VoiceChannel;
-    }
+  //       return guild.channels.cache.find(
+  //         (channel) =>
+  //           !!(
+  //             channel.type == "voice" &&
+  //             channel.name.toLowerCase() === channelName.toLowerCase() &&
+  //             channel.parent &&
+  //             channel.parent.name.toLowerCase() === folderName.toLowerCase()
+  //           )
+  //       ) as VoiceChannel;
+  //     }
 
-    // Just channel name
-    const channelName = matches[1].trim();
+  //     // Just channel name
+  //     const channelName = matches[1].trim();
 
-    return guild.channels.cache.find(
-      (channel) =>
-        channel.type == "voice" && channel.name.toLowerCase() === channelName.toLowerCase()
-    ) as VoiceChannel;
-  }
+  //     return guild.channels.cache.find(
+  //       (channel) =>
+  //         channel.type == "voice" && channel.name.toLowerCase() === channelName.toLowerCase()
+  //     ) as VoiceChannel;
+  //   }
 }

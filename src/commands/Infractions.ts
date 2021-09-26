@@ -6,7 +6,6 @@ import MemberService from "../services/Member.service";
 import RaphError from "../models/RaphError";
 import { Result } from "../enums/Result";
 import { autoInjectable } from "tsyringe";
-import { sumString } from "../utilities/Util";
 
 @autoInjectable()
 export default class Infractions extends Command {
@@ -37,9 +36,7 @@ export default class Infractions extends Command {
         .then((infractCount) => `${target.displayName} has incurred ${infractCount} infractions\n`)
     );
 
-    const feedback = await Promise.all(infractionPromises).then((messages) =>
-      messages.reduce(sumString)
-    );
+    const feedback = await Promise.all(infractionPromises).then((messages) => messages.join(""));
 
     await this.reply(feedback);
     await this.useItem(initiator);

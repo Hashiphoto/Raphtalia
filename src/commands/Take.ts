@@ -1,5 +1,4 @@
 import { GuildMember, TextChannel } from "discord.js";
-import { parseNumber, sumString } from "../utilities/Util";
 
 import Command from "./Command";
 import CommmandMessage from "../models/CommandMessage";
@@ -8,6 +7,7 @@ import Item from "../models/Item";
 import RaphError from "../models/RaphError";
 import { Result } from "../enums/Result";
 import { autoInjectable } from "tsyringe";
+import { parseNumber } from "../utilities/Util";
 
 @autoInjectable()
 export default class Take extends Command {
@@ -91,7 +91,7 @@ export default class Take extends Command {
         );
     });
 
-    return Promise.all(moneyPromises).then((messages) => messages.reduce(sumString) ?? "");
+    return Promise.all(moneyPromises).then((messages) => messages.join(""));
   }
 
   protected async transferItem(
@@ -112,6 +112,6 @@ export default class Take extends Command {
         );
     });
 
-    return Promise.all(itemPromises).then((messages) => messages.reduce(sumString) ?? "");
+    return Promise.all(itemPromises).then((messages) => messages.join(""));
   }
 }

@@ -1,12 +1,8 @@
-import { container, singleton } from "tsyringe";
-
-import { Client } from "discord.js";
-import ClientService from "./Client.service";
 import { CronJob } from "cron";
-import DatabaseService from "./Database.service";
+import { container, delay, inject, singleton } from "tsyringe";
 import DropPricesJob from "../jobs/DropPrices.job";
-import { Pool } from "mysql2/promise";
 import ResolveContestsJob from "../jobs/ResolveContests.job";
+import ClientService from "./Client.service";
 
 /**
   CRON Quick Refernce
@@ -23,20 +19,18 @@ import ResolveContestsJob from "../jobs/ResolveContests.job";
 @singleton()
 export default class JobService {
   private timezone: string;
-  private pool: Pool;
-  private client: Client;
 
-  public constructor(private dbService: DatabaseService, private clientService: ClientService) {
-    this.pool = this.dbService.getPool();
-    this.client = this.clientService.getClient();
+  public constructor(@inject(delay(() => ClientService)) private _clientService: ClientService) {
     this.timezone = "America/Los_Angeles";
   }
 
   public start(): void {
+    const client = this._clientService.getClient();
+
     // Every day at 08:00 PM
     new CronJob(
       "0 20 * * *",
-      () => container.resolve(ResolveContestsJob).run(this.client),
+      () => container.resolve(ResolveContestsJob).run(client),
       null,
       true,
       this.timezone
@@ -45,7 +39,7 @@ export default class JobService {
     // Every day at 06:30 AM
     new CronJob(
       "30 6 * * *",
-      () => container.resolve(DropPricesJob).run(this.client),
+      () => container.resolve(DropPricesJob).run(client),
       null,
       true,
       this.timezone

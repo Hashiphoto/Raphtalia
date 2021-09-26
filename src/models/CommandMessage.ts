@@ -108,6 +108,6 @@ export default class CommmandMessage {
     if (!role) {
       return [];
     }
-    return role.members.array();
+    return [...role.members.values()];
   }
 }

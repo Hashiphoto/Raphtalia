@@ -3,16 +3,8 @@
   "tasks": [
     {
       "label": "devConnectToDb",
-      "command": "ssh",
-      "args": [
-        "botadmin@47.25.165.160",
-        "-L",
-        "33306:localhost:3306",
-        "-N",
-        "-i",
-        "~/.ssh/id_rsa",
-        "-f"
-      ],
+      "command": "ssh botadmin@71.84.184.254 -L 33306:localhost:3306 -N -i ~/.ssh/id_rsa -f",
+      "args": [],
       "type": "shell",
       "presentation": {
         "reveal": "silent",
@@ -21,7 +13,7 @@
     },
     {
       "label": "devDisconnectFromDb",
-      "command": "ps -ef | grep 'ssh' | awk '{print $2}' | xargs kill",
+      "command": "ps -ef | grep 'ssh' -m 1 | awk '{print $2}' | xargs kill",
       "args": [],
       "type": "shell",
       "presentation": {

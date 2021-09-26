@@ -115,10 +115,6 @@ const listFormat = (itemArray: string[], conjunction = "and"): string => {
   return output;
 };
 
-const sumString = (a: string, b: string): string => {
-  return a + b;
-};
-
 export enum Format {
   Integer,
   Dollar,
@@ -139,4 +135,4 @@ const print = (amount: number, format: Format): string => {
   }
 };
 
-export { round, formatDate, random, parseDuration, parseNumber, listFormat, sumString, print };
+export { round, formatDate, random, parseDuration, parseNumber, listFormat, print };

@@ -1,5 +1,13 @@
 import delay from "delay";
-import { Client, Message } from "discord.js";
+import {
+  Client,
+  Message,
+  MessageReaction,
+  PartialMessageReaction,
+  PartialUser,
+  TextChannel,
+  User as DsUser,
+} from "discord.js";
 import { delay as tsDelay, inject, injectable } from "tsyringe";
 import CommmandMessage from "../models/CommandMessage";
 import CensorshipService from "./Censorship.service";
@@ -30,7 +38,7 @@ export default class MessageService {
     if (
       this._client.user &&
       this._client.user.id === message.author.id &&
-      message.type === "PINS_ADD"
+      message.type === "CHANNEL_PINNED_MESSAGE"
     ) {
       await message.delete();
       return;
@@ -38,9 +46,9 @@ export default class MessageService {
 
     // Unhandlded cases
     if (
-      message.channel.type === "dm" ||
+      message.channel.type === "DM" ||
       message.type !== "DEFAULT" ||
-      message.channel.type === "news" ||
+      message.channel.type === "GUILD_NEWS" ||
       !message.guild
     ) {
       return;
@@ -67,6 +75,48 @@ export default class MessageService {
     }
   }
 
+  public async handleReactionAdd(
+    messageReaction: MessageReaction | PartialMessageReaction,
+    user: DsUser | PartialUser
+  ): Promise<void> {
+    const message = messageReaction.message.partial
+      ? await messageReaction.message.fetch()
+      : messageReaction.message;
+    if (!user || !(message.channel instanceof TextChannel) || !message.guild) {
+      return;
+    }
+    // Only pay users for their first reaction to a message
+    if (message.reactions.cache.filter((e) => !!e.users.cache.get(user.id)).size > 1) {
+      return;
+    }
+    const guildMember = message.guild.members.cache.get(user.id);
+    if (!guildMember) {
+      return;
+    }
+    this._currencyService.payoutReaction(guildMember, message);
+  }
+
+  public async handleReactionRemove(
+    messageReaction: MessageReaction | PartialMessageReaction,
+    user: DsUser | PartialUser
+  ): Promise<void> {
+    const message = messageReaction.message.partial
+      ? await messageReaction.message.fetch()
+      : messageReaction.message;
+    if (!user || !(message.channel instanceof TextChannel) || !message.guild) {
+      return;
+    }
+    // Only subtract money for removing the user's only remaining reaction
+    if (message.reactions.cache.filter((r) => !!r.users.cache.get(user.id)).size > 0) {
+      return;
+    }
+    const guildMember = message.guild.members.cache.get(user.id);
+    if (!guildMember) {
+      return;
+    }
+    this._currencyService.payoutReaction(guildMember, message, true);
+  }
+
   /**
    * Delete a message after a delay
    */
@@ -76,7 +126,7 @@ export default class MessageService {
     }
     await delay(timeMs);
     message.delete().catch((error) => {
-      // Message was manually deleted
+      // Message no longer exists
       if (error.name === "DiscordAPIError" && error.message === "Unknown Message") {
         return;
       }

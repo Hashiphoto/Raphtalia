@@ -18,6 +18,7 @@ import Infractions from "../commands/Infractions";
 import NullCommand from "../commands/NullCommand";
 import Pardon from "../commands/Pardon";
 import Play from "../commands/Play";
+import Poke from "../commands/Poke";
 import Promote from "../commands/Promote";
 import Register from "../commands/Register";
 import Roles from "../commands/Roles";
@@ -136,19 +137,17 @@ export default class CommandService {
   // }
 
   private async executeCommand(cmdMessage: CommmandMessageWrapper, command: Command) {
-    cmdMessage.message.channel.startTyping();
+    cmdMessage.message.channel.sendTyping();
     try {
       await command.executeDefault(cmdMessage);
     } catch (error) {
       console.error(error);
-      cmdMessage.message.channel.type === "text" &&
+      cmdMessage.message.channel.isText() &&
         (await this._channelService.watchSend(
           cmdMessage.message.channel as TextChannel,
           error.message
         ));
       return cmdMessage.message.react("🛑");
-    } finally {
-      cmdMessage.message.channel.stopTyping(true);
     }
   }
 
@@ -190,6 +189,8 @@ export default class CommandService {
         return new Pardon();
       case "play":
         return new Play();
+      case "poke":
+        return new Poke();
       case "promote":
         return new Promote();
       case "register":
