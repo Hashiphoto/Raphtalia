@@ -3,6 +3,14 @@ import duration, { Duration } from "dayjs/plugin/duration";
 
 dayjs.extend(duration);
 
+// Discord markdown methods
+export const bold = (text: string): string => `**${text}**`;
+export const italicize = (text: string): string => `*${text}*`;
+
+export const buildCustomId = (...args: string[]): string => {
+  return args.join("|");
+};
+
 /**
  * @param {Number} amount
  * @returns {Number}

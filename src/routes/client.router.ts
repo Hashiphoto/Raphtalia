@@ -1,4 +1,5 @@
 import { Client } from "discord.js";
+import InteractionService from "../services/Interaction.service";
 import MemberService from "../services/Member.service";
 import MessageService from "../services/Message.service";
 import OnboardingService from "../services/Onboarding.service";
@@ -8,6 +9,7 @@ export default (client: Client): void => {
   const messageService = container.resolve(MessageService);
   const memberService = container.resolve(MemberService);
   const onboardingService = container.resolve(OnboardingService);
+  const interactionService = container.resolve(InteractionService);
 
   client.on("messageCreate", async (message) => {
     messageService.handleMessage(message);
@@ -31,6 +33,10 @@ export default (client: Client): void => {
 
   client.on("messageReactionRemove", (messageReaction, user) => {
     messageService.handleReactionRemove(messageReaction, user);
+  });
+
+  client.on("interactionCreate", (interaction) => {
+    interactionService.handleInteraction(interaction);
   });
 
   // /**

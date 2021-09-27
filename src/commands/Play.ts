@@ -1,23 +1,24 @@
-import { GuildMember, StageChannel, TextChannel, User as DsUser, VoiceChannel } from "discord.js";
-import { autoInjectable, delay, inject } from "tsyringe";
-import { Result } from "../enums/Result";
+import { User as DsUser, GuildMember, StageChannel, TextChannel, VoiceChannel } from "discord.js";
+
+import Command from "./Command";
 import CommmandMessage from "../models/CommandMessage";
 import RaphError from "../models/RaphError";
-import ClientService from "../services/Client.service";
-import Command from "./Command";
+import { Result } from "../enums/Result";
+import { autoInjectable } from "tsyringe";
 
 /**
  * TODO: https://github.com/discordjs/voice/blob/main/examples/music-bot/src/bot.ts
  */
 @autoInjectable()
 export default class Play extends Command {
-  public constructor(@inject(delay(() => ClientService)) private clientService?: ClientService) {
+  public constructor() {
     super();
     this.name = "Play";
     this.instructions =
-      "**Play**\nPlay the server theme in the voice channel you are in. " +
+      "Play the server theme in the voice channel you are in. " +
       "You can specify which voice channel to play in by voice channel name or channel group and voice channel name. ";
-    this.usage = "Usage: `Play [in (Group/VoiceChannel | VoiceChannel)]`";
+    this.usage = "`Play [in (Group/VoiceChannel | VoiceChannel)]`";
+    this.aliases = [this.name.toLowerCase()];
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {

@@ -1,25 +1,24 @@
-import { GuildMember, TextChannel } from "discord.js";
-import { formatDate, parseDuration } from "../utilities/Util";
-
-import Command from "./Command";
-import CommmandMessage from "../models/CommandMessage";
-import { Duration } from "dayjs/plugin/duration";
-import MemberService from "../services/Member.service";
-import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
-import RoleService from "../services/Role.service";
-import { autoInjectable } from "tsyringe";
 import dayjs from "dayjs";
+import { Duration } from "dayjs/plugin/duration";
+import { GuildMember, TextChannel } from "discord.js";
+import { autoInjectable, delay, inject } from "tsyringe";
+import { Result } from "../enums/Result";
+import CommmandMessage from "../models/CommandMessage";
+import RaphError from "../models/RaphError";
+import MemberService from "../services/Member.service";
+import { formatDate, parseDuration } from "../utilities/Util";
+import Command from "./Command";
 
 @autoInjectable()
 export default class Exile extends Command {
-  public constructor(private _roleService?: RoleService, private _memberService?: MemberService) {
+  public constructor(@inject(delay(() => MemberService)) private _memberService?: MemberService) {
     super();
     this.name = "Exile";
     this.instructions =
-      "**Exile**\nPut a specified member in exile for a period of time. " +
+      "Put a specified member in exile for a period of time. " +
       "Exiled members cannot use any commands. If no time is specified, the maximum value of 6 hours will be used. ";
-    this.usage = "Usage: `Exile @member [1h 1m 1s]`";
+    this.usage = "`Exile @member [1h 1m 1s]`";
+    this.aliases = [this.name.toLowerCase()];
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {

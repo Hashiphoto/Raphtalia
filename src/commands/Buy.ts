@@ -15,8 +15,9 @@ export default class Buy extends Command {
     super();
     this.name = "Buy";
     this.instructions =
-      "**Buy**\nPurchase an item from the server store. The item will be added to your inventory, if there is adequate quantity in the store";
-    this.usage = "Usage: `Buy (item name)`";
+      "Purchase an item from the server store. The item will be added to your inventory, if there is adequate quantity in the store";
+    this.usage = "`Buy (item name)`";
+    this.aliases = [this.name.toLowerCase()];
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {

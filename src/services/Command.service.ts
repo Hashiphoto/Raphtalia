@@ -21,6 +21,7 @@ import Play from "../commands/Play";
 import Poke from "../commands/Poke";
 import Promote from "../commands/Promote";
 import Register from "../commands/Register";
+import Revolt from "../commands/Revolt";
 import Roles from "../commands/Roles";
 import Scan from "../commands/Scan";
 import Screening from "../commands/Screening";
@@ -29,7 +30,6 @@ import Status from "../commands/Status";
 import Steal from "../commands/Steal";
 import Store from "../commands/Store";
 import Take from "../commands/Take";
-import { Env } from "../enums/Environment";
 import CommmandMessageWrapper from "../models/CommandMessage";
 import ChannelService from "./Channel.service";
 import InventoryService from "./Inventory.service";
@@ -37,6 +37,37 @@ import RoleService from "./Role.service";
 
 @injectable()
 export default class CommandService {
+  public static All: Command[] = [
+    new AllowWord(),
+    new AutoDelete(),
+    new Balance(),
+    new BanList(),
+    new BanWord(),
+    new Buy(),
+    new Censorship(),
+    new Debug(),
+    new Exile(),
+    new Give(),
+    new Headpat(),
+    new Help(),
+    new HoldVote(),
+    new Infractions(),
+    new Pardon(),
+    new Play(),
+    new Poke(),
+    new Promote(),
+    new Register(),
+    new Revolt(),
+    new Roles(),
+    new Scan(),
+    new Screening(),
+    new ServerStatus(),
+    new Status(),
+    new Steal(),
+    new Store(),
+    new Take(),
+  ];
+
   public constructor(
     @inject(RoleService) private _roleService: RoleService,
     @inject(InventoryService) private _inventoryService: InventoryService,
@@ -152,69 +183,6 @@ export default class CommandService {
   }
 
   public getCommandByName(name: string): Command | undefined {
-    // Keep alphabetical by primary command word
-    // The primary command keyword should be listed first
-    switch (name) {
-      case "allowword":
-      case "allowwords":
-        return new AllowWord();
-      case "autodelete":
-        return new AutoDelete();
-      case "balance":
-      case "wallet":
-        return new Balance();
-      case "banlist":
-      case "bannedwords":
-        return new BanList();
-      case "banword":
-      case "banwords":
-        return new BanWord();
-      case "buy":
-        return new Buy();
-      case "censorship":
-        return new Censorship();
-      case "exile":
-        return new Exile();
-      case "give":
-        return new Give();
-      case "headpat":
-        return new Headpat();
-      case "help":
-        return new Help();
-      case "holdvote":
-        return new HoldVote();
-      case "infractions":
-        return new Infractions();
-      case "pardon":
-        return new Pardon();
-      case "play":
-        return new Play();
-      case "poke":
-        return new Poke();
-      case "promote":
-        return new Promote();
-      case "register":
-        return new Register();
-      case "roles":
-        return new Roles();
-      case "scan":
-        return new Scan();
-      case "screening":
-        return new Screening();
-      case "serverstatus":
-        return new ServerStatus();
-      case "status":
-        return new Status();
-      case "steal":
-        return new Steal();
-      case "store":
-        return new Store();
-      case "take":
-        return new Take();
-      case "debug":
-        if (process.env.NODE_ENV === Env.Dev) {
-          return new Debug();
-        }
-    }
+    return CommandService.All.find((command) => command.aliases.includes(name.toLowerCase()));
   }
 }

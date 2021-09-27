@@ -1,26 +1,43 @@
 import { GuildMember, Message, MessageOptions, TextChannel } from "discord.js";
-
-import ChannelService from "../services/Channel.service";
-import CommmandMessage from "../models/CommandMessage";
-import InventoryService from "../services/Inventory.service";
-import RaphError from "../models/RaphError";
+import { autoInjectable, delay, inject } from "tsyringe";
 import { Result } from "../enums/Result";
+import CommmandMessage from "../models/CommandMessage";
+import RaphError from "../models/RaphError";
 import UserItem from "../models/UserItem";
-import { autoInjectable } from "tsyringe";
+import ChannelService from "../services/Channel.service";
+import ClientService from "../services/Client.service";
+import InventoryService from "../services/Inventory.service";
+import { bold } from "../utilities/Util";
 
 @autoInjectable()
 export default class Command {
   public item: UserItem;
-  public instructions: string;
   public channel: TextChannel;
   public name: string;
-  protected usage: string;
+  public aliases: string[];
+  private _usage: string;
+  private _instructions: string;
 
   public constructor(
     protected inventoryService?: InventoryService,
-    protected channelService?: ChannelService
-  ) {
-    this.name = "Command";
+    protected channelService?: ChannelService,
+    @inject(delay(() => ClientService)) protected clientService?: ClientService
+  ) {}
+
+  public get instructions(): string {
+    return bold(this.name) + "\n" + this._instructions;
+  }
+
+  public set instructions(text: string) {
+    this._instructions = text;
+  }
+
+  protected get usage(): string {
+    return `Usage: ${this._usage}`;
+  }
+
+  protected set usage(text: string) {
+    this._usage = text;
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {

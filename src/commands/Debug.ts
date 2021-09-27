@@ -3,6 +3,8 @@ import { autoInjectable, container } from "tsyringe";
 
 import Command from "./Command";
 import CommmandMessage from "../models/CommandMessage";
+import { Env } from "../enums/Environment";
+import NullCommand from "./NullCommand";
 import RaphError from "../models/RaphError";
 import { Result } from "../enums/Result";
 import RoleContestService from "../services/RoleContest.service";
@@ -14,7 +16,12 @@ export default class Debug extends Command {
     super();
     this.name = "Debug";
     this.instructions = "For testing in development only";
-    this.usage = "Usage: `Debug (options)`";
+    this.usage = "`Debug (options)`";
+    this.aliases = [this.name.toLowerCase()];
+
+    if (process.env.NODE_ENV !== Env.Dev) {
+      return new NullCommand();
+    }
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {

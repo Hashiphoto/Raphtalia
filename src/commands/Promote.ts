@@ -1,19 +1,19 @@
 import { GuildMember, TextChannel } from "discord.js";
-
-import Command from "./Command";
-import CommmandMessage from "../models/CommandMessage";
-import MemberService from "../services/Member.service";
-import RaphError from "../models/RaphError";
+import { autoInjectable, delay, inject } from "tsyringe";
 import { Result } from "../enums/Result";
-import { autoInjectable } from "tsyringe";
+import CommmandMessage from "../models/CommandMessage";
+import RaphError from "../models/RaphError";
+import MemberService from "../services/Member.service";
+import Command from "./Command";
 
 @autoInjectable()
 export default class Promote extends Command {
-  public constructor(private _memberService?: MemberService) {
+  public constructor(@inject(delay(() => MemberService)) private _memberService?: MemberService) {
     super();
     this.name = "Promote";
-    this.instructions = "**Promote**\nIncrease your rank by one";
-    this.usage = "Usage: `Promote`";
+    this.instructions = "Increase your rank by one";
+    this.usage = "`Promote`";
+    this.aliases = [this.name.toLowerCase()];
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {

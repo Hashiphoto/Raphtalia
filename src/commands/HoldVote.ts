@@ -18,10 +18,11 @@ export default class HoldVote extends Command {
     super();
     this.name = "HoldVote";
     this.instructions =
-      "**HoldVote**\nSet up a vote for all registered voters. " +
+      "Set up a vote for all registered voters. " +
       'Ballots will be sent to anyone with the "voter" role when the voting period starts. ' +
       "After using the initial command, you will be asked several additional questions to specify the parameters of the vote";
-    this.usage = "Usage: `HoldVote (Ask your question here)`";
+    this.usage = "`HoldVote (Ask your question here)`";
+    this.aliases = [this.name.toLowerCase()];
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {

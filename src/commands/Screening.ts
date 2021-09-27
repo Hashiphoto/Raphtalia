@@ -21,11 +21,12 @@ export default class Screening extends Command {
     super();
     this.name = "Screening";
     this.instructions =
-      "**Screening**\nView, edit or delete the guild screening questions. " +
+      "View, edit or delete the guild screening questions. " +
       "To view the current screening questions, use the `list` flag. This does not consume an item use.\n" +
       "To add a new screening question, use the `add` flag and answer the additional questions.\n" +
       "To remove a screening question, use the `delete` flag followed by the id of the screening question. The id can be obtained using the `list` flag";
-    this.usage = "Usage: `Screening (list | add | delete id)`";
+    this.usage = "`Screening (list | add | delete id)`";
+    this.aliases = [this.name.toLowerCase()];
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {

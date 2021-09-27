@@ -11,8 +11,9 @@ export default class Headpat extends Command {
   public constructor() {
     super();
     this.name = "Headpat";
-    this.instructions = "**Headpat**\nI will give a headpat to the member(s) is specified";
-    this.usage = "Usage: `Headpat @member`";
+    this.instructions = "I will give a headpat to the member(s) is specified";
+    this.usage = "`Headpat @member`";
+    this.aliases = [this.name.toLowerCase()];
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {

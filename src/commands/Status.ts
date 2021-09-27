@@ -1,13 +1,12 @@
-import { Format, print } from "../utilities/Util";
 import { GuildMember, MessageEmbed, TextChannel } from "discord.js";
-
-import Command from "./Command";
+import { autoInjectable, delay, inject } from "tsyringe";
+import { Result } from "../enums/Result";
 import CommmandMessage from "../models/CommandMessage";
+import RaphError from "../models/RaphError";
 import CurrencyService from "../services/Currency.service";
 import MemberService from "../services/Member.service";
-import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
-import { autoInjectable } from "tsyringe";
+import { Format, print } from "../utilities/Util";
+import Command from "./Command";
 
 enum Args {
   SHOW,
@@ -16,13 +15,14 @@ enum Args {
 @autoInjectable()
 export default class Status extends Command {
   public constructor(
-    private _currencyService?: CurrencyService,
-    private _memberService?: MemberService
+    @inject(delay(() => CurrencyService)) private _currencyService?: CurrencyService,
+    @inject(delay(() => MemberService)) private _memberService?: MemberService
   ) {
     super();
     this.name = "Status";
-    this.instructions = "**Status**\nPost your current balance and inventory in this channel";
-    this.usage = "Usage: `Status`";
+    this.instructions = "Post your current balance and inventory in this channel";
+    this.usage = "`Status`";
+    this.aliases = [this.name.toLowerCase()];
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {

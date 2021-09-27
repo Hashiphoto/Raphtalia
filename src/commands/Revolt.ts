@@ -15,8 +15,9 @@ export default class Revolt extends Command {
   public constructor() {
     super();
     this.name = "Revolt";
-    this.instructions = "**Revolt**\nDoesn't do anything";
-    this.usage = "Usage: `Revolt`";
+    this.instructions = "Doesn't do anything";
+    this.usage = "`Revolt`";
+    this.aliases = [this.name.toLowerCase()];
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {

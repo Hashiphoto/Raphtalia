@@ -21,10 +21,11 @@ export default class Censorship extends Command {
     super();
     this.name = "Censorship";
     this.instructions =
-      "**Censorship**\nEnable or disable censorship for the whole server. " +
+      "Enable or disable censorship for the whole server. " +
       "When censorship is enabled, anyone who uses a word from the banned " +
       "list will be given an infraction";
-    this.usage = "Usage: `Censorship (start|stop)`";
+    this.usage = "`Censorship (start|stop)`";
+    this.aliases = [this.name.toLowerCase()];
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {

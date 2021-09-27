@@ -21,11 +21,12 @@ export default class Scan extends Command {
   ) {
     super();
     this.name = "Scan";
-    this.instructions = `**Scan**\nSearch other users' inventories for a specified item. Costs ${print(
+    this.instructions = `Search other users' inventories for a specified item. Costs ${print(
       percentCost,
       Format.Percent
     )} of the item's store price. DC10 to reveal the user's name`;
-    this.usage = "Usage: `Scan (item name)`";
+    this.usage = "`Scan (item name)`";
+    this.aliases = [this.name.toLowerCase()];
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {

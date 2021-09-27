@@ -19,9 +19,10 @@ export default class Steal extends Command {
     super();
     this.name = "Steal";
     this.instructions =
-      "**Steal**\nAttempt to take an item from another user. " +
+      "Attempt to take an item from another user. " +
       "Odds of success are 1/20, or 2/20 if the user has had the item for more than 3 days. Cost of steal attempt = `odds * item price * 110%`";
-    this.usage = "Usage: `Steal @member (item name)`";
+    this.usage = "`Steal @member (item name)`";
+    this.aliases = [this.name.toLowerCase()];
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {

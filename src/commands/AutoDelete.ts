@@ -18,8 +18,9 @@ export default class AutoDelete extends Command {
     super();
     this.name = "AutoDelete";
     this.instructions =
-      "**AutoDelete**\nEnable or disable automatic message deletion in this channel. If deletion delay is not specified, default 2000ms will be used";
-    this.usage = "Usage: `AutoDelete (start|stop) [1ms]`";
+      "Enable or disable automatic message deletion in this channel. If deletion delay is not specified, default 2000ms will be used";
+    this.usage = "`AutoDelete (start|stop) [1ms]`";
+    this.aliases = [this.name.toLowerCase()];
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {

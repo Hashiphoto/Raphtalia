@@ -13,9 +13,10 @@ export default class Register extends Command {
     super();
     this.name = "Register";
     this.instructions =
-      "**Register**\nGive the voter role to yourself. " +
+      "Give the voter role to yourself. " +
       "This will allow you to vote when anyone uses the HoldVote command";
-    this.usage = "Usage: `Register`";
+    this.usage = "`Register`";
+    this.aliases = [this.name.toLowerCase()];
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {

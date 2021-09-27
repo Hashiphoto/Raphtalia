@@ -28,7 +28,7 @@ export default class MemberService {
     @inject(RoleService) private _roleService: RoleService,
     @inject(tsDelay(() => RoleContestService)) private _roleContestService: RoleContestService,
     @inject(RoleRepository) private _roleRepository: RoleRepository,
-    @inject(RoleListService) private _roleListService: RoleListService
+    @inject(tsDelay(() => RoleListService)) private _roleListService: RoleListService
   ) {}
 
   public hasAuthorityOver(sender: GuildMember, target: GuildMember | GuildMember[]): boolean {

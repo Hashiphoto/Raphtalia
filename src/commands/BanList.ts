@@ -12,8 +12,9 @@ export default class BanList extends Command {
   public constructor(private _banListService?: BanListService) {
     super();
     this.name = "BanList";
-    this.instructions = "**BanList**\nPost the Banned Words List in this channel";
-    this.usage = "Usage: `BanList`";
+    this.instructions = "Post the Banned Words List in this channel";
+    this.usage = "`BanList`";
+    this.aliases = [this.name.toLowerCase(), "bannedwords"];
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {

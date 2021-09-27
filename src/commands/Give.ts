@@ -17,10 +17,11 @@ export default class Give extends Take {
     super();
     this.name = "Give";
     this.instructions =
-      "**Give**\nGive the specified member(s) either an amount of money or an item. " +
+      "Give the specified member(s) either an amount of money or an item. " +
       "If multiple members are listed, each member will be given the amount of money specified. " +
       "When giving an item, each member will be given one of that item. Only unused items can be given.";
-    this.usage = "Usage: `Give @member ($1|item name)`";
+    this.usage = "`Give @member ($1|item name)`";
+    this.aliases = [this.name.toLowerCase()];
   }
 
   protected async transferMoney(

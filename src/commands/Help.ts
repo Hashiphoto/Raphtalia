@@ -17,8 +17,9 @@ export default class Help extends Command {
   ) {
     super();
     this.name = "Help";
-    this.instructions = "**Help**\nGet detailed information about how to use any other command";
-    this.usage = "Usage: `Help (command name)`";
+    this.instructions = "Get detailed information about how to use any other command";
+    this.usage = "`Help (command name)`";
+    this.aliases = [this.name.toLowerCase()];
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {

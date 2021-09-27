@@ -1,21 +1,21 @@
 import { GuildMember, TextChannel } from "discord.js";
-
-import Command from "./Command";
-import CommmandMessage from "../models/CommandMessage";
-import MemberService from "../services/Member.service";
-import RaphError from "../models/RaphError";
+import { autoInjectable, delay, inject } from "tsyringe";
 import { Result } from "../enums/Result";
-import { autoInjectable } from "tsyringe";
+import CommmandMessage from "../models/CommandMessage";
+import RaphError from "../models/RaphError";
+import MemberService from "../services/Member.service";
+import Command from "./Command";
 
 @autoInjectable()
 export default class Pardon extends Command {
-  public constructor(private _memberService?: MemberService) {
+  public constructor(@inject(delay(() => MemberService)) private _memberService?: MemberService) {
     super();
     this.name = "Pardon";
     this.instructions =
-      "**Pardon**\nRemoves all infractions from the specified member(s). " +
+      "Removes all infractions from the specified member(s). " +
       "If the members are exiled, they are also freed from exile";
-    this.usage = "Usage: `Pardon @member`";
+    this.usage = "`Pardon @member`";
+    this.aliases = [this.name.toLowerCase()];
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {

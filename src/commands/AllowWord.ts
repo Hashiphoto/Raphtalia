@@ -16,8 +16,9 @@ export default class AllowWord extends Command {
   ) {
     super();
     this.name = "AllowWord";
-    this.instructions = "**AllowWord**\nRemove a word from the ban list";
-    this.usage = "Usage: `AllowWord word1 word2 etc`";
+    this.instructions = "Remove a word from the ban list";
+    this.usage = "`AllowWord word1 word2 etc`";
+    this.aliases = [this.name.toLowerCase(), "allowwords"];
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {

@@ -15,9 +15,10 @@ export default class Take extends Command {
     super();
     this.name = "Take";
     this.instructions =
-      "**Take**\nTake money or items from the specified user. " +
+      "Take money or items from the specified user. " +
       "You can take money from multiple users at once, but only one item from one user at a time.";
-    this.usage = "Usage: `Take @member ($1|item name)`";
+    this.usage = "`Take @member ($1|item name)`";
+    this.aliases = [this.name.toLowerCase()];
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {

@@ -1,19 +1,21 @@
 import { GuildMember, TextChannel } from "discord.js";
-
-import Command from "./Command";
+import { autoInjectable, delay, inject } from "tsyringe";
+import { Result } from "../enums/Result";
 import CommmandMessage from "../models/CommandMessage";
 import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
 import RoleListService from "../services/message/RoleList.service";
-import { autoInjectable } from "tsyringe";
+import Command from "./Command";
 
 @autoInjectable()
 export default class Roles extends Command {
-  public constructor(private _roleListService?: RoleListService) {
+  public constructor(
+    @inject(delay(() => RoleListService)) private _roleListService?: RoleListService
+  ) {
     super();
     this.name = "Roles";
-    this.instructions = "**Roles**\nPost the roles list for this server in this channel";
-    this.usage = "Usage: `Roles`";
+    this.instructions = "Post the roles list for this server in this channel";
+    this.usage = "`Roles`";
+    this.aliases = [this.name.toLowerCase()];
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {

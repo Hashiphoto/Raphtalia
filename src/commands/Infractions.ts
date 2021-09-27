@@ -1,20 +1,20 @@
 import { GuildMember, TextChannel } from "discord.js";
-
-import Command from "./Command";
-import CommmandMessage from "../models/CommandMessage";
-import MemberService from "../services/Member.service";
-import RaphError from "../models/RaphError";
+import { autoInjectable, delay, inject } from "tsyringe";
 import { Result } from "../enums/Result";
-import { autoInjectable } from "tsyringe";
+import CommmandMessage from "../models/CommandMessage";
+import RaphError from "../models/RaphError";
+import MemberService from "../services/Member.service";
+import Command from "./Command";
 
 @autoInjectable()
 export default class Infractions extends Command {
-  public constructor(private _memberService?: MemberService) {
+  public constructor(@inject(delay(() => MemberService)) private _memberService?: MemberService) {
     super();
     this.name = "Infractions";
     this.instructions =
-      "**Infractions**\nGet the number of infractions commited by a member. To get your own infraction count, use the command without arguments (`Infractions`)";
-    this.usage = "Usage: `Infractions [@member]`";
+      "Get the number of infractions commited by a member. To get your own infraction count, use the command without arguments (`Infractions`)";
+    this.usage = "`Infractions [@member]`";
+    this.aliases = [this.name.toLowerCase()];
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {

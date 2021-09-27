@@ -12,8 +12,9 @@ export default class Store extends Command {
   public constructor(private _guildStoreService?: GuildStoreService) {
     super();
     this.name = "Store";
-    this.instructions = "**Store**\nPost the server store in this channel";
-    this.usage = "Usage: `Store`";
+    this.instructions = "Post the server store in this channel";
+    this.usage = "`Store`";
+    this.aliases = [this.name.toLowerCase()];
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {

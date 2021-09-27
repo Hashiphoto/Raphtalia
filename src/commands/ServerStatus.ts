@@ -15,9 +15,10 @@ export default class ServerStatus extends Command {
     super();
     this.name = "ServerStatus";
     this.instructions =
-      "**ServerStatus**\nPosts the ban list, role list, and store in this channel. " +
+      "Posts the ban list, role list, and store in this channel. " +
       "Equivalent to using the BanList, Roles, and Store commands consecutively.";
-    this.usage = "Usage: `ServerStatus`";
+    this.usage = "`ServerStatus`";
+    this.aliases = [this.name.toLowerCase()];
   }
 
   public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
