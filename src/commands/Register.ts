@@ -1,11 +1,10 @@
 import { GuildMember, TextChannel } from "discord.js";
-
-import Command from "./Command";
+import { autoInjectable } from "tsyringe";
+import { Result } from "../enums/Result";
 import CommmandMessage from "../models/CommandMessage";
 import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
 import RoleService from "../services/Role.service";
-import { autoInjectable } from "tsyringe";
+import Command from "./Command";
 
 @autoInjectable()
 export default class Register extends Command {
@@ -19,26 +18,27 @@ export default class Register extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
     this.channel = cmdMessage.message.channel as TextChannel;
-    return this.execute(cmdMessage.message.member);
+    await this.run(cmdMessage.message.member);
   }
 
-  public async execute(initiator: GuildMember): Promise<any> {
+  public async execute(initiator: GuildMember): Promise<number | undefined> {
     if (!this._roleService) {
       throw new RaphError(Result.ProgrammingError);
     }
     const voterRole = await this._roleService?.getCreateVoterRole(initiator.guild);
 
     if (initiator.roles.cache.has(voterRole.id)) {
-      return this.reply(`You are already a registered voter`);
+      await this.reply(`You are already a registered voter`);
+      return;
     }
 
     await initiator.roles.add(voterRole);
     await this.reply(`You are now a registered voter!`);
-    await this.useItem(initiator);
+    return 1;
   }
 }

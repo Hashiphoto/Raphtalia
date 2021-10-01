@@ -2,11 +2,19 @@ import { Interaction } from "discord.js";
 import Poke from "../commands/Poke";
 
 export enum RaphtaliaInteraction {
-  COMMAND_POKE_BACK = "CommandPokeBack",
+  // MessageComponents
+  ButtonPokeBack = "ButtonPokeBack",
+
+  // Commands (have to be lower case)
+  Poke = "poke",
 }
 
 export const InteractionMap: {
-  [interaction in RaphtaliaInteraction]: (interaction: Interaction, args: string[]) => void;
+  [interaction in RaphtaliaInteraction]: (interaction: Interaction, args?: string[]) => void;
 } = {
-  [RaphtaliaInteraction.COMMAND_POKE_BACK]: new Poke().pokeBack,
+  // MessageComponents
+  [RaphtaliaInteraction.ButtonPokeBack]: new Poke().pokeBack,
+
+  // Commands
+  [RaphtaliaInteraction.Poke]: new Poke().poke,
 };

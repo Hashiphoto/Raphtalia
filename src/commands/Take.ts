@@ -1,13 +1,12 @@
 import { GuildMember, TextChannel } from "discord.js";
-
-import Command from "./Command";
+import { autoInjectable } from "tsyringe";
+import { Result } from "../enums/Result";
 import CommmandMessage from "../models/CommandMessage";
-import CurrencyService from "../services/Currency.service";
 import Item from "../models/Item";
 import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
-import { autoInjectable } from "tsyringe";
+import CurrencyService from "../services/Currency.service";
 import { parseNumber } from "../utilities/Util";
+import Command from "./Command";
 
 @autoInjectable()
 export default class Take extends Command {
@@ -21,7 +20,7 @@ export default class Take extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
     if (!cmdMessage.message.member || !cmdMessage.message.guild) {
       throw new RaphError(Result.NoGuild);
     }
@@ -37,7 +36,7 @@ export default class Take extends Command {
       itemName
     );
 
-    return this.execute(cmdMessage.message.member, cmdMessage.memberMentions, amount, guildItem);
+    await this.run(cmdMessage.message.member, cmdMessage.memberMentions, amount, guildItem);
   }
 
   public async execute(
@@ -45,16 +44,17 @@ export default class Take extends Command {
     targets: GuildMember[],
     amount?: number,
     item?: Item
-  ): Promise<any> {
+  ): Promise<number | undefined> {
     if (targets.length === 0) {
       return this.sendHelpMessage();
     }
 
     if (!this.item.unlimitedUses && targets.length > this.item.remainingUses) {
-      return this.reply(
+      await this.reply(
         `Your ${this.item.name} does not have enough charges. ` +
           `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
       );
+      return;
     }
 
     if (!amount && !item) {
@@ -70,8 +70,8 @@ export default class Take extends Command {
       response += await this.transferItem(initiator, targets, item);
     }
 
-    await this.useItem(initiator, targets.length);
     await this.reply(response);
+    return targets.length;
   }
 
   protected async transferMoney(

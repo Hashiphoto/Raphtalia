@@ -29,7 +29,7 @@ export default class Scan extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
@@ -38,28 +38,30 @@ export default class Scan extends Command {
       await this.sendHelpMessage();
       return;
     }
-    return this.execute(cmdMessage.message.member, cmdMessage.parsedContent);
+    await this.run(cmdMessage.message.member, cmdMessage.parsedContent);
   }
 
-  public async execute(initiator: GuildMember, itemName: string): Promise<any> {
+  public async execute(initiator: GuildMember, itemName: string): Promise<number | undefined> {
     let guildItem: GuildItem | undefined;
     try {
       guildItem = await this.inventoryService?.findGuildItem(initiator.guild.id, itemName);
     } catch (error) {
       if (error.result === Result.AmbiguousInput) {
-        return this.reply(`There is more than one item with that name. Matches: ${error.message}`);
+        await this.reply(`There is more than one item with that name. Matches: ${error.message}`);
+        return;
       }
       throw error;
     }
     if (!guildItem) {
-      return this.reply(`There are no items named "${itemName}"`);
+      await this.reply(`There are no items named "${itemName}"`);
+      return;
     }
 
     // TODO: Simplify code with Steal
     const initiatorBalance = await this._currencyService?.getCurrency(initiator);
     const cost = guildItem.price * percentCost;
     if (!initiatorBalance || initiatorBalance < cost) {
-      return this.reply(
+      await this.reply(
         `${
           initiator.displayName
         } does not have enough money. Scanning for a ${guildItem.printName()} costs ${print(
@@ -67,6 +69,7 @@ export default class Scan extends Command {
           Format.Dollar
         )} (${print(percentCost, Format.Percent)} of the store price)`
       );
+      return;
     }
 
     await this._currencyService?.transferCurrency(
@@ -98,5 +101,6 @@ export default class Scan extends Command {
     response += `*Charged ${print(cost, Format.Dollar)} for this scan*`;
 
     await this.reply(response);
+    return 1;
   }
 }

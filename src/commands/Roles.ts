@@ -18,15 +18,15 @@ export default class Roles extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
     this.channel = cmdMessage.message.channel as TextChannel;
-    return this.execute(cmdMessage.message.member);
+    await this.run(cmdMessage.message.member);
   }
 
-  public async execute(initiator: GuildMember): Promise<any> {
+  public async execute(initiator: GuildMember): Promise<number | undefined> {
     // Remove the current message and post the new one
     if (!this.channel) {
       throw new RaphError(Result.ProgrammingError, "The channel is undefined");
@@ -37,6 +37,6 @@ export default class Roles extends Command {
     // Do asyncrhonously
     this._roleListService?.postEmbed(this.channel);
 
-    await this.useItem(initiator);
+    return 1;
   }
 }

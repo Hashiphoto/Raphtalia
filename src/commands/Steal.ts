@@ -25,7 +25,7 @@ export default class Steal extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
     if (!cmdMessage.message.member || !cmdMessage.message.guild) {
       throw new RaphError(Result.NoGuild);
     }
@@ -55,14 +55,14 @@ export default class Steal extends Command {
       return;
     }
 
-    return this.execute(cmdMessage.message.member, target, userItem);
+    await this.run(cmdMessage.message.member, target, userItem);
   }
 
   public async execute(
     initiator: GuildMember,
     target: GuildMember,
     userItem: UserItem
-  ): Promise<any> {
+  ): Promise<number | undefined> {
     const raphtalia = this._clientService?.getRaphtaliaMember(initiator.guild) as GuildMember;
     if (userItem.isStealProtected) {
       return this.sendHelpMessage(`${userItem.printName()} cannot be stolen.`);
@@ -94,6 +94,6 @@ export default class Steal extends Command {
       `*Charged ${print(cost, Format.Dollar)} for this attempt*`;
     await this.reply(response);
 
-    await this.useItem(initiator);
+    return 1;
   }
 }

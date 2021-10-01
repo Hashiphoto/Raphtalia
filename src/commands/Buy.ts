@@ -1,13 +1,12 @@
-import { Format, print } from "../utilities/Util";
 import { GuildMember, TextChannel } from "discord.js";
-
-import Command from "./Command";
+import { autoInjectable } from "tsyringe";
+import { Result } from "../enums/Result";
 import CommmandMessage from "../models/CommandMessage";
 import GuildItem from "../models/GuildItem";
-import InventoryService from "../services/Inventory.service";
 import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
-import { autoInjectable } from "tsyringe";
+import InventoryService from "../services/Inventory.service";
+import { Format, print } from "../utilities/Util";
+import Command from "./Command";
 
 @autoInjectable()
 export default class Buy extends Command {
@@ -20,27 +19,29 @@ export default class Buy extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
     this.channel = cmdMessage.message.channel as TextChannel;
-    return this.execute(cmdMessage.message.member, cmdMessage.parsedContent);
+    await this.run(cmdMessage.message.member, cmdMessage.parsedContent);
   }
 
-  public async execute(initiator: GuildMember, itemName: string): Promise<any> {
+  public async execute(initiator: GuildMember, itemName: string): Promise<number | undefined> {
     // Get the guild item they are buying
     let guildItem: GuildItem | undefined;
     try {
       guildItem = await this._inventoryService?.findGuildItem(initiator.guild.id, itemName);
     } catch (error) {
       if (error.result === Result.AmbiguousInput) {
-        return this.reply(`There is more than one item with that name. Matches: ${error.message}`);
+        await this.reply(`There is more than one item with that name. Matches: ${error.message}`);
+        return;
       }
       throw error;
     }
     if (!guildItem) {
-      return this.reply(`There are no items named "${itemName}"`);
+      await this.reply(`There are no items named "${itemName}"`);
+      return;
     }
 
     try {
@@ -48,13 +49,16 @@ export default class Buy extends Command {
     } catch (error) {
       switch (error.result) {
         case Result.OutOfStock:
-          return this.reply(`${guildItem.printName()} is currently out of stock`);
+          await this.reply(`${guildItem.printName()} is currently out of stock`);
+          return;
         case Result.TooPoor:
-          return this.reply(
+          await this.reply(
             `You do not have enough money to buy ${guildItem.printName()}. Current price: ${guildItem.printPrice()}`
           );
+          return;
         default:
-          return this.reply(`An error occurred purchasing the ${guildItem.printName()}`);
+          await this.reply(`An error occurred purchasing the ${guildItem.printName()}`);
+          return;
       }
     }
 
@@ -64,7 +68,6 @@ export default class Buy extends Command {
         Format.Dollar
       )}!\n>>> ${guildItem.printName()} | Uses: ${guildItem.printMaxUses()}`
     );
-
-    await this.useItem(initiator, 1);
+    return 1;
   }
 }

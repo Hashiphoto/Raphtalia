@@ -22,7 +22,7 @@ export default class Help extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
@@ -31,19 +31,20 @@ export default class Help extends Command {
       await this.sendHelpMessage(this.instructions);
       return;
     }
-    return this.execute(cmdMessage.message.member, cmdMessage.args[Args.COMMAND_NAME]);
+    await this.run(cmdMessage.message.member, cmdMessage.args[Args.COMMAND_NAME]);
   }
 
-  public async execute(initiator: GuildMember, commandName: string): Promise<any> {
+  public async execute(initiator: GuildMember, commandName: string): Promise<number | undefined> {
     const command = this._commandService?.getCommandByName(
       commandName.toLowerCase().replace(/!/, "")
     );
 
     if (!command) {
-      return this.sendHelpMessage();
+      await this.sendHelpMessage();
+      return;
     }
     command.channel = this.channel;
     await command.sendHelpMessage(command.instructions);
-    await this.useItem(initiator);
+    return 1;
   }
 }

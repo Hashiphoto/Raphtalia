@@ -1,13 +1,12 @@
 import { Guild as DsGuild, GuildMember, TextChannel } from "discord.js";
-
-import Command from "./Command";
+import { autoInjectable } from "tsyringe";
+import { Result } from "../enums/Result";
 import CommmandMessage from "../models/CommandMessage";
-import GuildService from "../services/Guild.service";
 import Question from "../models/Question";
 import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
 import ScreeningQuestion from "../models/ScreeningQuestion";
-import { autoInjectable } from "tsyringe";
+import GuildService from "../services/Guild.service";
+import Command from "./Command";
 
 enum Action {
   List,
@@ -29,7 +28,7 @@ export default class Screening extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
@@ -70,44 +69,49 @@ export default class Screening extends Command {
         return;
     }
 
-    return this.execute(cmdMessage.message.member, action, questionId);
+    await this.run(cmdMessage.message.member, action, questionId);
   }
 
-  public async execute(initiator: GuildMember, action: Action, questionId?: number): Promise<void> {
+  public async execute(
+    initiator: GuildMember,
+    action: Action,
+    questionId?: number
+  ): Promise<number | undefined> {
     switch (action) {
       case Action.List:
-        await this.list(initiator.guild);
-        break;
+        return this.list(initiator.guild);
       case Action.Add:
-        await this.add(initiator);
-        break;
+        return this.add(initiator);
       case Action.Delete:
-        await this.delete(initiator, questionId);
-        break;
+        return this.delete(initiator, questionId);
     }
   }
 
-  private async list(guild: DsGuild) {
-    return this._guildService?.getScreeningQuestions(guild.id).then((questions) => {
-      if (questions.length === 0) {
-        return this.reply("There are currently no screening questions");
-      }
-      const allQuestions = questions.reduce((sum, question) => sum + question, "");
-      return this.reply(allQuestions);
-    });
+  private async list(guild: DsGuild): Promise<undefined> {
+    return this._guildService
+      ?.getScreeningQuestions(guild.id)
+      .then((questions) => {
+        if (questions.length === 0) {
+          return this.reply("There are currently no screening questions");
+        }
+        const allQuestions = questions.reduce((sum, question) => sum + question, "");
+        return this.reply(allQuestions);
+      })
+      .then(() => undefined);
   }
 
-  private async add(initiator: GuildMember) {
+  private async add(initiator: GuildMember): Promise<number | undefined> {
     const screeningQuestion = await this.getNewQuestionDetails(initiator);
     if (!screeningQuestion) {
-      return this.reply("Invalid input. Adding new screening question aborted");
+      await this.reply("Invalid input. Adding new screening question aborted");
+      return;
     }
     await this._guildService?.addScreeningQuestion(initiator.guild.id, screeningQuestion);
     await this.reply("New question added!");
-    await this.useItem(initiator);
+    return 1;
   }
 
-  private async delete(initiator: GuildMember, questionId?: number) {
+  private async delete(initiator: GuildMember, questionId?: number): Promise<number | undefined> {
     if (questionId === undefined) {
       return this.sendHelpMessage("Please specify the ID of the question to delete");
     }
@@ -115,10 +119,12 @@ export default class Screening extends Command {
       initiator.guild.id,
       questionId
     );
-    if (deleted) {
-      return this.reply("Question deleted").then(() => this.useItem(initiator));
+    if (!deleted) {
+      await this.reply(`Deletion canceled. There is no question with id ${questionId}`);
+      return;
     }
-    return this.reply(`Deletion canceled. There is no question with id ${questionId}`);
+    await this.reply("Question deleted");
+    return 1;
   }
 
   private async getNewQuestionDetails(initiator: GuildMember) {

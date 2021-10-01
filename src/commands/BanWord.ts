@@ -1,13 +1,12 @@
 import { GuildMember, TextChannel } from "discord.js";
-
-import BanListService from "../services/message/BanWordList.service";
-import CensorshipService from "../services/Censorship.service";
-import Command from "./Command";
+import { autoInjectable } from "tsyringe";
+import { Result } from "../enums/Result";
 import CommmandMessage from "../models/CommandMessage";
 import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
-import { autoInjectable } from "tsyringe";
+import CensorshipService from "../services/Censorship.service";
+import BanListService from "../services/message/BanWordList.service";
 import { listFormat } from "../utilities/Util";
+import Command from "./Command";
 
 @autoInjectable()
 export default class BanWord extends Command {
@@ -22,29 +21,30 @@ export default class BanWord extends Command {
     this.aliases = [this.name.toLowerCase(), "banwords"];
   }
 
-  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
     this.channel = cmdMessage.message.channel as TextChannel;
-    return this.execute(cmdMessage.message.member, cmdMessage.args);
+    await this.run(cmdMessage.message.member, cmdMessage.args);
   }
 
-  public async execute(initiator: GuildMember, words: string[]): Promise<any> {
+  public async execute(initiator: GuildMember, words: string[]): Promise<number | undefined> {
     if (words.length === 0) {
       return this.sendHelpMessage();
     }
 
     if (!this.item.unlimitedUses && words.length > this.item.remainingUses) {
-      return this.reply(
+      await this.reply(
         `Your ${this.item.name} does not have enough charges. ` +
           `Attempting to use ${words.length}/${this.item.remainingUses} remaining uses`
       );
+      return;
     }
 
     await this._censorshipService?.insertWords(initiator.guild, words);
-    await this.useItem(initiator);
     await this.reply(`Banned words: ${listFormat(words)}` + "Ban list will be updated shortly");
     this._banListService?.update(initiator.guild);
+    return 1;
   }
 }

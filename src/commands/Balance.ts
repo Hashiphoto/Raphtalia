@@ -1,12 +1,11 @@
-import { Format, print } from "../utilities/Util";
 import { GuildMember, TextChannel } from "discord.js";
-
-import Command from "./Command";
-import CommmandMessage from "../models/CommandMessage";
-import CurrencyService from "../services/Currency.service";
-import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
 import { autoInjectable } from "tsyringe";
+import { Result } from "../enums/Result";
+import CommmandMessage from "../models/CommandMessage";
+import RaphError from "../models/RaphError";
+import CurrencyService from "../services/Currency.service";
+import { Format, print } from "../utilities/Util";
+import Command from "./Command";
 
 enum Args {
   SHOW,
@@ -22,15 +21,15 @@ export default class Balance extends Command {
     this.aliases = [this.name.toLowerCase(), "wallet"];
   }
 
-  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
     this.channel = cmdMessage.message.channel as TextChannel;
-    return this.execute(cmdMessage.message.member, cmdMessage.args);
+    await this.run(cmdMessage.message.member, cmdMessage.args);
   }
 
-  public async execute(initiator: GuildMember, args: string[]): Promise<any> {
+  public async execute(initiator: GuildMember, args: string[]): Promise<number | undefined> {
     const showPublic = args.length > 0 && args[Args.SHOW] === "show";
 
     const balance = (await this._currencyService?.getCurrency(initiator)) as number;
@@ -42,7 +41,6 @@ export default class Balance extends Command {
       const dmChannel = await initiator.createDM();
       dmChannel.send(messageText);
     }
-
-    await this.useItem(initiator);
+    return 1;
   }
 }

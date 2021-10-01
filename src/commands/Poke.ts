@@ -1,23 +1,24 @@
 import {
-  User as DsUser,
+  CommandInteraction,
   GuildMember,
   Message,
   MessageActionRow,
   MessageButton,
   MessageComponentInteraction,
   TextChannel,
+  User as DsUser,
 } from "discord.js";
-
-import Command from "./Command";
-import CommmandMessage from "../models/CommandMessage";
-import RaphError from "../models/RaphError";
+import { autoInjectable } from "tsyringe";
 import { RaphtaliaInteraction } from "../enums/Interactions";
 import { Result } from "../enums/Result";
-import { autoInjectable } from "tsyringe";
+import CommmandMessage from "../models/CommandMessage";
+import RaphError from "../models/RaphError";
 import { buildCustomId } from "../utilities/Util";
+import Command from "./Command";
 
 @autoInjectable()
 export default class Poke extends Command {
+  public poke: (interaction: CommandInteraction) => void;
   public pokeBack: (interaction: MessageComponentInteraction, args: string[]) => void;
 
   public constructor() {
@@ -26,20 +27,45 @@ export default class Poke extends Command {
     this.instructions = "I will poke the targeted member for you";
     this.usage = "`Poke @member`";
     this.aliases = [this.name.toLowerCase()];
+    this.slashCommands = [
+      {
+        name: RaphtaliaInteraction.Poke,
+        description: "Poke one of your friends in a completely not annoying way!",
+        options: [
+          {
+            name: "user",
+            description: "The user to poke",
+            type: "USER",
+            required: true,
+          },
+        ],
+      },
+    ];
 
     // interaction callbacks
+    this.poke = async (interaction: CommandInteraction) => {
+      const initiator = await interaction.guild?.members.fetch(interaction.user.id);
+      if (!initiator) {
+        return interaction.reply(`This only works in a server`);
+      }
+      const target = interaction.options.getUser("user");
+      if (!target) {
+        return interaction.reply(`I don't know who to poke. No user was specified`);
+      }
+      this.run(initiator, [target]).then(() => {
+        return interaction.reply({ content: `Poked ${target.toString()}!`, ephemeral: true });
+      });
+    };
+
     this.pokeBack = async (
       interaction: MessageComponentInteraction,
       args: string[]
     ): Promise<void> => {
-      console.log(JSON.stringify(interaction, null, " "));
       interaction.update({ components: [] });
-
       if (!args.length) {
         interaction.followUp(`Ah, I don't know who to poke. Sorry`);
         return;
       }
-
       const target = await this.clientService?.getClient().users.fetch(args[0]);
       if (!target) {
         interaction.followUp(
@@ -47,36 +73,39 @@ export default class Poke extends Command {
         );
         return;
       }
-
       this.sendPoke(target, interaction.user).then(() => interaction.followUp("Poke sent!"));
     };
   }
 
-  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
     this.channel = cmdMessage.message.channel as TextChannel;
-    return this.execute(cmdMessage.message.member, cmdMessage.memberMentions);
+    await this.run(
+      cmdMessage.message.member,
+      cmdMessage.memberMentions.map((m) => m.user)
+    );
   }
 
-  public async execute(initiator: GuildMember, targets: GuildMember[]): Promise<any> {
+  public async execute(initiator: GuildMember, targets: DsUser[]): Promise<number | undefined> {
     if (targets.length === 0) {
       return this.sendHelpMessage();
     }
 
     if (!this.item.unlimitedUses && targets.length > this.item.remainingUses) {
-      return this.reply(
+      await this.reply(
         `Your ${this.item.name} does not have enough charges. ` +
           `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
       );
+      return;
     }
 
     let successes = 0;
 
     await Promise.all(
       targets.map((target) =>
-        this.sendPoke(target.user, initiator.user)
+        this.sendPoke(target, initiator.user)
           .then(() => successes++)
           .catch(() => {
             // swallow
@@ -84,9 +113,8 @@ export default class Poke extends Command {
       )
     );
 
-    return this.reply(`Sent ${successes} poke${successes > 1 ? "s" : ""}!`).then(() =>
-      this.useItem(initiator, targets.length)
-    );
+    await this.reply(`Sent ${successes} poke${successes > 1 ? "s" : ""}!`);
+    return targets.length;
   }
 
   private async sendPoke(target: DsUser, initiator: DsUser): Promise<Message> {
@@ -95,7 +123,7 @@ export default class Poke extends Command {
         new MessageButton()
           .setLabel("Poke Back")
           .setStyle(1)
-          .setCustomId(buildCustomId(RaphtaliaInteraction.COMMAND_POKE_BACK, initiator.id))
+          .setCustomId(buildCustomId(RaphtaliaInteraction.ButtonPokeBack, initiator.id))
       );
       return dmChannel.send({
         content: `${initiator.toString()} poked you!`,

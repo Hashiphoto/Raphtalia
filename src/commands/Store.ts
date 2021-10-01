@@ -1,11 +1,10 @@
 import { GuildMember, TextChannel } from "discord.js";
-
-import Command from "./Command";
-import CommmandMessage from "../models/CommandMessage";
-import GuildStoreService from "../services/message/GuildStore.service";
-import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
 import { autoInjectable } from "tsyringe";
+import { Result } from "../enums/Result";
+import CommmandMessage from "../models/CommandMessage";
+import RaphError from "../models/RaphError";
+import GuildStoreService from "../services/message/GuildStore.service";
+import Command from "./Command";
 
 @autoInjectable()
 export default class Store extends Command {
@@ -17,15 +16,15 @@ export default class Store extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
     this.channel = cmdMessage.message.channel as TextChannel;
-    return this.execute(cmdMessage.message.member);
+    await this.run(cmdMessage.message.member);
   }
 
-  public async execute(initiator: GuildMember): Promise<any> {
+  public async execute(initiator: GuildMember): Promise<number | undefined> {
     if (!this.channel) {
       throw new RaphError(Result.ProgrammingError, "The channel is undefined");
     }
@@ -35,6 +34,6 @@ export default class Store extends Command {
     // Do asyncrhonously
     this._guildStoreService?.postEmbed(this.channel);
 
-    await this.useItem(initiator);
+    return 1;
   }
 }

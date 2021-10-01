@@ -1,11 +1,10 @@
 import { GuildMember, TextChannel } from "discord.js";
-
-import BanListService from "../services/message/BanWordList.service";
-import Command from "./Command";
+import { autoInjectable } from "tsyringe";
+import { Result } from "../enums/Result";
 import CommmandMessage from "../models/CommandMessage";
 import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
-import { autoInjectable } from "tsyringe";
+import BanListService from "../services/message/BanWordList.service";
+import Command from "./Command";
 
 @autoInjectable()
 export default class BanList extends Command {
@@ -17,15 +16,15 @@ export default class BanList extends Command {
     this.aliases = [this.name.toLowerCase(), "bannedwords"];
   }
 
-  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
     this.channel = cmdMessage.message.channel as TextChannel;
-    return this.execute(cmdMessage.message.member);
+    await this.run(cmdMessage.message.member);
   }
 
-  public async execute(initiator: GuildMember): Promise<void> {
+  public async execute(initiator: GuildMember): Promise<number | undefined> {
     if (!this.channel) {
       throw new RaphError(Result.ProgrammingError, "The channel is undefined");
     }
@@ -35,6 +34,6 @@ export default class BanList extends Command {
     // Do asyncrhonously
     this._banListService?.postEmbed(this.channel);
 
-    await this.useItem(initiator);
+    return 1;
   }
 }

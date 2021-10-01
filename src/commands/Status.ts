@@ -25,19 +25,19 @@ export default class Status extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
     this.channel = cmdMessage.message.channel as TextChannel;
 
-    return this.execute(
+    await this.run(
       cmdMessage.message.member,
       cmdMessage.args.length > 0 ? cmdMessage.args[Args.SHOW].toLowerCase() === "show" : false
     );
   }
 
-  public async execute(initiator: GuildMember, show = false): Promise<any> {
+  public async execute(initiator: GuildMember, show = false): Promise<number | undefined> {
     const balanceMessage = await this._currencyService?.getCurrency(initiator).then((balance) => {
       return `**Balance**: ${print(balance, Format.Dollar)}\n`;
     });
@@ -62,6 +62,6 @@ export default class Status extends Command {
       const dmChannel = await initiator.createDM();
       await dmChannel.send({ content, embeds: [inventoryEmbed] });
     }
-    await this.useItem(initiator);
+    return 1;
   }
 }

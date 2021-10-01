@@ -1,14 +1,13 @@
 import { GuildMember, TextChannel } from "discord.js";
 import { autoInjectable, container } from "tsyringe";
-
-import Command from "./Command";
-import CommmandMessage from "../models/CommandMessage";
 import { Env } from "../enums/Environment";
-import NullCommand from "./NullCommand";
-import RaphError from "../models/RaphError";
 import { Result } from "../enums/Result";
-import RoleContestService from "../services/RoleContest.service";
+import CommmandMessage from "../models/CommandMessage";
+import RaphError from "../models/RaphError";
 import RoleService from "../services/Role.service";
+import RoleContestService from "../services/RoleContest.service";
+import Command from "./Command";
+import NullCommand from "./NullCommand";
 
 @autoInjectable()
 export default class Debug extends Command {
@@ -24,15 +23,15 @@ export default class Debug extends Command {
     }
   }
 
-  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
     this.channel = cmdMessage.message.channel as TextChannel;
-    return this.execute(cmdMessage.message.member, cmdMessage.args);
+    await this.run(cmdMessage.message.member, cmdMessage.args);
   }
 
-  public async execute(initiator: GuildMember, args: string[]): Promise<any> {
+  public async execute(initiator: GuildMember, args: string[]): Promise<number | undefined> {
     switch (args[0].toLowerCase()) {
       case "resolvecontests": {
         const roleContestService = container.resolve(RoleContestService);
@@ -57,7 +56,7 @@ export default class Debug extends Command {
         break;
       }
       default:
-        return this.sendHelpMessage();
+        await this.sendHelpMessage();
     }
   }
 }

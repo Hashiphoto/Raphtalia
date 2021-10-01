@@ -1,11 +1,10 @@
 import { GuildMember, TextChannel } from "discord.js";
-
-import Command from "./Command";
+import { autoInjectable } from "tsyringe";
+import { Result } from "../enums/Result";
 import CommmandMessage from "../models/CommandMessage";
 import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
-import { autoInjectable } from "tsyringe";
 import { parseDuration } from "../utilities/Util";
+import Command from "./Command";
 
 enum Args {
   ACTION,
@@ -23,7 +22,7 @@ export default class AutoDelete extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
@@ -34,10 +33,10 @@ export default class AutoDelete extends Command {
       return;
     }
 
-    return this.execute(cmdMessage.message.member, cmdMessage.args);
+    await this.run(cmdMessage.message.member, cmdMessage.args);
   }
 
-  public async execute(initiator: GuildMember, args: string[]): Promise<void> {
+  public async execute(initiator: GuildMember, args: string[]): Promise<number | undefined> {
     if (!this.channel) {
       throw new RaphError(Result.ProgrammingError, "The channel is undefined");
     }
@@ -76,6 +75,6 @@ export default class AutoDelete extends Command {
 
     this.channel.setTopic(response);
     this.reply(response);
-    this.useItem(initiator);
+    return 1;
   }
 }

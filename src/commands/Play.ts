@@ -1,10 +1,9 @@
-import { User as DsUser, GuildMember, StageChannel, TextChannel, VoiceChannel } from "discord.js";
-
-import Command from "./Command";
+import { GuildMember, StageChannel, TextChannel, User as DsUser, VoiceChannel } from "discord.js";
+import { autoInjectable } from "tsyringe";
+import { Result } from "../enums/Result";
 import CommmandMessage from "../models/CommandMessage";
 import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
-import { autoInjectable } from "tsyringe";
+import Command from "./Command";
 
 /**
  * TODO: https://github.com/discordjs/voice/blob/main/examples/music-bot/src/bot.ts
@@ -21,7 +20,7 @@ export default class Play extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
@@ -33,13 +32,13 @@ export default class Play extends Command {
     //   cmdMessage.parsedContent
     // );
 
-    // return this.execute(cmdMessage.message.member, voiceChannel);
+    // await this.run(cmdMessage.message.member, voiceChannel);
   }
 
   public async execute(
     initiator: GuildMember,
     voiceChannel?: VoiceChannel | StageChannel
-  ): Promise<any> {
+  ): Promise<number | undefined> {
     // const content = this.ec.messageHelper.parsedContent;
     // TODO: fix percentage parsing
     // const lastArg = this.message.args[this.message.args.length - 1];

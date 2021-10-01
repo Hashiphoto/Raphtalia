@@ -1,16 +1,15 @@
-import { Collection, Guild as DsGuild, GuildMember, Message, TextChannel } from "discord.js";
-import { Format, formatDate, parseDuration, print } from "../utilities/Util";
-
-import Command from "./Command";
-import CommmandMessage from "../models/CommandMessage";
+import dayjs from "dayjs";
 import { Duration } from "dayjs/plugin/duration";
+import delay from "delay";
+import { Collection, Guild as DsGuild, GuildMember, Message, TextChannel } from "discord.js";
+import { autoInjectable } from "tsyringe";
+import { Result } from "../enums/Result";
+import CommmandMessage from "../models/CommandMessage";
 import Question from "../models/Question";
 import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
 import VotingOption from "../models/VotingOption";
-import { autoInjectable } from "tsyringe";
-import dayjs from "dayjs";
-import delay from "delay";
+import { Format, formatDate, parseDuration, print } from "../utilities/Util";
+import Command from "./Command";
 
 @autoInjectable()
 export default class HoldVote extends Command {
@@ -25,7 +24,7 @@ export default class HoldVote extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
@@ -36,13 +35,14 @@ export default class HoldVote extends Command {
       return;
     }
 
-    return this.execute(cmdMessage.message.member, votePrompt);
+    await this.run(cmdMessage.message.member, votePrompt);
   }
 
-  public async execute(initiator: GuildMember, votePrompt: string): Promise<any> {
+  public async execute(initiator: GuildMember, votePrompt: string): Promise<number | undefined> {
     const voters = await this.getVoters(initiator.guild);
     if (voters.size === 0) {
-      return this.reply(`There are no registered voters. Use the Register command first.`);
+      await this.reply(`There are no registered voters. Use the Register command first.`);
+      return;
     }
 
     // Get the voting options
@@ -58,7 +58,8 @@ export default class HoldVote extends Command {
       true
     );
     if (!optionsMessage) {
-      return this.sendHelpMessage("Vote canceled. No options given");
+      await this.sendHelpMessage("Vote canceled. No options given");
+      return;
     }
 
     const options = this.removeMentions(initiator.guild, optionsMessage).split(",");
@@ -72,7 +73,8 @@ export default class HoldVote extends Command {
       votingOptions.push(new VotingOption(i + 1, options[i]));
     }
     if (votingOptions.length === 0) {
-      return this.sendHelpMessage("Vote canceled. No voting options were specified");
+      await this.sendHelpMessage("Vote canceled. No voting options were specified");
+      return;
     }
 
     // Get the time
@@ -84,13 +86,15 @@ export default class HoldVote extends Command {
       true
     );
     if (!message) {
-      return this.reply(`No response. Vote canceled`);
+      await this.reply(`No response. Vote canceled`);
+      return;
     }
     const timeContent = message.content;
 
     let duration = parseDuration(timeContent);
     if (!duration) {
-      return this.reply(`Could not understand time format. Vote canceled`);
+      await this.reply(`Could not understand time format. Vote canceled`);
+      return;
     }
     const endDate = dayjs().add(duration);
     // Don't allow the time (in ms) to exceed Integer max value (a little more than 24 days)
@@ -111,9 +115,10 @@ export default class HoldVote extends Command {
     // Announce results asynchronously
     delay(duration.asMilliseconds()).then(() => this.announceResults(votingOptions));
 
-    await this.channelService
-      ?.watchSend(this.channel, { content: `Voting begins now and ends at ${formatDate(endDate)}` })
-      .then(() => this.useItem(initiator));
+    await this.channelService?.watchSend(this.channel, {
+      content: `Voting begins now and ends at ${formatDate(endDate)}`,
+    });
+    return 1;
   }
 
   private async distributeBallots(

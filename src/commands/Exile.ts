@@ -21,7 +21,7 @@ export default class Exile extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
@@ -30,23 +30,24 @@ export default class Exile extends Command {
     // Input or default 6 hours
     const duration = parseDuration(cmdMessage.parsedContent) ?? dayjs.duration({ hours: 6 });
 
-    return this.execute(cmdMessage.message.member, cmdMessage.memberMentions, duration);
+    await this.run(cmdMessage.message.member, cmdMessage.memberMentions, duration);
   }
 
   public async execute(
     initiator: GuildMember,
     targets: GuildMember[],
     duration: Duration
-  ): Promise<any> {
+  ): Promise<number | undefined> {
     if (targets.length === 0) {
       return this.sendHelpMessage();
     }
 
     if (!this.item.unlimitedUses && targets.length > this.item.remainingUses) {
-      return this.reply(
+      await this.reply(
         `Your ${this.item.name} does not have enough charges. ` +
           `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
       );
+      return;
     }
     // Current time + exile duration
     const releaseDate = dayjs().add(duration);
@@ -67,6 +68,6 @@ export default class Exile extends Command {
     Promise.all(exilePromises);
 
     await this.reply(response);
-    await this.useItem(initiator, targets.length);
+    return targets.length;
   }
 }

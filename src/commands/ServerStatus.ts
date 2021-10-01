@@ -1,13 +1,12 @@
 import { GuildMember, TextChannel } from "discord.js";
-
-import BanList from "./BanList";
-import Command from "./Command";
+import { autoInjectable } from "tsyringe";
+import { Result } from "../enums/Result";
 import CommmandMessage from "../models/CommandMessage";
 import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
+import BanList from "./BanList";
+import Command from "./Command";
 import Roles from "./Roles";
 import Store from "./Store";
-import { autoInjectable } from "tsyringe";
 
 @autoInjectable()
 export default class ServerStatus extends Command {
@@ -21,15 +20,15 @@ export default class ServerStatus extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
     this.channel = cmdMessage.message.channel as TextChannel;
-    return this.execute(cmdMessage.message.member);
+    await this.run(cmdMessage.message.member);
   }
 
-  public async execute(initiator: GuildMember): Promise<void> {
+  public async execute(initiator: GuildMember): Promise<number | undefined> {
     const banList = new BanList();
     const store = new Store();
     const roles = new Roles();
@@ -43,5 +42,7 @@ export default class ServerStatus extends Command {
     await banList.execute(initiator);
     await roles.execute(initiator);
     await store.execute(initiator);
+
+    return 1;
   }
 }

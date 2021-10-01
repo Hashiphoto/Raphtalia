@@ -1,12 +1,11 @@
 import { GuildMember, TextChannel } from "discord.js";
-
+import { autoInjectable } from "tsyringe";
+import { Result } from "../enums/Result";
+import CommmandMessage from "../models/CommandMessage";
+import RaphError from "../models/RaphError";
+import GuildService from "../services/Guild.service";
 import BanListService from "../services/message/BanWordList.service";
 import Command from "./Command";
-import CommmandMessage from "../models/CommandMessage";
-import GuildService from "../services/Guild.service";
-import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
-import { autoInjectable } from "tsyringe";
 
 enum Args {
   ACTION,
@@ -28,18 +27,17 @@ export default class Censorship extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
     this.channel = cmdMessage.message.channel as TextChannel;
-    return this.execute(cmdMessage.message.member, cmdMessage.args);
+    await this.run(cmdMessage.message.member, cmdMessage.args);
   }
 
-  public async execute(initiator: GuildMember, args: string[]): Promise<any> {
+  public async execute(initiator: GuildMember, args: string[]): Promise<number | undefined> {
     if (args.length === 0) {
-      await this.sendHelpMessage();
-      return;
+      return this.sendHelpMessage();
     }
 
     let response: string;
@@ -52,12 +50,13 @@ export default class Censorship extends Command {
       response = "All speech is permitted!";
       start = false;
     } else {
-      return this.sendHelpMessage("Please specify either `start` or `stop`");
+      await this.sendHelpMessage("Please specify either `start` or `stop`");
+      return;
     }
 
     await this._guildService?.setCensorship(initiator.guild.id, start);
     await this.reply(response);
     this._banListService?.update(initiator.guild);
-    this.useItem(initiator);
+    return 1;
   }
 }

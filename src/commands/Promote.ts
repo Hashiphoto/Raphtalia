@@ -16,15 +16,15 @@ export default class Promote extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
     this.channel = cmdMessage.message.channel as TextChannel;
-    return this.execute(cmdMessage.message.member);
+    await this.run(cmdMessage.message.member);
   }
 
-  public async execute(initiator: GuildMember): Promise<any> {
+  public async execute(initiator: GuildMember): Promise<number | undefined> {
     if (!this.channel) {
       throw new RaphError(Result.ProgrammingError, "This command needs a channel");
     }
@@ -35,11 +35,12 @@ export default class Promote extends Command {
       }
     } catch (error) {
       if (error.name === "RaphError") {
-        return this.reply(error.message);
+        await this.reply(error.message);
+        return;
       }
       throw error;
     }
 
-    return this.useItem(initiator);
+    return 1;
   }
 }

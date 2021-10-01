@@ -8,7 +8,8 @@
       "type": "shell",
       "presentation": {
         "reveal": "silent",
-        "panel": "new"
+        "revealProblems": "onProblem",
+        "close": true
       }
     },
     {
@@ -18,7 +19,8 @@
       "type": "shell",
       "presentation": {
         "reveal": "silent",
-        "panel": "new"
+        "revealProblems": "onProblem",
+        "close": true
       }
     }
   ]

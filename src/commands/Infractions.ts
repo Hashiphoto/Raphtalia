@@ -17,19 +17,22 @@ export default class Infractions extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
     this.channel = cmdMessage.message.channel as TextChannel;
 
-    return this.execute(
+    await this.run(
       cmdMessage.message.member,
       cmdMessage.memberMentions.length ? cmdMessage.memberMentions : [cmdMessage.message.member]
     );
   }
 
-  public async execute(initiator: GuildMember, targets: GuildMember[]): Promise<any> {
+  public async execute(
+    initiator: GuildMember,
+    targets: GuildMember[]
+  ): Promise<number | undefined> {
     const infractionPromises = targets.map((target) =>
       this._memberService
         ?.getInfractions(target)
@@ -39,6 +42,6 @@ export default class Infractions extends Command {
     const feedback = await Promise.all(infractionPromises).then((messages) => messages.join(""));
 
     await this.reply(feedback);
-    await this.useItem(initiator);
+    return 1;
   }
 }
