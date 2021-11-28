@@ -1,16 +1,21 @@
 import dayjs from "dayjs";
 import { Duration } from "dayjs/plugin/duration";
-import { GuildMember, TextChannel } from "discord.js";
+import { TextChannel } from "discord.js";
 import { autoInjectable, delay, inject } from "tsyringe";
 import { Result } from "../enums/Result";
-import CommmandMessage from "../models/CommandMessage";
+import { ITargettedProps } from "../interfaces/CommandInterfaces";
+import CommandMessage from "../models/CommandMessage";
 import RaphError from "../models/RaphError";
 import MemberService from "../services/Member.service";
 import { formatDate, parseDuration } from "../utilities/Util";
 import Command from "./Command";
 
+interface IExileProps extends ITargettedProps {
+  duration: Duration;
+}
+
 @autoInjectable()
-export default class Exile extends Command {
+export default class Exile extends Command<IExileProps> {
   public constructor(@inject(delay(() => MemberService)) private _memberService?: MemberService) {
     super();
     this.name = "Exile";
@@ -21,7 +26,7 @@ export default class Exile extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
@@ -30,14 +35,14 @@ export default class Exile extends Command {
     // Input or default 6 hours
     const duration = parseDuration(cmdMessage.parsedContent) ?? dayjs.duration({ hours: 6 });
 
-    await this.run(cmdMessage.message.member, cmdMessage.memberMentions, duration);
+    await this.runWithItem({
+      initiator: cmdMessage.message.member,
+      targets: cmdMessage.memberMentions,
+      duration,
+    });
   }
 
-  public async execute(
-    initiator: GuildMember,
-    targets: GuildMember[],
-    duration: Duration
-  ): Promise<number | undefined> {
+  public async execute({ targets, duration }: IExileProps): Promise<number | undefined> {
     if (targets.length === 0) {
       return this.sendHelpMessage();
     }

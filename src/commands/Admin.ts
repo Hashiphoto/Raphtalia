@@ -1,17 +1,23 @@
-import { ApplicationCommandData, Guild as DsGuild, GuildMember, TextChannel } from "discord.js";
-import { autoInjectable } from "tsyringe";
-import { Result } from "../enums/Result";
-import CommmandMessage from "../models/CommandMessage";
-import RaphError from "../models/RaphError";
-import Command from "./Command";
+import { ApplicationCommandData, Guild as DsGuild, TextChannel } from "discord.js";
+
 import { AllCommands } from "./CommandList";
+import Command from "./Command";
+import CommandMessage from "../models/CommandMessage";
+import { ICommandProps } from "../interfaces/CommandInterfaces";
+import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
+import { autoInjectable } from "tsyringe";
 
 export enum AdminCommand {
   Setup = "Setup",
 }
 
+interface IAdminProps extends ICommandProps {
+  adminCommand: AdminCommand;
+}
+
 @autoInjectable()
-export default class Admin extends Command {
+export default class Admin extends Command<IAdminProps> {
   public constructor() {
     super();
     this.name = "Admin";
@@ -20,7 +26,7 @@ export default class Admin extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
@@ -32,17 +38,18 @@ export default class Admin extends Command {
 
     switch (cmdMessage.args[0].toLowerCase()) {
       case "setup":
-        return this.run(cmdMessage.message.member, AdminCommand.Setup);
+        return this.runWithItem({
+          initiator: cmdMessage.message.member,
+          adminCommand: AdminCommand.Setup,
+        });
       default:
         this.sendHelpMessage(`Unknown command ${cmdMessage.args[0]}`);
         return;
     }
   }
 
-  public async execute(
-    initiator: GuildMember,
-    adminCommand: AdminCommand
-  ): Promise<number | undefined> {
+  public async execute(props: IAdminProps): Promise<number | undefined> {
+    const { initiator, adminCommand } = props;
     switch (adminCommand) {
       case AdminCommand.Setup:
         await this.setup(initiator.guild);
@@ -57,6 +64,7 @@ export default class Admin extends Command {
   private async setup(guild: DsGuild) {
     const slashCommands: ApplicationCommandData[] = [];
     AllCommands.forEach((command) => slashCommands.push(...command.slashCommands));
-    return guild.commands.set(slashCommands);
+    await guild.commands.set(slashCommands);
+    this.reply(`Set commands: ${slashCommands.map((s) => `\`${s.name}\``).join(", ")}`);
   }
 }

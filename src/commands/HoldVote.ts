@@ -1,18 +1,20 @@
-import dayjs from "dayjs";
-import { Duration } from "dayjs/plugin/duration";
-import delay from "delay";
 import { Collection, Guild as DsGuild, GuildMember, Message, TextChannel } from "discord.js";
-import { autoInjectable } from "tsyringe";
-import { Result } from "../enums/Result";
-import CommmandMessage from "../models/CommandMessage";
+import { Format, formatDate, parseDuration, print } from "../utilities/Util";
+
+import Command from "./Command";
+import CommandMessage from "../models/CommandMessage";
+import { Duration } from "dayjs/plugin/duration";
+import { IArgProps } from "../interfaces/CommandInterfaces";
 import Question from "../models/Question";
 import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
 import VotingOption from "../models/VotingOption";
-import { Format, formatDate, parseDuration, print } from "../utilities/Util";
-import Command from "./Command";
+import { autoInjectable } from "tsyringe";
+import dayjs from "dayjs";
+import delay from "delay";
 
 @autoInjectable()
-export default class HoldVote extends Command {
+export default class HoldVote extends Command<IArgProps> {
   public constructor() {
     super();
     this.name = "HoldVote";
@@ -24,7 +26,7 @@ export default class HoldVote extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
@@ -35,10 +37,10 @@ export default class HoldVote extends Command {
       return;
     }
 
-    await this.run(cmdMessage.message.member, votePrompt);
+    await this.runWithItem({ initiator: cmdMessage.message.member, arg: votePrompt });
   }
 
-  public async execute(initiator: GuildMember, votePrompt: string): Promise<number | undefined> {
+  public async execute({ initiator, arg: votePrompt }: IArgProps): Promise<number | undefined> {
     const voters = await this.getVoters(initiator.guild);
     if (voters.size === 0) {
       await this.reply(`There are no registered voters. Use the Register command first.`);

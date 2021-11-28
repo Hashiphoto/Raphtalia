@@ -1,7 +1,8 @@
-import { GuildMember, TextChannel } from "discord.js";
+import { TextChannel } from "discord.js";
 import { autoInjectable, delay, inject } from "tsyringe";
 import { Result } from "../enums/Result";
-import CommmandMessage from "../models/CommandMessage";
+import { IArgProps } from "../interfaces/CommandInterfaces";
+import CommandMessage from "../models/CommandMessage";
 import RaphError from "../models/RaphError";
 import CommandService from "../services/Command.service";
 import Command from "./Command";
@@ -11,7 +12,7 @@ enum Args {
 }
 
 @autoInjectable()
-export default class Help extends Command {
+export default class Help extends Command<IArgProps> {
   public constructor(
     @inject(delay(() => CommandService)) private _commandService?: CommandService
   ) {
@@ -22,7 +23,7 @@ export default class Help extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
@@ -31,10 +32,13 @@ export default class Help extends Command {
       await this.sendHelpMessage(this.instructions);
       return;
     }
-    await this.run(cmdMessage.message.member, cmdMessage.args[Args.COMMAND_NAME]);
+    await this.runWithItem({
+      initiator: cmdMessage.message.member,
+      arg: cmdMessage.args[Args.COMMAND_NAME],
+    });
   }
 
-  public async execute(initiator: GuildMember, commandName: string): Promise<number | undefined> {
+  public async execute({ arg: commandName }: IArgProps): Promise<number | undefined> {
     const command = this._commandService?.getCommandByName(
       commandName.toLowerCase().replace(/!/, "")
     );

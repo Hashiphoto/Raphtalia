@@ -1,12 +1,14 @@
 import { Guild as DsGuild, GuildMember, TextChannel } from "discord.js";
-import { autoInjectable } from "tsyringe";
-import { Result } from "../enums/Result";
-import CommmandMessage from "../models/CommandMessage";
+
+import Command from "./Command";
+import CommandMessage from "../models/CommandMessage";
+import GuildService from "../services/Guild.service";
+import { ICommandProps } from "../interfaces/CommandInterfaces";
 import Question from "../models/Question";
 import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
 import ScreeningQuestion from "../models/ScreeningQuestion";
-import GuildService from "../services/Guild.service";
-import Command from "./Command";
+import { autoInjectable } from "tsyringe";
 
 enum Action {
   List,
@@ -14,8 +16,13 @@ enum Action {
   Delete,
 }
 
+interface IScreeningProps extends ICommandProps {
+  action: Action;
+  questionId?: number;
+}
+
 @autoInjectable()
-export default class Screening extends Command {
+export default class Screening extends Command<IScreeningProps> {
   public constructor(private _guildService?: GuildService) {
     super();
     this.name = "Screening";
@@ -28,7 +35,7 @@ export default class Screening extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
@@ -69,14 +76,14 @@ export default class Screening extends Command {
         return;
     }
 
-    await this.run(cmdMessage.message.member, action, questionId);
+    await this.runWithItem({ initiator: cmdMessage.message.member, action, questionId });
   }
 
-  public async execute(
-    initiator: GuildMember,
-    action: Action,
-    questionId?: number
-  ): Promise<number | undefined> {
+  public async execute({
+    initiator,
+    action,
+    questionId,
+  }: IScreeningProps): Promise<number | undefined> {
     switch (action) {
       case Action.List:
         return this.list(initiator.guild);

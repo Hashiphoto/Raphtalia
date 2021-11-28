@@ -7,7 +7,8 @@ import {
 } from "discord.js";
 import { autoInjectable, delay, inject } from "tsyringe";
 import { Result } from "../enums/Result";
-import CommmandMessage from "../models/CommandMessage";
+import { ICommandProps } from "../interfaces/CommandInterfaces";
+import CommandMessage from "../models/CommandMessage";
 import RaphError from "../models/RaphError";
 import UserItem from "../models/UserItem";
 import ChannelService from "../services/Channel.service";
@@ -16,7 +17,7 @@ import InventoryService from "../services/Inventory.service";
 import { bold } from "../utilities/Util";
 
 @autoInjectable()
-export default class Command {
+export default class Command<T extends ICommandProps> {
   public item: UserItem;
   public channel: TextChannel;
   public name: string;
@@ -47,24 +48,28 @@ export default class Command {
     this._usage = text;
   }
 
-  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {
     throw new RaphError(Result.ProgrammingError, "executeDefault not implemented");
   }
 
   /**
    * Harness for the command execution to handle item usage
    */
-  public async run(initiator: GuildMember, ...params: any): Promise<any> {
-    const item = await this.getOrBuyItem(initiator);
+  public async runWithItem(props: T): Promise<any> {
+    const item = await this.getOrBuyItem(props.initiator);
     if (!item) {
       return;
     }
     this.item = item;
-    const itemUses = await this.execute(initiator, ...params);
+    const itemUses = await this.execute(props);
 
     if (itemUses) {
-      await this.useItem(initiator, itemUses);
+      await this.useItem(props.initiator, itemUses);
     }
+  }
+
+  public async execute(props: T): Promise<number | undefined> {
+    throw new RaphError(Result.ProgrammingError, "execute not implemented");
   }
 
   public async sendHelpMessage(pretext = ""): Promise<undefined> {
@@ -81,10 +86,6 @@ export default class Command {
         `Your ${updatedItem.printName()} broke! You have ${updatedItem.quantity} remaining.\n`
       );
     }
-  }
-
-  public async execute(initiator: GuildMember, ...params: any): Promise<number | undefined> {
-    throw new RaphError(Result.ProgrammingError, "execute not implemented");
   }
 
   protected async reply(content: string, options?: MessageOptions): Promise<Message | undefined> {

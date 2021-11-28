@@ -111,11 +111,10 @@ export default class CurrencyService {
     toMember: GuildMember,
     amount: number
   ): Promise<void> {
-    await this._userRepository
-      .incrementCurrency(fromMember.id, fromMember.guild.id, -amount)
-      .then(() => {
-        this._userRepository.incrementCurrency(toMember.id, fromMember.guild.id, amount);
-      });
+    const guild = fromMember.guild;
+    await this._userRepository.incrementCurrency(fromMember.id, guild.id, -amount).then(() => {
+      this._userRepository.incrementCurrency(toMember.id, guild.id, amount);
+    });
   }
 
   public async getCurrency(member: GuildMember): Promise<number> {

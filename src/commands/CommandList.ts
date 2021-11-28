@@ -13,6 +13,7 @@ import Give from "./Give";
 import Headpat from "./Headpat";
 import Help from "./Help";
 import HoldVote from "./HoldVote";
+import { ICommandProps } from "../interfaces/CommandInterfaces";
 import Infractions from "./Infractions";
 import Pardon from "./Pardon";
 import Play from "./Play";
@@ -29,7 +30,7 @@ import Steal from "./Steal";
 import Store from "./Store";
 import Take from "./Take";
 
-export const AllCommands: Command[] = [
+export const AllCommands: Command<ICommandProps>[] = [
   new Admin(),
   new AllowWord(),
   new AutoDelete(),

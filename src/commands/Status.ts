@@ -1,7 +1,9 @@
-import { GuildMember, MessageEmbed, TextChannel } from "discord.js";
+import { CommandInteraction, MessageEmbed, TextChannel } from "discord.js";
 import { autoInjectable, delay, inject } from "tsyringe";
+import { RaphtaliaInteraction } from "../enums/Interactions";
 import { Result } from "../enums/Result";
-import CommmandMessage from "../models/CommandMessage";
+import { ICommandProps } from "../interfaces/CommandInterfaces";
+import CommandMessage from "../models/CommandMessage";
 import RaphError from "../models/RaphError";
 import CurrencyService from "../services/Currency.service";
 import MemberService from "../services/Member.service";
@@ -12,32 +14,69 @@ enum Args {
   SHOW,
 }
 
+interface IStatusProps extends ICommandProps {
+  show?: boolean;
+}
+
 @autoInjectable()
-export default class Status extends Command {
+export default class Status extends Command<IStatusProps> {
+  public status: (interaction: CommandInteraction) => void;
+
   public constructor(
     @inject(delay(() => CurrencyService)) private _currencyService?: CurrencyService,
     @inject(delay(() => MemberService)) private _memberService?: MemberService
   ) {
     super();
     this.name = "Status";
-    this.instructions = "Post your current balance and inventory in this channel";
+    this.instructions = "Get your current balance and inventory";
     this.usage = "`Status`";
     this.aliases = [this.name.toLowerCase()];
+    this.slashCommands = [
+      {
+        name: RaphtaliaInteraction.Status,
+        description: "Get your balance and inventory",
+        options: [
+          {
+            name: "show",
+            description: "Post publicly in this channel instead of a DM. Default: False",
+            type: "BOOLEAN",
+          },
+        ],
+      },
+    ];
+
+    // interaction callbacks
+    this.status = async (interaction: CommandInteraction) => {
+      if (!interaction.inGuild) {
+        return interaction.reply(`Please use this command in a server`);
+      }
+      const initiator = await interaction.guild?.members.fetch(interaction.user.id);
+      if (!initiator) {
+        return interaction.reply(`This only works in a server`);
+      }
+      const show = interaction.options.getBoolean("show");
+      this.channel = interaction.channel as TextChannel;
+      this.runWithItem({ initiator, show: show ?? undefined });
+      return interaction.reply({
+        content: show ? "Showing status publicly" : "Status sent in a DM",
+        ephemeral: true,
+      });
+    };
   }
 
-  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
     this.channel = cmdMessage.message.channel as TextChannel;
 
-    await this.run(
-      cmdMessage.message.member,
-      cmdMessage.args.length > 0 ? cmdMessage.args[Args.SHOW].toLowerCase() === "show" : false
-    );
+    await this.runWithItem({
+      initiator: cmdMessage.message.member,
+      show: cmdMessage.args.length > 0 && cmdMessage.args[Args.SHOW].toLowerCase() === "show",
+    });
   }
 
-  public async execute(initiator: GuildMember, show = false): Promise<number | undefined> {
+  public async execute({ initiator, show }: IStatusProps): Promise<number | undefined> {
     const balanceMessage = await this._currencyService?.getCurrency(initiator).then((balance) => {
       return `**Balance**: ${print(balance, Format.Dollar)}\n`;
     });

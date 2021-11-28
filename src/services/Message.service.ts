@@ -9,7 +9,7 @@ import {
   User as DsUser,
 } from "discord.js";
 import { delay as tsDelay, inject, injectable } from "tsyringe";
-import CommmandMessage from "../models/CommandMessage";
+import CommandMessage from "../models/CommandMessage";
 import CensorshipService from "./Censorship.service";
 import ChannelService from "./Channel.service";
 import ClientService from "./Client.service";
@@ -62,7 +62,7 @@ export default class MessageService {
     this.delayedDelete(message, deleteTime);
 
     // Process command
-    if (message.content.startsWith(CommmandMessage.COMMAND_PREFIX)) {
+    if (message.content.startsWith(CommandMessage.COMMAND_PREFIX)) {
       await this._commandService.processMessage(message);
       await this._currencyService.payoutMessageAuthor(message);
     }

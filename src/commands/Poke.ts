@@ -1,23 +1,24 @@
 import {
   CommandInteraction,
-  GuildMember,
+  User as DsUser,
   Message,
   MessageActionRow,
   MessageButton,
   MessageComponentInteraction,
   TextChannel,
-  User as DsUser,
 } from "discord.js";
-import { autoInjectable } from "tsyringe";
+
+import Command from "./Command";
+import CommandMessage from "../models/CommandMessage";
+import { ITargettedProps } from "../interfaces/CommandInterfaces";
+import RaphError from "../models/RaphError";
 import { RaphtaliaInteraction } from "../enums/Interactions";
 import { Result } from "../enums/Result";
-import CommmandMessage from "../models/CommandMessage";
-import RaphError from "../models/RaphError";
+import { autoInjectable } from "tsyringe";
 import { buildCustomId } from "../utilities/Util";
-import Command from "./Command";
 
 @autoInjectable()
-export default class Poke extends Command {
+export default class Poke extends Command<ITargettedProps> {
   public poke: (interaction: CommandInteraction) => void;
   public pokeBack: (interaction: MessageComponentInteraction, args: string[]) => void;
 
@@ -44,15 +45,21 @@ export default class Poke extends Command {
 
     // interaction callbacks
     this.poke = async (interaction: CommandInteraction) => {
+      if (!interaction.inGuild) {
+        return interaction.reply(`Please use this command in a server`);
+      }
       const initiator = await interaction.guild?.members.fetch(interaction.user.id);
       if (!initiator) {
         return interaction.reply(`This only works in a server`);
       }
-      const target = interaction.options.getUser("user");
+      const targetUser = interaction.options.getUser("user");
+      const target = targetUser ? await interaction.guild?.members.fetch(targetUser) : undefined;
       if (!target) {
-        return interaction.reply(`I don't know who to poke. No user was specified`);
+        return interaction.reply(
+          `I don't know who to poke. No user was specified or they are not members of the server`
+        );
       }
-      this.run(initiator, [target]).then(() => {
+      this.runWithItem({ initiator, targets: [target] }).then(() => {
         return interaction.reply({ content: `Poked ${target.toString()}!`, ephemeral: true });
       });
     };
@@ -77,18 +84,18 @@ export default class Poke extends Command {
     };
   }
 
-  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
     this.channel = cmdMessage.message.channel as TextChannel;
-    await this.run(
-      cmdMessage.message.member,
-      cmdMessage.memberMentions.map((m) => m.user)
-    );
+    await this.runWithItem({
+      initiator: cmdMessage.message.member,
+      targets: cmdMessage.memberMentions,
+    });
   }
 
-  public async execute(initiator: GuildMember, targets: DsUser[]): Promise<number | undefined> {
+  public async execute({ initiator, targets }: ITargettedProps): Promise<number | undefined> {
     if (targets.length === 0) {
       return this.sendHelpMessage();
     }
@@ -105,7 +112,7 @@ export default class Poke extends Command {
 
     await Promise.all(
       targets.map((target) =>
-        this.sendPoke(target, initiator.user)
+        this.sendPoke(target.user, initiator.user)
           .then(() => successes++)
           .catch(() => {
             // swallow

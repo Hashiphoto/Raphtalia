@@ -1,13 +1,14 @@
-import { GuildMember, TextChannel } from "discord.js";
+import { TextChannel } from "discord.js";
 import { autoInjectable, delay, inject } from "tsyringe";
 import { Result } from "../enums/Result";
-import CommmandMessage from "../models/CommandMessage";
+import { ITargettedProps } from "../interfaces/CommandInterfaces";
+import CommandMessage from "../models/CommandMessage";
 import RaphError from "../models/RaphError";
 import MemberService from "../services/Member.service";
 import Command from "./Command";
 
 @autoInjectable()
-export default class Pardon extends Command {
+export default class Pardon extends Command<ITargettedProps> {
   public constructor(@inject(delay(() => MemberService)) private _memberService?: MemberService) {
     super();
     this.name = "Pardon";
@@ -18,18 +19,18 @@ export default class Pardon extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
     this.channel = cmdMessage.message.channel as TextChannel;
-    await this.run(cmdMessage.message.member, cmdMessage.memberMentions);
+    await this.runWithItem({
+      initiator: cmdMessage.message.member,
+      targets: cmdMessage.memberMentions,
+    });
   }
 
-  public async execute(
-    initiator: GuildMember,
-    targets: GuildMember[]
-  ): Promise<number | undefined> {
+  public async execute({ targets }: ITargettedProps): Promise<number | undefined> {
     if (targets.length === 0) {
       await this.sendHelpMessage();
       return;

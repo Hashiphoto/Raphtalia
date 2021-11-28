@@ -1,13 +1,14 @@
-import { GuildMember, TextChannel } from "discord.js";
+import { TextChannel } from "discord.js";
 import { autoInjectable, delay, inject } from "tsyringe";
 import { Result } from "../enums/Result";
-import CommmandMessage from "../models/CommandMessage";
+import { ICommandProps } from "../interfaces/CommandInterfaces";
+import CommandMessage from "../models/CommandMessage";
 import RaphError from "../models/RaphError";
 import RoleListService from "../services/message/RoleList.service";
 import Command from "./Command";
 
 @autoInjectable()
-export default class Roles extends Command {
+export default class Roles extends Command<ICommandProps> {
   public constructor(
     @inject(delay(() => RoleListService)) private _roleListService?: RoleListService
   ) {
@@ -18,15 +19,15 @@ export default class Roles extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
     this.channel = cmdMessage.message.channel as TextChannel;
-    await this.run(cmdMessage.message.member);
+    await this.runWithItem({ initiator: cmdMessage.message.member });
   }
 
-  public async execute(initiator: GuildMember): Promise<number | undefined> {
+  public async execute({ initiator }: ICommandProps): Promise<number | undefined> {
     // Remove the current message and post the new one
     if (!this.channel) {
       throw new RaphError(Result.ProgrammingError, "The channel is undefined");

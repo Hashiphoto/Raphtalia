@@ -1,7 +1,8 @@
 import { GuildMember, TextChannel } from "discord.js";
 import { autoInjectable, delay, inject } from "tsyringe";
 import { Result } from "../enums/Result";
-import CommmandMessage from "../models/CommandMessage";
+import { ITargettedProps } from "../interfaces/CommandInterfaces";
+import CommandMessage from "../models/CommandMessage";
 import RaphError from "../models/RaphError";
 import UserItem from "../models/UserItem";
 import ClientService from "../services/Client.service";
@@ -10,8 +11,12 @@ import { Dice, roll } from "../utilities/Rng";
 import { Format, print } from "../utilities/Util";
 import Command from "./Command";
 
+interface IStealProps extends ITargettedProps {
+  userItem: UserItem;
+}
+
 @autoInjectable()
-export default class Steal extends Command {
+export default class Steal extends Command<IStealProps> {
   public constructor(
     @inject(CurrencyService) private _currencyService?: CurrencyService,
     @inject(delay(() => ClientService)) private _clientService?: ClientService
@@ -25,7 +30,7 @@ export default class Steal extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {
     if (!cmdMessage.message.member || !cmdMessage.message.guild) {
       throw new RaphError(Result.NoGuild);
     }
@@ -55,18 +60,19 @@ export default class Steal extends Command {
       return;
     }
 
-    await this.run(cmdMessage.message.member, target, userItem);
+    await this.runWithItem({ initiator: cmdMessage.message.member, targets: [target], userItem });
   }
 
-  public async execute(
-    initiator: GuildMember,
-    target: GuildMember,
-    userItem: UserItem
-  ): Promise<number | undefined> {
+  public async execute({ initiator, targets, userItem }: IStealProps): Promise<number | undefined> {
     const raphtalia = this._clientService?.getRaphtaliaMember(initiator.guild) as GuildMember;
     if (userItem.isStealProtected) {
       return this.sendHelpMessage(`${userItem.printName()} cannot be stolen.`);
     }
+    if (!targets.length) {
+      this.sendHelpMessage(`Please specify one user to steal from`);
+      return;
+    }
+    const target = targets[0];
 
     const dc = userItem.stealDc;
 

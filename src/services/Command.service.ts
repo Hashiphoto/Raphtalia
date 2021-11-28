@@ -3,27 +3,26 @@ import { inject, injectable } from "tsyringe";
 import Command from "../commands/Command";
 import { AllCommands } from "../commands/CommandList";
 import NullCommand from "../commands/NullCommand";
-import CommmandMessageWrapper from "../models/CommandMessage";
+import { ICommandProps } from "../interfaces/CommandInterfaces";
+import CommandMessage from "../models/CommandMessage";
 import ChannelService from "./Channel.service";
-import InventoryService from "./Inventory.service";
 import RoleService from "./Role.service";
 
 @injectable()
 export default class CommandService {
   public constructor(
     @inject(RoleService) private _roleService: RoleService,
-    @inject(InventoryService) private _inventoryService: InventoryService,
     @inject(ChannelService) private _channelService: ChannelService
   ) {}
 
   public async processMessage(message: Message): Promise<void> {
-    const cmdMessage = new CommmandMessageWrapper(message);
+    const cmdMessage = new CommandMessage(message);
     const command = await this.selectCommand(cmdMessage);
     console.log(message.author.username, message.author.id, command.name, cmdMessage.args);
     await this.executeCommand(cmdMessage, command);
   }
 
-  private async selectCommand(cmdMessage: CommmandMessageWrapper): Promise<Command> {
+  private async selectCommand(cmdMessage: CommandMessage): Promise<Command<ICommandProps>> {
     // Check for exile
     if (!cmdMessage.message.guild || !cmdMessage.message.member) {
       return new NullCommand("Commands can only be used in a server text channel");
@@ -39,10 +38,9 @@ export default class CommandService {
       new NullCommand(`Unknown command "${cmdMessage.command}"`);
 
     return command;
-    // return this.autoBuyNeededItem(context, command);
   }
 
-  private async executeCommand(cmdMessage: CommmandMessageWrapper, command: Command) {
+  private async executeCommand(cmdMessage: CommandMessage, command: Command<ICommandProps>) {
     cmdMessage.message.channel.sendTyping();
     try {
       await command.runFromCommand(cmdMessage);
@@ -57,7 +55,7 @@ export default class CommandService {
     }
   }
 
-  public getCommandByName(name: string): Command | undefined {
+  public getCommandByName(name: string): Command<ICommandProps> | undefined {
     return AllCommands.find((command) => command.aliases.includes(name.toLowerCase()));
   }
 }

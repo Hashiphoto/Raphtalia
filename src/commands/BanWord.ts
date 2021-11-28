@@ -1,15 +1,16 @@
-import { GuildMember, TextChannel } from "discord.js";
-import { autoInjectable } from "tsyringe";
-import { Result } from "../enums/Result";
-import CommmandMessage from "../models/CommandMessage";
-import RaphError from "../models/RaphError";
-import CensorshipService from "../services/Censorship.service";
 import BanListService from "../services/message/BanWordList.service";
-import { listFormat } from "../utilities/Util";
+import CensorshipService from "../services/Censorship.service";
 import Command from "./Command";
+import CommandMessage from "../models/CommandMessage";
+import { IArgsProps } from "../interfaces/CommandInterfaces";
+import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
+import { TextChannel } from "discord.js";
+import { autoInjectable } from "tsyringe";
+import { listFormat } from "../utilities/Util";
 
 @autoInjectable()
-export default class BanWord extends Command {
+export default class BanWord extends Command<IArgsProps> {
   public constructor(
     private _censorshipService?: CensorshipService,
     private _banListService?: BanListService
@@ -21,29 +22,29 @@ export default class BanWord extends Command {
     this.aliases = [this.name.toLowerCase(), "banwords"];
   }
 
-  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
     this.channel = cmdMessage.message.channel as TextChannel;
-    await this.run(cmdMessage.message.member, cmdMessage.args);
+    await this.runWithItem({ initiator: cmdMessage.message.member, args: cmdMessage.args });
   }
 
-  public async execute(initiator: GuildMember, words: string[]): Promise<number | undefined> {
-    if (words.length === 0) {
+  public async execute({ initiator, args }: IArgsProps): Promise<number | undefined> {
+    if (args.length === 0) {
       return this.sendHelpMessage();
     }
 
-    if (!this.item.unlimitedUses && words.length > this.item.remainingUses) {
+    if (!this.item.unlimitedUses && args.length > this.item.remainingUses) {
       await this.reply(
         `Your ${this.item.name} does not have enough charges. ` +
-          `Attempting to use ${words.length}/${this.item.remainingUses} remaining uses`
+          `Attempting to use ${args.length}/${this.item.remainingUses} remaining uses`
       );
       return;
     }
 
-    await this._censorshipService?.insertWords(initiator.guild, words);
-    await this.reply(`Banned words: ${listFormat(words)}` + "Ban list will be updated shortly");
+    await this._censorshipService?.insertWords(initiator.guild, args);
+    await this.reply(`Banned words: ${listFormat(args)}` + "Ban list will be updated shortly");
     this._banListService?.update(initiator.guild);
     return 1;
   }

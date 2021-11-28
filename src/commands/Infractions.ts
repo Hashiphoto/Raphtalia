@@ -1,13 +1,14 @@
-import { GuildMember, TextChannel } from "discord.js";
+import { TextChannel } from "discord.js";
 import { autoInjectable, delay, inject } from "tsyringe";
 import { Result } from "../enums/Result";
-import CommmandMessage from "../models/CommandMessage";
+import { ITargettedProps } from "../interfaces/CommandInterfaces";
+import CommandMessage from "../models/CommandMessage";
 import RaphError from "../models/RaphError";
 import MemberService from "../services/Member.service";
 import Command from "./Command";
 
 @autoInjectable()
-export default class Infractions extends Command {
+export default class Infractions extends Command<ITargettedProps> {
   public constructor(@inject(delay(() => MemberService)) private _memberService?: MemberService) {
     super();
     this.name = "Infractions";
@@ -17,22 +18,21 @@ export default class Infractions extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
     this.channel = cmdMessage.message.channel as TextChannel;
 
-    await this.run(
-      cmdMessage.message.member,
-      cmdMessage.memberMentions.length ? cmdMessage.memberMentions : [cmdMessage.message.member]
-    );
+    await this.runWithItem({
+      initiator: cmdMessage.message.member,
+      targets: cmdMessage.memberMentions.length
+        ? cmdMessage.memberMentions
+        : [cmdMessage.message.member],
+    });
   }
 
-  public async execute(
-    initiator: GuildMember,
-    targets: GuildMember[]
-  ): Promise<number | undefined> {
+  public async execute({ targets }: ITargettedProps): Promise<number | undefined> {
     const infractionPromises = targets.map((target) =>
       this._memberService
         ?.getInfractions(target)

@@ -1,10 +1,11 @@
-import { GuildMember, TextChannel } from "discord.js";
-import { autoInjectable } from "tsyringe";
-import { Result } from "../enums/Result";
-import CommmandMessage from "../models/CommandMessage";
-import RaphError from "../models/RaphError";
-import { parseDuration } from "../utilities/Util";
 import Command from "./Command";
+import CommandMessage from "../models/CommandMessage";
+import { IArgsProps } from "../interfaces/CommandInterfaces";
+import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
+import { TextChannel } from "discord.js";
+import { autoInjectable } from "tsyringe";
+import { parseDuration } from "../utilities/Util";
 
 enum Args {
   ACTION,
@@ -12,7 +13,7 @@ enum Args {
 }
 
 @autoInjectable()
-export default class AutoDelete extends Command {
+export default class AutoDelete extends Command<IArgsProps> {
   public constructor() {
     super();
     this.name = "AutoDelete";
@@ -22,7 +23,7 @@ export default class AutoDelete extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
@@ -33,10 +34,11 @@ export default class AutoDelete extends Command {
       return;
     }
 
-    await this.run(cmdMessage.message.member, cmdMessage.args);
+    await this.runWithItem({ initiator: cmdMessage.message.member, args: cmdMessage.args });
   }
 
-  public async execute(initiator: GuildMember, args: string[]): Promise<number | undefined> {
+  public async execute(props: IArgsProps): Promise<number | undefined> {
+    const { args } = props;
     if (!this.channel) {
       throw new RaphError(Result.ProgrammingError, "The channel is undefined");
     }

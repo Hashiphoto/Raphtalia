@@ -1,13 +1,14 @@
-import { GuildMember, TextChannel } from "discord.js";
-import { autoInjectable } from "tsyringe";
-import { Result } from "../enums/Result";
-import CommmandMessage from "../models/CommandMessage";
-import RaphError from "../models/RaphError";
-import RoleService from "../services/Role.service";
 import Command from "./Command";
+import CommandMessage from "../models/CommandMessage";
+import { ICommandProps } from "../interfaces/CommandInterfaces";
+import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
+import RoleService from "../services/Role.service";
+import { TextChannel } from "discord.js";
+import { autoInjectable } from "tsyringe";
 
 @autoInjectable()
-export default class Register extends Command {
+export default class Register extends Command<ICommandProps> {
   public constructor(private _roleService?: RoleService) {
     super();
     this.name = "Register";
@@ -18,15 +19,15 @@ export default class Register extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
     this.channel = cmdMessage.message.channel as TextChannel;
-    await this.run(cmdMessage.message.member);
+    await this.runWithItem({ initiator: cmdMessage.message.member });
   }
 
-  public async execute(initiator: GuildMember): Promise<number | undefined> {
+  public async execute({ initiator }: ICommandProps): Promise<number | undefined> {
     if (!this._roleService) {
       throw new RaphError(Result.ProgrammingError);
     }

@@ -6,10 +6,10 @@ import RaphError from "../models/RaphError";
 import ClientService from "../services/Client.service";
 import RoleContestService from "../services/RoleContest.service";
 import { Format, print } from "../utilities/Util";
-import Take from "./Take";
+import Transfer from "./Transfer";
 
 @autoInjectable()
-export default class Give extends Take {
+export default class Give extends Transfer {
   public constructor(
     @inject(delay(() => ClientService)) private _clientService?: ClientService,
     @inject(delay(() => RoleContestService)) private _roleContestService?: RoleContestService

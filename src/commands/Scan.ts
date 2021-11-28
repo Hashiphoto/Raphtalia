@@ -1,7 +1,8 @@
 import { GuildMember, TextChannel } from "discord.js";
 import { autoInjectable, delay, inject } from "tsyringe";
 import { Result } from "../enums/Result";
-import CommmandMessage from "../models/CommandMessage";
+import { IArgProps } from "../interfaces/CommandInterfaces";
+import CommandMessage from "../models/CommandMessage";
 import GuildItem from "../models/GuildItem";
 import RaphError from "../models/RaphError";
 import UserItem from "../models/UserItem";
@@ -14,7 +15,7 @@ import Command from "./Command";
 const percentCost = 0.05;
 
 @autoInjectable()
-export default class Scan extends Command {
+export default class Scan extends Command<IArgProps> {
   public constructor(
     @inject(CurrencyService) private _currencyService?: CurrencyService,
     @inject(delay(() => ClientService)) private _clientService?: ClientService
@@ -29,7 +30,7 @@ export default class Scan extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
@@ -38,10 +39,10 @@ export default class Scan extends Command {
       await this.sendHelpMessage();
       return;
     }
-    await this.run(cmdMessage.message.member, cmdMessage.parsedContent);
+    await this.runWithItem({ initiator: cmdMessage.message.member, arg: cmdMessage.parsedContent });
   }
 
-  public async execute(initiator: GuildMember, itemName: string): Promise<number | undefined> {
+  public async execute({ initiator, arg: itemName }: IArgProps): Promise<number | undefined> {
     let guildItem: GuildItem | undefined;
     try {
       guildItem = await this.inventoryService?.findGuildItem(initiator.guild.id, itemName);

@@ -1,15 +1,21 @@
-import { GuildMember, TextChannel } from "discord.js";
-import { autoInjectable } from "tsyringe";
-import { Result } from "../enums/Result";
-import CommmandMessage from "../models/CommandMessage";
-import GuildItem from "../models/GuildItem";
-import RaphError from "../models/RaphError";
-import InventoryService from "../services/Inventory.service";
 import { Format, print } from "../utilities/Util";
+
 import Command from "./Command";
+import CommandMessage from "../models/CommandMessage";
+import GuildItem from "../models/GuildItem";
+import { ICommandProps } from "../interfaces/CommandInterfaces";
+import InventoryService from "../services/Inventory.service";
+import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
+import { TextChannel } from "discord.js";
+import { autoInjectable } from "tsyringe";
+
+interface IBuyProps extends ICommandProps {
+  itemName: string;
+}
 
 @autoInjectable()
-export default class Buy extends Command {
+export default class Buy extends Command<IBuyProps> {
   public constructor(private _inventoryService?: InventoryService) {
     super();
     this.name = "Buy";
@@ -19,15 +25,18 @@ export default class Buy extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
     this.channel = cmdMessage.message.channel as TextChannel;
-    await this.run(cmdMessage.message.member, cmdMessage.parsedContent);
+    await this.runWithItem({
+      initiator: cmdMessage.message.member,
+      itemName: cmdMessage.parsedContent,
+    });
   }
 
-  public async execute(initiator: GuildMember, itemName: string): Promise<number | undefined> {
+  public async execute({ initiator, itemName }: IBuyProps): Promise<number | undefined> {
     // Get the guild item they are buying
     let guildItem: GuildItem | undefined;
     try {

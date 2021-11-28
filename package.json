@@ -33,7 +33,9 @@
     "mysql2": "^2.1.0",
     "reflect-metadata": "^0.1.13",
     "tsyringe": "^4.6.0",
-    "ytdl-core": "^4.9.1"
+    "ytdl-core": "^4.9.1",
+    "youtube-dl-exec": "^2.0.0",
+    "libsodium-wrappers": "^0.7.9"
   },
   "devDependencies": {
     "@babel/core": "^7.15.0",

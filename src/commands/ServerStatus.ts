@@ -1,15 +1,16 @@
-import { GuildMember, TextChannel } from "discord.js";
-import { autoInjectable } from "tsyringe";
-import { Result } from "../enums/Result";
-import CommmandMessage from "../models/CommandMessage";
-import RaphError from "../models/RaphError";
 import BanList from "./BanList";
 import Command from "./Command";
+import CommandMessage from "../models/CommandMessage";
+import { ICommandProps } from "../interfaces/CommandInterfaces";
+import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
 import Roles from "./Roles";
 import Store from "./Store";
+import { TextChannel } from "discord.js";
+import { autoInjectable } from "tsyringe";
 
 @autoInjectable()
-export default class ServerStatus extends Command {
+export default class ServerStatus extends Command<ICommandProps> {
   public constructor() {
     super();
     this.name = "ServerStatus";
@@ -20,15 +21,15 @@ export default class ServerStatus extends Command {
     this.aliases = [this.name.toLowerCase()];
   }
 
-  public async runFromCommand(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
     this.channel = cmdMessage.message.channel as TextChannel;
-    await this.run(cmdMessage.message.member);
+    await this.runWithItem({ initiator: cmdMessage.message.member });
   }
 
-  public async execute(initiator: GuildMember): Promise<number | undefined> {
+  public async execute({ initiator }: ICommandProps): Promise<number | undefined> {
     const banList = new BanList();
     const store = new Store();
     const roles = new Roles();
@@ -39,9 +40,9 @@ export default class ServerStatus extends Command {
     store.item = this.item;
     roles.item = this.item;
 
-    await banList.execute(initiator);
-    await roles.execute(initiator);
-    await store.execute(initiator);
+    await banList.execute({ initiator });
+    await roles.execute({ initiator });
+    await store.execute({ initiator });
 
     return 1;
   }
