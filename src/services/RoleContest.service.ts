@@ -110,6 +110,7 @@ export default class RoleContestService {
       if (!loserBid) {
         return "There are no bids. Roles will remain the same";
       }
+      console.log(loserBid);
 
       await this._roleRepository.deleteContest(contest.id).catch((e) => {
         console.log(e);
@@ -145,7 +146,7 @@ export default class RoleContestService {
     }
     // Initiator promoted to role. Loser demoted
     else {
-      let feedback = await this._memberService.increaseMemberRank(contestor, role);
+      let feedback = await this._memberService.increaseMemberRank(contestor, role, true);
       feedback += await this._memberService.demoteMember(loserBid.member);
 
       return feedback;
