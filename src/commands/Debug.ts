@@ -33,7 +33,6 @@ export default class Debug extends Command {
         const feedback = await roleContestService
           .resolveRoleContests(initiator.guild, true)
           .then((responses) => responses.reduce(sumString));
-        console.log(feedback);
         if (feedback.length === 0) {
           return;
         }

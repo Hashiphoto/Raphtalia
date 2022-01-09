@@ -219,8 +219,6 @@ export default class MemberService {
 
     const role = await this._roleService.getRole(discordRole.id);
 
-    console.log(discordRole.members.size);
-    console.log(role.memberLimit);
     if (!force && !role.unlimited && discordRole.members.size >= role.memberLimit) {
       console.error(`Role ${role.id} is full`);
       throw new RaphError(Result.Full);

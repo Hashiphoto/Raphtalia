@@ -110,7 +110,6 @@ export default class RoleContestService {
       if (!loserBid) {
         return "There are no bids. Roles will remain the same";
       }
-      console.log(loserBid);
 
       await this._roleRepository.deleteContest(contest.id).catch((e) => {
         console.log(e);
