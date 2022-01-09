@@ -206,17 +206,21 @@ export default class MemberService {
    * @param {RoleResolvable[]} roleResolvable - An array of roles representing the names of the roles to give the members
    * @param {Boolean} clearAllRoles - True to remove all hoisted and non-hoisted roles first
    */
-  public async setHoistedRole(member: GuildMember, roleResolvable: RoleResolvable): Promise<void> {
+  public async setHoistedRole(
+    member: GuildMember,
+    roleResolvable: RoleResolvable,
+    force = false
+  ): Promise<void> {
     const discordRole = this._roleService.convertToRole(member.guild, roleResolvable);
     if (!discordRole) {
+      console.error(`Role ${roleResolvable} does not exist`);
       throw new RaphError(Result.NotFound);
     }
 
     const role = await this._roleService.getRole(discordRole.id);
 
-    console.log(discordRole.members.size);
-    console.log(role.memberLimit);
-    if (!role.unlimited && discordRole.members.size >= role.memberLimit) {
+    if (!force && !role.unlimited && discordRole.members.size >= role.memberLimit) {
+      console.error(`Role ${role.id} is full`);
       throw new RaphError(Result.Full);
     }
 
@@ -286,7 +290,11 @@ export default class MemberService {
    * @param {Discord.Role} role - If left empty, the next highest role will be used
    * @throws {RangeError}
    */
-  public async increaseMemberRank(member: GuildMember, role?: DsRole): Promise<string> {
+  public async increaseMemberRank(
+    member: GuildMember,
+    role?: DsRole,
+    force = false
+  ): Promise<string> {
     if (!role) {
       role = this.getNextHighestRole(member);
       if (!role) {
@@ -294,7 +302,7 @@ export default class MemberService {
       }
     }
 
-    await this.setHoistedRole(member, role);
+    await this.setHoistedRole(member, role, force);
     await this._roleRepository.updateRolePromotionDate(role.id);
     await this.resetInfractions(member);
 
