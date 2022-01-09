@@ -1,11 +1,11 @@
 import { TextChannel } from "discord.js";
 import { autoInjectable, delay, inject } from "tsyringe";
-import { Result } from "../enums/Result";
-import { ICommandProps } from "../interfaces/CommandInterfaces";
-import CommandMessage from "../models/CommandMessage";
-import RaphError from "../models/RaphError";
-import RoleListService from "../services/message/RoleList.service";
-import Command from "./Command";
+import { Result } from "../../enums/Result";
+import { ICommandProps } from "../../interfaces/CommandInterfaces";
+import CommandMessage from "../../models/CommandMessage";
+import RaphError from "../../models/RaphError";
+import RoleListService from "../../services/message/RoleList.service";
+import Command from "../Command";
 
 @autoInjectable()
 export default class Roles extends Command<ICommandProps> {
@@ -29,14 +29,14 @@ export default class Roles extends Command<ICommandProps> {
 
   public async execute({ initiator }: ICommandProps): Promise<number | undefined> {
     // Remove the current message and post the new one
-    if (!this.channel) {
+    if (!this.channel || !((this.channel as TextChannel)?.type === "GUILD_TEXT")) {
       throw new RaphError(Result.ProgrammingError, "The channel is undefined");
     }
 
     await this._roleListService?.removeMessage(initiator.guild);
 
     // Do asyncrhonously
-    this._roleListService?.postEmbed(this.channel);
+    this._roleListService?.postEmbed(this.channel as TextChannel);
 
     return 1;
   }

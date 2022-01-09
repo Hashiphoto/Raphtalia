@@ -1,10 +1,10 @@
-import BanListService from "../services/message/BanWordList.service";
-import Command from "./Command";
-import CommandMessage from "../models/CommandMessage";
-import GuildService from "../services/Guild.service";
-import { IArgsProps } from "../interfaces/CommandInterfaces";
-import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
+import BanListService from "../../services/message/BanWordList.service";
+import Command from "../Command";
+import CommandMessage from "../../models/CommandMessage";
+import GuildService from "../../services/Guild.service";
+import { IArgsProps } from "../../interfaces/CommandInterfaces";
+import RaphError from "../../models/RaphError";
+import { Result } from "../../enums/Result";
 import { TextChannel } from "discord.js";
 import { autoInjectable } from "tsyringe";
 

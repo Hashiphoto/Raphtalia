@@ -1,13 +1,14 @@
 import { CommandInteraction, TextChannel } from "discord.js";
 
-import BanListService from "../services/message/BanWordList.service";
-import CensorshipService from "../services/Censorship.service";
-import Command from "./Command";
-import CommandMessage from "../models/CommandMessage";
-import { IArgsProps } from "../interfaces/CommandInterfaces";
-import RaphError from "../models/RaphError";
-import { RaphtaliaInteraction } from "../enums/Interactions";
-import { Result } from "../enums/Result";
+import BanListService from "../../services/message/BanWordList.service";
+import CensorshipService from "../../services/Censorship.service";
+import Command from "../Command";
+import CommandMessage from "../../models/CommandMessage";
+import { IArgsProps } from "../../interfaces/CommandInterfaces";
+import InteractionChannel from "../../models/InteractionChannel";
+import RaphError from "../../models/RaphError";
+import { RaphtaliaInteraction } from "../../enums/Interactions";
+import { Result } from "../../enums/Result";
 import { autoInjectable } from "tsyringe";
 
 @autoInjectable()
@@ -32,6 +33,7 @@ export default class AllowWord extends Command<IArgsProps> {
             name: "words",
             description: "The word or words to allow",
             type: "STRING",
+            required: true,
           },
         ],
       },
@@ -39,7 +41,7 @@ export default class AllowWord extends Command<IArgsProps> {
 
     // interaction callbacks
     this.allowWord = async (interaction: CommandInteraction) => {
-      if (!interaction.inGuild) {
+      if (!interaction.inGuild || !interaction.guild) {
         return interaction.reply(`Please use this command in a server`);
       }
       const initiator = await interaction.guild?.members.fetch(interaction.user.id);
@@ -48,9 +50,11 @@ export default class AllowWord extends Command<IArgsProps> {
       }
       const content = interaction.options.getString("words");
       const args = CommandMessage.GetArgs(content ?? "");
-      this.runWithItem({ initiator, args })
-        .then(() => interaction.reply("Words allowed"))
-        .catch(() => interaction.reply("Something went wrong"));
+
+      this.channel = new InteractionChannel(interaction);
+      this.runWithItem({ initiator, args }).catch(() =>
+        interaction.reply({ content: "Something went wrong", ephemeral: true })
+      );
     };
   }
 

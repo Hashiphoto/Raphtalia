@@ -11,10 +11,10 @@ import {
 } from "@discordjs/voice";
 import { CommandInteraction, User as DsUser, TextChannel, VoiceChannel } from "discord.js";
 
-import Command from "./Command";
-import CommandMessage from "../models/CommandMessage";
-import { ICommandProps } from "../interfaces/CommandInterfaces";
-import { RaphtaliaInteraction } from "../enums/Interactions";
+import Command from "../Command";
+import CommandMessage from "../../models/CommandMessage";
+import { ICommandProps } from "../../interfaces/CommandInterfaces";
+import { RaphtaliaInteraction } from "../../enums/Interactions";
 import { autoInjectable } from "tsyringe";
 
 interface IPlayProps extends ICommandProps {

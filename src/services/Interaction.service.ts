@@ -1,6 +1,7 @@
 import { CommandInteraction, Interaction, MessageComponentInteraction } from "discord.js";
-import { InteractionMap, RaphtaliaInteraction } from "../enums/Interactions";
 
+import { InteractionMap } from "../enums/InteractionMap";
+import { RaphtaliaInteraction } from "../enums/Interactions";
 import { injectable } from "tsyringe";
 
 @injectable()

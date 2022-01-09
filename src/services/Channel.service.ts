@@ -5,6 +5,7 @@ import {
   GuildMember,
   Message,
   MessageOptions,
+  PartialTextBasedChannelFields,
   TextBasedChannels,
   TextChannel,
 } from "discord.js";
@@ -50,21 +51,26 @@ export default class ChannelService {
 
   /**
    * Adds the "watchSend" method to the channel to send messages and delete them
-   * after a delay (set in the channel's db entry)=
+   * after a delay (set in the channel's db entry)
    */
-  public async getDeleteTime(channel: TextBasedChannels): Promise<number> {
-    return this._channelRepo.get(channel.id).then((dbChannel) => {
-      let deleteTime = -1;
-      if (dbChannel && dbChannel.delete_ms >= 0) {
-        deleteTime = dbChannel.delete_ms;
-      }
+  public async getDeleteTime(channel: PartialTextBasedChannelFields): Promise<number> {
+    const id = (channel as TextChannel)?.id;
+    if (id) {
+      return this._channelRepo.get(id).then((dbChannel) => {
+        let deleteTime = -1;
+        if (dbChannel && dbChannel.delete_ms >= 0) {
+          deleteTime = dbChannel.delete_ms;
+        }
 
-      return deleteTime;
-    });
+        return deleteTime;
+      });
+    }
+
+    return -1;
   }
 
   public async watchSend(
-    channel: TextChannel | DMChannel,
+    channel: PartialTextBasedChannelFields,
     options: MessageOptions
   ): Promise<Message> {
     const message = await channel.send(options);

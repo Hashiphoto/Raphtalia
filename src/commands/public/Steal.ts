@@ -1,15 +1,15 @@
 import { GuildMember, TextChannel } from "discord.js";
 import { autoInjectable, delay, inject } from "tsyringe";
-import { Result } from "../enums/Result";
-import { ITargettedProps } from "../interfaces/CommandInterfaces";
-import CommandMessage from "../models/CommandMessage";
-import RaphError from "../models/RaphError";
-import UserItem from "../models/UserItem";
-import ClientService from "../services/Client.service";
-import CurrencyService from "../services/Currency.service";
-import { Dice, roll } from "../utilities/Rng";
-import { Format, print } from "../utilities/Util";
-import Command from "./Command";
+import { Result } from "../../enums/Result";
+import { ITargettedProps } from "../../interfaces/CommandInterfaces";
+import CommandMessage from "../../models/CommandMessage";
+import RaphError from "../../models/RaphError";
+import UserItem from "../../models/UserItem";
+import ClientService from "../../services/Client.service";
+import CurrencyService from "../../services/Currency.service";
+import { Dice, roll } from "../../utilities/Rng";
+import { Format, print } from "../../utilities/Util";
+import Command from "../Command";
 
 interface IStealProps extends ITargettedProps {
   userItem: UserItem;

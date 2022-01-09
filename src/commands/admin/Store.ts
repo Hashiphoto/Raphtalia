@@ -1,9 +1,9 @@
-import Command from "./Command";
-import CommandMessage from "../models/CommandMessage";
-import GuildStoreService from "../services/message/GuildStore.service";
-import { ICommandProps } from "../interfaces/CommandInterfaces";
-import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
+import Command from "../Command";
+import CommandMessage from "../../models/CommandMessage";
+import GuildStoreService from "../../services/message/GuildStore.service";
+import { ICommandProps } from "../../interfaces/CommandInterfaces";
+import RaphError from "../../models/RaphError";
+import { Result } from "../../enums/Result";
 import { TextChannel } from "discord.js";
 import { autoInjectable } from "tsyringe";
 
@@ -26,14 +26,14 @@ export default class Store extends Command<ICommandProps> {
   }
 
   public async execute({ initiator }: ICommandProps): Promise<number | undefined> {
-    if (!this.channel) {
+    if (!this.channel || !((this.channel as TextChannel)?.type === "GUILD_TEXT")) {
       throw new RaphError(Result.ProgrammingError, "The channel is undefined");
     }
 
     await this._guildStoreService?.removeMessage(initiator.guild);
 
     // Do asyncrhonously
-    this._guildStoreService?.postEmbed(this.channel);
+    this._guildStoreService?.postEmbed(this.channel as TextChannel);
 
     return 1;
   }

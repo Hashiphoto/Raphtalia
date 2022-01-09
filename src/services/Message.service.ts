@@ -66,8 +66,8 @@ export default class MessageService {
       await this._commandService.processMessage(message);
       await this._currencyService.payoutMessageAuthor(message);
     }
-    // Censor non-commands
-    else {
+    // Censor non-commands that didn't come from the bot
+    else if (message.author.id !== this._client.user?.id) {
       const censored = await this._censorshipService.censorMessage(message);
       if (!censored) {
         await this._currencyService.payoutMessageAuthor(message);

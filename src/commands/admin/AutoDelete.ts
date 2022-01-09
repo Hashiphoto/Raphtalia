@@ -1,11 +1,12 @@
-import Command from "./Command";
-import CommandMessage from "../models/CommandMessage";
-import { IArgsProps } from "../interfaces/CommandInterfaces";
-import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
-import { TextChannel } from "discord.js";
+import { TextBasedChannel, TextBasedChannels, TextChannel } from "discord.js";
+
+import Command from "../Command";
+import CommandMessage from "../../models/CommandMessage";
+import { IArgsProps } from "../../interfaces/CommandInterfaces";
+import RaphError from "../../models/RaphError";
+import { Result } from "../../enums/Result";
 import { autoInjectable } from "tsyringe";
-import { parseDuration } from "../utilities/Util";
+import { parseDuration } from "../../utilities/Util";
 
 enum Args {
   ACTION,
@@ -39,7 +40,7 @@ export default class AutoDelete extends Command<IArgsProps> {
 
   public async execute(props: IArgsProps): Promise<number | undefined> {
     const { args } = props;
-    if (!this.channel) {
+    if (!this.channel || !(this.channel instanceof TextBasedChannel)) {
       throw new RaphError(Result.ProgrammingError, "The channel is undefined");
     }
 
@@ -61,12 +62,15 @@ export default class AutoDelete extends Command<IArgsProps> {
         );
         return;
       }
-      await this.channelService?.setAutoDelete(this.channel.id, delayMs.asMilliseconds());
+      await this.channelService?.setAutoDelete(
+        (this.channel as TextBasedChannels).id,
+        delayMs.asMilliseconds()
+      );
       response = `Messages are deleted after ${delayMs.asMilliseconds()}ms`;
     }
     // AUTO DELETE OFF
     else if (args[Args.ACTION] === "stop") {
-      await this.channelService?.setAutoDelete(this.channel.id, -1);
+      await this.channelService?.setAutoDelete((this.channel as TextBasedChannels).id, -1);
       response = "Messages are no longer deleted";
     }
     // ERROR
@@ -75,7 +79,7 @@ export default class AutoDelete extends Command<IArgsProps> {
       return;
     }
 
-    this.channel.setTopic(response);
+    (this.channel as TextChannel)?.setTopic(response);
     this.reply(response);
     return 1;
   }

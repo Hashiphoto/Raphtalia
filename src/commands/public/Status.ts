@@ -1,14 +1,14 @@
-import { CommandInteraction, MessageEmbed, TextChannel } from "discord.js";
+import { CommandInteraction, GuildMember, MessageEmbed, TextChannel } from "discord.js";
 import { autoInjectable, delay, inject } from "tsyringe";
-import { RaphtaliaInteraction } from "../enums/Interactions";
-import { Result } from "../enums/Result";
-import { ICommandProps } from "../interfaces/CommandInterfaces";
-import CommandMessage from "../models/CommandMessage";
-import RaphError from "../models/RaphError";
-import CurrencyService from "../services/Currency.service";
-import MemberService from "../services/Member.service";
-import { Format, print } from "../utilities/Util";
-import Command from "./Command";
+import { RaphtaliaInteraction } from "../../enums/Interactions";
+import { Result } from "../../enums/Result";
+import { ICommandProps } from "../../interfaces/CommandInterfaces";
+import CommandMessage from "../../models/CommandMessage";
+import RaphError from "../../models/RaphError";
+import CurrencyService from "../../services/Currency.service";
+import MemberService from "../../services/Member.service";
+import { Format, print } from "../../utilities/Util";
+import Command from "../Command";
 
 enum Args {
   SHOW,
@@ -77,6 +77,18 @@ export default class Status extends Command<IStatusProps> {
   }
 
   public async execute({ initiator, show }: IStatusProps): Promise<number | undefined> {
+    const { content, embed } = await this.generateMessage(initiator);
+
+    if (show) {
+      await this.reply(content, { embeds: [embed] });
+    } else {
+      const dmChannel = await initiator.createDM();
+      await dmChannel.send({ content, embeds: [embed] });
+    }
+    return 1;
+  }
+
+  private async generateMessage(initiator: GuildMember) {
     const balanceMessage = await this._currencyService?.getCurrency(initiator).then((balance) => {
       return `**Balance**: ${print(balance, Format.Dollar)}\n`;
     });
@@ -87,7 +99,7 @@ export default class Status extends Command<IStatusProps> {
         return `**Infractions**: ${infractions}\n`;
       });
 
-    const inventoryEmbed = (await this.inventoryService
+    const embed = (await this.inventoryService
       ?.getUserInventory(initiator)
       .then((userInventory) => {
         return userInventory.toEmbed();
@@ -95,12 +107,6 @@ export default class Status extends Command<IStatusProps> {
 
     const content = `${balanceMessage}${infractionMessage}`;
 
-    if (show) {
-      await this.reply(content, { embeds: [inventoryEmbed] });
-    } else {
-      const dmChannel = await initiator.createDM();
-      await dmChannel.send({ content, embeds: [inventoryEmbed] });
-    }
-    return 1;
+    return { content, embed };
   }
 }

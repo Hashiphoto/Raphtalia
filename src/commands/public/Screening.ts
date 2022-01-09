@@ -1,13 +1,13 @@
 import { Guild as DsGuild, GuildMember, TextChannel } from "discord.js";
 
-import Command from "./Command";
-import CommandMessage from "../models/CommandMessage";
-import GuildService from "../services/Guild.service";
-import { ICommandProps } from "../interfaces/CommandInterfaces";
-import Question from "../models/Question";
-import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
-import ScreeningQuestion from "../models/ScreeningQuestion";
+import Command from "../Command";
+import CommandMessage from "../../models/CommandMessage";
+import GuildService from "../../services/Guild.service";
+import { ICommandProps } from "../../interfaces/CommandInterfaces";
+import Question from "../../models/Question";
+import RaphError from "../../models/RaphError";
+import { Result } from "../../enums/Result";
+import ScreeningQuestion from "../../models/ScreeningQuestion";
 import { autoInjectable } from "tsyringe";
 
 enum Action {
@@ -108,6 +108,10 @@ export default class Screening extends Command<IScreeningProps> {
   }
 
   private async add(initiator: GuildMember): Promise<number | undefined> {
+    if (!((this.channel as TextChannel)?.type === "GUILD_TEXT")) {
+      await this.reply("This command can only be used in a server text channel");
+      return;
+    }
     const screeningQuestion = await this.getNewQuestionDetails(initiator);
     if (!screeningQuestion) {
       await this.reply("Invalid input. Adding new screening question aborted");
@@ -137,7 +141,7 @@ export default class Screening extends Command<IScreeningProps> {
   private async getNewQuestionDetails(initiator: GuildMember) {
     const question = new ScreeningQuestion();
     const promptMessage = await this.channelService?.sendTimedMessage(
-      this.channel,
+      this.channel as TextChannel,
       initiator,
       new Question("What is the question they will be asked?", ".*", 120000)
     );
@@ -147,7 +151,7 @@ export default class Screening extends Command<IScreeningProps> {
     question.prompt = promptMessage.content;
 
     const answerMessage = await this.channelService?.sendTimedMessage(
-      this.channel,
+      this.channel as TextChannel,
       initiator,
       new Question(
         "What is the acceptable answer to the question? (case-insensitive)",
@@ -161,7 +165,7 @@ export default class Screening extends Command<IScreeningProps> {
     question.answer = "^" + answerMessage.content + "$";
 
     const timeoutMessage = await this.channelService?.sendTimedMessage(
-      this.channel,
+      this.channel as TextChannel,
       initiator,
       new Question("How many milliseconds (ms) will they have to answer correctly?", ".*", 120000)
     );
@@ -175,7 +179,7 @@ export default class Screening extends Command<IScreeningProps> {
     question.timeout = timeout;
 
     const strictMessage = await this.channelService?.sendTimedMessage(
-      this.channel,
+      this.channel as TextChannel,
       initiator,
       new Question(
         "Should the user be ejected immediately after answering incorrectly? (yes/no)",

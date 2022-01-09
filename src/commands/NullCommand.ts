@@ -3,7 +3,6 @@ import CommandMessage from "../models/CommandMessage";
 import { ICommandProps } from "../interfaces/CommandInterfaces";
 import RaphError from "../models/RaphError";
 import { Result } from "../enums/Result";
-import { TextChannel } from "discord.js";
 import { autoInjectable } from "tsyringe";
 
 @autoInjectable()
@@ -20,12 +19,14 @@ export default class NullCommand extends Command<ICommandProps> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
-    this.channel = cmdMessage.message.channel as TextChannel;
-    await this.runWithItem({ initiator: cmdMessage.message.member });
+    this.channel = cmdMessage.message.channel;
+    // We don't call runWithItem since the user might not have
+    // the right item, or they could be in exile
+    await this.execute();
   }
 
   public async execute(): Promise<number | undefined> {
-    await this.reply(this.text ?? "Error");
+    this.reply(this.text ?? "Error");
     return;
   }
 }

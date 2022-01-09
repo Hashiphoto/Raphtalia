@@ -3,7 +3,7 @@ import {
   GuildMember,
   Message,
   MessageOptions,
-  TextChannel,
+  PartialTextBasedChannelFields,
 } from "discord.js";
 import { autoInjectable, delay, inject } from "tsyringe";
 import { Result } from "../enums/Result";
@@ -19,7 +19,7 @@ import { bold } from "../utilities/Util";
 @autoInjectable()
 export default class Command<T extends ICommandProps> {
   public item: UserItem;
-  public channel: TextChannel;
+  public channel: PartialTextBasedChannelFields;
   public name: string;
   public aliases: string[] = [];
   public slashCommands: ApplicationCommandData[] = [];
@@ -68,6 +68,9 @@ export default class Command<T extends ICommandProps> {
     }
   }
 
+  /**
+   * Do the command operation. Returns the number of item uses used
+   */
   public async execute(props: T): Promise<number | undefined> {
     throw new RaphError(Result.ProgrammingError, "execute not implemented");
   }

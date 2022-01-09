@@ -1,9 +1,9 @@
-import BanListService from "../services/message/BanWordList.service";
-import Command from "./Command";
-import CommandMessage from "../models/CommandMessage";
-import { ICommandProps } from "../interfaces/CommandInterfaces";
-import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
+import BanListService from "../../services/message/BanWordList.service";
+import Command from "../Command";
+import CommandMessage from "../../models/CommandMessage";
+import { ICommandProps } from "../../interfaces/CommandInterfaces";
+import RaphError from "../../models/RaphError";
+import { Result } from "../../enums/Result";
 import { TextChannel } from "discord.js";
 import { autoInjectable } from "tsyringe";
 
@@ -26,14 +26,14 @@ export default class BanList extends Command<ICommandProps> {
   }
 
   public async execute({ initiator }: ICommandProps): Promise<number | undefined> {
-    if (!this.channel) {
+    if (!this.channel || !((this.channel as TextChannel)?.type === "GUILD_TEXT")) {
       throw new RaphError(Result.ProgrammingError, "The channel is undefined");
     }
 
     await this._banListService?.removeMessage(initiator.guild);
 
     // Do asyncrhonously
-    this._banListService?.postEmbed(this.channel);
+    this._banListService?.postEmbed(this.channel as TextChannel);
 
     return 1;
   }

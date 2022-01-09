@@ -1,16 +1,16 @@
 import { GuildMember, TextChannel } from "discord.js";
 import { autoInjectable, delay, inject } from "tsyringe";
-import { Result } from "../enums/Result";
-import { IArgProps } from "../interfaces/CommandInterfaces";
-import CommandMessage from "../models/CommandMessage";
-import GuildItem from "../models/GuildItem";
-import RaphError from "../models/RaphError";
-import UserItem from "../models/UserItem";
-import ClientService from "../services/Client.service";
-import CurrencyService from "../services/Currency.service";
-import { Dice, roll } from "../utilities/Rng";
-import { Format, print } from "../utilities/Util";
-import Command from "./Command";
+import { Result } from "../../enums/Result";
+import { IArgProps } from "../../interfaces/CommandInterfaces";
+import CommandMessage from "../../models/CommandMessage";
+import GuildItem from "../../models/GuildItem";
+import RaphError from "../../models/RaphError";
+import UserItem from "../../models/UserItem";
+import ClientService from "../../services/Client.service";
+import CurrencyService from "../../services/Currency.service";
+import { Dice, roll } from "../../utilities/Rng";
+import { Format, print } from "../../utilities/Util";
+import Command from "../Command";
 
 const percentCost = 0.05;
 

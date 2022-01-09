@@ -1,11 +1,11 @@
 import { ApplicationCommandData, Guild as DsGuild, TextChannel } from "discord.js";
 
-import { AllCommands } from "./CommandList";
-import Command from "./Command";
-import CommandMessage from "../models/CommandMessage";
-import { ICommandProps } from "../interfaces/CommandInterfaces";
-import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
+import Command from "../Command";
+import CommandMessage from "../../models/CommandMessage";
+import CommandService from "../../services/Command.service";
+import { ICommandProps } from "../../interfaces/CommandInterfaces";
+import RaphError from "../../models/RaphError";
+import { Result } from "../../enums/Result";
 import { autoInjectable } from "tsyringe";
 
 export enum AdminCommand {
@@ -63,7 +63,7 @@ export default class Admin extends Command<IAdminProps> {
    */
   private async setup(guild: DsGuild) {
     const slashCommands: ApplicationCommandData[] = [];
-    AllCommands.forEach((command) => slashCommands.push(...command.slashCommands));
+    CommandService.AllCommands.forEach((command) => slashCommands.push(...command.slashCommands));
     await guild.commands.set(slashCommands);
     this.reply(`Set commands: ${slashCommands.map((s) => `\`${s.name}\``).join(", ")}`);
   }

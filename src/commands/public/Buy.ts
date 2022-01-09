@@ -1,13 +1,15 @@
-import { Format, print } from "../utilities/Util";
+import { CommandInteraction, TextChannel } from "discord.js";
+import { Format, print } from "../../utilities/Util";
 
-import Command from "./Command";
-import CommandMessage from "../models/CommandMessage";
-import GuildItem from "../models/GuildItem";
-import { ICommandProps } from "../interfaces/CommandInterfaces";
-import InventoryService from "../services/Inventory.service";
-import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
-import { TextChannel } from "discord.js";
+import Command from "../Command";
+import CommandMessage from "../../models/CommandMessage";
+import GuildItem from "../../models/GuildItem";
+import { ICommandProps } from "../../interfaces/CommandInterfaces";
+import InteractionChannel from "../../models/InteractionChannel";
+import InventoryService from "../../services/Inventory.service";
+import RaphError from "../../models/RaphError";
+import { RaphtaliaInteraction } from "../../enums/Interactions";
+import { Result } from "../../enums/Result";
 import { autoInjectable } from "tsyringe";
 
 interface IBuyProps extends ICommandProps {
@@ -16,6 +18,8 @@ interface IBuyProps extends ICommandProps {
 
 @autoInjectable()
 export default class Buy extends Command<IBuyProps> {
+  public buy: (interaction: CommandInteraction) => void;
+
   public constructor(private _inventoryService?: InventoryService) {
     super();
     this.name = "Buy";
@@ -23,6 +27,38 @@ export default class Buy extends Command<IBuyProps> {
       "Purchase an item from the server store. The item will be added to your inventory, if there is adequate quantity in the store";
     this.usage = "`Buy (item name)`";
     this.aliases = [this.name.toLowerCase()];
+    this.slashCommands = [
+      {
+        name: RaphtaliaInteraction.Buy,
+        description: "Purchase an item from the store",
+        options: [
+          {
+            name: "item",
+            description:
+              "The name of the item to purchase. You do not need to enter the whole name",
+            type: "STRING",
+            required: true,
+          },
+        ],
+      },
+    ];
+
+    // interaction callbacks
+    this.buy = async (interaction: CommandInteraction) => {
+      if (!interaction.inGuild) {
+        return interaction.reply(`Please use this command in a server`);
+      }
+
+      const initiator = await interaction.guild?.members.fetch(interaction.user.id);
+      if (!initiator) {
+        return interaction.reply(`This only works in a server`);
+      }
+      this.channel = new InteractionChannel(interaction);
+      const itemName = interaction.options.getString("item", true);
+      return this.runWithItem({ initiator, itemName }).catch(() =>
+        interaction.reply("Something went wrong")
+      );
+    };
   }
 
   public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {

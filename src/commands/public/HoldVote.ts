@@ -1,18 +1,21 @@
 import { Collection, Guild as DsGuild, GuildMember, Message, TextChannel } from "discord.js";
-import { Format, formatDate, parseDuration, print } from "../utilities/Util";
+import { Format, formatDate, parseDuration, print } from "../../utilities/Util";
 
-import Command from "./Command";
-import CommandMessage from "../models/CommandMessage";
+import Command from "../Command";
+import CommandMessage from "../../models/CommandMessage";
 import { Duration } from "dayjs/plugin/duration";
-import { IArgProps } from "../interfaces/CommandInterfaces";
-import Question from "../models/Question";
-import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
-import VotingOption from "../models/VotingOption";
+import { IArgProps } from "../../interfaces/CommandInterfaces";
+import Question from "../../models/Question";
+import RaphError from "../../models/RaphError";
+import { Result } from "../../enums/Result";
+import VotingOption from "../../models/VotingOption";
 import { autoInjectable } from "tsyringe";
 import dayjs from "dayjs";
 import delay from "delay";
 
+/**
+ * @deprecated
+ */
 @autoInjectable()
 export default class HoldVote extends Command<IArgProps> {
   public constructor() {
@@ -41,6 +44,9 @@ export default class HoldVote extends Command<IArgProps> {
   }
 
   public async execute({ initiator, arg: votePrompt }: IArgProps): Promise<number | undefined> {
+    if (!((this.channel as TextChannel)?.type === "GUILD_TEXT")) {
+      return;
+    }
     const voters = await this.getVoters(initiator.guild);
     if (voters.size === 0) {
       await this.reply(`There are no registered voters. Use the Register command first.`);
@@ -54,7 +60,7 @@ export default class HoldVote extends Command<IArgProps> {
       60000
     );
     const optionsMessage = await this.channelService?.sendTimedMessage(
-      this.channel,
+      this.channel as TextChannel,
       initiator,
       optionsQuestion,
       true
@@ -82,7 +88,7 @@ export default class HoldVote extends Command<IArgProps> {
     // Get the time
     const timeQuestion = new Question("How long will voting be open? (e.g. `1h 30m`)", ".*", 60000);
     const message = await this.channelService?.sendTimedMessage(
-      this.channel,
+      this.channel as TextChannel,
       initiator,
       timeQuestion,
       true
@@ -140,7 +146,9 @@ export default class HoldVote extends Command<IArgProps> {
           const selected = votingOptions.find((v) => v.id === parseInt(choice.content));
           if (selected) {
             dmChannel.send(
-              `Thank you for your vote!\nResults will be announced in **${guild.name}/#${this.channel.name}** when voting is closed`
+              `Thank you for your vote!\nResults will be announced in **${guild.name}/#${
+                (this.channel as TextChannel).name
+              }** when voting is closed`
             );
             selected.votes++;
             console.log(`${voter.displayName} voted for ${selected.body}`);

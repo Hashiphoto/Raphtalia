@@ -1,9 +1,9 @@
 import BanList from "./BanList";
-import Command from "./Command";
-import CommandMessage from "../models/CommandMessage";
-import { ICommandProps } from "../interfaces/CommandInterfaces";
-import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
+import Command from "../Command";
+import CommandMessage from "../../models/CommandMessage";
+import { ICommandProps } from "../../interfaces/CommandInterfaces";
+import RaphError from "../../models/RaphError";
+import { Result } from "../../enums/Result";
 import Roles from "./Roles";
 import Store from "./Store";
 import { TextChannel } from "discord.js";

@@ -8,14 +8,14 @@ import {
   TextChannel,
 } from "discord.js";
 
-import Command from "./Command";
-import CommandMessage from "../models/CommandMessage";
-import { ITargettedProps } from "../interfaces/CommandInterfaces";
-import RaphError from "../models/RaphError";
-import { RaphtaliaInteraction } from "../enums/Interactions";
-import { Result } from "../enums/Result";
+import Command from "../Command";
+import CommandMessage from "../../models/CommandMessage";
+import { ITargettedProps } from "../../interfaces/CommandInterfaces";
+import RaphError from "../../models/RaphError";
+import { RaphtaliaInteraction } from "../../enums/Interactions";
+import { Result } from "../../enums/Result";
 import { autoInjectable } from "tsyringe";
-import { buildCustomId } from "../utilities/Util";
+import { buildCustomId } from "../../utilities/Util";
 
 @autoInjectable()
 export default class Poke extends Command<ITargettedProps> {
@@ -55,9 +55,7 @@ export default class Poke extends Command<ITargettedProps> {
       const targetUser = interaction.options.getUser("user");
       const target = targetUser ? await interaction.guild?.members.fetch(targetUser) : undefined;
       if (!target) {
-        return interaction.reply(
-          `I don't know who to poke. No user was specified or they are not members of the server`
-        );
+        return interaction.reply(`No user was specified or they are not members of the server`);
       }
       this.runWithItem({ initiator, targets: [target] }).then(() => {
         return interaction.reply({ content: `Poked ${target.toString()}!`, ephemeral: true });

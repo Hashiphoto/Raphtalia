@@ -1,12 +1,15 @@
 import { TextChannel } from "discord.js";
 import { autoInjectable, delay, inject } from "tsyringe";
-import { Result } from "../enums/Result";
-import { ITargettedProps } from "../interfaces/CommandInterfaces";
-import CommandMessage from "../models/CommandMessage";
-import RaphError from "../models/RaphError";
-import MemberService from "../services/Member.service";
-import Command from "./Command";
+import { Result } from "../../enums/Result";
+import { ITargettedProps } from "../../interfaces/CommandInterfaces";
+import CommandMessage from "../../models/CommandMessage";
+import RaphError from "../../models/RaphError";
+import MemberService from "../../services/Member.service";
+import Command from "../Command";
 
+/**
+ * @deprecated
+ */
 @autoInjectable()
 export default class Pardon extends Command<ITargettedProps> {
   public constructor(@inject(delay(() => MemberService)) private _memberService?: MemberService) {

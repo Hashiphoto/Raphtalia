@@ -1,9 +1,9 @@
-import Command from "./Command";
-import CommandMessage from "../models/CommandMessage";
-import { ICommandProps } from "../interfaces/CommandInterfaces";
-import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
-import RoleService from "../services/Role.service";
+import Command from "../Command";
+import CommandMessage from "../../models/CommandMessage";
+import { ICommandProps } from "../../interfaces/CommandInterfaces";
+import RaphError from "../../models/RaphError";
+import { Result } from "../../enums/Result";
+import RoleService from "../../services/Role.service";
 import { TextChannel } from "discord.js";
 import { autoInjectable } from "tsyringe";
 
