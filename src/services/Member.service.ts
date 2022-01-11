@@ -238,7 +238,7 @@ export default class MemberService {
     if (!dsRole) {
       throw new RaphError(
         Result.OutOfBounds,
-        `${member.toString()} holds the highest office already\n`
+        `${member.toString()} you cannot promote because you hold the highest office already\n`
       );
     }
 
@@ -257,7 +257,11 @@ export default class MemberService {
         if (promotionAvailableDate.isAfter(dayjs())) {
           throw new RaphError(
             Result.OnCooldown,
-            `${dsRole.name} will be open for contests at ${formatDate(promotionAvailableDate)}`
+            `${member.toString()} you cannot promote to ${
+              dsRole.name
+            } because it was contested too recently. It will be open for contests again at ${formatDate(
+              promotionAvailableDate
+            )}`
           );
         }
       }

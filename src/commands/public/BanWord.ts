@@ -28,7 +28,7 @@ export default class BanWord extends Command<IArgsProps> {
     this.slashCommands = [
       {
         name: RaphtaliaInteraction.BanWord,
-        description: "Add word(s) from the banned word list",
+        description: "Add word(s) to the banned word list",
         options: [
           {
             name: "words",

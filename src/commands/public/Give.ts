@@ -34,7 +34,7 @@ export default class Give extends Command<ITransferProps> {
     this.slashCommands = [
       {
         name: RaphtaliaInteraction.Give,
-        description: "Remove word(s) from the banned word list",
+        description: "Give a user money or an item",
         options: [
           {
             name: "user",
