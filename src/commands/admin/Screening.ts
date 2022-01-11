@@ -41,6 +41,7 @@ export default class Screening extends Command<IScreeningProps> {
       {
         name: RaphtaliaInteraction.Screening,
         description: "Edit the server screening questions new members are asked on entry",
+        defaultPermission: false,
         options: [
           {
             name: "list",
