@@ -82,13 +82,9 @@ export default class Exile extends Command<IExileProps> {
         return interaction.reply(`No user was specified or they are not members of the server`);
       }
 
-      this.runWithItem({ initiator, duration, targets: [target] })
-        .then(() =>
-          interaction.reply(
-            `Exiled ${target.displayName} until ${formatDate(dayjs().add(duration))}`
-          )
-        )
-        .catch(() => interaction.reply("Something went wrong"));
+      this.runWithItem({ initiator, duration, targets: [target] }).then(() =>
+        interaction.reply(`Exiled ${target.displayName} until ${formatDate(dayjs().add(duration))}`)
+      );
     };
   }
 

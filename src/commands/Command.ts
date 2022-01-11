@@ -14,6 +14,7 @@ import UserItem from "../models/UserItem";
 import ChannelService from "../services/Channel.service";
 import ClientService from "../services/Client.service";
 import InventoryService from "../services/Inventory.service";
+import RoleService from "../services/Role.service";
 import { bold } from "../utilities/Util";
 
 @autoInjectable()
@@ -23,13 +24,16 @@ export default class Command<T extends ICommandProps> {
   public name: string;
   public aliases: string[] = [];
   public slashCommands: ApplicationCommandData[] = [];
+  public itemRequired = true;
+  public leaderOnly = false;
   private _usage: string;
   private _instructions: string;
 
   public constructor(
     protected inventoryService?: InventoryService,
     protected channelService?: ChannelService,
-    @inject(delay(() => ClientService)) protected clientService?: ClientService
+    @inject(delay(() => ClientService)) protected clientService?: ClientService,
+    @inject(delay(() => RoleService)) protected roleService?: RoleService
   ) {}
 
   public get instructions(): string {
@@ -56,14 +60,27 @@ export default class Command<T extends ICommandProps> {
    * Harness for the command execution to handle item usage
    */
   public async runWithItem(props: T): Promise<any> {
-    const item = await this.getOrBuyItem(props.initiator);
-    if (!item) {
+    console.log(`${props.initiator.displayName} executing ${this.name}`);
+
+    // Check for exile
+    const guild = props.initiator.guild;
+    const exileRole = await this.roleService?.getCreateExileRole(guild);
+    if (exileRole && props.initiator.roles.cache.find((r) => r.id === exileRole.id)) {
+      this.reply(`You cannot use commands while in exile`);
       return;
     }
-    this.item = item;
+
+    if (this.itemRequired) {
+      const item = await this.getOrBuyItem(props.initiator);
+      if (!item) {
+        return;
+      }
+      this.item = item;
+    }
+
     const itemUses = await this.execute(props);
 
-    if (itemUses) {
+    if (this.itemRequired && itemUses) {
       await this.useItem(props.initiator, itemUses);
     }
   }
@@ -81,6 +98,9 @@ export default class Command<T extends ICommandProps> {
   }
 
   public async useItem(itemOwner: GuildMember, uses = 1): Promise<void> {
+    if (!this.item) {
+      return;
+    }
     const oldQuantity = this.item.quantity;
     const updatedItem = await this.inventoryService?.useItem(this.item, itemOwner, uses);
 
@@ -105,9 +125,6 @@ export default class Command<T extends ICommandProps> {
     // See if the user owns it
     const userItem = await this.inventoryService.getUserItemByCommand(initiator, this.name);
     if (userItem) {
-      console.log(
-        `${initiator.displayName} is executing ${this.name} with owned item ${userItem.name}`
-      );
       return userItem;
     }
 

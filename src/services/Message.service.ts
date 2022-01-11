@@ -33,7 +33,7 @@ export default class MessageService {
   /**
    * Process a guild member's channel message
    */
-  public async handleMessage(message: Message): Promise<void> {
+  public async handleGuildMessage(message: Message): Promise<void> {
     // Delete the "Raphtalia has pinned a message to this channel" message
     if (
       this._client.user &&
@@ -54,6 +54,10 @@ export default class MessageService {
       return;
     }
 
+    return this.handleMessage(message);
+  }
+
+  public async handleMessage(message: Message): Promise<void> {
     // Delete the incoming message
     let deleteTime = await this._channelService.getDeleteTime(message.channel);
     if (message.author.bot) {
@@ -125,6 +129,10 @@ export default class MessageService {
       return;
     }
     await delay(timeMs);
+    const sentByRaph = message.author.id === this._client.user?.id;
+    if (sentByRaph && message.pinned) {
+      return;
+    }
     message.delete().catch((error) => {
       // Message no longer exists
       if (error.name === "DiscordAPIError" && error.message === "Unknown Message") {

@@ -12,7 +12,7 @@ export default (client: Client): void => {
   const interactionService = container.resolve(InteractionService);
 
   client.on("messageCreate", async (message) => {
-    messageService.handleMessage(message);
+    messageService.handleGuildMessage(message);
   });
 
   client.on("guildMemberAdd", async (member) => {

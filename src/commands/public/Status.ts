@@ -1,9 +1,10 @@
-import { CommandInteraction, GuildMember, MessageEmbed, TextChannel } from "discord.js";
+import { CommandInteraction, GuildMember, MessageEmbed } from "discord.js";
 import { autoInjectable, delay, inject } from "tsyringe";
 import { RaphtaliaInteraction } from "../../enums/Interactions";
 import { Result } from "../../enums/Result";
 import { ICommandProps } from "../../interfaces/CommandInterfaces";
 import CommandMessage from "../../models/CommandMessage";
+import InteractionChannel from "../../models/InteractionChannel";
 import RaphError from "../../models/RaphError";
 import CurrencyService from "../../services/Currency.service";
 import MemberService from "../../services/Member.service";
@@ -31,6 +32,7 @@ export default class Status extends Command<IStatusProps> {
     this.instructions = "Get your current balance and inventory";
     this.usage = "`Status`";
     this.aliases = [this.name.toLowerCase()];
+    this.itemRequired = false;
     this.slashCommands = [
       {
         name: RaphtaliaInteraction.Status,
@@ -38,7 +40,7 @@ export default class Status extends Command<IStatusProps> {
         options: [
           {
             name: "show",
-            description: "Post publicly in this channel instead of a DM. Default: False",
+            description: "Post publicly in this channel. Default: False",
             type: "BOOLEAN",
           },
         ],
@@ -54,38 +56,29 @@ export default class Status extends Command<IStatusProps> {
       if (!initiator) {
         return interaction.reply(`This only works in a server`);
       }
-      const show = interaction.options.getBoolean("show");
-      this.channel = interaction.channel as TextChannel;
-      this.runWithItem({ initiator, show: show ?? undefined });
-      return interaction.reply({
-        content: show ? "Showing status publicly" : "Status sent in a DM",
-        ephemeral: true,
-      });
+      const show = interaction.options.getBoolean("show") ?? false;
+      this.channel = new InteractionChannel(interaction, !show);
+      this.runWithItem({ initiator });
     };
   }
 
   public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {
-    if (!cmdMessage.message.member) {
+    const initiator = cmdMessage.message.member;
+    if (!initiator) {
       throw new RaphError(Result.NoGuild);
     }
-    this.channel = cmdMessage.message.channel as TextChannel;
+    const show = cmdMessage.args.length > 0 && cmdMessage.args[Args.SHOW].toLowerCase() === "show";
+    this.channel = show ? cmdMessage.message.channel : await initiator.createDM();
 
     await this.runWithItem({
-      initiator: cmdMessage.message.member,
-      show: cmdMessage.args.length > 0 && cmdMessage.args[Args.SHOW].toLowerCase() === "show",
+      initiator,
     });
   }
 
-  public async execute({ initiator, show }: IStatusProps): Promise<number | undefined> {
+  public async execute({ initiator }: ICommandProps): Promise<number | undefined> {
     const { content, embed } = await this.generateMessage(initiator);
-
-    if (show) {
-      await this.reply(content, { embeds: [embed] });
-    } else {
-      const dmChannel = await initiator.createDM();
-      await dmChannel.send({ content, embeds: [embed] });
-    }
-    return 1;
+    await this.reply(content, { embeds: [embed] });
+    return undefined;
   }
 
   private async generateMessage(initiator: GuildMember) {

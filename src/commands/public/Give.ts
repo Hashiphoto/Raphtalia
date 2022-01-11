@@ -30,7 +30,7 @@ export default class Give extends Command<ITransferProps> {
       "When giving an item, each member will be given one of that item. Only unused items can be given.";
     this.usage = "`Give @member ($1|item name)`";
     this.aliases = [this.name.toLowerCase()];
-
+    this.itemRequired = false;
     this.slashCommands = [
       {
         name: RaphtaliaInteraction.Give,
@@ -76,9 +76,7 @@ export default class Give extends Command<ITransferProps> {
         : undefined;
 
       this.channel = new InteractionChannel(interaction);
-      this.runWithItem({ initiator, targets: [target], amount, item }).catch(() =>
-        interaction.reply({ content: "Something went wrong", ephemeral: true })
-      );
+      this.runWithItem({ initiator, targets: [target], amount, item });
     };
   }
 
@@ -116,14 +114,6 @@ export default class Give extends Command<ITransferProps> {
       return this.sendHelpMessage();
     }
 
-    if (!this.item.unlimitedUses && targets.length > this.item.remainingUses) {
-      await this.reply(
-        `Your ${this.item.name} does not have enough charges. ` +
-          `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
-      );
-      return;
-    }
-
     if (!amount && !item) {
       return this.sendHelpMessage();
     }
@@ -138,7 +128,7 @@ export default class Give extends Command<ITransferProps> {
     }
 
     await this.reply(response);
-    return targets.length;
+    return undefined;
   }
 
   protected async transferMoney(

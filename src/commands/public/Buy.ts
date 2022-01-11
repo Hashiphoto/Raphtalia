@@ -4,7 +4,7 @@ import { Format, print } from "../../utilities/Util";
 import Command from "../Command";
 import CommandMessage from "../../models/CommandMessage";
 import GuildItem from "../../models/GuildItem";
-import { ICommandProps } from "../../interfaces/CommandInterfaces";
+import { IArgProps } from "../../interfaces/CommandInterfaces";
 import InteractionChannel from "../../models/InteractionChannel";
 import InventoryService from "../../services/Inventory.service";
 import RaphError from "../../models/RaphError";
@@ -12,12 +12,8 @@ import { RaphtaliaInteraction } from "../../enums/Interactions";
 import { Result } from "../../enums/Result";
 import { autoInjectable } from "tsyringe";
 
-interface IBuyProps extends ICommandProps {
-  itemName: string;
-}
-
 @autoInjectable()
-export default class Buy extends Command<IBuyProps> {
+export default class Buy extends Command<IArgProps> {
   public buy: (interaction: CommandInteraction) => void;
 
   public constructor(private _inventoryService?: InventoryService) {
@@ -27,6 +23,7 @@ export default class Buy extends Command<IBuyProps> {
       "Purchase an item from the server store. The item will be added to your inventory, if there is adequate quantity in the store";
     this.usage = "`Buy (item name)`";
     this.aliases = [this.name.toLowerCase()];
+    this.itemRequired = false;
     this.slashCommands = [
       {
         name: RaphtaliaInteraction.Buy,
@@ -55,9 +52,7 @@ export default class Buy extends Command<IBuyProps> {
       }
       this.channel = new InteractionChannel(interaction);
       const itemName = interaction.options.getString("item", true);
-      return this.runWithItem({ initiator, itemName }).catch(() =>
-        interaction.reply("Something went wrong")
-      );
+      return this.runWithItem({ initiator, arg: itemName });
     };
   }
 
@@ -68,11 +63,11 @@ export default class Buy extends Command<IBuyProps> {
     this.channel = cmdMessage.message.channel as TextChannel;
     await this.runWithItem({
       initiator: cmdMessage.message.member,
-      itemName: cmdMessage.parsedContent,
+      arg: cmdMessage.parsedContent,
     });
   }
 
-  public async execute({ initiator, itemName }: IBuyProps): Promise<number | undefined> {
+  public async execute({ initiator, arg: itemName }: IArgProps): Promise<number | undefined> {
     // Get the guild item they are buying
     let guildItem: GuildItem | undefined;
     try {
@@ -113,6 +108,6 @@ export default class Buy extends Command<IBuyProps> {
         Format.Dollar
       )}!\n>>> ${guildItem.printName()} | Uses: ${guildItem.printMaxUses()}`
     );
-    return 1;
+    return undefined;
   }
 }

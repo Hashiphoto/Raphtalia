@@ -12,7 +12,7 @@ import Command from "../Command";
 export default class Promote extends Command<ICommandProps> {
   public promote: (interaction: CommandInteraction) => void;
 
-  public constructor(@inject(delay(() => MemberService)) private _memberService?: MemberService) {
+  public constructor(@inject(delay(() => MemberService)) private MemberService?: MemberService) {
     super();
     this.name = "Promote";
     this.instructions = "Increase your rank by one";
@@ -39,9 +39,9 @@ export default class Promote extends Command<ICommandProps> {
         this.channel = interaction.channel;
       }
 
-      this.runWithItem({ initiator }).catch(() =>
-        interaction.reply({ content: "Something went wrong", ephemeral: true })
-      );
+      this.runWithItem({ initiator }).then(() => {
+        interaction.reply({ content: "Promotion request received", ephemeral: true });
+      });
     };
   }
 
@@ -58,7 +58,7 @@ export default class Promote extends Command<ICommandProps> {
       throw new RaphError(Result.ProgrammingError, "This command needs a channel");
     }
     try {
-      const feedback = await this._memberService?.promoteMember(
+      const feedback = await this.MemberService?.promoteMember(
         initiator,
         this.channel as TextChannel
       );

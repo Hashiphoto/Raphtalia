@@ -25,6 +25,7 @@ export default class Balance extends Command<ICommandProps> {
     this.instructions = "Get your current balance sent to you in a direct message";
     this.usage = "`Balance`";
     this.aliases = [this.name.toLowerCase(), "wallet"];
+    this.itemRequired = false;
     this.slashCommands = [
       {
         name: RaphtaliaInteraction.Balance,
@@ -75,6 +76,6 @@ export default class Balance extends Command<ICommandProps> {
     const messageText = `You have ${print(balance, Format.Dollar)} in ${initiator.guild.name}`;
 
     this.reply(messageText);
-    return 1;
+    return undefined;
   }
 }

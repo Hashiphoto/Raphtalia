@@ -1,12 +1,17 @@
-import { ApplicationCommandData, Guild as DsGuild, TextChannel } from "discord.js";
-
-import Command from "../Command";
-import CommandMessage from "../../models/CommandMessage";
-import CommandService from "../../services/Command.service";
-import { ICommandProps } from "../../interfaces/CommandInterfaces";
-import RaphError from "../../models/RaphError";
+import {
+  ApplicationCommandData,
+  ApplicationCommandPermissionData,
+  Guild as DsGuild,
+  TextChannel,
+} from "discord.js";
+import { autoInjectable, delay, inject } from "tsyringe";
 import { Result } from "../../enums/Result";
-import { autoInjectable } from "tsyringe";
+import { ICommandProps } from "../../interfaces/CommandInterfaces";
+import CommandMessage from "../../models/CommandMessage";
+import RaphError from "../../models/RaphError";
+import CommandService from "../../services/Command.service";
+import RoleService from "../../services/Role.service";
+import Command from "../Command";
 
 export enum AdminCommand {
   Setup = "Setup",
@@ -18,7 +23,10 @@ interface IAdminProps extends ICommandProps {
 
 @autoInjectable()
 export default class Admin extends Command<IAdminProps> {
-  public constructor() {
+  public constructor(
+    @inject(delay(() => CommandService)) private _commandService?: CommandService,
+    @inject(delay(() => RoleService)) private _roleService?: RoleService
+  ) {
     super();
     this.name = "Admin";
     this.instructions = "Perform an administrative action";
@@ -62,9 +70,40 @@ export default class Admin extends Command<IAdminProps> {
    * Insert every slash command into the guild
    */
   private async setup(guild: DsGuild) {
+    // Upsert all slash commands
     const slashCommands: ApplicationCommandData[] = [];
-    CommandService.AllCommands.forEach((command) => slashCommands.push(...command.slashCommands));
+    const leaderOnlyCommands: Command<ICommandProps>[] = [];
+    this._commandService?.allCommands.forEach((command) => {
+      slashCommands.push(...command.slashCommands);
+      if (command.leaderOnly) {
+        leaderOnlyCommands.push(command);
+      }
+    });
     await guild.commands.set(slashCommands);
+
+    // Give specific permissions
+    const leaderRole = this._roleService?.getLeaderRole(guild);
+    console.log(`leaderRole is ${leaderRole?.name}`);
+    if (leaderRole) {
+      const liveSlashCommands = await guild.commands.fetch();
+      const leaderPermission = {
+        id: leaderRole.id,
+        type: "ROLE",
+        permission: true,
+      } as ApplicationCommandPermissionData;
+
+      await Promise.all(
+        leaderOnlyCommands.map(async (command) => {
+          for (const slashCommand of command.slashCommands) {
+            const liveSlashCommand = liveSlashCommands.find((c) => c.name === slashCommand.name);
+            liveSlashCommand?.permissions.set({
+              permissions: [leaderPermission],
+            });
+          }
+        })
+      );
+    }
+
     this.reply(`Set commands: ${slashCommands.map((s) => `\`${s.name}\``).join(", ")}`);
   }
 }

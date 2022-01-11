@@ -19,6 +19,7 @@ export default class Headpat extends Command<ITargettedProps> {
     this.instructions = "I will give a headpat to the member(s) is specified";
     this.usage = "`Headpat @member`";
     this.aliases = [this.name.toLowerCase()];
+    this.itemRequired = false;
     this.slashCommands = [
       {
         name: RaphtaliaInteraction.Headpat,
@@ -47,9 +48,7 @@ export default class Headpat extends Command<ITargettedProps> {
       const target = await interaction.guild.members.fetch(user.id);
 
       this.channel = new InteractionChannel(interaction);
-      this.runWithItem({ initiator, targets: [target] }).catch(() =>
-        interaction.reply({ content: "Something went wrong", ephemeral: true })
-      );
+      this.runWithItem({ initiator, targets: [target] });
     };
   }
 
@@ -69,20 +68,12 @@ export default class Headpat extends Command<ITargettedProps> {
       return this.sendHelpMessage();
     }
 
-    if (!this.item.unlimitedUses && targets.length > this.item.remainingUses) {
-      await this.reply(
-        `Your ${this.item.name} does not have enough charges. ` +
-          `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
-      );
-      return;
-    }
-
     let response = "";
     for (const member of targets) {
       response += `${member.toString()} headpat\n`;
     }
 
     this.reply(response);
-    return targets.length;
+    return undefined;
   }
 }

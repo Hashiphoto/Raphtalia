@@ -22,9 +22,6 @@ interface IPlayProps extends ICommandProps {
   voiceChannel?: VoiceChannel;
 }
 
-/**
- * TODO: https://github.com/discordjs/voice/blob/main/examples/music-bot/src/bot.ts
- */
 @autoInjectable()
 export default class Play extends Command<IPlayProps> {
   public play: (interaction: CommandInteraction) => void;
@@ -39,6 +36,7 @@ export default class Play extends Command<IPlayProps> {
     this.usage = "`Play [in (Group/VoiceChannel | VoiceChannel)]`";
     this.aliases = [this.name.toLowerCase()];
     this.player = createAudioPlayer();
+    this.itemRequired = false;
     this.slashCommands = [
       {
         name: RaphtaliaInteraction.Play,

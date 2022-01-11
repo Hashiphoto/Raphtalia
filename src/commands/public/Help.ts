@@ -25,6 +25,7 @@ export default class Help extends Command<IArgProps> {
     this.instructions = "Get detailed information about how to use any other command";
     this.usage = "`Help (command name)`";
     this.aliases = [this.name.toLowerCase()];
+    this.itemRequired = false;
     this.slashCommands = [
       {
         name: RaphtaliaInteraction.Help,
@@ -52,9 +53,7 @@ export default class Help extends Command<IArgProps> {
       const commandName = interaction.options.getString("command", true);
 
       this.channel = new InteractionChannel(interaction, true);
-      this.runWithItem({ initiator, arg: commandName }).catch(() =>
-        interaction.reply({ content: "Something went wrong", ephemeral: true })
-      );
+      this.runWithItem({ initiator, arg: commandName });
     };
   }
 
@@ -75,15 +74,15 @@ export default class Help extends Command<IArgProps> {
 
   public async execute({ arg: commandName }: IArgProps): Promise<number | undefined> {
     const command = this._commandService?.getCommandByName(
-      commandName.toLowerCase().replace(/[!-_\s]/g, "")
+      commandName.toLowerCase().replace(/[-_!/.\s]/g, "")
     );
 
     if (!command) {
-      await this.sendHelpMessage();
+      await this.sendHelpMessage(`Couldn't find any command named ${commandName}`);
       return;
     }
     command.channel = this.channel;
     await command.sendHelpMessage(command.instructions);
-    return 1;
+    return undefined;
   }
 }

@@ -1,4 +1,4 @@
-import { TextBasedChannel, TextBasedChannels, TextChannel } from "discord.js";
+import { TextBasedChannels, TextChannel } from "discord.js";
 
 import Command from "../Command";
 import CommandMessage from "../../models/CommandMessage";
@@ -40,7 +40,7 @@ export default class AutoDelete extends Command<IArgsProps> {
 
   public async execute(props: IArgsProps): Promise<number | undefined> {
     const { args } = props;
-    if (!this.channel || !(this.channel instanceof TextBasedChannel)) {
+    if (!this.channel || !((this.channel as TextChannel)?.type === "GUILD_TEXT")) {
       throw new RaphError(Result.ProgrammingError, "The channel is undefined");
     }
 

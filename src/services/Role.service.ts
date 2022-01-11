@@ -59,6 +59,13 @@ export default class RoleService {
   }
 
   /**
+   * Get the highest hoisted role in the guild
+   */
+  public getLeaderRole(guild: DsGuild): DsRole | undefined {
+    return this.getHoistedRoles(guild).first();
+  }
+
+  /**
    * Returns the hoisted role one lower than the given role
    */
   public getNextLower(role: DsRole, guild: DsGuild): DsRole | undefined {

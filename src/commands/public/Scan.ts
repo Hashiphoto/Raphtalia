@@ -1,9 +1,11 @@
-import { GuildMember, TextChannel } from "discord.js";
+import { CommandInteraction, GuildMember, TextChannel } from "discord.js";
 import { autoInjectable, delay, inject } from "tsyringe";
+import { RaphtaliaInteraction } from "../../enums/Interactions";
 import { Result } from "../../enums/Result";
 import { IArgProps } from "../../interfaces/CommandInterfaces";
 import CommandMessage from "../../models/CommandMessage";
 import GuildItem from "../../models/GuildItem";
+import InteractionChannel from "../../models/InteractionChannel";
 import RaphError from "../../models/RaphError";
 import UserItem from "../../models/UserItem";
 import ClientService from "../../services/Client.service";
@@ -16,6 +18,8 @@ const percentCost = 0.05;
 
 @autoInjectable()
 export default class Scan extends Command<IArgProps> {
+  public scan: (interaction: CommandInteraction) => void;
+
   public constructor(
     @inject(CurrencyService) private _currencyService?: CurrencyService,
     @inject(delay(() => ClientService)) private _clientService?: ClientService
@@ -28,6 +32,35 @@ export default class Scan extends Command<IArgProps> {
     )} of the item's store price. DC10 to reveal the user's name`;
     this.usage = "`Scan (item name)`";
     this.aliases = [this.name.toLowerCase()];
+    this.slashCommands = [
+      {
+        name: RaphtaliaInteraction.Scan,
+        description: `Search others' inventories for an item`,
+        options: [
+          {
+            name: "item",
+            description: "The name of the item to scan for",
+            type: "STRING",
+            required: true,
+          },
+        ],
+      },
+    ];
+
+    // interaction callbacks
+    this.scan = async (interaction: CommandInteraction) => {
+      if (!interaction.inGuild) {
+        return interaction.reply(`Please use this command in a server`);
+      }
+
+      const initiator = await interaction.guild?.members.fetch(interaction.user.id);
+      if (!initiator) {
+        return interaction.reply(`This only works in a server`);
+      }
+      this.channel = new InteractionChannel(interaction);
+      const itemName = interaction.options.getString("item", true);
+      return this.runWithItem({ initiator, arg: itemName });
+    };
   }
 
   public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {

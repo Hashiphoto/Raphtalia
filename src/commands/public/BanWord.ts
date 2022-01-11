@@ -54,9 +54,7 @@ export default class BanWord extends Command<IArgsProps> {
       const args = CommandMessage.GetArgs(content ?? "");
 
       this.channel = new InteractionChannel(interaction);
-      this.runWithItem({ initiator, args }).catch(() =>
-        interaction.reply({ content: "Something went wrong", ephemeral: true })
-      );
+      this.runWithItem({ initiator, args });
     };
   }
 

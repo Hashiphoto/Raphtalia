@@ -28,6 +28,7 @@ export default class Poke extends Command<ITargettedProps> {
     this.instructions = "I will poke the targeted member for you";
     this.usage = "`Poke @member`";
     this.aliases = [this.name.toLowerCase()];
+    this.itemRequired = false;
     this.slashCommands = [
       {
         name: RaphtaliaInteraction.Poke,
@@ -52,8 +53,8 @@ export default class Poke extends Command<ITargettedProps> {
       if (!initiator) {
         return interaction.reply(`This only works in a server`);
       }
-      const targetUser = interaction.options.getUser("user");
-      const target = targetUser ? await interaction.guild?.members.fetch(targetUser) : undefined;
+      const targetUser = interaction.options.getUser("user", true);
+      const target = await interaction.guild?.members.fetch(targetUser);
       if (!target) {
         return interaction.reply(`No user was specified or they are not members of the server`);
       }
@@ -98,14 +99,6 @@ export default class Poke extends Command<ITargettedProps> {
       return this.sendHelpMessage();
     }
 
-    if (!this.item.unlimitedUses && targets.length > this.item.remainingUses) {
-      await this.reply(
-        `Your ${this.item.name} does not have enough charges. ` +
-          `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
-      );
-      return;
-    }
-
     let successes = 0;
 
     await Promise.all(
@@ -119,7 +112,7 @@ export default class Poke extends Command<ITargettedProps> {
     );
 
     await this.reply(`Sent ${successes} poke${successes > 1 ? "s" : ""}!`);
-    return targets.length;
+    return undefined;
   }
 
   private async sendPoke(target: DsUser, initiator: DsUser): Promise<Message> {

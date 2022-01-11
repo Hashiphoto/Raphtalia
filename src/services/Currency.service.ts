@@ -52,13 +52,13 @@ export default class CurrencyService {
 
     if (process.env.NODE_ENV === Env.Dev) {
       console.log(
-        `${member.displayName}\n` +
-          `Last interaction: ${
+        `Payout ${member.displayName}\n` +
+          `\tLast interaction: ${
             dbUser.lastMessageDate ? dbUser.lastMessageDate.toLocaleString() : "never"
           }.\n` +
-          `This interaction ${interactionDate.toLocaleString()}\n` +
-          `Time interval: ${timeElapsed} seconds\n` +
-          `Payout: rate (${guild.messageRate}) * time (${timeScalar}) * role (${roleScalar}) = ${payout}\n\n`
+          `\tThis interaction ${interactionDate.toLocaleString()}\n` +
+          `\tTime interval: ${timeElapsed} seconds\n` +
+          `\tPayout: rate (${guild.messageRate}) * time (${timeScalar}) * role (${roleScalar}) = ${payout}\n\n`
       );
     }
 
