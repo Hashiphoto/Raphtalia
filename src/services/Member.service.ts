@@ -213,12 +213,14 @@ export default class MemberService {
   ): Promise<void> {
     const discordRole = this._roleService.convertToRole(member.guild, roleResolvable);
     if (!discordRole) {
+      console.error(`Role ${roleResolvable} does not exist`);
       throw new RaphError(Result.NotFound);
     }
 
     const role = await this._roleService.getRole(discordRole.id);
 
     if (!force && !role.unlimited && discordRole.members.size >= role.memberLimit) {
+      console.error(`Role ${role.id} is full`);
       throw new RaphError(Result.Full);
     }
 

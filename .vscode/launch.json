@@ -11,8 +11,6 @@
       "runtimeArgs": ["-r", "ts-node/register"],
       "cwd": "${workspaceRoot}",
       "args": ["${workspaceFolder}/src/Bot.ts"],
-      "preLaunchTask": "devConnectToDb",
-      "postDebugTask": "devDisconnectFromDb",
       "env": {
         "NODE_ENV": "dev"
       },
