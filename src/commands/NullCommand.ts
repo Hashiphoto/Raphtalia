@@ -3,9 +3,7 @@ import CommandMessage from "../models/CommandMessage";
 import { ICommandProps } from "../interfaces/CommandInterfaces";
 import RaphError from "../models/RaphError";
 import { Result } from "../enums/Result";
-import { autoInjectable } from "tsyringe";
 
-@autoInjectable()
 export default class NullCommand extends Command<ICommandProps> {
   private text: string | undefined;
 
