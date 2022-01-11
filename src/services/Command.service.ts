@@ -94,7 +94,7 @@ export default class CommandService {
       cmdMessage.message.channel.isText() &&
         (await this._channelService.watchSend(
           cmdMessage.message.channel as TextChannel,
-          error.message
+          error.message ?? `Encountered an error executing the ${command.name} command`
         ));
       return cmdMessage.message.react("🛑");
     }
