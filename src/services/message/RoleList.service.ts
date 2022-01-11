@@ -1,5 +1,5 @@
 import { EmbedFieldData, Guild as DsGuild, MessageEmbed } from "discord.js";
-import { inject, injectable } from "tsyringe";
+import { delay, inject, injectable } from "tsyringe";
 import CensorshipService from "../Censorship.service";
 import ChannelService from "../Channel.service";
 import GuildService from "../Guild.service";
@@ -9,10 +9,10 @@ import EmbedMessageManager from "./EmbedMessage.service";
 @injectable()
 export default class RoleListService extends EmbedMessageManager {
   public constructor(
-    @inject(GuildService) protected guildService: GuildService,
-    @inject(ChannelService) protected channelService: ChannelService,
-    @inject(CensorshipService) protected censorshipService: CensorshipService,
-    @inject(RoleService) private _roleService: RoleService
+    @inject(delay(() => GuildService)) protected guildService: GuildService,
+    @inject(delay(() => ChannelService)) protected channelService: ChannelService,
+    @inject(delay(() => CensorshipService)) protected censorshipService: CensorshipService,
+    @inject(delay(() => RoleService)) private _roleService: RoleService
   ) {
     super(guildService, channelService, censorshipService);
 
@@ -38,10 +38,12 @@ export default class RoleListService extends EmbedMessageManager {
   private async getFields(guild: DsGuild): Promise<EmbedFieldData[]> {
     const fields = [];
 
-    const discordRoles = guild.roles.cache
-      .filter((role) => role.hoist)
-      .sort((a, b) => b.comparePositionTo(a))
-      .array();
+    const discordRoles = [
+      ...guild.roles.cache
+        .filter((role) => role.hoist)
+        .sort((a, b) => b.comparePositionTo(a))
+        .values(),
+    ];
 
     for (let i = 0; i < discordRoles.length; i++) {
       const dbRole = await this._roleService.getRole(discordRoles[i].id);

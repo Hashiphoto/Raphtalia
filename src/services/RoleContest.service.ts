@@ -52,7 +52,7 @@ export default class RoleContestService {
 
     const embed = await this.getStatusEmbed(contestedRole);
 
-    const message = await channel.send({ content, embed });
+    const message = await channel.send({ content, embeds: [embed] });
 
     await this._roleRepository.insertRoleContest(
       contestedRole.id,
@@ -82,7 +82,7 @@ export default class RoleContestService {
       updatedRoleContest.messageId
     );
     if (contestStatusMessage) {
-      contestStatusMessage.edit({ embed: await this.getStatusEmbed(role, updatedRoleContest) });
+      contestStatusMessage.edit({ embeds: [await this.getStatusEmbed(role, updatedRoleContest)] });
     }
 
     return updatedRoleContest;
@@ -102,7 +102,7 @@ export default class RoleContestService {
       if (!role || !contestor) {
         return "";
       }
-      const participants = role.members.array();
+      const participants = [...role.members.values()];
       participants.push(contestor);
 
       // If there are no bids, everyone loses

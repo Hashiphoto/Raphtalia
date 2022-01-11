@@ -125,15 +125,6 @@ export default class GuildInventoryRepository extends Repository {
     ]);
   }
 
-  public async updateGuildItem(item: GuildItem): Promise<void> {
-    await this.pool
-      .query(
-        "UPDATE guild_inventory SET price=?, max_uses=?, quantity=?, max_quantity=? WHERE guild_id=? AND item_id=?",
-        [item.price, item.maxUses, item.quantity, item.maxQuantity, item.guildId, item.id]
-      )
-      .then(() => this.pool.query("UPDATE items SET name=? WHERE id=?", [item.name, item.id]));
-  }
-
   public async resetStoreCycle(guildId: string): Promise<void> {
     await this.pool.query("UPDATE guild_inventory SET sold_in_cycle=0 WHERE guild_id=?", [guildId]);
   }

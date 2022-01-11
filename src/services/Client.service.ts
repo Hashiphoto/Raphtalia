@@ -1,11 +1,9 @@
-import { Client, Guild as DsGuild, GuildMember } from "discord.js";
+import { Client, Guild as DsGuild, GuildMember, Intents } from "discord.js";
 
 import RaphError from "../models/RaphError";
 import { Result } from "../enums/Result";
+import configureRoutes from "../routes/client.router";
 import dayjs from "dayjs";
-import guildMemberRoute from "../routes/guildMember.route";
-import messageRoute from "../routes/message.route";
-import reactionRoute from "../routes/reaction.route";
 import secretConfig from "../config/secrets.config";
 import { singleton } from "tsyringe";
 
@@ -14,14 +12,29 @@ class ClientService {
   private _client: Client;
 
   public constructor() {
-    this._client = new Client();
+    if (!this._client) {
+      this._client = new Client({
+        intents: [
+          Intents.FLAGS.GUILDS,
+          Intents.FLAGS.GUILD_WEBHOOKS,
+          Intents.FLAGS.GUILD_MEMBERS,
+          Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
+          Intents.FLAGS.GUILD_MESSAGES,
+          Intents.FLAGS.DIRECT_MESSAGES,
+          Intents.FLAGS.DIRECT_MESSAGE_REACTIONS,
+          Intents.FLAGS.GUILD_VOICE_STATES,
+        ],
+      });
+    }
   }
 
-  public getClient(): Client {
-    return this._client;
-  }
-
+  /**
+   * This must be run once after initialization
+   */
   public async login(): Promise<void> {
+    if (!this._client) {
+      throw new RaphError(Result.ProgrammingError, "client is undefined");
+    }
     this._client.once("ready", () => {
       console.log(
         `NODE_ENV: ${process.env.NODE_ENV} | ${dayjs(
@@ -41,9 +54,11 @@ class ClientService {
   }
 
   public async configureRoutes(): Promise<void> {
-    messageRoute(this._client);
-    guildMemberRoute(this._client);
-    reactionRoute(this._client);
+    configureRoutes(this._client);
+  }
+
+  public getClient(): Client {
+    return this._client;
   }
 
   public getRaphtaliaMember(guild: DsGuild): GuildMember {

@@ -16,11 +16,10 @@ export default class ScreeningQuestion extends Question {
   }
 
   public toString() {
-    // Slice is to cut off the regexp (^...$) surrounding them
     return (
       `**ID: ${this.id}** | Time Limit: ${this.timeout}ms ` +
       `${this.strict ? " | strict" : ""}\n${this.prompt} \n` +
-      `*${this.answer?.slice(1, this.answer.length - 1)}*\n\n`
+      `*${this.answer}*\n\n`
     );
   }
 }

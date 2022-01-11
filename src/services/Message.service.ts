@@ -1,7 +1,15 @@
 import delay from "delay";
-import { Client, Message } from "discord.js";
+import {
+  Client,
+  Message,
+  MessageReaction,
+  PartialMessageReaction,
+  PartialUser,
+  TextChannel,
+  User as DsUser,
+} from "discord.js";
 import { delay as tsDelay, inject, injectable } from "tsyringe";
-import CommmandMessage from "../models/CommandMessage";
+import CommandMessage from "../models/CommandMessage";
 import CensorshipService from "./Censorship.service";
 import ChannelService from "./Channel.service";
 import ClientService from "./Client.service";
@@ -25,12 +33,12 @@ export default class MessageService {
   /**
    * Process a guild member's channel message
    */
-  public async handleMessage(message: Message): Promise<void> {
+  public async handleGuildMessage(message: Message): Promise<void> {
     // Delete the "Raphtalia has pinned a message to this channel" message
     if (
       this._client.user &&
       this._client.user.id === message.author.id &&
-      message.type === "PINS_ADD"
+      message.type === "CHANNEL_PINNED_MESSAGE"
     ) {
       await message.delete();
       return;
@@ -38,14 +46,18 @@ export default class MessageService {
 
     // Unhandlded cases
     if (
-      message.channel.type === "dm" ||
+      message.channel.type === "DM" ||
       message.type !== "DEFAULT" ||
-      message.channel.type === "news" ||
+      message.channel.type === "GUILD_NEWS" ||
       !message.guild
     ) {
       return;
     }
 
+    return this.handleMessage(message);
+  }
+
+  public async handleMessage(message: Message): Promise<void> {
     // Delete the incoming message
     let deleteTime = await this._channelService.getDeleteTime(message.channel);
     if (message.author.bot) {
@@ -54,17 +66,59 @@ export default class MessageService {
     this.delayedDelete(message, deleteTime);
 
     // Process command
-    if (message.content.startsWith(CommmandMessage.COMMAND_PREFIX)) {
+    if (message.content.startsWith(CommandMessage.COMMAND_PREFIX)) {
       await this._commandService.processMessage(message);
       await this._currencyService.payoutMessageAuthor(message);
     }
-    // Censor non-commands
-    else {
+    // Censor non-commands that didn't come from the bot
+    else if (message.author.id !== this._client.user?.id) {
       const censored = await this._censorshipService.censorMessage(message);
       if (!censored) {
         await this._currencyService.payoutMessageAuthor(message);
       }
     }
+  }
+
+  public async handleReactionAdd(
+    messageReaction: MessageReaction | PartialMessageReaction,
+    user: DsUser | PartialUser
+  ): Promise<void> {
+    const message = messageReaction.message.partial
+      ? await messageReaction.message.fetch()
+      : messageReaction.message;
+    if (!user || !(message.channel instanceof TextChannel) || !message.guild) {
+      return;
+    }
+    // Only pay users for their first reaction to a message
+    if (message.reactions.cache.filter((e) => !!e.users.cache.get(user.id)).size > 1) {
+      return;
+    }
+    const guildMember = message.guild.members.cache.get(user.id);
+    if (!guildMember) {
+      return;
+    }
+    this._currencyService.payoutReaction(guildMember, message);
+  }
+
+  public async handleReactionRemove(
+    messageReaction: MessageReaction | PartialMessageReaction,
+    user: DsUser | PartialUser
+  ): Promise<void> {
+    const message = messageReaction.message.partial
+      ? await messageReaction.message.fetch()
+      : messageReaction.message;
+    if (!user || !(message.channel instanceof TextChannel) || !message.guild) {
+      return;
+    }
+    // Only subtract money for removing the user's only remaining reaction
+    if (message.reactions.cache.filter((r) => !!r.users.cache.get(user.id)).size > 0) {
+      return;
+    }
+    const guildMember = message.guild.members.cache.get(user.id);
+    if (!guildMember) {
+      return;
+    }
+    this._currencyService.payoutReaction(guildMember, message, true);
   }
 
   /**
@@ -75,8 +129,12 @@ export default class MessageService {
       return;
     }
     await delay(timeMs);
+    const sentByRaph = message.author.id === this._client.user?.id;
+    if (sentByRaph && message.pinned) {
+      return;
+    }
     message.delete().catch((error) => {
-      // Message was manually deleted
+      // Message no longer exists
       if (error.name === "DiscordAPIError" && error.message === "Unknown Message") {
         return;
       }

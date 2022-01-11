@@ -59,23 +59,28 @@ export default class RoleService {
   }
 
   /**
+   * Get the highest hoisted role in the guild
+   */
+  public getLeaderRole(guild: DsGuild): DsRole | undefined {
+    return this.getHoistedRoles(guild).first();
+  }
+
+  /**
    * Returns the hoisted role one lower than the given role
    */
-  public getNextLower(role: DsRole, guild: DsGuild): DsRole {
+  public getNextLower(role: DsRole, guild: DsGuild): DsRole | undefined {
     return guild.roles.cache
       .filter((r) => r.comparePositionTo(role) < 0 && r.hoist)
       .sort((role1, role2) => {
         return role1.comparePositionTo(role2);
       })
-      .array()[0];
+      .first();
   }
 
   public async getCreateExileRole(guild: DsGuild): Promise<DsRole> {
     let exileRole = guild.roles.cache.find((r) => r.name === "Exile");
     if (!exileRole) {
-      exileRole = await guild.roles.create({
-        data: { name: "Exile", hoist: false, color: "#010000" },
-      });
+      exileRole = await guild.roles.create({ name: "Exile", hoist: false, color: "#010000" });
       exileRole.setPosition(guild.roles.cache.size - 2);
     }
     return exileRole;
@@ -84,9 +89,7 @@ export default class RoleService {
   public async getCreateVoterRole(guild: DsGuild): Promise<DsRole> {
     let voterRole = guild.roles.cache.find((r) => r.name === "Voter");
     if (!voterRole) {
-      voterRole = await guild.roles.create({
-        data: { name: "Voter", hoist: false, color: "#4cd692" },
-      });
+      voterRole = await guild.roles.create({ name: "Voter", hoist: false, color: "#4cd692" });
     }
     return voterRole;
   }

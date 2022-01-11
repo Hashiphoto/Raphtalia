@@ -3,6 +3,14 @@ import duration, { Duration } from "dayjs/plugin/duration";
 
 dayjs.extend(duration);
 
+// Discord markdown methods
+export const bold = (text: string): string => `**${text}**`;
+export const italicize = (text: string): string => `*${text}*`;
+
+export const buildCustomId = (...args: string[]): string => {
+  return args.join("|");
+};
+
 /**
  * @param {Number} amount
  * @returns {Number}
@@ -115,10 +123,6 @@ const listFormat = (itemArray: string[], conjunction = "and"): string => {
   return output;
 };
 
-const sumString = (a: string, b: string): string => {
-  return a + b;
-};
-
 export enum Format {
   Integer,
   Dollar,
@@ -139,4 +143,4 @@ const print = (amount: number, format: Format): string => {
   }
 };
 
-export { round, formatDate, random, parseDuration, parseNumber, listFormat, sumString, print };
+export { round, formatDate, random, parseDuration, parseNumber, listFormat, print };

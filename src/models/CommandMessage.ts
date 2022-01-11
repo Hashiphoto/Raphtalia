@@ -1,6 +1,6 @@
 import { Guild as DsGuild, Role as DsRole, GuildMember, Message } from "discord.js";
 
-export default class CommmandMessage {
+export default class CommandMessage {
   public static COMMAND_PREFIX = "!";
   public message: Message;
 
@@ -13,10 +13,14 @@ export default class CommmandMessage {
     this.message = message;
   }
 
+  public static GetArgs(content: string): string[] {
+    return content.toLowerCase().split(/\s+/);
+  }
+
   // Every word in the message, separated by whitespace
   public get allArgs(): string[] {
     if (!this._args) {
-      this._args = this.message.content.toLowerCase().split(/\s+/);
+      this._args = CommandMessage.GetArgs(this.message.content);
     }
     return this._args;
   }
@@ -28,14 +32,14 @@ export default class CommmandMessage {
 
   // The command is the first word in the message minus the prefix
   public get command(): string {
-    return this.allArgs[0].slice(CommmandMessage.COMMAND_PREFIX.length);
+    return this.allArgs[0].slice(CommandMessage.COMMAND_PREFIX.length);
   }
 
   // The content, without the leading command
   public get parsedContent(): string {
     if (!this._parsedContent) {
       this._parsedContent = this.message.content
-        .slice(CommmandMessage.COMMAND_PREFIX.length + this.command.length)
+        .slice(CommandMessage.COMMAND_PREFIX.length + this.command.length)
         .trim();
     }
     return this._parsedContent;
@@ -108,6 +112,6 @@ export default class CommmandMessage {
     if (!role) {
       return [];
     }
-    return role.members.array();
+    return [...role.members.values()];
   }
 }

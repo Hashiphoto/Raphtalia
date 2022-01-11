@@ -1,13 +1,12 @@
-import { GuildMember, TextChannel } from "discord.js";
-
 import Command from "./Command";
-import CommmandMessage from "../models/CommandMessage";
+import CommandMessage from "../models/CommandMessage";
+import { ICommandProps } from "../interfaces/CommandInterfaces";
 import RaphError from "../models/RaphError";
 import { Result } from "../enums/Result";
 import { autoInjectable } from "tsyringe";
 
 @autoInjectable()
-export default class NullCommand extends Command {
+export default class NullCommand extends Command<ICommandProps> {
   private text: string | undefined;
 
   public constructor(text?: string) {
@@ -16,15 +15,18 @@ export default class NullCommand extends Command {
     this.text = text;
   }
 
-  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
-    this.channel = cmdMessage.message.channel as TextChannel;
-    return this.execute(cmdMessage.message.member);
+    this.channel = cmdMessage.message.channel;
+    // We don't call runWithItem since the user might not have
+    // the right item, or they could be in exile
+    await this.execute();
   }
 
-  public async execute(initiator: GuildMember): Promise<any> {
-    return this.reply(this.text ?? "Error");
+  public async execute(): Promise<number | undefined> {
+    this.reply(this.text ?? "Error");
+    return;
   }
 }

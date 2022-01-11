@@ -1,11 +1,12 @@
-import { GuildMember, TextChannel } from "discord.js";
+import { TextBasedChannels, TextChannel } from "discord.js";
 
-import Command from "./Command";
-import CommmandMessage from "../models/CommandMessage";
-import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
+import Command from "../Command";
+import CommandMessage from "../../models/CommandMessage";
+import { IArgsProps } from "../../interfaces/CommandInterfaces";
+import RaphError from "../../models/RaphError";
+import { Result } from "../../enums/Result";
 import { autoInjectable } from "tsyringe";
-import { parseDuration } from "../utilities/Util";
+import { parseDuration } from "../../utilities/Util";
 
 enum Args {
   ACTION,
@@ -13,16 +14,17 @@ enum Args {
 }
 
 @autoInjectable()
-export default class AutoDelete extends Command {
+export default class AutoDelete extends Command<IArgsProps> {
   public constructor() {
     super();
     this.name = "AutoDelete";
     this.instructions =
-      "**AutoDelete**\nEnable or disable automatic message deletion in this channel. If deletion delay is not specified, default 2000ms will be used";
-    this.usage = "Usage: `AutoDelete (start|stop) [1ms]`";
+      "Enable or disable automatic message deletion in this channel. If deletion delay is not specified, default 2000ms will be used";
+    this.usage = "`AutoDelete (start|stop) [1ms]`";
+    this.aliases = [this.name.toLowerCase()];
   }
 
-  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {
     if (!cmdMessage.message.member) {
       throw new RaphError(Result.NoGuild);
     }
@@ -33,11 +35,12 @@ export default class AutoDelete extends Command {
       return;
     }
 
-    return this.execute(cmdMessage.message.member, cmdMessage.args);
+    await this.runWithItem({ initiator: cmdMessage.message.member, args: cmdMessage.args });
   }
 
-  public async execute(initiator: GuildMember, args: string[]): Promise<void> {
-    if (!this.channel) {
+  public async execute(props: IArgsProps): Promise<number | undefined> {
+    const { args } = props;
+    if (!this.channel || !((this.channel as TextChannel)?.type === "GUILD_TEXT")) {
       throw new RaphError(Result.ProgrammingError, "The channel is undefined");
     }
 
@@ -59,12 +62,15 @@ export default class AutoDelete extends Command {
         );
         return;
       }
-      await this.channelService?.setAutoDelete(this.channel.id, delayMs.asMilliseconds());
+      await this.channelService?.setAutoDelete(
+        (this.channel as TextBasedChannels).id,
+        delayMs.asMilliseconds()
+      );
       response = `Messages are deleted after ${delayMs.asMilliseconds()}ms`;
     }
     // AUTO DELETE OFF
     else if (args[Args.ACTION] === "stop") {
-      await this.channelService?.setAutoDelete(this.channel.id, -1);
+      await this.channelService?.setAutoDelete((this.channel as TextBasedChannels).id, -1);
       response = "Messages are no longer deleted";
     }
     // ERROR
@@ -73,8 +79,8 @@ export default class AutoDelete extends Command {
       return;
     }
 
-    this.channel.setTopic(response);
+    (this.channel as TextChannel)?.setTopic(response);
     this.reply(response);
-    this.useItem(initiator);
+    return 1;
   }
 }

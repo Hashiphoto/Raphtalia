@@ -40,17 +40,17 @@ const init = async () => {
   }
 
   /**
+   * Start Discord client
+   */
+  const clientService = container.resolve(ClientService);
+  await clientService.login();
+  clientService.configureRoutes();
+
+  /**
    * Start CRON jobs
    */
   const jobService = container.resolve(JobService);
   jobService.start();
-
-  /**
-   * Start Discord client
-   */
-  const clientService = container.resolve(ClientService);
-  clientService.login();
-  clientService.configureRoutes();
 };
 
 init();

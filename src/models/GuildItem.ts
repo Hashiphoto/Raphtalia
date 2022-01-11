@@ -1,7 +1,6 @@
 import { Format, print } from "../utilities/Util";
-
-import CommandItem from "./ItemCommand";
 import Item from "./Item";
+import CommandItem from "./ItemCommand";
 
 export default class GuildItem extends Item {
   public price: number;
@@ -41,8 +40,9 @@ export default class GuildItem extends Item {
   public getDetails(): string {
     const price = `Price: ${print(this.price, Format.Dollar)}\n`;
     const uses = `Uses: ${this.unlimitedUses ? "∞" : this.maxUses}\n`;
-    const quantity =
-      `Quantity: ` + (this.unlimitedQuantity ? "∞" : `${this.quantity}/${this.maxQuantity}`) + `\n`;
+    const quantity = `Quantity: ${
+      this.unlimitedQuantity ? "∞" : `${this.quantity}/${this.maxQuantity}`
+    }\n`;
 
     return price + uses + quantity + this.printCommands();
   }

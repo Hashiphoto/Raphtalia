@@ -31,11 +31,6 @@ export default class InventoryService {
     return this._guildInventoryRepo.findGuildItem(guildId, name);
   }
 
-  public async updateGuildItem(guild: DsGuild, item: GuildItem): Promise<void> {
-    await this._guildInventoryRepo.updateGuildItem(item);
-    this._guildStoreService.update(guild);
-  }
-
   public async subtractGuildStock(
     guild: DsGuild,
     item: GuildItem,

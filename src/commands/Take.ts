@@ -1,26 +1,28 @@
 import { GuildMember, TextChannel } from "discord.js";
-import { parseNumber, sumString } from "../utilities/Util";
 
 import Command from "./Command";
-import CommmandMessage from "../models/CommandMessage";
+import CommandMessage from "../models/CommandMessage";
 import CurrencyService from "../services/Currency.service";
+import { ITransferProps } from "../interfaces/CommandInterfaces";
 import Item from "../models/Item";
 import RaphError from "../models/RaphError";
 import { Result } from "../enums/Result";
 import { autoInjectable } from "tsyringe";
+import { parseNumber } from "../utilities/Util";
 
 @autoInjectable()
-export default class Take extends Command {
+export default class Take extends Command<ITransferProps> {
   public constructor(protected currencyService?: CurrencyService) {
     super();
     this.name = "Take";
     this.instructions =
-      "**Take**\nTake money or items from the specified user. " +
+      "Take money or items from the specified user. " +
       "You can take money from multiple users at once, but only one item from one user at a time.";
-    this.usage = "Usage: `Take @member ($1|item name)`";
+    this.usage = "`Take @member ($1|item name)`";
+    this.aliases = [this.name.toLowerCase()];
   }
 
-  public async executeDefault(cmdMessage: CommmandMessage): Promise<void> {
+  public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {
     if (!cmdMessage.message.member || !cmdMessage.message.guild) {
       throw new RaphError(Result.NoGuild);
     }
@@ -36,24 +38,30 @@ export default class Take extends Command {
       itemName
     );
 
-    return this.execute(cmdMessage.message.member, cmdMessage.memberMentions, amount, guildItem);
+    await this.runWithItem({
+      initiator: cmdMessage.message.member,
+      targets: cmdMessage.memberMentions,
+      amount,
+      item: guildItem,
+    });
   }
 
-  public async execute(
-    initiator: GuildMember,
-    targets: GuildMember[],
-    amount?: number,
-    item?: Item
-  ): Promise<any> {
+  public async execute({
+    initiator,
+    targets,
+    amount,
+    item,
+  }: ITransferProps): Promise<number | undefined> {
     if (targets.length === 0) {
       return this.sendHelpMessage();
     }
 
     if (!this.item.unlimitedUses && targets.length > this.item.remainingUses) {
-      return this.reply(
+      await this.reply(
         `Your ${this.item.name} does not have enough charges. ` +
           `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
       );
+      return;
     }
 
     if (!amount && !item) {
@@ -69,8 +77,8 @@ export default class Take extends Command {
       response += await this.transferItem(initiator, targets, item);
     }
 
-    await this.useItem(initiator, targets.length);
     await this.reply(response);
+    return targets.length;
   }
 
   protected async transferMoney(
@@ -79,7 +87,7 @@ export default class Take extends Command {
     amount: number
   ): Promise<string> {
     if (amount < 0) {
-      return "You cannot take a negative amount of money\n";
+      return "You cannot transfer a negative amount of money\n";
     }
 
     const moneyPromises = targets.map((target) => {
@@ -91,7 +99,7 @@ export default class Take extends Command {
         );
     });
 
-    return Promise.all(moneyPromises).then((messages) => messages.reduce(sumString) ?? "");
+    return Promise.all(moneyPromises).then((messages) => messages.join(""));
   }
 
   protected async transferItem(
@@ -112,6 +120,6 @@ export default class Take extends Command {
         );
     });
 
-    return Promise.all(itemPromises).then((messages) => messages.reduce(sumString) ?? "");
+    return Promise.all(itemPromises).then((messages) => messages.join(""));
   }
 }
