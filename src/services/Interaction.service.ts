@@ -26,8 +26,8 @@ export default class InteractionService {
       } catch (e) {
         console.error(e);
         const errorText = "Something went wrong!";
-        interaction.replied || interaction.replied
-          ? interaction.followUp(errorText)
+        interaction.deferred || interaction.replied
+          ? interaction.editReply(errorText)
           : interaction.reply(errorText);
       }
     }
@@ -39,7 +39,9 @@ export default class InteractionService {
     if (interactionHandler) {
       interactionHandler(interaction);
     } else {
-      interaction.reply(`I don't know how to handle this command: ${interaction.commandName}`);
+      const errMsg = `I don't know how to handle this command: ${interaction.commandName}`;
+      console.error(errMsg);
+      interaction.reply(errMsg);
     }
   }
 }

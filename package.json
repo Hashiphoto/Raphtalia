@@ -1,6 +1,6 @@
 {
   "name": "raphtalia",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A discord bot to assist with managing the Gulag",
   "main": "Bot.ts",
   "scripts": {

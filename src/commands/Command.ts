@@ -140,17 +140,20 @@ export default class Command<T extends ICommandProps> {
       `Auto-purchasing item ${guildItem.name} for ${initiator.displayName} for command ${this.name}`
     );
     return this.inventoryService.userPurchase(initiator, guildItem).catch(async (error) => {
-      let resultMessage = `You can't use the ${bold(
-        this.name
-      )} command because you don't own any ${guildItem.printName()}. Try using the Buy command.`;
+      let resultMessage: string;
 
+      const autoPurchaseError = `You need a ${guildItem.printName()} to execute this command. Could not auto-purchase one for you because`;
       switch (error.result) {
         case Result.OutOfStock:
-          resultMessage = `Could not auto-purchase ${guildItem.printName()} because it is currently out of stock`;
+          resultMessage = `${autoPurchaseError} it is currently out of stock`;
           break;
         case Result.TooPoor:
-          resultMessage = `Could not auto-purchase ${guildItem.printName()} because you're too poor. Current price: ${guildItem.printPrice()}`;
+          resultMessage = `${autoPurchaseError} you're too poor. Current price: ${guildItem.printPrice()}`;
           break;
+        default:
+          resultMessage = `You can't use the ${bold(
+            this.name
+          )} command because you don't own any ${guildItem.printName()}. Try using the Buy command.`;
       }
       await this.reply(resultMessage);
       return undefined;
