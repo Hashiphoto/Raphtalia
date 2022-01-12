@@ -22,6 +22,7 @@ import Help from "../commands/public/Help";
 import Pardon from "../commands/public/Pardon";
 import Play from "../commands/public/Play";
 import Poke from "../commands/public/Poke";
+import Poll from "../commands/public/Poll";
 import Promote from "../commands/public/Promote";
 import Scan from "../commands/public/Scan";
 import Status from "../commands/public/Status";
@@ -52,6 +53,7 @@ export default class CommandService {
       new Help(),
       new Pardon(),
       new Play(),
+      new Poll(),
       new Poke(),
       new Promote(),
       new Roles(),

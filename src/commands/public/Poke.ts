@@ -124,7 +124,7 @@ export default class Poke extends Command<ITargettedProps> {
           .setCustomId(buildCustomId(RaphtaliaInteraction.ButtonPokeBack, initiator.id))
       );
       return dmChannel.send({
-        content: `${initiator.toString()} poked you!`,
+        content: `**${initiator.username}** poked you!`,
         components: [row],
       });
     });

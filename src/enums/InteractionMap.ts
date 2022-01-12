@@ -11,6 +11,7 @@ import { Interaction } from "discord.js";
 import Pardon from "../commands/public/Pardon";
 import Play from "../commands/public/Play";
 import Poke from "../commands/public/Poke";
+import Poll from "../commands/public/Poll";
 import Promote from "../commands/public/Promote";
 import { RaphtaliaInteraction } from "./Interactions";
 import Scan from "../commands/public/Scan";
@@ -37,6 +38,7 @@ export const InteractionMap: {
   [RaphtaliaInteraction.Pardon]: new Pardon().pardon,
   [RaphtaliaInteraction.Play]: new Play().play,
   [RaphtaliaInteraction.Promote]: new Promote().promote,
+  [RaphtaliaInteraction.Poll]: new Poll().poll,
   [RaphtaliaInteraction.Poke]: new Poke().poke,
   [RaphtaliaInteraction.Scan]: new Scan().scan,
   [RaphtaliaInteraction.Screening]: new Screening().screening,

@@ -14,6 +14,7 @@ export enum RaphtaliaInteraction {
   Exile = "exile",
   Pardon = "pardon",
   Play = "play",
+  Poll = "poll",
   Promote = "promote",
   Poke = "poke",
   Scan = "scan",
