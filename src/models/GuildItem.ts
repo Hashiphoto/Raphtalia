@@ -24,13 +24,13 @@ export default class GuildItem extends Item {
   ) {
     super(id, guildId, name, maxUses, quantity, isStealProtected, commands);
 
-    // override logic
-    this.unlimitedQuantity = this.quantity < 0 || this.maxQuantity < 0;
-
     this.price = price;
     this.maxQuantity = maxQuantity;
     this.soldInCycle = soldInCycle;
     this.dateLastSold = dateLastSold;
+
+    // override logic
+    this.unlimitedQuantity = this.quantity < 0 || this.maxQuantity < 0;
   }
 
   public inStock(): boolean {
