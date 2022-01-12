@@ -38,24 +38,27 @@ export default class RoleListService extends EmbedMessageManager {
   private async getFields(guild: DsGuild): Promise<EmbedFieldData[]> {
     const fields = [];
 
-    const discordRoles = [
-      ...guild.roles.cache
-        .filter((role) => role.hoist)
-        .sort((a, b) => b.comparePositionTo(a))
-        .values(),
-    ];
+    const allRoles = await guild.roles.fetch(undefined, { force: true });
+    const hoistedRoles = allRoles
+      .filter((role) => role.hoist)
+      .sort((a, b) => b.comparePositionTo(a))
+      .values();
 
-    for (let i = 0; i < discordRoles.length; i++) {
-      const dbRole = await this._roleService.getRole(discordRoles[i].id);
-      let roleInfo = `Members: ${discordRoles[i].members.size}`;
+    let iterable = hoistedRoles.next();
+    while (!iterable.done) {
+      const role = iterable.value;
+      const dbRole = await this._roleService.getRole(role.id);
+      let roleInfo = `Members: ${role.members.size}`;
       if (dbRole.memberLimit >= 0) {
         roleInfo += `/${dbRole.memberLimit}`;
       }
       fields.push({
-        name: discordRoles[i].name,
+        name: role.name,
         value: roleInfo,
         inline: true,
       });
+
+      iterable = hoistedRoles.next();
     }
 
     return fields;
