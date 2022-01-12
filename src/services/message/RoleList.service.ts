@@ -38,6 +38,9 @@ export default class RoleListService extends EmbedMessageManager {
   private async getFields(guild: DsGuild): Promise<EmbedFieldData[]> {
     const fields = [];
 
+    // Refresh member cache
+    await guild.members.fetch({ force: true });
+
     const allRoles = await guild.roles.fetch(undefined, { force: true });
     const hoistedRoles = allRoles
       .filter((role) => role.hoist)
