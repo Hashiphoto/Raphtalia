@@ -1,6 +1,7 @@
 import { Format, print } from "../utilities/Util";
-import Item from "./Item";
+
 import CommandItem from "./ItemCommand";
+import Item from "./Item";
 
 export default class GuildItem extends Item {
   public price: number;
@@ -22,6 +23,9 @@ export default class GuildItem extends Item {
     dateLastSold: Date
   ) {
     super(id, guildId, name, maxUses, quantity, isStealProtected, commands);
+
+    // override logic
+    this.unlimitedQuantity = this.quantity < 0 || this.maxQuantity < 0;
 
     this.price = price;
     this.maxQuantity = maxQuantity;
