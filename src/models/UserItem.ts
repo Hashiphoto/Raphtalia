@@ -6,9 +6,10 @@ export default class UserItem extends GuildItem {
   public remainingUses: number;
   public datePurchased: Date;
   public userId: string;
+  public id?: string;
 
   public constructor(
-    id: string,
+    itemId: string,
     guildId: string,
     name: string,
     maxUses: number,
@@ -21,10 +22,11 @@ export default class UserItem extends GuildItem {
     dateLastSold: Date,
     remainingUses: number,
     datePurchased: Date,
-    userId: string
+    userId: string,
+    id?: string
   ) {
     super(
-      id,
+      itemId,
       guildId,
       name,
       maxUses,
@@ -40,6 +42,7 @@ export default class UserItem extends GuildItem {
     this.remainingUses = remainingUses;
     this.datePurchased = datePurchased;
     this.userId = userId;
+    this.id = id;
   }
 
   public get stealDc(): number {
@@ -58,7 +61,7 @@ export default class UserItem extends GuildItem {
    */
   public copy(): UserItem {
     return new UserItem(
-      this.id,
+      this.itemId,
       this.guildId,
       this.name,
       this.maxUses,
@@ -71,7 +74,8 @@ export default class UserItem extends GuildItem {
       this.dateLastSold,
       this.remainingUses,
       this.datePurchased,
-      this.userId
+      this.userId,
+      this.id
     );
   }
 

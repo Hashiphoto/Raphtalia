@@ -101,7 +101,7 @@ export default class GuildInventoryRepository extends Repository {
 
     await this.pool.query(
       `UPDATE guild_inventory SET quantity=quantity+? ${updateDateSold} ${increaseSoldQuery} WHERE guild_id=? AND item_id=?`,
-      [quantityChange, guildId, item.id]
+      [quantityChange, guildId, item.itemId]
     );
   }
 
@@ -113,7 +113,7 @@ export default class GuildInventoryRepository extends Repository {
   ): Promise<void> {
     await this.pool.query(
       `UPDATE guild_inventory SET sold_in_cycle=sold_in_cycle+?, date_last_sold=? WHERE guild_id=? AND item_id=?`,
-      [soldInCycle, soldDateTime, guildId, item.id]
+      [soldInCycle, soldDateTime, guildId, item.itemId]
     );
   }
 
@@ -121,7 +121,7 @@ export default class GuildInventoryRepository extends Repository {
     await this.pool.query("UPDATE guild_inventory SET price=? WHERE guild_id=? and item_id=?", [
       newPrice,
       guildId,
-      item.id,
+      item.itemId,
     ]);
   }
 
@@ -132,7 +132,7 @@ export default class GuildInventoryRepository extends Repository {
   private async toGuildItem(row: RowDataPacket) {
     const commands = await this._commandRepository.getCommandsForItem(row.id);
     return new GuildItem(
-      row.id,
+      row.item_id,
       row.guild_id,
       row.name,
       row.max_uses,

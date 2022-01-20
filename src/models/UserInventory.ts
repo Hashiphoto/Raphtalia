@@ -12,7 +12,7 @@ export default class UserInventory {
   }
 
   public toEmbed() {
-    const fields = this.items.map((item) => {
+    const fields = this.getAggregatedItems().map((item) => {
       return {
         name: item.getFormattedName(),
         value: item.getDetails(),
@@ -29,5 +29,22 @@ export default class UserInventory {
     fields.forEach((field) => embed.addField(field.name, field.value, field.inline));
 
     return embed;
+  }
+
+  /**
+   * Combine items sharing the same item id
+   */
+  private getAggregatedItems(): UserItem[] {
+    const itemMap = new Map<string, UserItem>();
+    this.items.forEach((userItem) => {
+      const item = itemMap.get(userItem.itemId);
+      if (item) {
+        item.quantity += userItem.quantity;
+        item.remainingUses += userItem.remainingUses;
+      } else {
+        itemMap.set(userItem.itemId, userItem);
+      }
+    });
+    return Array.from(itemMap, ([, userItem]) => userItem);
   }
 }

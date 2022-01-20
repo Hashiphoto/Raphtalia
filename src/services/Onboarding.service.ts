@@ -37,6 +37,13 @@ export default class OnboardingService {
       throw new RaphError(Result.NotFound, "There is no system channel set for the guild");
     }
 
+    if (member.user.bot) {
+      await this._channelService.watchSend(channel, {
+        content: `Welcome fellow bot, ${member.displayName}, to ${member.guild.name}! 🎉🎉🎉`,
+      });
+      return;
+    }
+
     await this._memberService.setHoistedRole(member, discordConfig().roles.immigrant);
     await this._channelService.watchSend(channel, {
       content:

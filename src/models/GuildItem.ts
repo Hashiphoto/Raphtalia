@@ -10,7 +10,7 @@ export default class GuildItem extends Item {
   public dateLastSold: Date;
 
   public constructor(
-    id: string,
+    itemId: string,
     guildId: string,
     name: string,
     maxUses: number,
@@ -22,7 +22,7 @@ export default class GuildItem extends Item {
     soldInCycle: number,
     dateLastSold: Date
   ) {
-    super(id, guildId, name, maxUses, quantity, isStealProtected, commands);
+    super(itemId, guildId, name, maxUses, quantity, isStealProtected, commands);
 
     this.price = price;
     this.maxQuantity = maxQuantity;

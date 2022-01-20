@@ -105,9 +105,7 @@ export default class Command<T extends ICommandProps> {
     const updatedItem = await this.inventoryService?.useItem(this.item, itemOwner, uses);
 
     if (updatedItem && updatedItem.quantity < oldQuantity) {
-      await this.reply(
-        `Your ${updatedItem.printName()} broke! You have ${updatedItem.quantity} remaining.\n`
-      );
+      await this.reply(`Your ${updatedItem.printName()} broke!`);
     }
   }
 

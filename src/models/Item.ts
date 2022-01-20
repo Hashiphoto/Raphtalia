@@ -1,7 +1,7 @@
 import CommandItem from "./ItemCommand";
 
 export default class Item {
-  public id: string;
+  public itemId: string;
   public guildId: string;
   public name: string;
   public maxUses: number;
@@ -12,7 +12,7 @@ export default class Item {
   public commands: CommandItem[];
 
   public constructor(
-    id: string,
+    itemId: string,
     guildId: string,
     name: string,
     maxUses: number,
@@ -20,7 +20,7 @@ export default class Item {
     isStealProtected: boolean,
     commands: CommandItem[]
   ) {
-    this.id = id;
+    this.itemId = itemId;
     this.guildId = guildId;
     this.name = name;
     this.maxUses = maxUses;

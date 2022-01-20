@@ -41,23 +41,24 @@ export default class UserInventoryRepository extends Repository {
       "INSERT INTO user_inventory (user_id, guild_id, item_id, quantity, remaining_uses)" +
         "VALUES (?,?,?,?,?) " +
         "ON DUPLICATE KEY UPDATE quantity=quantity+?, remaining_uses=remaining_uses+?, date_purchased=CURRENT_TIMESTAMP",
-      [userId, guildId, item.id, item.quantity, item.maxUses, item.quantity, item.maxUses]
+      [userId, guildId, item.itemId, item.quantity, item.maxUses, item.quantity, item.maxUses]
     );
   }
 
   public async getUserItems(
     guildId: string,
-    userId: string,
+    userId?: string,
     showHidden = false
   ): Promise<UserItem[]> {
+    const queryString =
+      this.selectUserItem +
+      `WHERE guild_id=${escape(guildId)}` +
+      (userId ? ` AND user_id=${escape(userId)}` : "") +
+      (showHidden ? "" : ` AND hidden=0`);
+
     return this.pool
-      .query(
-        this.selectUserItem +
-          "WHERE guild_id=? AND user_id=?" +
-          `${showHidden ? "" : "AND hidden = 0"}`,
-        [guildId, userId]
-      )
-      .then(([rows, fields]: [RowDataPacket[], FieldPacket[]]) => {
+      .query(queryString)
+      .then(([rows]: [RowDataPacket[], FieldPacket[]]) => {
         return rows;
       })
       .then(async (dbRows) => {
@@ -113,17 +114,21 @@ export default class UserInventoryRepository extends Repository {
   }
 
   public async updateUserItem(guildId: string, userId: string, item: UserItem): Promise<void> {
+    // TODO: Remove/rework this to use id primarily
+    const idQuery = item.id ? ` AND id=${item.id}` : "";
     await this.pool.query(
       "UPDATE user_inventory SET quantity=?, remaining_uses=? " +
-        "WHERE guild_id=? AND user_id=? AND item_id=?",
-      [item.quantity, item.remainingUses, guildId, userId, item.id]
+        "WHERE guild_id=? AND user_id=? AND item_id=?" +
+        idQuery,
+      [item.quantity, item.remainingUses, guildId, userId, item.itemId]
     );
   }
 
   public async deleteUserItem(guildId: string, userId: string, item: UserItem): Promise<void> {
+    const idQuery = item.id ? ` AND id=${item.id}` : "";
     await this.pool.query(
-      "DELETE FROM user_inventory WHERE guild_id=? AND user_id=? AND item_id=?",
-      [guildId, userId, item.id]
+      "DELETE FROM user_inventory WHERE guild_id=? AND user_id=? AND item_id=?" + idQuery,
+      [guildId, userId, item.itemId]
     );
   }
 
@@ -161,7 +166,8 @@ export default class UserInventoryRepository extends Repository {
       row.dateLastSold,
       row.remaining_uses,
       row.date_purchased,
-      row.user_id
+      row.user_id,
+      row.id
     );
   }
 }
