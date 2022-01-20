@@ -108,14 +108,10 @@ export default class Exile extends Command<IExileProps> {
     if (targets.length === 0) {
       return this.sendHelpMessage();
     }
-
-    if (!this.item.unlimitedUses && targets.length > this.item.remainingUses) {
-      await this.reply(
-        `Your ${this.item.name} does not have enough charges. ` +
-          `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
-      );
-      return;
+    if (targets.length > 1) {
+      return this.sendHelpMessage("This command can only target one user at a time");
     }
+
     // Current time + exile duration
     const releaseDate = dayjs().add(duration);
 

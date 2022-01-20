@@ -10,22 +10,25 @@ import { ICommandProps } from "../../interfaces/CommandInterfaces";
 import CommandMessage from "../../models/CommandMessage";
 import RaphError from "../../models/RaphError";
 import CommandService from "../../services/Command.service";
+import InventoryService from "../../services/Inventory.service";
 import RoleService from "../../services/Role.service";
 import Command from "../Command";
 
 export enum AdminCommand {
-  Setup = "Setup",
+  Setup = "setup",
+  MigrateUserInventory = "migrateuserinventory",
 }
 
 interface IAdminProps extends ICommandProps {
-  adminCommand: AdminCommand;
+  adminCommand: string;
 }
 
 @autoInjectable()
 export default class Admin extends Command<IAdminProps> {
   public constructor(
     @inject(delay(() => CommandService)) private _commandService?: CommandService,
-    @inject(delay(() => RoleService)) private _roleService?: RoleService
+    @inject(delay(() => RoleService)) private _roleService?: RoleService,
+    @inject(delay(() => InventoryService)) private _inventoryService?: InventoryService
   ) {
     super();
     this.name = "Admin";
@@ -44,24 +47,23 @@ export default class Admin extends Command<IAdminProps> {
       return;
     }
 
-    switch (cmdMessage.args[0].toLowerCase()) {
-      case "setup":
-        return this.runWithItem({
-          initiator: cmdMessage.message.member,
-          adminCommand: AdminCommand.Setup,
-        });
-      default:
-        this.sendHelpMessage(`Unknown command ${cmdMessage.args[0]}`);
-        return;
-    }
+    return this.runWithItem({
+      initiator: cmdMessage.message.member,
+      adminCommand: cmdMessage.args[0].toLowerCase(),
+    });
   }
 
-  public async execute(props: IAdminProps): Promise<number | undefined> {
-    const { initiator, adminCommand } = props;
+  public async execute({ initiator, adminCommand }: IAdminProps): Promise<number | undefined> {
     switch (adminCommand) {
       case AdminCommand.Setup:
         await this.setup(initiator.guild);
         break;
+      case AdminCommand.MigrateUserInventory:
+        await this.migrateUserInventory(initiator.guild);
+        break;
+      default:
+        this.sendHelpMessage(`Unknown command ${adminCommand}`);
+        return;
     }
     return 1;
   }
@@ -105,5 +107,43 @@ export default class Admin extends Command<IAdminProps> {
     }
 
     this.reply(`Set commands: ${slashCommands.map((s) => `\`${s.name}\``).join(", ")}`);
+  }
+
+  private async migrateUserInventory(guild: DsGuild): Promise<void> {
+    if (!this._inventoryService) {
+      console.error("FAILED. Inventory service is undefined");
+      return;
+    }
+
+    // Get all user items
+    const allUserItems = await this._inventoryService.getAllUserItems(guild, true);
+
+    // For each item, Insert (quantity-1) items into the db.
+    for (const userItem of allUserItems) {
+      const extraQuantity = userItem.quantity - 1;
+      if (extraQuantity === 0) {
+        continue;
+      }
+      const newItem = userItem.copy();
+
+      if (!newItem.unlimitedUses) {
+        newItem.remainingUses = newItem.maxUses;
+        userItem.remainingUses -= newItem.maxUses * extraQuantity;
+        if (userItem.remainingUses < 1) {
+          userItem.remainingUses = 1;
+        }
+      } else {
+        newItem.remainingUses = -1;
+        userItem.remainingUses = -1;
+      }
+
+      for (let i = 0; i < extraQuantity; i++) {
+        await this._inventoryService.insertUserItem(newItem);
+      }
+
+      // Set the item quantity to 1
+      userItem.quantity = 1;
+      await this._inventoryService.updateUserItem(userItem);
+    }
   }
 }

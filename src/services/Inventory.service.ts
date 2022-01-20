@@ -50,7 +50,7 @@ export default class InventoryService {
     }
 
     this._guildStoreService.update(guild);
-    return this._guildInventoryRepo.getGuildItem(item.guildId, item.id);
+    return this._guildInventoryRepo.getGuildItem(item.guildId, item.itemId);
   }
 
   public async increaseGuildItemPrice(guild: DsGuild, guildItem: GuildItem): Promise<void> {
@@ -118,7 +118,11 @@ export default class InventoryService {
     item.quantity = quantity;
     await this._userInventoryRepo.insertUserItem(guildId, member.id, item);
 
-    return (await this._userInventoryRepo.getUserItem(guildId, member.id, item.id)) as UserItem;
+    return (await this._userInventoryRepo.getUserItem(guildId, member.id, item.itemId)) as UserItem;
+  }
+
+  public async getAllUserItems(guild: DsGuild, showHidden = false): Promise<UserItem[]> {
+    return this._userInventoryRepo.getUserItems(guild.id, undefined, showHidden);
   }
 
   public async getUserInventory(member: GuildMember): Promise<UserInventory> {
@@ -128,7 +132,7 @@ export default class InventoryService {
   }
 
   public async getUserItem(member: GuildMember, item: Item): Promise<UserItem | undefined> {
-    return this._userInventoryRepo.getUserItem(member.guild.id, member.id, item.id);
+    return this._userInventoryRepo.getUserItem(member.guild.id, member.id, item.itemId);
   }
 
   public async getUserItemByCommand(
@@ -145,25 +149,29 @@ export default class InventoryService {
 
     item.remainingUses -= uses;
 
-    // Check if quantity needs to be reduced
-    const newQuantity = Math.ceil(item.remainingUses / item.maxUses);
-    if (item.quantity !== newQuantity) {
-      item.quantity = newQuantity;
+    // Item is used up. Return to store
+    if (item.remainingUses <= 0) {
+      item.quantity -= 1;
       this._guildInventoryRepo.updateGuildItemQuantity(member.guild.id, item, uses);
+      // Update the store message
+      this._guildStoreService.update(member.guild);
     }
 
-    this._guildStoreService.update(member.guild);
-    return this.updateUserItem(item, member).then(() => {
+    return this.updateUserItem(item).then(() => {
       return item;
     });
   }
 
-  public async updateUserItem(item: UserItem, member: GuildMember): Promise<void> {
+  public async updateUserItem(item: UserItem): Promise<void> {
     if (item.quantity === 0) {
-      return this._userInventoryRepo.deleteUserItem(member.guild.id, member.id, item);
+      return this._userInventoryRepo.deleteUserItem(item.guildId, item.userId, item);
     }
 
-    return this._userInventoryRepo.updateUserItem(member.guild.id, member.id, item);
+    return this._userInventoryRepo.updateUserItem(item.guildId, item.userId, item);
+  }
+
+  public async insertUserItem(item: UserItem): Promise<void> {
+    return this._userInventoryRepo.insertUserItem(item.guildId, item.userId, item);
   }
 
   public async transferItem(
@@ -174,7 +182,7 @@ export default class InventoryService {
     // Remove the item from the owner
     item.quantity -= 1;
     item.remainingUses -= item.maxUses;
-    this.updateUserItem(item, fromMember);
+    this.updateUserItem(item);
 
     // Reset the item and give it to the receiver
     const givenItem = item.copy();
@@ -185,6 +193,6 @@ export default class InventoryService {
   }
 
   public async findUsersWithItem(item: Item): Promise<UserItem[]> {
-    return this._userInventoryRepo.findUsersWithItem(item.guildId, item.id);
+    return this._userInventoryRepo.findUsersWithItem(item.guildId, item.itemId);
   }
 }
