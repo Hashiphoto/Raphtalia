@@ -125,6 +125,7 @@ export default class Admin extends Command<IAdminProps> {
         continue;
       }
       const newItem = userItem.copy();
+      newItem.quantity = 1;
 
       if (!newItem.unlimitedUses) {
         newItem.remainingUses = newItem.maxUses;
