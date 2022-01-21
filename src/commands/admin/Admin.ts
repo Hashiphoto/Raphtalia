@@ -10,7 +10,6 @@ import { ICommandProps } from "../../interfaces/CommandInterfaces";
 import CommandMessage from "../../models/CommandMessage";
 import RaphError from "../../models/RaphError";
 import CommandService from "../../services/Command.service";
-import InventoryService from "../../services/Inventory.service";
 import RoleService from "../../services/Role.service";
 import Command from "../Command";
 
@@ -26,8 +25,7 @@ interface IAdminProps extends ICommandProps {
 export default class Admin extends Command<IAdminProps> {
   public constructor(
     @inject(delay(() => CommandService)) private _commandService?: CommandService,
-    @inject(delay(() => RoleService)) private _roleService?: RoleService,
-    @inject(delay(() => InventoryService)) private _inventoryService?: InventoryService
+    @inject(delay(() => RoleService)) private _roleService?: RoleService
   ) {
     super();
     this.name = "Admin";
