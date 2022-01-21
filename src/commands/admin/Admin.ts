@@ -16,7 +16,6 @@ import Command from "../Command";
 
 export enum AdminCommand {
   Setup = "setup",
-  MigrateUserInventory = "migrateuserinventory",
 }
 
 interface IAdminProps extends ICommandProps {
@@ -57,9 +56,6 @@ export default class Admin extends Command<IAdminProps> {
     switch (adminCommand) {
       case AdminCommand.Setup:
         await this.setup(initiator.guild);
-        break;
-      case AdminCommand.MigrateUserInventory:
-        await this.migrateUserInventory(initiator.guild);
         break;
       default:
         this.sendHelpMessage(`Unknown command ${adminCommand}`);
@@ -107,44 +103,5 @@ export default class Admin extends Command<IAdminProps> {
     }
 
     this.reply(`Set commands: ${slashCommands.map((s) => `\`${s.name}\``).join(", ")}`);
-  }
-
-  private async migrateUserInventory(guild: DsGuild): Promise<void> {
-    if (!this._inventoryService) {
-      console.error("FAILED. Inventory service is undefined");
-      return;
-    }
-
-    // Get all user items
-    const allUserItems = await this._inventoryService.getAllUserItems(guild, true);
-
-    // For each item, Insert (quantity-1) items into the db.
-    for (const userItem of allUserItems) {
-      const extraQuantity = userItem.quantity - 1;
-      if (extraQuantity === 0) {
-        continue;
-      }
-      const newItem = userItem.copy();
-      newItem.quantity = 1;
-
-      if (!newItem.unlimitedUses) {
-        newItem.remainingUses = newItem.maxUses;
-        userItem.remainingUses -= newItem.maxUses * extraQuantity;
-        if (userItem.remainingUses < 1) {
-          userItem.remainingUses = 1;
-        }
-      } else {
-        newItem.remainingUses = -1;
-        userItem.remainingUses = -1;
-      }
-
-      for (let i = 0; i < extraQuantity; i++) {
-        await this._inventoryService.insertUserItem(newItem);
-      }
-
-      // Set the item quantity to 1
-      userItem.quantity = 1;
-      await this._inventoryService.updateUserItem(userItem);
-    }
   }
 }
