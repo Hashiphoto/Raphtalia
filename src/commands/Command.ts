@@ -65,7 +65,7 @@ export default class Command<T extends ICommandProps> {
     if (this.itemRequired) {
       const item = await this.getOrBuyItem(props.initiator);
       if (!item) {
-        return this.reply("");
+        return this.flushMessageQueue();
       }
       this.item = item;
     }
