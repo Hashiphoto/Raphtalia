@@ -24,7 +24,7 @@ export default class NullCommand extends Command<ICommandProps> {
   }
 
   public async execute(): Promise<number | undefined> {
-    this.reply(this.text ?? "Error");
+    this.queueReply(this.text ?? "Error");
     return;
   }
 }

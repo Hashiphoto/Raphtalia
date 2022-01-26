@@ -1,9 +1,17 @@
 import { Format, print } from "../utilities/Util";
 
 import CommandItem from "./ItemCommand";
-import Item from "./Item";
 
-export default class GuildItem extends Item {
+export default class GuildItem {
+  public itemId: string;
+  public guildId: string;
+  public name: string;
+  public maxUses: number;
+  public quantity: number;
+  public unlimitedUses: boolean;
+  public unlimitedQuantity: boolean;
+  public isStealProtected: boolean;
+  public commands: CommandItem[];
   public price: number;
   public maxQuantity: number;
   public soldInCycle: number;
@@ -22,15 +30,42 @@ export default class GuildItem extends Item {
     soldInCycle: number,
     dateLastSold: Date
   ) {
-    super(itemId, guildId, name, maxUses, quantity, isStealProtected, commands);
-
+    this.itemId = itemId;
+    this.guildId = guildId;
+    this.name = name;
+    this.maxUses = maxUses;
+    this.quantity = quantity;
+    this.isStealProtected = isStealProtected;
+    this.commands = commands;
     this.price = price;
     this.maxQuantity = maxQuantity;
     this.soldInCycle = soldInCycle;
     this.dateLastSold = dateLastSold;
-
-    // override logic
+    this.unlimitedUses = this.maxUses < 0;
     this.unlimitedQuantity = this.quantity < 0 || this.maxQuantity < 0;
+  }
+
+  public printName(): string {
+    return `**${this.name}**`;
+  }
+
+  public getFormattedName(): string {
+    return `${this.isStealProtected ? "🔒" : ""} ${this.name}`;
+  }
+
+  public printMaxUses(): string {
+    return this.unlimitedUses ? "∞" : String(this.maxUses);
+  }
+
+  public printCommands(): string {
+    if (this.commands.length === 0) {
+      return "```\nNo Commands\n```";
+    }
+    return (
+      "```fix\n" +
+      this.commands.reduce((sum: string, value: { name: any }) => sum + `!${value.name}\n`, "") +
+      "```"
+    );
   }
 
   public inStock(): boolean {

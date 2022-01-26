@@ -2,7 +2,6 @@ import { Guild as DsGuild, GuildMember } from "discord.js";
 import { delay, inject, injectable } from "tsyringe";
 import { Result } from "../enums/Result";
 import GuildItem from "../models/GuildItem";
-import Item from "../models/Item";
 import RaphError from "../models/RaphError";
 import UserInventory from "../models/UserInventory";
 import UserItem from "../models/UserItem";
@@ -79,14 +78,24 @@ export default class InventoryService {
   }
 
   /** USER ITEMS **/
-  public async findUserItem(member: GuildMember, name: string): Promise<UserItem | undefined> {
-    return this._userInventoryRepo.findUserItemByName(member.guild.id, member.id, name);
+
+  public async findUserItem(member: GuildMember, name: string): Promise<UserItem[]> {
+    const userItems = await this._userInventoryRepo.findUserItemByName(
+      member.guild.id,
+      member.id,
+      name
+    );
+    return (userItems ?? []).sort(this.byRemainingUses);
   }
 
   /**
    * Purchase an item from the store, taking into account cost and available quantity
    */
-  public async userPurchase(member: GuildMember, item: GuildItem, quantity = 1): Promise<UserItem> {
+  public async userPurchase(
+    member: GuildMember,
+    item: GuildItem,
+    quantity = 1
+  ): Promise<UserItem | undefined> {
     const guildId = member.guild.id;
     // Check available stock
     if (!item.inStock()) {
@@ -116,30 +125,33 @@ export default class InventoryService {
 
     // Add it to player stock
     item.quantity = quantity;
-    await this._userInventoryRepo.insertUserItem(guildId, member.id, item);
+    const newItemId = await this._userInventoryRepo.createUserItem(guildId, member.id, item);
 
-    return (await this._userInventoryRepo.getUserItem(guildId, member.id, item.itemId)) as UserItem;
+    return this._userInventoryRepo.getUserItem(newItemId);
   }
 
   public async getAllUserItems(guild: DsGuild, showHidden = false): Promise<UserItem[]> {
-    return this._userInventoryRepo.getUserItems(guild.id, undefined, showHidden);
+    return this._userInventoryRepo
+      .listUserItems(guild.id, undefined, showHidden)
+      .then((items) => items.sort(this.byRemainingUses));
   }
 
   public async getUserInventory(member: GuildMember): Promise<UserInventory> {
     return this._userInventoryRepo
-      .getUserItems(member.guild.id, member.id)
-      .then((items) => new UserInventory(member, items));
+      .listUserItems(member.guild.id, member.id)
+      .then((items) => new UserInventory(member, items.sort(this.byRemainingUses)));
   }
 
-  public async getUserItem(member: GuildMember, item: Item): Promise<UserItem | undefined> {
-    return this._userInventoryRepo.getUserItem(member.guild.id, member.id, item.itemId);
+  public async getUserItems(member: GuildMember, item: GuildItem): Promise<UserItem[]> {
+    return this._userInventoryRepo
+      .getUserItemsByItemId(member.guild.id, member.id, item.itemId)
+      .then((items) => items.sort(this.byRemainingUses));
   }
 
-  public async getUserItemByCommand(
-    member: GuildMember,
-    commandName: string
-  ): Promise<UserItem | undefined> {
-    return this._userInventoryRepo.getUserItemByCommand(member.guild.id, member.id, commandName);
+  public async getUserItemByCommand(member: GuildMember, commandName: string): Promise<UserItem[]> {
+    return this._userInventoryRepo
+      .getUserItemsByCommand(member.guild.id, member.id, commandName)
+      .then((items) => items.sort(this.byRemainingUses));
   }
 
   public async useItem(item: UserItem, member: GuildMember, uses: number): Promise<UserItem> {
@@ -174,25 +186,16 @@ export default class InventoryService {
     return this._userInventoryRepo.insertUserItem(item.guildId, item.userId, item);
   }
 
-  public async transferItem(
-    item: UserItem,
-    fromMember: GuildMember,
-    toMember: GuildMember
-  ): Promise<void> {
-    // Remove the item from the owner
-    item.quantity -= 1;
-    item.remainingUses -= item.maxUses;
-    this.updateUserItem(item);
-
-    // Reset the item and give it to the receiver
-    const givenItem = item.copy();
-    givenItem.quantity = 1;
-    givenItem.remainingUses = givenItem.maxUses;
-
-    await this._userInventoryRepo.insertUserItem(fromMember.guild.id, toMember.id, givenItem);
+  public async transferItem(item: UserItem, toMember: GuildMember): Promise<void> {
+    await this._userInventoryRepo.transferUserItem(toMember.id, item);
   }
 
-  public async findUsersWithItem(item: Item): Promise<UserItem[]> {
-    return this._userInventoryRepo.findUsersWithItem(item.guildId, item.itemId);
+  public async findUsersWithItem(item: GuildItem): Promise<UserItem[]> {
+    return this._userInventoryRepo
+      .findUsersWithItem(item.guildId, item.itemId)
+      .then((items) => items.sort(this.byRemainingUses));
   }
+
+  private byRemainingUses = (a: UserItem, b: UserItem) =>
+    a.userId.localeCompare(b.userId) || a.remainingUses - b.remainingUses;
 }

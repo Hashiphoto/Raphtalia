@@ -30,7 +30,6 @@ export default class Status extends Command<IStatusProps> {
     super();
     this.name = "Status";
     this.instructions = "Get your current balance and inventory";
-    this.usage = "`Status`";
     this.aliases = [this.name.toLowerCase()];
     this.itemRequired = false;
     this.slashCommands = [
@@ -58,7 +57,7 @@ export default class Status extends Command<IStatusProps> {
       }
       const show = interaction.options.getBoolean("show") ?? false;
       this.channel = new InteractionChannel(interaction, !show);
-      this.runWithItem({ initiator });
+      return this.runWithItem({ initiator });
     };
   }
 
@@ -77,7 +76,7 @@ export default class Status extends Command<IStatusProps> {
 
   public async execute({ initiator }: ICommandProps): Promise<number | undefined> {
     const { content, embed } = await this.generateMessage(initiator);
-    await this.reply(content, { embeds: [embed] });
+    this.reply(content, { embeds: [embed] });
     return undefined;
   }
 

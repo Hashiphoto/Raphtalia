@@ -13,7 +13,6 @@ export default class BanList extends Command<ICommandProps> {
     super();
     this.name = "BanList";
     this.instructions = "Post the Banned Words List in this channel";
-    this.usage = "`BanList`";
     this.aliases = [this.name.toLowerCase(), "bannedwords"];
   }
 

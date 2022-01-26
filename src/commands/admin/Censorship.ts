@@ -33,7 +33,6 @@ export default class Censorship extends Command<ICensorshipProps> {
       "Enable or disable censorship for the whole server. " +
       "When censorship is enabled, anyone who uses a word from the banned " +
       "list will be given an infraction";
-    this.usage = "`Censorship (enable|disable)`";
     this.aliases = [this.name.toLowerCase()];
     this.itemRequired = false;
     this.leaderOnly = true;
@@ -92,9 +91,9 @@ export default class Censorship extends Command<ICensorshipProps> {
 
   public async execute({ initiator, isEnabled }: ICensorshipProps): Promise<number | undefined> {
     if (isEnabled) {
-      await this.reply("Censorship is enabled");
+      this.queueReply("Censorship is enabled");
     } else {
-      await this.reply("All speech is permitted!");
+      this.queueReply("All speech is permitted!");
     }
 
     await this._guildService?.setCensorship(initiator.guild.id, isEnabled);

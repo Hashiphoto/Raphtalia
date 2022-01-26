@@ -17,7 +17,6 @@ export default class Headpat extends Command<ITargettedProps> {
     super();
     this.name = "Headpat";
     this.instructions = "I will give a headpat to the member(s) is specified";
-    this.usage = "`Headpat @member`";
     this.aliases = [this.name.toLowerCase()];
     this.itemRequired = false;
     this.slashCommands = [
@@ -48,7 +47,7 @@ export default class Headpat extends Command<ITargettedProps> {
       const target = await interaction.guild.members.fetch(user.id);
 
       this.channel = new InteractionChannel(interaction);
-      this.runWithItem({ initiator, targets: [target] });
+      return this.runWithItem({ initiator, targets: [target] });
     };
   }
 
@@ -73,7 +72,7 @@ export default class Headpat extends Command<ITargettedProps> {
       response += `${member.toString()} headpat\n`;
     }
 
-    this.reply(response);
+    this.queueReply(response);
     return undefined;
   }
 }

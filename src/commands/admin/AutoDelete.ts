@@ -20,7 +20,6 @@ export default class AutoDelete extends Command<IArgsProps> {
     this.name = "AutoDelete";
     this.instructions =
       "Enable or disable automatic message deletion in this channel. If deletion delay is not specified, default 2000ms will be used";
-    this.usage = "`AutoDelete (start|stop) [1ms]`";
     this.aliases = [this.name.toLowerCase()];
   }
 
@@ -80,7 +79,7 @@ export default class AutoDelete extends Command<IArgsProps> {
     }
 
     (this.channel as TextChannel)?.setTopic(response);
-    this.reply(response);
+    this.queueReply(response);
     return 1;
   }
 }

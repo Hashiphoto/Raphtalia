@@ -33,7 +33,6 @@ export default class Screening extends Command<IScreeningProps> {
       "`list` shows all the current screening questions\n" +
       "`add` creates additional questions\n" +
       "`delete` removes a question. The id can be found by using `list`";
-    this.usage = "`Screening (list | add | delete id)`";
     this.aliases = [this.name.toLowerCase()];
     this.itemRequired = false;
     this.leaderOnly = true;
@@ -122,12 +121,12 @@ export default class Screening extends Command<IScreeningProps> {
       }
 
       this.channel = new InteractionChannel(interaction);
-      this.runWithItem(props);
+      return this.runWithItem(props);
     };
   }
 
   public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {
-    await this.reply(
+    this.queueReply(
       `Use the slash command. This is only available to the user(s) holding the highest role`
     );
     return;
@@ -147,7 +146,7 @@ export default class Screening extends Command<IScreeningProps> {
       case Action.Delete:
         return this.delete(initiator, questionId);
       default:
-        await this.reply(`Unknown action ${action}`);
+        this.queueReply(`Unknown action ${action}`);
     }
   }
 
@@ -156,10 +155,10 @@ export default class Screening extends Command<IScreeningProps> {
       ?.getScreeningQuestions(guild.id)
       .then((questions) => {
         if (questions.length === 0) {
-          return this.reply("There are currently no screening questions");
+          return this.queueReply("There are currently no screening questions");
         }
         const allQuestions = questions.reduce((sum, question) => sum + question, "");
-        return this.reply(allQuestions);
+        return this.queueReply(allQuestions);
       })
       .then(() => undefined);
   }
@@ -169,11 +168,11 @@ export default class Screening extends Command<IScreeningProps> {
     screeningQuestion: ScreeningQuestion | undefined
   ): Promise<number | undefined> {
     if (!screeningQuestion) {
-      await this.reply("All required fields must be filled out");
+      this.queueReply("All required fields must be filled out");
       return;
     }
     await this._guildService?.addScreeningQuestion(initiator.guild.id, screeningQuestion);
-    await this.reply("New question added!");
+    this.queueReply("New question added!");
     return 1;
   }
 
@@ -186,10 +185,10 @@ export default class Screening extends Command<IScreeningProps> {
       questionId
     );
     if (!deleted) {
-      await this.reply(`Deletion canceled. There is no question with id ${questionId}`);
+      this.queueReply(`Deletion canceled. There is no question with id ${questionId}`);
       return;
     }
-    await this.reply("Question deleted");
+    this.queueReply("Question deleted");
     return 1;
   }
 }

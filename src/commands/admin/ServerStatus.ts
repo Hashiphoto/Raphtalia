@@ -17,7 +17,6 @@ export default class ServerStatus extends Command<ICommandProps> {
     this.instructions =
       "Posts the ban list, role list, and store in this channel. " +
       "Equivalent to using the BanList, Roles, and Store commands consecutively.";
-    this.usage = "`ServerStatus`";
     this.aliases = [this.name.toLowerCase()];
   }
 

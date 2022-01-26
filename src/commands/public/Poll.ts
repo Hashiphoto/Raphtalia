@@ -21,7 +21,6 @@ export default class Poll extends Command<IPollProps> {
     super();
     this.name = "Poll";
     this.instructions = "Start a poll that users can vote on with reactions";
-    this.usage = "`Poll`";
     this.aliases = [this.name.toLowerCase()];
     this.itemRequired = false;
 
@@ -76,7 +75,7 @@ export default class Poll extends Command<IPollProps> {
   }
 
   public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {
-    this.reply(`This is only available using the slash command`);
+    this.queueReply(`This is only available using the slash command`);
   }
 
   public async execute({ initiator, question, options }: IPollProps): Promise<number | undefined> {

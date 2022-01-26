@@ -21,29 +21,36 @@ export default class InteractionChannel implements PartialTextBasedChannelFields
   }
 
   public async send(options: string | MessagePayload | MessageOptions): Promise<Message> {
-    const msgOptions = (
-      typeof options === "string"
-        ? ({ content: options } as MessageOptions)
-        : (options as MessagePayload)?.options
-        ? (options as MessagePayload).options
-        : options
-    ) as MessageOptions;
+    try {
+      const msgOptions = (
+        typeof options === "string"
+          ? ({ content: options } as MessageOptions)
+          : (options as MessagePayload)?.options
+          ? (options as MessagePayload).options
+          : options
+      ) as MessageOptions;
 
-    const response = await (this._interaction.replied
-      ? this._interaction.followUp({ ...msgOptions, ephemeral: this._ephemeral })
-      : this._interaction.reply({ ...msgOptions, ephemeral: this._ephemeral }));
+      const response = await (this._interaction.deferred
+        ? this._interaction.editReply({ ...msgOptions })
+        : this._interaction.replied
+        ? this._interaction.followUp({ ...msgOptions, ephemeral: this._ephemeral })
+        : this._interaction.reply({ ...msgOptions, ephemeral: this._ephemeral }));
 
-    // Ephemeral responses cannot be fetched or deleted
-    if (!this._ephemeral) {
-      const botReply = await this._interaction.fetchReply();
-      if (botReply instanceof Message) {
-        this._messageService?.handleMessage(botReply as Message).catch((e) => {
-          console.error(e);
-        });
+      // Ephemeral responses cannot be fetched or deleted
+      if (!this._ephemeral) {
+        const botReply = await this._interaction.fetchReply();
+        if (botReply instanceof Message) {
+          this._messageService?.handleMessage(botReply as Message).catch((e) => {
+            console.error(e);
+          });
+        }
+        return botReply as Message;
       }
-      return botReply as Message;
-    }
 
-    return response as Message;
+      return response as Message;
+    } catch (e) {
+      console.error(e);
+      return {} as Message;
+    }
   }
 }

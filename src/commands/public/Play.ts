@@ -9,11 +9,12 @@ import {
   entersState,
   joinVoiceChannel,
 } from "@discordjs/voice";
-import { CommandInteraction, User as DsUser, TextChannel, VoiceChannel } from "discord.js";
+import { CommandInteraction, User as DsUser, VoiceChannel } from "discord.js";
 
 import Command from "../Command";
 import CommandMessage from "../../models/CommandMessage";
 import { ICommandProps } from "../../interfaces/CommandInterfaces";
+import InteractionChannel from "../../models/InteractionChannel";
 import { RaphtaliaInteraction } from "../../enums/Interactions";
 import { autoInjectable } from "tsyringe";
 
@@ -33,7 +34,6 @@ export default class Play extends Command<IPlayProps> {
     this.instructions =
       "Play the server theme in the voice channel you are in. " +
       "You can specify which voice channel to play in by voice channel name or channel group and voice channel name. ";
-    this.usage = "`Play [in (Group/VoiceChannel | VoiceChannel)]`";
     this.aliases = [this.name.toLowerCase()];
     this.player = createAudioPlayer();
     this.itemRequired = false;
@@ -69,16 +69,14 @@ export default class Play extends Command<IPlayProps> {
       }
       const song = interaction.options.getString("song", true);
       const voiceChannel = interaction.options.getChannel("voice-channel");
-      if (interaction.channel instanceof TextChannel) {
-        this.channel = interaction.channel;
-      }
-      interaction.reply({ content: `Playing...` });
-      this.runWithItem({ initiator, url: song, voiceChannel: voiceChannel as VoiceChannel });
+
+      this.channel = new InteractionChannel(interaction, true);
+      return this.runWithItem({ initiator, url: song, voiceChannel: voiceChannel as VoiceChannel });
     };
   }
 
   public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {
-    await this.reply(`Use the slash command /play instead`);
+    this.queueReply(`Use the slash command /play instead`);
     return;
   }
 
@@ -104,7 +102,7 @@ export default class Play extends Command<IPlayProps> {
       const connection = await this.connectToChannel(voiceChannel);
       connection.subscribe(this.player);
       await this.playSong(url);
-      await this.reply("Playing now!");
+      this.queueReply("Playing now!");
     } catch (error) {
       console.error(error);
     }

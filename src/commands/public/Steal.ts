@@ -1,5 +1,5 @@
 import { CommandInteraction, GuildMember, TextChannel } from "discord.js";
-import { autoInjectable, delay, inject } from "tsyringe";
+import { delay, inject, injectable } from "tsyringe";
 import { RaphtaliaInteraction } from "../../enums/Interactions";
 import { Result } from "../../enums/Result";
 import { ITargettedProps } from "../../interfaces/CommandInterfaces";
@@ -17,7 +17,7 @@ interface IStealProps extends ITargettedProps {
   itemName: string;
 }
 
-@autoInjectable()
+@injectable()
 export default class Steal extends Command<IStealProps> {
   public steal: (interaction: CommandInteraction) => void;
 
@@ -30,7 +30,6 @@ export default class Steal extends Command<IStealProps> {
     this.instructions =
       "Attempt to take an item from another user. " +
       "Odds of success are 1/20, or 2/20 if the user has had the item for more than 3 days. Cost of steal attempt = `odds * item price * 110%`";
-    this.usage = "`Steal @member (item name)`";
     this.aliases = [this.name.toLowerCase()];
     this.slashCommands = [
       {
@@ -110,20 +109,21 @@ export default class Steal extends Command<IStealProps> {
       guildItem = await this.inventoryService?.findGuildItem(target.guild.id, itemName);
     } catch (error) {
       if (error.result === Result.AmbiguousInput) {
-        await this.reply(`There is more than one item with that name. Matches: ${error.message}`);
+        this.queueReply(`There is more than one item with that name. Matches: ${error.message}`);
         return;
       }
     }
     if (!guildItem) {
-      this.reply(`Item "${itemName}" does not exist`);
+      this.queueReply(`Item "${itemName}" does not exist`);
       return;
     }
 
-    const userItem = await this.inventoryService?.findUserItem(target, guildItem.name);
-    if (!userItem) {
-      this.reply(`${target.displayName} does not have any ${guildItem.printName()} to steal`);
+    const userItems = await this.inventoryService?.findUserItem(target, guildItem.name);
+    if (!userItems?.length) {
+      this.queueReply(`${target.displayName} does not have any ${guildItem.printName()} to steal`);
       return;
     }
+    const userItem = userItems[0];
     if (userItem.isStealProtected) {
       return this.sendHelpMessage(`${userItem.printName()} cannot be stolen.`);
     }
@@ -138,7 +138,7 @@ export default class Steal extends Command<IStealProps> {
     const dieResult = roll(Dice.D20);
 
     if (dieResult.against(dc)) {
-      await this.inventoryService?.transferItem(userItem, target, initiator);
+      await this.inventoryService?.transferItem(userItem, target);
       response +=
         `**${userItem.name} successfully stolen!** ` +
         `Transferred one ${userItem.printName()} from ${target.displayName} to ${
@@ -153,7 +153,7 @@ export default class Steal extends Command<IStealProps> {
     response +=
       `Rolled a \`<${dieResult.result}>\` against \`${dc}\`\n` +
       `*Charged ${print(cost, Format.Dollar)} for this attempt*`;
-    await this.reply(response);
+    this.queueReply(response);
 
     return 1;
   }

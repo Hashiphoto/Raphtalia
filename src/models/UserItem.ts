@@ -6,7 +6,7 @@ export default class UserItem extends GuildItem {
   public remainingUses: number;
   public datePurchased: Date;
   public userId: string;
-  public id?: string;
+  public id: string;
 
   public constructor(
     itemId: string,
@@ -23,7 +23,7 @@ export default class UserItem extends GuildItem {
     remainingUses: number,
     datePurchased: Date,
     userId: string,
-    id?: string
+    id: string
   ) {
     super(
       itemId,

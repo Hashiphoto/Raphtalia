@@ -23,7 +23,6 @@ export default class Help extends Command<IArgProps> {
     super();
     this.name = "Help";
     this.instructions = "Get detailed information about how to use any other command";
-    this.usage = "`Help (command name)`";
     this.aliases = [this.name.toLowerCase()];
     this.itemRequired = false;
     this.slashCommands = [
@@ -53,7 +52,7 @@ export default class Help extends Command<IArgProps> {
       const commandName = interaction.options.getString("command", true);
 
       this.channel = new InteractionChannel(interaction, true);
-      this.runWithItem({ initiator, arg: commandName });
+      return this.runWithItem({ initiator, arg: commandName });
     };
   }
 
@@ -82,7 +81,9 @@ export default class Help extends Command<IArgProps> {
       return;
     }
     command.channel = this.channel;
-    await command.sendHelpMessage(command.instructions);
+    await command.sendHelpMessage();
+    // message is queued. Need to reply to flush the queue
+    await command.flushMessageQueue();
     return undefined;
   }
 }

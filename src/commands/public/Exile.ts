@@ -6,6 +6,7 @@ import { RaphtaliaInteraction } from "../../enums/Interactions";
 import { Result } from "../../enums/Result";
 import { ITargettedProps } from "../../interfaces/CommandInterfaces";
 import CommandMessage from "../../models/CommandMessage";
+import InteractionChannel from "../../models/InteractionChannel";
 import RaphError from "../../models/RaphError";
 import MemberService from "../../services/Member.service";
 import { formatDate, parseDuration } from "../../utilities/Util";
@@ -25,7 +26,6 @@ export default class Exile extends Command<IExileProps> {
     this.instructions =
       "Put a specified member in exile for a period of time. " +
       "Exiled members cannot use any commands. If no time is specified, the maximum value of 6 hours will be used. ";
-    this.usage = "`Exile @member [1h 1m 1s]`";
     this.aliases = [this.name.toLowerCase()];
     this.slashCommands = [
       {
@@ -74,6 +74,7 @@ export default class Exile extends Command<IExileProps> {
       if (!initiator) {
         return interaction.reply(`This only works in a server`);
       }
+
       const durationString = interaction.options.getString("duration") ?? "1h";
       const duration = parseDuration(durationString) ?? dayjs.duration({ hours: 6 });
       const user = interaction.options.getUser("user", true);
@@ -82,9 +83,8 @@ export default class Exile extends Command<IExileProps> {
         return interaction.reply(`No user was specified or they are not members of the server`);
       }
 
-      this.runWithItem({ initiator, duration, targets: [target] }).then(() =>
-        interaction.reply(`Exiled ${target.displayName} until ${formatDate(dayjs().add(duration))}`)
-      );
+      this.channel = new InteractionChannel(interaction);
+      return this.runWithItem({ initiator, duration, targets: [target] });
     };
   }
 
@@ -122,15 +122,13 @@ export default class Exile extends Command<IExileProps> {
     );
 
     const exilePromises = targets.map((target) =>
-      this._memberService?.exileMember(target, duration).then(() => {
-        return this.reply(`${target.toString()} has been released from exile!`);
-      })
+      this._memberService?.exileMember(target, duration)
     );
 
     // Important to run asynchronously
     Promise.all(exilePromises);
 
-    await this.reply(response);
+    this.queueReply(response);
     return targets.length;
   }
 }

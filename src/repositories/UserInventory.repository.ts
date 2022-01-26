@@ -1,7 +1,7 @@
-import { escape } from "mysql2";
+import { escape, OkPacket } from "mysql2";
 import { FieldPacket, RowDataPacket } from "mysql2/promise";
 import { inject, injectable } from "tsyringe";
-import Item from "../models/Item";
+import GuildItem from "../models/GuildItem";
 import UserItem from "../models/UserItem";
 import CommandRepository from "./Command.repository";
 import Repository from "./Repository";
@@ -19,33 +19,41 @@ export default class UserInventoryRepository extends Repository {
     userId: string,
     itemName: string,
     showHidden = false
-  ): Promise<UserItem | undefined> {
-    return this.pool
-      .query(
-        this.selectUserItem +
-          `WHERE guild_id=? AND user_id=? AND name LIKE ${escape(`%${itemName}%`)} ` +
-          `${showHidden ? "" : "AND hidden = 0"}`,
-        [guildId, userId]
-      )
-      .then(([rows]: [RowDataPacket[], FieldPacket[]]) => {
-        if (rows.length === 0) {
-          return;
-        }
-
-        return this.toUserItem(rows[0]);
-      });
+  ): Promise<UserItem[]> {
+    const [rows]: [RowDataPacket[], FieldPacket[]] = await this.pool.query(
+      this.selectUserItem +
+        `WHERE guild_id=? AND user_id=? AND name LIKE ${escape(`%${itemName}%`)} ` +
+        `${showHidden ? "" : "AND hidden = 0"}`,
+      [guildId, userId]
+    );
+    return Promise.all(rows.map((r) => this.toUserItem(r)));
   }
 
-  public async insertUserItem(guildId: string, userId: string, item: Item): Promise<void> {
+  public async insertUserItem(guildId: string, userId: string, item: UserItem): Promise<void> {
     await this.pool.query(
-      "INSERT INTO user_inventory (user_id, guild_id, item_id, quantity, remaining_uses)" +
-        "VALUES (?,?,?,?,?) " +
-        "ON DUPLICATE KEY UPDATE quantity=quantity+?, remaining_uses=remaining_uses+?, date_purchased=CURRENT_TIMESTAMP",
-      [userId, guildId, item.itemId, item.quantity, item.maxUses, item.quantity, item.maxUses]
+      `INSERT INTO user_inventory (user_id, guild_id, item_id, quantity, remaining_uses) VALUES (?,?,?,?,?)`,
+      [userId, guildId, item.itemId, item.quantity, item.maxUses]
     );
   }
 
-  public async getUserItems(
+  public async transferUserItem(toMemberId: string, item: UserItem): Promise<void> {
+    await this.pool.query(`UPDATE user_inventory SET user_id=? WHERE id=?`, [toMemberId, item.id]);
+  }
+
+  /**
+   * User has purchased an item. Insert a new db row
+   * @returns the id number inserted
+   */
+  public async createUserItem(guildId: string, userId: string, item: GuildItem): Promise<number> {
+    return this.pool
+      .query(
+        `INSERT INTO user_inventory (user_id, guild_id, item_id, quantity, remaining_uses) VALUES (?,?,?,?,?)`,
+        [userId, guildId, item.itemId, item.quantity, item.maxUses]
+      )
+      .then(([result]: [OkPacket, FieldPacket[]]) => result.insertId);
+  }
+
+  public async listUserItems(
     guildId: string,
     userId?: string,
     showHidden = false
@@ -62,24 +70,15 @@ export default class UserInventoryRepository extends Repository {
         return rows;
       })
       .then(async (dbRows) => {
-        const items = [];
-
-        for (const row of dbRows) {
-          const userItem = await this.toUserItem(row);
-          if (userItem) {
-            items.push(userItem);
-          }
-        }
-
-        return items;
+        return Promise.all(dbRows.map((row) => this.toUserItem(row)));
       });
   }
 
-  public async getUserItem(
+  public async getUserItemsByItemId(
     guildId: string,
     userId: string,
     itemId: string
-  ): Promise<UserItem | undefined> {
+  ): Promise<UserItem[]> {
     return this.pool
       .query(this.selectUserItem + "WHERE guild_id=? AND user_id=? AND item_id=?", [
         guildId,
@@ -87,30 +86,35 @@ export default class UserInventoryRepository extends Repository {
         itemId,
       ])
       .then(async ([rows]: [RowDataPacket[], FieldPacket[]]) => {
-        if (!rows.length) {
-          return;
-        }
-        return (await this.toUserItem(rows[0])) as UserItem;
+        return Promise.all(rows.map((r) => this.toUserItem(r)));
       });
   }
 
-  public async getUserItemByCommand(
+  public async getUserItemsByCommand(
     guildId: string,
     userId: string,
     commandName: string
-  ): Promise<UserItem | undefined> {
+  ): Promise<UserItem[]> {
     const itemId = await this.pool
       .query("SELECT item_id FROM commands WHERE name LIKE ?", [commandName])
       .then(([rows]: [RowDataPacket[], FieldPacket[]]) => {
-        if (rows.length === 0) {
-          return;
-        }
-        return rows[0].item_id;
+        return rows.length ? rows[0].item_id : undefined;
       });
     if (!itemId) {
-      return;
+      return [];
     }
-    return this.getUserItem(guildId, userId, itemId);
+    return this.getUserItemsByItemId(guildId, userId, itemId);
+  }
+
+  public async getUserItem(id: number): Promise<UserItem | undefined> {
+    return this.pool
+      .query(this.selectUserItem + `WHERE id=?`, [id])
+      .then(([rows]: [RowDataPacket[], FieldPacket[]]) => {
+        if (rows.length === 0) {
+          return undefined;
+        }
+        return this.toUserItem(rows[0]);
+      });
   }
 
   public async updateUserItem(guildId: string, userId: string, item: UserItem): Promise<void> {
@@ -147,10 +151,7 @@ export default class UserInventoryRepository extends Repository {
       });
   }
 
-  private async toUserItem(row: RowDataPacket) {
-    if (!row) {
-      return;
-    }
+  private async toUserItem(row: RowDataPacket): Promise<UserItem> {
     const commands = await this._commandRepository.getCommandsForItem(row.item_id);
     return new UserItem(
       row.item_id,

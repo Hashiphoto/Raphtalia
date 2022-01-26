@@ -10,6 +10,7 @@ import RaphError from "../../models/RaphError";
 import { RaphtaliaInteraction } from "../../enums/Interactions";
 import { Result } from "../../enums/Result";
 import { autoInjectable } from "tsyringe";
+import { listFormat } from "../../utilities/Util";
 
 @autoInjectable()
 export default class AllowWord extends Command<IArgsProps> {
@@ -21,8 +22,7 @@ export default class AllowWord extends Command<IArgsProps> {
   ) {
     super();
     this.name = "AllowWord";
-    this.instructions = "Remove a word from the ban list";
-    this.usage = "`AllowWord word1 word2 etc`";
+    this.instructions = "Remove word(s) from the ban list";
     this.aliases = [this.name.toLowerCase(), "allowwords"];
     this.slashCommands = [
       {
@@ -51,8 +51,9 @@ export default class AllowWord extends Command<IArgsProps> {
       const content = interaction.options.getString("words");
       const args = CommandMessage.GetArgs(content ?? "");
 
+      await interaction.deferReply();
       this.channel = new InteractionChannel(interaction);
-      this.runWithItem({ initiator, args });
+      return this.runWithItem({ initiator, args });
     };
   }
 
@@ -71,17 +72,19 @@ export default class AllowWord extends Command<IArgsProps> {
     }
 
     if (!this.item.unlimitedUses && words.length > this.item.remainingUses) {
-      await this.reply(
+      this.queueReply(
         `Your ${this.item.name} does not have enough charges. ` +
           `Attempting to use ${words.length}/${this.item.remainingUses} remaining uses`
       );
       return;
     }
 
-    await this._censorshipService
-      ?.deleteWords(initiator.guild, words)
-      .then(() => this._banListService?.update(initiator.guild))
-      .then(() => this.reply("Banned words list has been updated"));
+    await this._censorshipService?.deleteWords(initiator.guild, words);
+    this.queueReply(
+      `Allowed words: ${listFormat(words, "and", (text) => `"${text}"`)}` +
+        "\nBan list will be updated shortly"
+    );
+    this._banListService?.update(initiator.guild);
 
     return words.length;
   }

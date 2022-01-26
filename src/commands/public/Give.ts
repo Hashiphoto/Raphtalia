@@ -5,8 +5,8 @@ import { Result } from "../../enums/Result";
 import { ITransferProps } from "../../interfaces/CommandInterfaces";
 import CommandMessage from "../../models/CommandMessage";
 import InteractionChannel from "../../models/InteractionChannel";
-import Item from "../../models/Item";
 import RaphError from "../../models/RaphError";
+import UserItem from "../../models/UserItem";
 import ClientService from "../../services/Client.service";
 import CurrencyService from "../../services/Currency.service";
 import RoleContestService from "../../services/RoleContest.service";
@@ -28,7 +28,6 @@ export default class Give extends Command<ITransferProps> {
       "Give the specified member(s) either an amount of money or an item. " +
       "If multiple members are listed, each member will be given the amount of money specified. " +
       "When giving an item, each member will be given one of that item. Only unused items can be given.";
-    this.usage = "`Give @member ($1|item name)`";
     this.aliases = [this.name.toLowerCase()];
     this.itemRequired = false;
     this.slashCommands = [
@@ -76,7 +75,7 @@ export default class Give extends Command<ITransferProps> {
         : undefined;
 
       this.channel = new InteractionChannel(interaction);
-      this.runWithItem({ initiator, targets: [target], amount, item });
+      return this.runWithItem({ initiator, targets: [target], amount, item });
     };
   }
 
@@ -113,7 +112,9 @@ export default class Give extends Command<ITransferProps> {
     if (targets.length === 0) {
       return this.sendHelpMessage();
     }
-
+    if (targets.length > 1) {
+      return this.sendHelpMessage("You can only give to one user at a time");
+    }
     if (!amount && !item) {
       return this.sendHelpMessage();
     }
@@ -121,31 +122,27 @@ export default class Give extends Command<ITransferProps> {
     let response = "";
 
     if (amount) {
-      response += await this.transferMoney(initiator, targets, amount);
+      response += await this.transferMoney(initiator, targets[0], amount);
     }
     if (item) {
-      response += await this.transferItem(initiator, targets, item);
+      response += await this.transferItem(initiator, targets[0], item);
     }
 
-    await this.reply(response);
+    this.queueReply(response);
     return undefined;
   }
 
   protected async transferMoney(
     initiator: GuildMember,
-    targets: GuildMember[],
+    target: GuildMember,
     amount: number
   ): Promise<string> {
     if (amount < 0) {
       return "You cannot send a negative amount of money\n";
     }
-    const totalAmount = amount * targets.length;
     const balance = (await this.currencyService?.getCurrency(initiator)) as number;
-    if (balance < totalAmount) {
-      return `You do not have enough money for that. Funds needed: ${print(
-        totalAmount,
-        Format.Dollar
-      )}`;
+    if (balance < amount) {
+      return `You do not have enough money for that. Funds needed: ${print(amount, Format.Dollar)}`;
     }
     const raphtalia = this._clientService?.getRaphtaliaMember(initiator.guild);
     if (!raphtalia) {
@@ -154,54 +151,35 @@ export default class Give extends Command<ITransferProps> {
         `Raphtalia is not a member of the ${initiator.guild.name} server`
       );
     }
-    const givePromises = targets.map(async (target) => {
-      await this.currencyService?.transferCurrency(initiator, target, amount);
-      // Giving money to Raphtalia, presumably for a contest
-      if (target.id === raphtalia.id && initiator.roles.hoist) {
-        const existingContest = await this._roleContestService?.bidOnRoleContest(
-          initiator.roles.hoist,
-          initiator,
-          amount
-        );
-        return existingContest
-          ? `Paid ${print(amount, Format.Dollar)} towards contesting the ${
-              initiator.guild.roles.cache.get(existingContest.roleId)?.name
-            } role!`
-          : `Thanks for the ${print(amount, Format.Dollar)}!`;
-      } else {
-        return `Transfered ${print(amount, Format.Dollar)} to ${target.displayName}!`;
-      }
-    });
-
-    return Promise.all(givePromises).then((messages) => messages.join(""));
+    await this.currencyService?.transferCurrency(initiator, target, amount);
+    // Giving money to Raphtalia, presumably for a contest
+    if (target.id === raphtalia.id && initiator.roles.hoist) {
+      const existingContest = await this._roleContestService?.bidOnRoleContest(
+        initiator.roles.hoist,
+        initiator,
+        amount
+      );
+      return existingContest
+        ? `Paid ${print(amount, Format.Dollar)} towards contesting the ${
+            initiator.guild.roles.cache.get(existingContest.roleId)?.name
+          } role!`
+        : `Thanks for the ${print(amount, Format.Dollar)}!`;
+    } else {
+      return `Transfered ${print(amount, Format.Dollar)} to ${target.displayName}!`;
+    }
   }
 
   protected async transferItem(
     initiator: GuildMember,
-    targets: GuildMember[],
-    item: Item
+    target: GuildMember,
+    item: UserItem
   ): Promise<string> {
-    const userItem = await this.inventoryService?.getUserItem(initiator, item);
-    if (!userItem) {
+    const userItems = await this.inventoryService?.getUserItems(initiator, item);
+    if (!userItems?.length) {
       return `${initiator.displayName} does not have any ${item.name} to give away`;
     }
-
-    const unusedItemCount = Math.floor(userItem.remainingUses / userItem.maxUses);
-    if (unusedItemCount < targets.length) {
-      return (
-        `You need ${targets.length - unusedItemCount} more unused items for that. ` +
-        `Unused ${userItem.name} in inventory: ${unusedItemCount}`
-      );
-    }
-
-    const givePromises = targets.map((target) => {
-      return this.inventoryService?.transferItem(userItem, initiator, target).then(() => {
-        return `Transferred one ${item.name} to ${target.toString()}\n`;
-      });
-    });
-
-    return Promise.all(givePromises).then((messages) => {
-      return messages.join("");
-    });
+    const userItem = userItems[0];
+    await this.inventoryService?.transferItem(userItem, target);
+    return `Transferred one ${item.name} to ${target.toString()}\n`;
   }
 }

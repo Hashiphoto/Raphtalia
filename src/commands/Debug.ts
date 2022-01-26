@@ -17,7 +17,6 @@ export default class Debug extends Command<IArgsProps> {
     super();
     this.name = "Debug";
     this.instructions = "For testing in development only";
-    this.usage = "`Debug (options)`";
     this.aliases = [this.name.toLowerCase()];
 
     if (process.env.NODE_ENV !== Env.Dev) {
@@ -43,18 +42,18 @@ export default class Debug extends Command<IArgsProps> {
         if (feedback.length === 0) {
           return;
         }
-        this.reply(feedback);
+        this.queueReply(feedback);
         break;
       }
       case "resetrole": {
         const roleService = container.resolve(RoleService);
         const role = roleService.convertToRole(initiator.guild, args[1]);
         if (!role) {
-          this.reply(`Cannot find role ${args[1]}`);
+          this.queueReply(`Cannot find role ${args[1]}`);
           return;
         }
         await roleService.resetRoleDates(role);
-        this.reply("Completed");
+        this.queueReply("Completed");
         break;
       }
       default:
