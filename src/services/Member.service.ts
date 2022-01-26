@@ -183,7 +183,7 @@ export default class MemberService {
     const inExile = member.roles.cache.has(exileRole.id);
     if (inExile) {
       await member.roles.remove(exileRole);
-      response += `${member.toString()}'s exile has ended\n`;
+      response += `${member.toString()}'s exile has ended`;
     }
 
     return response;
@@ -308,10 +308,7 @@ export default class MemberService {
     await this._roleRepository.updateRolePromotionDate(role.id);
     await this.resetInfractions(member);
 
-    return (
-      `${member.toString()} has been promoted to ` +
-      `**${role.name}**!\nInfractions have been reset\n`
-    );
+    return `${member.toString()} has been promoted to ` + `**${role.name}**!\n`;
   }
 
   /**
@@ -343,9 +340,7 @@ export default class MemberService {
     for (const role of lowerRoles) {
       try {
         await this.setHoistedRole(target, role);
-        response +=
-          `${target.displayName} has been demoted to ${role.name}!\n` +
-          "Infractions have been reset\n";
+        response += `${target.displayName} has been demoted to ${role.name}!\n`;
         await this.resetInfractions(target);
 
         return response;

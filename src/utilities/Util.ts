@@ -6,6 +6,7 @@ dayjs.extend(duration);
 // Discord markdown methods
 export const bold = (text: string): string => `**${text}**`;
 export const italicize = (text: string): string => `*${text}*`;
+export const spoiler = (text: string): string => `||${text}||`;
 
 export const buildCustomId = (...args: string[]): string => {
   return args.join("|");
@@ -97,18 +98,24 @@ const parseNumber = (text: string): number | undefined => {
   return round(amount);
 };
 
-const listFormat = (itemArray: string[], conjunction = "and"): string => {
-  if (itemArray.length === 1) {
-    return itemArray[0];
+const listFormat = (
+  itemArray: string[],
+  conjunction = "and",
+  formatFn?: (text: string) => string
+): string => {
+  if (!formatFn) {
+    formatFn = (text: string) => text;
   }
-
+  if (itemArray.length === 1) {
+    return formatFn(itemArray[0]);
+  }
   if (itemArray.length === 2) {
-    return itemArray[0] + ` ${conjunction} ` + itemArray[1];
+    return formatFn(itemArray[0]) + ` ${conjunction} ` + formatFn(itemArray[1]);
   }
 
   let output = "";
   for (let i = 0; i < itemArray.length; i++) {
-    output += itemArray[i];
+    output += formatFn(itemArray[i]);
 
     // If it's not the last element
     if (i < itemArray.length - 1) {

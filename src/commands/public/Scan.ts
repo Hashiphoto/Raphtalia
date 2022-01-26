@@ -30,7 +30,6 @@ export default class Scan extends Command<IArgProps> {
       percentCost,
       Format.Percent
     )} of the item's store price. DC10 to reveal the user's name`;
-    this.usage = "`Scan (item name)`";
     this.aliases = [this.name.toLowerCase()];
     this.slashCommands = [
       {
@@ -81,13 +80,13 @@ export default class Scan extends Command<IArgProps> {
       guildItem = await this.inventoryService?.findGuildItem(initiator.guild.id, itemName);
     } catch (error) {
       if (error.result === Result.AmbiguousInput) {
-        await this.reply(`There is more than one item with that name. Matches: ${error.message}`);
+        this.queueReply(`There is more than one item with that name. Matches: ${error.message}`);
         return;
       }
       throw error;
     }
     if (!guildItem) {
-      await this.reply(`There are no items named "${itemName}"`);
+      this.queueReply(`There are no items named "${itemName}"`);
       return;
     }
 
@@ -95,7 +94,7 @@ export default class Scan extends Command<IArgProps> {
     const initiatorBalance = await this._currencyService?.getCurrency(initiator);
     const cost = guildItem.price * percentCost;
     if (!initiatorBalance || initiatorBalance < cost) {
-      await this.reply(
+      this.queueReply(
         `${
           initiator.displayName
         } does not have enough money. Scanning for a ${guildItem.printName()} costs ${print(
@@ -117,6 +116,7 @@ export default class Scan extends Command<IArgProps> {
     ).filter((item) => item.userId !== initiator.user.id);
     const members = await initiator.guild.members.fetch({
       user: usersWithItem.map((ui) => ui.userId),
+      force: true,
     });
 
     let deciphered = 0;
@@ -129,12 +129,12 @@ export default class Scan extends Command<IArgProps> {
     }, "");
 
     let response = `Deciphered ${deciphered}/${
-      usersWithItem?.length
+      members.size
     } members with a ${guildItem.printName()}:\n${memberNames}`;
 
     response += `*Charged ${print(cost, Format.Dollar)} for this scan*`;
 
-    await this.reply(response);
+    this.queueReply(response);
     return 1;
   }
 }

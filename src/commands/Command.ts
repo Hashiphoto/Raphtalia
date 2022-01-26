@@ -26,7 +26,7 @@ export default class Command<T extends ICommandProps> {
   public slashCommands: ApplicationCommandData[] = [];
   public itemRequired = true;
   public leaderOnly = false;
-  private _usage: string;
+  protected queuedText = "";
   private _instructions: string;
 
   public constructor(
@@ -42,14 +42,6 @@ export default class Command<T extends ICommandProps> {
 
   public set instructions(text: string) {
     this._instructions = text;
-  }
-
-  protected get usage(): string {
-    return `Usage: ${this._usage}`;
-  }
-
-  protected set usage(text: string) {
-    this._usage = text;
   }
 
   public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {
@@ -73,7 +65,7 @@ export default class Command<T extends ICommandProps> {
     if (this.itemRequired) {
       const item = await this.getOrBuyItem(props.initiator);
       if (!item) {
-        return;
+        return this.reply("");
       }
       this.item = item;
     }
@@ -82,6 +74,9 @@ export default class Command<T extends ICommandProps> {
 
     if (this.itemRequired && itemUses) {
       await this.useItem(props.initiator, itemUses);
+    }
+    if (this.queuedText.length) {
+      await this.flushMessageQueue();
     }
   }
 
@@ -93,7 +88,7 @@ export default class Command<T extends ICommandProps> {
   }
 
   public async sendHelpMessage(pretext = ""): Promise<undefined> {
-    await this.reply(pretext + "\n" + this.usage);
+    this.queueReply(this.instructions);
     return;
   }
 
@@ -105,15 +100,41 @@ export default class Command<T extends ICommandProps> {
     const updatedItem = await this.inventoryService?.useItem(this.item, itemOwner, uses);
 
     if (updatedItem && updatedItem.quantity < oldQuantity) {
-      await this.reply(`Your ${updatedItem.printName()} broke!`);
+      this.queueReply(`Your ${updatedItem.printName()} broke!`);
     }
+  }
+
+  public async flushMessageQueue(): Promise<Message | undefined> {
+    if (!this.channel || !this.queuedText.length) {
+      return;
+    }
+    return this.channelService
+      ?.watchSend(this.channel, {
+        content: this.queuedText,
+      })
+      .then((message) => {
+        this.queuedText = "";
+        return message;
+      });
+  }
+
+  protected queueReply(content: string): void {
+    this.queuedText += content + "\n";
   }
 
   protected async reply(content: string, options?: MessageOptions): Promise<Message | undefined> {
     if (!this.channel) {
       return;
     }
-    return this.channelService?.watchSend(this.channel, { ...options, content });
+    return this.channelService
+      ?.watchSend(this.channel, {
+        ...options,
+        content: this.queuedText + content,
+      })
+      .then((message) => {
+        this.queuedText = "";
+        return message;
+      });
   }
 
   protected async getOrBuyItem(initiator: GuildMember): Promise<UserItem | undefined> {
@@ -121,9 +142,10 @@ export default class Command<T extends ICommandProps> {
       throw new RaphError(Result.ProgrammingError, "Inventory service was null");
     }
     // See if the user owns it
-    const userItem = await this.inventoryService.getUserItemByCommand(initiator, this.name);
-    if (userItem) {
-      return userItem;
+    const userItems = await this.inventoryService.getUserItemByCommand(initiator, this.name);
+    if (userItems.length) {
+      // Use the item with the least remaining uses
+      return userItems[0];
     }
 
     // Else, buy it for them
@@ -137,24 +159,30 @@ export default class Command<T extends ICommandProps> {
     console.log(
       `Auto-purchasing item ${guildItem.name} for ${initiator.displayName} for command ${this.name}`
     );
-    return this.inventoryService.userPurchase(initiator, guildItem).catch(async (error) => {
-      let resultMessage: string;
+    return this.inventoryService
+      .userPurchase(initiator, guildItem)
+      .then((userItem) => {
+        this.queueReply(`Auto-purchased a ${guildItem.printName()} for ${guildItem.printPrice()}`);
+        return userItem;
+      })
+      .catch(async (error) => {
+        let resultMessage: string;
 
-      const autoPurchaseError = `You need a ${guildItem.printName()} to execute this command. Could not auto-purchase one for you because`;
-      switch (error.result) {
-        case Result.OutOfStock:
-          resultMessage = `${autoPurchaseError} it is currently out of stock`;
-          break;
-        case Result.TooPoor:
-          resultMessage = `${autoPurchaseError} you're too poor. Current price: ${guildItem.printPrice()}`;
-          break;
-        default:
-          resultMessage = `You can't use the ${bold(
-            this.name
-          )} command because you don't own any ${guildItem.printName()}. Try using the Buy command.`;
-      }
-      await this.reply(resultMessage);
-      return undefined;
-    });
+        const autoPurchaseError = `You need a ${guildItem.printName()} to execute this command. Could not auto-purchase one for you because`;
+        switch (error.result) {
+          case Result.OutOfStock:
+            resultMessage = `${autoPurchaseError} it is currently out of stock`;
+            break;
+          case Result.TooPoor:
+            resultMessage = `${autoPurchaseError} you're too poor. Current price: ${guildItem.printPrice()}`;
+            break;
+          default:
+            resultMessage = `You can't use the ${bold(
+              this.name
+            )} command because you don't own any ${guildItem.printName()}. Try using the Buy command.`;
+        }
+        this.queueReply(resultMessage);
+        return undefined;
+      });
   }
 }

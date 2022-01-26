@@ -26,7 +26,6 @@ export default class Poke extends Command<ITargettedProps> {
     super();
     this.name = "Poke";
     this.instructions = "I will poke the targeted member for you";
-    this.usage = "`Poke @member`";
     this.aliases = [this.name.toLowerCase()];
     this.itemRequired = false;
     this.slashCommands = [
@@ -58,7 +57,7 @@ export default class Poke extends Command<ITargettedProps> {
       if (!target) {
         return interaction.reply(`No user was specified or they are not members of the server`);
       }
-      this.runWithItem({ initiator, targets: [target] }).then(() => {
+      return this.runWithItem({ initiator, targets: [target] }).then(() => {
         return interaction.reply({ content: `Poked ${target.toString()}!`, ephemeral: true });
       });
     };
@@ -111,7 +110,7 @@ export default class Poke extends Command<ITargettedProps> {
       )
     );
 
-    await this.reply(`Sent ${successes} poke${successes > 1 ? "s" : ""}!`);
+    this.queueReply(`Sent ${successes} poke${successes > 1 ? "s" : ""}!`);
     return undefined;
   }
 

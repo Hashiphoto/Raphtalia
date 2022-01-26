@@ -3,7 +3,6 @@ import { FieldPacket, RowDataPacket } from "mysql2/promise";
 import { inject, injectable } from "tsyringe";
 import { Result } from "../enums/Result";
 import GuildItem from "../models/GuildItem";
-import Item from "../models/Item";
 import RaphError from "../models/RaphError";
 import { listFormat } from "../utilities/Util";
 import CommandRepository from "./Command.repository";
@@ -15,7 +14,7 @@ export default class GuildInventoryRepository extends Repository {
     super();
   }
 
-  private guildSelect = "SELECT * FROM guild_inventory gi JOIN items i ON gi.item_id = i.id ";
+  private guildSelect = "SELECT * FROM vw_guild_inventory ";
 
   public async getGuildStock(guildId: string, showHidden = false): Promise<GuildItem[]> {
     return this.pool
@@ -57,7 +56,7 @@ export default class GuildInventoryRepository extends Repository {
 
   public async getGuildItem(guildId: string, itemId: string): Promise<GuildItem> {
     return this.pool
-      .query(this.guildSelect + `WHERE guild_id = ? AND id=?`, [guildId, itemId])
+      .query(this.guildSelect + `WHERE guild_id = ? AND item_id=?`, [guildId, itemId])
       .then(([rows]: [RowDataPacket[], FieldPacket[]]) => {
         if (rows.length === 0) {
           throw new RaphError(Result.NotFound);
@@ -90,7 +89,7 @@ export default class GuildInventoryRepository extends Repository {
 
   public async updateGuildItemQuantity(
     guildId: string,
-    item: Item,
+    item: GuildItem,
     quantityChange: number,
     soldDateTime?: Date
   ): Promise<void> {
@@ -107,7 +106,7 @@ export default class GuildInventoryRepository extends Repository {
 
   public async updateGuildItemSold(
     guildId: string,
-    item: Item,
+    item: GuildItem,
     soldInCycle: number,
     soldDateTime: Date
   ): Promise<void> {
@@ -117,7 +116,11 @@ export default class GuildInventoryRepository extends Repository {
     );
   }
 
-  public async updateGuildItemPrice(guildId: string, item: Item, newPrice: number): Promise<void> {
+  public async updateGuildItemPrice(
+    guildId: string,
+    item: GuildItem,
+    newPrice: number
+  ): Promise<void> {
     await this.pool.query("UPDATE guild_inventory SET price=? WHERE guild_id=? and item_id=?", [
       newPrice,
       guildId,
@@ -130,7 +133,7 @@ export default class GuildInventoryRepository extends Repository {
   }
 
   private async toGuildItem(row: RowDataPacket) {
-    const commands = await this._commandRepository.getCommandsForItem(row.id);
+    const commands = await this._commandRepository.getCommandsForItem(row.item_id);
     return new GuildItem(
       row.item_id,
       row.guild_id,

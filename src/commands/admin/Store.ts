@@ -13,7 +13,6 @@ export default class Store extends Command<ICommandProps> {
     super();
     this.name = "Store";
     this.instructions = "Post the server store in this channel";
-    this.usage = "`Store`";
     this.aliases = [this.name.toLowerCase()];
   }
 

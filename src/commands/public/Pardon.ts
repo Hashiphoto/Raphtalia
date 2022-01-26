@@ -19,7 +19,6 @@ export default class Pardon extends Command<ITargettedProps> {
     this.instructions =
       "Removes all infractions from the specified member(s). " +
       "If the members are exiled, they are also freed from exile";
-    this.usage = "`Pardon @member`";
     this.aliases = [this.name.toLowerCase()];
     this.slashCommands = [
       {
@@ -53,7 +52,7 @@ export default class Pardon extends Command<ITargettedProps> {
 
       this.channel = new InteractionChannel(interaction);
 
-      this.runWithItem({ initiator, targets: [target] });
+      return this.runWithItem({ initiator, targets: [target] });
     };
   }
 
@@ -75,7 +74,7 @@ export default class Pardon extends Command<ITargettedProps> {
     }
 
     if (!this.item.unlimitedUses && targets.length > this.item.remainingUses) {
-      await this.reply(
+      this.queueReply(
         `Your ${this.item.name} does not have enough charges. ` +
           `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
       );
@@ -86,7 +85,7 @@ export default class Pardon extends Command<ITargettedProps> {
 
     await Promise.all(pardonPromises)
       .then((messages) => messages.join(""))
-      .then((response) => this.reply(response));
+      .then((response) => this.queueReply(response));
     return targets.length;
   }
 }

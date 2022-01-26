@@ -23,7 +23,6 @@ export default class Balance extends Command<ICommandProps> {
     super();
     this.name = "Balance";
     this.instructions = "Get your current balance sent to you in a direct message";
-    this.usage = "`Balance`";
     this.aliases = [this.name.toLowerCase(), "wallet"];
     this.itemRequired = false;
     this.slashCommands = [
@@ -75,7 +74,7 @@ export default class Balance extends Command<ICommandProps> {
     const balance = (await this._currencyService?.getCurrency(initiator)) as number;
     const messageText = `You have ${print(balance, Format.Dollar)} in ${initiator.guild.name}`;
 
-    this.reply(messageText);
+    this.queueReply(messageText);
     return undefined;
   }
 }

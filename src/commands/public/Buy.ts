@@ -21,7 +21,6 @@ export default class Buy extends Command<IArgProps> {
     this.name = "Buy";
     this.instructions =
       "Purchase an item from the server store. The item will be added to your inventory, if there is adequate quantity in the store";
-    this.usage = "`Buy (item name)`";
     this.aliases = [this.name.toLowerCase()];
     this.itemRequired = false;
     this.slashCommands = [
@@ -74,13 +73,13 @@ export default class Buy extends Command<IArgProps> {
       guildItem = await this._inventoryService?.findGuildItem(initiator.guild.id, itemName);
     } catch (error) {
       if (error.result === Result.AmbiguousInput) {
-        await this.reply(`There is more than one item with that name. Matches: ${error.message}`);
+        this.queueReply(`There is more than one item with that name. Matches: ${error.message}`);
         return;
       }
       throw error;
     }
     if (!guildItem) {
-      await this.reply(`There are no items named "${itemName}"`);
+      this.queueReply(`There are no items named "${itemName}"`);
       return;
     }
 
@@ -89,20 +88,21 @@ export default class Buy extends Command<IArgProps> {
     } catch (error) {
       switch (error.result) {
         case Result.OutOfStock:
-          await this.reply(`${guildItem.printName()} is currently out of stock`);
+          this.queueReply(`${guildItem.printName()} is currently out of stock`);
           return;
         case Result.TooPoor:
-          await this.reply(
+          this.queueReply(
             `You do not have enough money to buy ${guildItem.printName()}. Current price: ${guildItem.printPrice()}`
           );
           return;
         default:
-          await this.reply(`An error occurred purchasing the ${guildItem.printName()}`);
+          console.error(error);
+          this.queueReply(`An error occurred purchasing the ${guildItem.printName()}`);
           return;
       }
     }
 
-    this.reply(
+    this.queueReply(
       `Thank you for your purchase of ${print(
         guildItem.price,
         Format.Dollar

@@ -4,9 +4,9 @@ import Command from "./Command";
 import CommandMessage from "../models/CommandMessage";
 import CurrencyService from "../services/Currency.service";
 import { ITransferProps } from "../interfaces/CommandInterfaces";
-import Item from "../models/Item";
 import RaphError from "../models/RaphError";
 import { Result } from "../enums/Result";
+import UserItem from "../models/UserItem";
 import { autoInjectable } from "tsyringe";
 import { parseNumber } from "../utilities/Util";
 
@@ -18,7 +18,6 @@ export default class Take extends Command<ITransferProps> {
     this.instructions =
       "Take money or items from the specified user. " +
       "You can take money from multiple users at once, but only one item from one user at a time.";
-    this.usage = "`Take @member ($1|item name)`";
     this.aliases = [this.name.toLowerCase()];
   }
 
@@ -57,7 +56,7 @@ export default class Take extends Command<ITransferProps> {
     }
 
     if (!this.item.unlimitedUses && targets.length > this.item.remainingUses) {
-      await this.reply(
+      this.queueReply(
         `Your ${this.item.name} does not have enough charges. ` +
           `Attempting to use ${targets.length}/${this.item.remainingUses} remaining uses`
       );
@@ -77,7 +76,7 @@ export default class Take extends Command<ITransferProps> {
       response += await this.transferItem(initiator, targets, item);
     }
 
-    await this.reply(response);
+    this.queueReply(response);
     return targets.length;
   }
 
@@ -105,15 +104,15 @@ export default class Take extends Command<ITransferProps> {
   protected async transferItem(
     initiator: GuildMember,
     targets: GuildMember[],
-    item: Item
+    item: UserItem
   ): Promise<string> {
     const itemPromises = targets.map(async (target) => {
-      const targetItem = await this.inventoryService?.getUserItem(target, item);
-      if (!targetItem) {
+      const targetItem = await this.inventoryService?.getUserItems(target, item);
+      if (!targetItem?.length) {
         return `${target.displayName} has no ${item.name}`;
       }
       return this.inventoryService
-        ?.transferItem(targetItem, target, initiator)
+        ?.transferItem(targetItem[0], initiator)
         .then(
           () =>
             `Transferred one ${item.name} from ${target.toString()} to ${initiator.toString()}\n`

@@ -30,7 +30,6 @@ export default class Admin extends Command<IAdminProps> {
     super();
     this.name = "Admin";
     this.instructions = "Perform an administrative action";
-    this.usage = "`Admin command [args]`";
     this.aliases = [this.name.toLowerCase()];
   }
 
@@ -100,6 +99,6 @@ export default class Admin extends Command<IAdminProps> {
       );
     }
 
-    this.reply(`Set commands: ${slashCommands.map((s) => `\`${s.name}\``).join(", ")}`);
+    this.queueReply(`Set commands: ${slashCommands.map((s) => `\`${s.name}\``).join(", ")}`);
   }
 }

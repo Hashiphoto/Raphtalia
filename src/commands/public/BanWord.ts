@@ -1,4 +1,5 @@
 import { CommandInteraction, TextChannel } from "discord.js";
+import { listFormat, spoiler } from "../../utilities/Util";
 
 import BanListService from "../../services/message/BanWordList.service";
 import CensorshipService from "../../services/Censorship.service";
@@ -10,7 +11,6 @@ import RaphError from "../../models/RaphError";
 import { RaphtaliaInteraction } from "../../enums/Interactions";
 import { Result } from "../../enums/Result";
 import { autoInjectable } from "tsyringe";
-import { listFormat } from "../../utilities/Util";
 
 @autoInjectable()
 export default class BanWord extends Command<IArgsProps> {
@@ -23,7 +23,6 @@ export default class BanWord extends Command<IArgsProps> {
     super();
     this.name = "BanWord";
     this.instructions = "Add a word to the ban list";
-    this.usage = "`BanWord word1 word2 etc1`";
     this.aliases = [this.name.toLowerCase(), "banwords"];
     this.slashCommands = [
       {
@@ -53,8 +52,9 @@ export default class BanWord extends Command<IArgsProps> {
       const content = interaction.options.getString("words");
       const args = CommandMessage.GetArgs(content ?? "");
 
+      await interaction.deferReply();
       this.channel = new InteractionChannel(interaction);
-      this.runWithItem({ initiator, args });
+      return this.runWithItem({ initiator, args });
     };
   }
 
@@ -66,21 +66,24 @@ export default class BanWord extends Command<IArgsProps> {
     await this.runWithItem({ initiator: cmdMessage.message.member, args: cmdMessage.args });
   }
 
-  public async execute({ initiator, args }: IArgsProps): Promise<number | undefined> {
-    if (args.length === 0) {
+  public async execute({ initiator, args: words }: IArgsProps): Promise<number | undefined> {
+    if (words.length === 0) {
       return this.sendHelpMessage();
     }
 
-    if (!this.item.unlimitedUses && args.length > this.item.remainingUses) {
-      await this.reply(
+    if (!this.item.unlimitedUses && words.length > this.item.remainingUses) {
+      this.queueReply(
         `Your ${this.item.name} does not have enough charges. ` +
-          `Attempting to use ${args.length}/${this.item.remainingUses} remaining uses`
+          `Attempting to use ${words.length}/${this.item.remainingUses} remaining uses`
       );
       return;
     }
 
-    await this._censorshipService?.insertWords(initiator.guild, args);
-    await this.reply(`Banned words: ${listFormat(args)}` + "Ban list will be updated shortly");
+    await this._censorshipService?.insertWords(initiator.guild, words);
+    this.queueReply(
+      `Banned words: ${spoiler(listFormat(words, "and", (text) => `"${text}"`))}` +
+        "\nBan list will be updated shortly"
+    );
     this._banListService?.update(initiator.guild);
     return 1;
   }

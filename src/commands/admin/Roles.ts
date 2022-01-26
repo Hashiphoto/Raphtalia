@@ -15,7 +15,6 @@ export default class Roles extends Command<ICommandProps> {
     super();
     this.name = "Roles";
     this.instructions = "Post the roles list for this server in this channel";
-    this.usage = "`Roles`";
     this.aliases = [this.name.toLowerCase()];
   }
 

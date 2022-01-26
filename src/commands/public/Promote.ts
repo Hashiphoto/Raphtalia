@@ -16,7 +16,6 @@ export default class Promote extends Command<ICommandProps> {
     super();
     this.name = "Promote";
     this.instructions = "Increase your rank by one";
-    this.usage = "`Promote`";
     this.aliases = [this.name.toLowerCase()];
     this.slashCommands = [
       {
@@ -39,7 +38,7 @@ export default class Promote extends Command<ICommandProps> {
         this.channel = interaction.channel;
       }
 
-      this.runWithItem({ initiator }).then(() => {
+      return this.runWithItem({ initiator }).then(() => {
         interaction.reply({ content: "Promotion request received", ephemeral: true });
       });
     };
@@ -63,11 +62,11 @@ export default class Promote extends Command<ICommandProps> {
         this.channel as TextChannel
       );
       if (feedback?.length) {
-        this.reply(feedback);
+        this.queueReply(feedback);
       }
     } catch (error) {
       if (error.name === "RaphError") {
-        await this.reply(error.message);
+        this.queueReply(error.message);
         return;
       }
       throw error;
