@@ -4,9 +4,9 @@ import { RaphtaliaInteraction } from "../../enums/Interactions";
 import { Result } from "../../enums/Result";
 import { ITransferProps } from "../../interfaces/CommandInterfaces";
 import CommandMessage from "../../models/CommandMessage";
+import GuildItem from "../../models/GuildItem";
 import InteractionChannel from "../../models/InteractionChannel";
 import RaphError from "../../models/RaphError";
-import UserItem from "../../models/UserItem";
 import ClientService from "../../services/Client.service";
 import CurrencyService from "../../services/Currency.service";
 import RoleContestService from "../../services/RoleContest.service";
@@ -172,7 +172,7 @@ export default class Give extends Command<ITransferProps> {
   protected async transferItem(
     initiator: GuildMember,
     target: GuildMember,
-    item: UserItem
+    item: GuildItem
   ): Promise<string> {
     const userItems = await this.inventoryService?.getUserItems(initiator, item);
     if (!userItems?.length) {

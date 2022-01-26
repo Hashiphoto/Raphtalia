@@ -3,10 +3,10 @@ import { GuildMember, TextChannel } from "discord.js";
 import Command from "./Command";
 import CommandMessage from "../models/CommandMessage";
 import CurrencyService from "../services/Currency.service";
+import GuildItem from "../models/GuildItem";
 import { ITransferProps } from "../interfaces/CommandInterfaces";
 import RaphError from "../models/RaphError";
 import { Result } from "../enums/Result";
-import UserItem from "../models/UserItem";
 import { autoInjectable } from "tsyringe";
 import { parseNumber } from "../utilities/Util";
 
@@ -104,7 +104,7 @@ export default class Take extends Command<ITransferProps> {
   protected async transferItem(
     initiator: GuildMember,
     targets: GuildMember[],
-    item: UserItem
+    item: GuildItem
   ): Promise<string> {
     const itemPromises = targets.map(async (target) => {
       const targetItem = await this.inventoryService?.getUserItems(target, item);
