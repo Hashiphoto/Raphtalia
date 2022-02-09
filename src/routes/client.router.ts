@@ -44,7 +44,7 @@ export default (client: Client): void => {
   client.on("voiceStateUpdate", (oldState, newState) => {
     // Payout if they join a voice channel
     if (!oldState.channel && newState.channel && newState.member) {
-      currencyService.payoutInteraction(newState.member, new Date());
+      currencyService.payoutMember(newState.member, new Date());
     }
   });
 };

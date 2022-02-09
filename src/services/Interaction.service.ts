@@ -17,7 +17,7 @@ export default class InteractionService {
 
   public async handleInteraction(interaction: Interaction): Promise<void> {
     if (interaction.member && interaction.member instanceof GuildMember) {
-      this._currencyService.payoutInteraction(interaction.member, interaction.createdAt);
+      this._currencyService.payoutMember(interaction.member, interaction.createdAt);
     }
 
     if (interaction.isMessageComponent()) {
