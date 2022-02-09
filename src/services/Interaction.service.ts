@@ -1,12 +1,25 @@
-import { CommandInteraction, Interaction, MessageComponentInteraction } from "discord.js";
-
+import {
+  CommandInteraction,
+  GuildMember,
+  Interaction,
+  MessageComponentInteraction,
+} from "discord.js";
+import { delay, inject, injectable } from "tsyringe";
 import { InteractionMap } from "../enums/InteractionMap";
 import { RaphtaliaInteraction } from "../enums/Interactions";
-import { injectable } from "tsyringe";
+import CurrencyService from "./Currency.service";
 
 @injectable()
 export default class InteractionService {
+  public constructor(
+    @inject(delay(() => CurrencyService)) private _currencyService: CurrencyService
+  ) {}
+
   public async handleInteraction(interaction: Interaction): Promise<void> {
+    if (interaction.member && interaction.member instanceof GuildMember) {
+      this._currencyService.payoutMember(interaction.member, interaction.createdAt);
+    }
+
     if (interaction.isMessageComponent()) {
       return this.handleMessageComponentInteraction(interaction as MessageComponentInteraction);
     } else if (interaction.isCommand()) {

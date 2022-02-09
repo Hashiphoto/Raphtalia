@@ -15,7 +15,7 @@ export default class CurrencyService {
     if (!message.member) {
       return;
     }
-    await this.payoutInteraction(message.member, message.createdAt);
+    await this.payoutMember(message.member, message.createdAt);
   }
 
   public async payoutReaction(member: GuildMember, message: Message, undo = false): Promise<void> {
@@ -30,13 +30,13 @@ export default class CurrencyService {
     const reacteeAmount = undo ? -guild.reacteeRate : guild.reacteeRate;
 
     if (!undo) {
-      this.payoutInteraction(member, message.createdAt);
+      this.payoutMember(member, message.createdAt);
     }
 
     await this.addCurrency(message.member, reacteeAmount);
   }
 
-  public async payoutInteraction(member: GuildMember, interactionDate: Date): Promise<void> {
+  public async payoutMember(member: GuildMember, interactionDate: Date): Promise<void> {
     const guild = await this._guildRepository.get(member.guild.id);
     if (!guild) {
       return;
