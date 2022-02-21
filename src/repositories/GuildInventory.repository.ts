@@ -145,7 +145,8 @@ export default class GuildInventoryRepository extends Repository {
       parseFloat(row.price),
       row.max_quantity,
       row.sold_in_cycle,
-      row.date_last_sold
+      row.date_last_sold,
+      row.lifespan_days
     );
   }
 }

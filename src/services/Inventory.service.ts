@@ -176,10 +176,10 @@ export default class InventoryService {
 
   public async updateUserItem(item: UserItem): Promise<void> {
     if (item.quantity === 0) {
-      return this._userInventoryRepo.deleteUserItem(item.guildId, item.userId, item);
+      return this._userInventoryRepo.deleteUserItem(item.guildId, item);
     }
 
-    return this._userInventoryRepo.updateUserItem(item.guildId, item.userId, item);
+    return this._userInventoryRepo.updateUserItem(item.guildId, item);
   }
 
   public async insertUserItem(item: UserItem): Promise<void> {

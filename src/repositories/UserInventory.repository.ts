@@ -117,23 +117,25 @@ export default class UserInventoryRepository extends Repository {
       });
   }
 
-  public async updateUserItem(guildId: string, userId: string, item: UserItem): Promise<void> {
-    // TODO: Remove/rework this to use id primarily
-    const idQuery = item.id ? ` AND id=${item.id}` : "";
+  public async updateUserItem(guildId: string, item: UserItem): Promise<void> {
     await this.pool.query(
-      "UPDATE user_inventory SET quantity=?, remaining_uses=? " +
-        "WHERE guild_id=? AND user_id=? AND item_id=?" +
-        idQuery,
-      [item.quantity, item.remainingUses, guildId, userId, item.itemId]
+      "UPDATE user_inventory SET quantity=?, remaining_uses=? WHERE guild_id=? AND id=?",
+      [item.quantity, item.remainingUses, guildId, item.id]
     );
   }
 
-  public async deleteUserItem(guildId: string, userId: string, item: UserItem): Promise<void> {
-    const idQuery = item.id ? ` AND id=${item.id}` : "";
-    await this.pool.query(
-      "DELETE FROM user_inventory WHERE guild_id=? AND user_id=? AND item_id=?" + idQuery,
-      [guildId, userId, item.itemId]
-    );
+  public async deleteUserItem(guildId: string, item: UserItem): Promise<void> {
+    await this.pool.query("DELETE FROM user_inventory WHERE guild_id=? AND id=?", [
+      guildId,
+      item.id,
+    ]);
+  }
+
+  public async deleteUserItems(guildId: string, items: UserItem[]): Promise<void> {
+    await this.pool.query("DELETE FROM user_inventory WHERE guild_id=? AND id in (?)", [
+      guildId,
+      items.map((item) => item.id),
+    ]);
   }
 
   public async findUsersWithItem(guildId: string, itemId: string): Promise<UserItem[]> {
@@ -161,14 +163,15 @@ export default class UserInventoryRepository extends Repository {
       row.quantity,
       row.steal_protected,
       commands,
-      row.price,
-      row.maxQuantity,
-      row.soldInCycle,
-      row.dateLastSold,
+      parseFloat(row.price),
+      row.max_quantity,
+      row.sold_in_cycle,
+      row.date_last_sold,
       row.remaining_uses,
       row.date_purchased,
       row.user_id,
-      row.id
+      row.id,
+      row.lifespan_days
     );
   }
 }

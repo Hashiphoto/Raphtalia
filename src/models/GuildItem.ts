@@ -1,5 +1,4 @@
 import { Format, print } from "../utilities/Util";
-
 import CommandItem from "./ItemCommand";
 
 export default class GuildItem {
@@ -16,6 +15,7 @@ export default class GuildItem {
   public maxQuantity: number;
   public soldInCycle: number;
   public dateLastSold: Date;
+  public lifespanDays?: number;
 
   public constructor(
     itemId: string,
@@ -28,7 +28,8 @@ export default class GuildItem {
     price: number,
     maxQuantity: number,
     soldInCycle: number,
-    dateLastSold: Date
+    dateLastSold: Date,
+    lifespanDays?: number
   ) {
     this.itemId = itemId;
     this.guildId = guildId;
@@ -41,6 +42,8 @@ export default class GuildItem {
     this.maxQuantity = maxQuantity;
     this.soldInCycle = soldInCycle;
     this.dateLastSold = dateLastSold;
+    this.lifespanDays = lifespanDays;
+
     this.unlimitedUses = this.maxUses < 0;
     this.unlimitedQuantity = this.quantity < 0 || this.maxQuantity < 0;
   }
@@ -63,7 +66,7 @@ export default class GuildItem {
     }
     return (
       "```fix\n" +
-      this.commands.reduce((sum: string, value: { name: any }) => sum + `!${value.name}\n`, "") +
+      this.commands.reduce((sum: string, value: { name: string }) => sum + `!${value.name}\n`, "") +
       "```"
     );
   }

@@ -1,6 +1,6 @@
-import CommandItem from "./ItemCommand";
-import GuildItem from "./GuildItem";
 import dayjs from "dayjs";
+import GuildItem from "./GuildItem";
+import CommandItem from "./ItemCommand";
 
 export default class UserItem extends GuildItem {
   public remainingUses: number;
@@ -23,7 +23,8 @@ export default class UserItem extends GuildItem {
     remainingUses: number,
     datePurchased: Date,
     userId: string,
-    id: string
+    id: string,
+    lifespanDays?: number
   ) {
     super(
       itemId,
@@ -36,7 +37,8 @@ export default class UserItem extends GuildItem {
       price,
       maxQuantity,
       soldInCycle,
-      dateLastSold
+      dateLastSold,
+      lifespanDays
     );
 
     this.remainingUses = remainingUses;
@@ -75,7 +77,8 @@ export default class UserItem extends GuildItem {
       this.remainingUses,
       this.datePurchased,
       this.userId,
-      this.id
+      this.id,
+      this.lifespanDays
     );
   }
 

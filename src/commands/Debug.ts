@@ -1,15 +1,16 @@
-import { autoInjectable, container } from "tsyringe";
-
-import Command from "./Command";
-import CommandMessage from "../models/CommandMessage";
-import { Env } from "../enums/Environment";
-import { IArgsProps } from "../interfaces/CommandInterfaces";
-import NullCommand from "./NullCommand";
-import RaphError from "../models/RaphError";
-import { Result } from "../enums/Result";
-import RoleContestService from "../services/RoleContest.service";
-import RoleService from "../services/Role.service";
 import { TextChannel } from "discord.js";
+import { autoInjectable, container } from "tsyringe";
+import { Env } from "../enums/Environment";
+import { Result } from "../enums/Result";
+import { IArgsProps } from "../interfaces/CommandInterfaces";
+import DecayItemsJob from "../jobs/DecayItemsJob";
+import CommandMessage from "../models/CommandMessage";
+import RaphError from "../models/RaphError";
+import ClientService from "../services/Client.service";
+import RoleService from "../services/Role.service";
+import RoleContestService from "../services/RoleContest.service";
+import Command from "./Command";
+import NullCommand from "./NullCommand";
 
 @autoInjectable()
 export default class Debug extends Command<IArgsProps> {
@@ -54,6 +55,13 @@ export default class Debug extends Command<IArgsProps> {
         }
         await roleService.resetRoleDates(role);
         this.queueReply("Completed");
+        break;
+      }
+      case "decayitems": {
+        this.queueReply("Hi");
+        const clientService = container.resolve(ClientService);
+        const client = clientService.getClient();
+        container.resolve(DecayItemsJob).run(client);
         break;
       }
       default:
