@@ -1,4 +1,4 @@
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import GuildItem from "./GuildItem";
 import CommandItem from "./ItemCommand";
 
@@ -58,6 +58,21 @@ export default class UserItem extends GuildItem {
     return 20;
   }
 
+  public get expirationDate(): Dayjs | undefined {
+    if (!this.lifespanDays) {
+      return undefined;
+    }
+    const expirationDay = dayjs(this.datePurchased).add(this.lifespanDays, "day");
+    const expirationMoment = expirationDay
+      .set("hour", 8)
+      .set("minute", 0)
+      .set("second", 0)
+      .set("millisecond", 0);
+    return expirationDay.isBefore(expirationMoment)
+      ? expirationMoment
+      : expirationMoment.add(1, "day");
+  }
+
   /**
    * Returns a deep-copy of this item
    */
@@ -82,10 +97,10 @@ export default class UserItem extends GuildItem {
     );
   }
 
-  public getDetails(): string {
+  public getDetails(additional = ""): string {
     const quantity = `Quantity: ${this.quantity}\n`;
     const uses = `Uses: ${this.unlimitedUses ? "∞" : `${this.remainingUses}/${this.maxUses}`}\n`;
 
-    return quantity + uses + this.printCommands();
+    return quantity + uses + additional + this.printCommands();
   }
 }

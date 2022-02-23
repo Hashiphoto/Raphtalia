@@ -14,7 +14,7 @@ import RaphError from "../models/RaphError";
 import RoleRepository from "../repositories/Role.repository";
 import UserRepository from "../repositories/User.repository";
 import links from "../resources/links";
-import { formatDate } from "../utilities/Util";
+import { formatFullDate } from "../utilities/Util";
 import RoleListService from "./message/RoleList.service";
 import RoleService from "./Role.service";
 import RoleContestService from "./RoleContest.service";
@@ -259,7 +259,7 @@ export default class MemberService {
             Result.OnCooldown,
             `${member.toString()} you cannot promote to ${
               dsRole.name
-            } because it was contested too recently. It will be open for contests again at ${formatDate(
+            } because it was contested too recently. It will be open for contests again at ${formatFullDate(
               promotionAvailableDate
             )}`
           );

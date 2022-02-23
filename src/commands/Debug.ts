@@ -58,10 +58,10 @@ export default class Debug extends Command<IArgsProps> {
         break;
       }
       case "decayitems": {
-        this.queueReply("Hi");
         const clientService = container.resolve(ClientService);
         const client = clientService.getClient();
         container.resolve(DecayItemsJob).run(client);
+        this.queueReply("Removed expired items");
         break;
       }
       default:

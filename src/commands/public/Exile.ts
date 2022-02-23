@@ -9,7 +9,7 @@ import CommandMessage from "../../models/CommandMessage";
 import InteractionChannel from "../../models/InteractionChannel";
 import RaphError from "../../models/RaphError";
 import MemberService from "../../services/Member.service";
-import { formatDate, parseDuration } from "../../utilities/Util";
+import { formatFullDate, parseDuration } from "../../utilities/Util";
 import Command from "../Command";
 
 interface IExileProps extends ITargettedProps {
@@ -117,7 +117,7 @@ export default class Exile extends Command<IExileProps> {
 
     const response = targets.reduce(
       (sum, target) =>
-        sum + `${target.toString()} has been exiled until ${formatDate(releaseDate)}`,
+        sum + `${target.toString()} has been exiled until ${formatFullDate(releaseDate)}`,
       ""
     );
 

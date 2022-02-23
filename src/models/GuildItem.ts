@@ -79,13 +79,13 @@ export default class GuildItem {
     return print(this.price, Format.Dollar);
   }
 
-  public getDetails(): string {
+  public getDetails(additional = ""): string {
     const price = `Price: ${print(this.price, Format.Dollar)}\n`;
     const uses = `Uses: ${this.unlimitedUses ? "∞" : this.maxUses}\n`;
     const quantity = `Quantity: ${
       this.unlimitedQuantity ? "∞" : `${this.quantity}/${this.maxQuantity}`
     }\n`;
 
-    return price + uses + quantity + this.printCommands();
+    return price + uses + quantity + additional + this.printCommands();
   }
 }

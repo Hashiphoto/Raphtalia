@@ -1,5 +1,5 @@
 import { GuildMember, MessageEmbed } from "discord.js";
-
+import { formatDate } from "../utilities/Util";
 import UserItem from "./UserItem";
 
 export default class UserInventory {
@@ -12,10 +12,17 @@ export default class UserInventory {
   }
 
   public toEmbed() {
-    const fields = this.getAggregatedItems().map((item) => {
+    // All the items are identical, so we aggregate them into a single field
+    const fields = this.groupItems().map((items) => {
+      const expirations = items.reduce((sum, current) => {
+        return current.expirationDate ? sum + `🕒 ${formatDate(current.expirationDate)}\n` : sum;
+      }, "");
+      const aggregate = items[0].copy();
+      aggregate.quantity = items.reduce((sum, current) => sum + current.quantity, 0);
+      aggregate.remainingUses = items.reduce((sum, current) => sum + current.remainingUses, 0);
       return {
-        name: item.getFormattedName(),
-        value: item.getDetails(),
+        name: aggregate.getFormattedName(),
+        value: aggregate.getDetails(expirations),
         inline: true,
       };
     });
@@ -34,15 +41,14 @@ export default class UserInventory {
   /**
    * Combine items sharing the same item id
    */
-  private getAggregatedItems(): UserItem[] {
-    const itemMap = new Map<string, UserItem>();
+  private groupItems(): UserItem[][] {
+    const itemMap = new Map<string, UserItem[]>();
     this.items.forEach((userItem) => {
-      const item = itemMap.get(userItem.itemId);
-      if (item) {
-        item.quantity += userItem.quantity;
-        item.remainingUses += userItem.remainingUses;
+      const itemArray = itemMap.get(userItem.itemId);
+      if (itemArray) {
+        itemArray.push(userItem);
       } else {
-        itemMap.set(userItem.itemId, userItem);
+        itemMap.set(userItem.itemId, [userItem]);
       }
     });
     return Array.from(itemMap, ([, userItem]) => userItem);

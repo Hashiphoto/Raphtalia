@@ -12,8 +12,6 @@ export default class DecayItemsJob implements Job {
     const now = dayjs();
     const guildStoreUpdates = client.guilds.cache.map(async (dsGuild) => {
       const allUserItems = await this._userInventoryRepository.listUserItems(dsGuild.id);
-      console.log(allUserItems);
-
       const expiredItems = allUserItems.filter(
         (item) =>
           item.lifespanDays && dayjs(item.datePurchased).add(item.lifespanDays, "day").isBefore(now)
