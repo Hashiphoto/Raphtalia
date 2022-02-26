@@ -165,7 +165,7 @@ export default class InventoryService {
 
     if (item.quantity <= 0) {
       await this.returnItemToStore(member.guild, item);
-      return undefined;
+      return item;
     } else {
       await this.updateUserItem(item);
       return item;
@@ -175,7 +175,7 @@ export default class InventoryService {
   public async returnItemToStore(guild: DsGuild, item: UserItem): Promise<void> {
     await this._userInventoryRepo.deleteUserItem(item);
     await this._guildInventoryRepo
-      .updateGuildItemQuantity(item, item.quantity)
+      .updateGuildItemQuantity(item, 1)
       .then(() => this._guildStoreService.update(guild));
   }
 
