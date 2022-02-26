@@ -124,9 +124,9 @@ export default class UserInventoryRepository extends Repository {
     );
   }
 
-  public async deleteUserItem(guildId: string, item: UserItem): Promise<void> {
+  public async deleteUserItem(item: UserItem): Promise<void> {
     await this.pool.query("DELETE FROM user_inventory WHERE guild_id=? AND id=?", [
-      guildId,
+      item.guildId,
       item.id,
     ]);
   }

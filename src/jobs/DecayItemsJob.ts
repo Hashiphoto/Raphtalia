@@ -1,24 +1,23 @@
-import dayjs from "dayjs";
 import { Client } from "discord.js";
-import { injectable } from "tsyringe";
-import UserInventoryRepository from "../repositories/UserInventory.repository";
+import InventoryService from "../services/Inventory.service";
 import Job from "./Job";
+import dayjs from "dayjs";
+import { injectable } from "tsyringe";
 
 @injectable()
 export default class DecayItemsJob implements Job {
-  public constructor(private _userInventoryRepository: UserInventoryRepository) {}
+  public constructor(private _inventoryService: InventoryService) {}
 
   public async run(client: Client): Promise<void> {
     const now = dayjs();
     const guildStoreUpdates = client.guilds.cache.map(async (dsGuild) => {
-      const allUserItems = await this._userInventoryRepository.listUserItems(dsGuild.id);
+      const allUserItems = await this._inventoryService.getAllUserItems(dsGuild);
       const expiredItems = allUserItems.filter(
-        (item) =>
-          item.lifespanDays && dayjs(item.datePurchased).add(item.lifespanDays, "day").isBefore(now)
+        (item) => item.lifespanDays && dayjs(item.expirationDate).isBefore(now)
       );
 
       if (expiredItems.length) {
-        return this._userInventoryRepository.deleteUserItems(dsGuild.id, expiredItems);
+        return this._inventoryService.bulkReturnItemsToStore(dsGuild, expiredItems);
       }
     });
 

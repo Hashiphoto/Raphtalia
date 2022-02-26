@@ -87,20 +87,16 @@ export default class GuildInventoryRepository extends Repository {
       .then((itemId) => (itemId ? this.getGuildItem(guildId, itemId) : undefined));
   }
 
-  public async updateGuildItemQuantity(
-    guildId: string,
-    item: GuildItem,
-    quantityChange: number,
-    soldDateTime?: Date
-  ): Promise<void> {
-    // If decreasing in quantity, increase sold_in_cycle
+  public async updateGuildItemQuantity(item: GuildItem, quantityChange: number): Promise<void> {
+    // Decrease in quantity means a user purchased one
+    // increase sold_in_cycle and update the date_last_sold
     const increaseSoldQuery =
       quantityChange < 0 ? `, sold_in_cycle=sold_in_cycle+${-quantityChange}` : ``;
-    const updateDateSold = soldDateTime ? `, date_last_sold=${escape(soldDateTime)}` : ``;
+    const updateDateSold = quantityChange < 0 ? `, date_last_sold=${escape(new Date())}` : ``;
 
     await this.pool.query(
-      `UPDATE guild_inventory SET quantity=quantity+? ${updateDateSold} ${increaseSoldQuery} WHERE guild_id=? AND item_id=?`,
-      [quantityChange, guildId, item.itemId]
+      `UPDATE guild_inventory SET quantity=LEAST(quantity+?, max_quantity) ${updateDateSold} ${increaseSoldQuery} WHERE guild_id=? AND item_id=?`,
+      [quantityChange, item.guildId, item.itemId]
     );
   }
 

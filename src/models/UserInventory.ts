@@ -13,7 +13,7 @@ export default class UserInventory {
 
   public toEmbed() {
     // All the items are identical, so we aggregate them into a single field
-    const fields = this.groupItems().map((items) => {
+    const fields = UserInventory.groupItems(this.items).map((items) => {
       const expirations = items.reduce((sum, current) => {
         return current.expirationDate ? sum + `🕒 ${formatDate(current.expirationDate)}\n` : sum;
       }, "");
@@ -41,9 +41,9 @@ export default class UserInventory {
   /**
    * Combine items sharing the same item id
    */
-  private groupItems(): UserItem[][] {
+  public static groupItems(items: UserItem[]): UserItem[][] {
     const itemMap = new Map<string, UserItem[]>();
-    this.items.forEach((userItem) => {
+    items.forEach((userItem) => {
       const itemArray = itemMap.get(userItem.itemId);
       if (itemArray) {
         itemArray.push(userItem);
