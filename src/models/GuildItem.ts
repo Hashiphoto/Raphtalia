@@ -1,4 +1,5 @@
 import { Format, print } from "../utilities/Util";
+
 import CommandItem from "./ItemCommand";
 
 export default class GuildItem {
@@ -53,7 +54,7 @@ export default class GuildItem {
   }
 
   public getFormattedName(): string {
-    return `${this.isStealProtected ? "🔒" : ""} ${this.name}`;
+    return `${this.isStealProtected ? "🔒 " : ""}${this.name}`;
   }
 
   public printMaxUses(): string {
@@ -66,7 +67,9 @@ export default class GuildItem {
     }
     return (
       "```fix\n" +
-      this.commands.reduce((sum: string, value: { name: string }) => sum + `!${value.name}\n`, "") +
+      this.commands.reduce((sum: string, value) => {
+        return sum + `/${value.name.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase()}\n`;
+      }, "") +
       "```"
     );
   }
