@@ -40,12 +40,7 @@ export default class InventoryService {
       await this._guildInventoryRepo.updateGuildItemSold(item.guildId, item, quantity, new Date());
     } else {
       // Update the quantity AND how many are sold
-      await this._guildInventoryRepo.updateGuildItemQuantity(
-        item.guildId,
-        item,
-        -quantity,
-        new Date()
-      );
+      await this._guildInventoryRepo.updateGuildItemQuantity(item, -quantity);
     }
 
     this._guildStoreService.update(guild);
@@ -154,32 +149,50 @@ export default class InventoryService {
       .then((items) => items.sort(this.byRemainingUses));
   }
 
-  public async useItem(item: UserItem, member: GuildMember, uses: number): Promise<UserItem> {
+  public async useItem(
+    item: UserItem,
+    member: GuildMember,
+    uses: number
+  ): Promise<UserItem | undefined> {
     if (item.unlimitedUses) {
       return item;
     }
 
     item.remainingUses -= uses;
-
-    // Item is used up. Return to store
     if (item.remainingUses <= 0) {
       item.quantity -= 1;
-      this._guildInventoryRepo.updateGuildItemQuantity(member.guild.id, item, uses);
-      // Update the store message
-      this._guildStoreService.update(member.guild);
     }
 
-    return this.updateUserItem(item).then(() => {
+    if (item.quantity <= 0) {
+      await this.returnItemToStore(member.guild, item);
       return item;
-    });
+    } else {
+      await this.updateUserItem(item);
+      return item;
+    }
+  }
+
+  public async returnItemToStore(guild: DsGuild, item: UserItem): Promise<void> {
+    await this._userInventoryRepo.deleteUserItem(item);
+    await this._guildInventoryRepo
+      .updateGuildItemQuantity(item, 1)
+      .then(() => this._guildStoreService.update(guild));
+  }
+
+  public async bulkReturnItemsToStore(guild: DsGuild, items: UserItem[]): Promise<void> {
+    await this._userInventoryRepo.deleteUserItems(guild.id, items);
+    const groupedItems = UserInventory.groupItems(items);
+    await Promise.all(
+      groupedItems.map((items) => {
+        const aggregate = items[0].copy();
+        const quantity = items.reduce((sum, current) => sum + current.quantity, 0);
+        return this._guildInventoryRepo.updateGuildItemQuantity(aggregate, quantity);
+      })
+    ).then(() => this._guildStoreService.update(guild));
   }
 
   public async updateUserItem(item: UserItem): Promise<void> {
-    if (item.quantity === 0) {
-      return this._userInventoryRepo.deleteUserItem(item.guildId, item.userId, item);
-    }
-
-    return this._userInventoryRepo.updateUserItem(item.guildId, item.userId, item);
+    await this._userInventoryRepo.updateUserItem(item.guildId, item);
   }
 
   public async insertUserItem(item: UserItem): Promise<void> {

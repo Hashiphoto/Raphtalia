@@ -12,7 +12,7 @@ import RaphError from "../models/RaphError";
 import RoleContest from "../models/RoleContest";
 import RoleContestBid from "../models/RoleContestBid";
 import RoleRepository from "../repositories/Role.repository";
-import { Format, formatDate, print } from "../utilities/Util";
+import { Format, formatFullDate, print } from "../utilities/Util";
 import ChannelService from "./Channel.service";
 import MemberService from "./Member.service";
 import RoleService from "./Role.service";
@@ -34,7 +34,7 @@ export default class RoleContestService {
   ): Promise<void> {
     const eightPmToday = dayjs().set("h", 20).startOf("h");
     const now = dayjs();
-    console.log(formatDate(eightPmToday));
+    console.log(formatFullDate(eightPmToday));
     const contestEnd = eightPmToday.isAfter(now)
       ? eightPmToday.add(24, "h")
       : eightPmToday.add(48, "h");
@@ -48,7 +48,7 @@ export default class RoleContestService {
       } and everyone who currently holds the ${contestedRole.toString()} role can give me money to keep the role.\n` +
       `🔸 Whoever gives the least amount of money by the end of the contest period will be demoted.\n` +
       `🔸 Use the command \`!Give @Raphtalia $1.00\` to pay me\n` +
-      `🔸 This contest will end at **${formatDate(contestEnd)}**`;
+      `🔸 This contest will end at **${formatFullDate(contestEnd)}**`;
 
     const embed = await this.getStatusEmbed(contestedRole);
 

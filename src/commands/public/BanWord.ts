@@ -85,6 +85,6 @@ export default class BanWord extends Command<IArgsProps> {
         "\nBan list will be updated shortly"
     );
     this._banListService?.update(initiator.guild);
-    return 1;
+    return words.length;
   }
 }

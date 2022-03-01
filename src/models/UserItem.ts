@@ -1,6 +1,6 @@
-import CommandItem from "./ItemCommand";
+import dayjs, { Dayjs } from "dayjs";
 import GuildItem from "./GuildItem";
-import dayjs from "dayjs";
+import CommandItem from "./ItemCommand";
 
 export default class UserItem extends GuildItem {
   public remainingUses: number;
@@ -23,7 +23,8 @@ export default class UserItem extends GuildItem {
     remainingUses: number,
     datePurchased: Date,
     userId: string,
-    id: string
+    id: string,
+    lifespanDays?: number
   ) {
     super(
       itemId,
@@ -36,7 +37,8 @@ export default class UserItem extends GuildItem {
       price,
       maxQuantity,
       soldInCycle,
-      dateLastSold
+      dateLastSold,
+      lifespanDays
     );
 
     this.remainingUses = remainingUses;
@@ -54,6 +56,21 @@ export default class UserItem extends GuildItem {
       return 19;
     }
     return 20;
+  }
+
+  public get expirationDate(): Dayjs | undefined {
+    if (!this.lifespanDays) {
+      return undefined;
+    }
+    const expirationDay = dayjs(this.datePurchased).add(this.lifespanDays, "day");
+    const expirationMoment = expirationDay
+      .set("hour", 8)
+      .set("minute", 0)
+      .set("second", 0)
+      .set("millisecond", 0);
+    return expirationDay.isBefore(expirationMoment)
+      ? expirationMoment
+      : expirationMoment.add(1, "day");
   }
 
   /**
@@ -75,14 +92,15 @@ export default class UserItem extends GuildItem {
       this.remainingUses,
       this.datePurchased,
       this.userId,
-      this.id
+      this.id,
+      this.lifespanDays
     );
   }
 
-  public getDetails(): string {
+  public getDetails(additional = ""): string {
     const quantity = `Quantity: ${this.quantity}\n`;
     const uses = `Uses: ${this.unlimitedUses ? "∞" : `${this.remainingUses}/${this.maxUses}`}\n`;
 
-    return quantity + uses + this.printCommands();
+    return quantity + uses + additional + this.printCommands();
   }
 }

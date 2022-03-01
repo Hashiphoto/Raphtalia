@@ -1,5 +1,6 @@
 import { CronJob } from "cron";
 import { container, delay, inject, singleton } from "tsyringe";
+import DecayItemsJob from "../jobs/DecayItemsJob";
 import DropPricesJob from "../jobs/DropPrices.job";
 import ResolveContestsJob from "../jobs/ResolveContests.job";
 import ClientService from "./Client.service";
@@ -40,6 +41,15 @@ export default class JobService {
     new CronJob(
       "30 6 * * *",
       () => container.resolve(DropPricesJob).run(client),
+      null,
+      true,
+      this.timezone
+    );
+
+    // Every day at 8:00 AM
+    new CronJob(
+      "0 8 * * *",
+      () => container.resolve(DecayItemsJob).run(client),
       null,
       true,
       this.timezone

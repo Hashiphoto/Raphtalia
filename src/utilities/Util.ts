@@ -20,9 +20,11 @@ const round = (amount: number) => {
   return Number(Math.round(Number(amount + "e2")) + "e-2");
 };
 
-const formatDate = (date: Dayjs) => {
+const formatFullDate = (date: Dayjs) => {
   return date.format("h:mm A on MMM D, YYYY");
 };
+
+const formatDate = (date: Dayjs) => date.format("MMM D, YYYY");
 
 /**
  * Generates a number from 0 up to, but not including, max;
@@ -150,4 +152,4 @@ const print = (amount: number, format: Format): string => {
   }
 };
 
-export { round, formatDate, random, parseDuration, parseNumber, listFormat, print };
+export { round, formatFullDate, formatDate, random, parseDuration, parseNumber, listFormat, print };
