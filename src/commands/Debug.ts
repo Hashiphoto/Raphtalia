@@ -4,10 +4,8 @@ import ClientService from "../services/Client.service";
 import Command from "./Command";
 import CommandMessage from "../models/CommandMessage";
 import DecayItemsJob from "../jobs/DecayItemsJob";
-import { Env } from "../enums/Environment";
 import GuildService from "../services/Guild.service";
 import { IArgsProps } from "../interfaces/CommandInterfaces";
-import NullCommand from "./NullCommand";
 import RaphError from "../models/RaphError";
 import { Result } from "../enums/Result";
 import RoleContestService from "../services/RoleContest.service";
@@ -23,10 +21,6 @@ export default class Debug extends Command<IArgsProps> {
     this.name = "Debug";
     this.instructions = "For testing in development only";
     this.aliases = [this.name.toLowerCase()];
-
-    if (process.env.NODE_ENV !== Env.Dev) {
-      return new NullCommand();
-    }
   }
 
   public async runFromCommand(cmdMessage: CommandMessage): Promise<void> {
