@@ -38,9 +38,8 @@ export default class Promote extends Command<ICommandProps> {
         this.channel = interaction.channel;
       }
 
-      return this.runWithItem({ initiator }).then(() => {
-        interaction.reply({ content: "Promotion request received", ephemeral: true });
-      });
+      this.runWithItem({ initiator });
+      interaction.reply({ content: "Promotion request received", ephemeral: true });
     };
   }
 

@@ -1,8 +1,9 @@
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import {
   Guild as DsGuild,
   GuildMember,
   MessageEmbed,
+  MessageOptions,
   Role as DsRole,
   TextChannel,
 } from "discord.js";
@@ -14,6 +15,7 @@ import RoleContestBid from "../models/RoleContestBid";
 import RoleRepository from "../repositories/Role.repository";
 import { Format, formatFullDate, print } from "../utilities/Util";
 import ChannelService from "./Channel.service";
+import GuildService from "./Guild.service";
 import MemberService from "./Member.service";
 import RoleService from "./Role.service";
 
@@ -23,19 +25,39 @@ export default class RoleContestService {
     @inject(RoleRepository) private _roleRepository: RoleRepository,
     @inject(RoleService) private _roleService: RoleService,
     @inject(ChannelService) private _channelService: ChannelService,
-    @inject(delay(() => MemberService)) private _memberService: MemberService
+    @inject(delay(() => MemberService)) private _memberService: MemberService,
+    @inject(delay(() => GuildService)) private _guildService: GuildService
   ) {}
 
   public async startContest(
     contestedRole: DsRole,
     previousRole: DsRole,
     initiator: GuildMember,
-    channel: TextChannel
+    backupChannel: TextChannel,
+    contestStart?: Dayjs
   ): Promise<void> {
-    const eightPmToday = dayjs().set("h", 20).startOf("h");
-    const now = dayjs();
-    console.log(formatFullDate(eightPmToday));
-    const contestEnd = eightPmToday.isAfter(now)
+    contestStart = contestStart ?? dayjs();
+    const messageOptions = await this.createContestMessage(contestedRole, initiator, contestStart);
+    const outputChannel =
+      (await this._guildService.getOutputChannel(initiator.guild)) ?? backupChannel;
+    const message = await outputChannel.send(messageOptions);
+
+    await this._roleRepository.insertRoleContest(
+      contestedRole.id,
+      previousRole.id,
+      initiator.id,
+      contestStart.toDate(),
+      message.id
+    );
+  }
+
+  public async createContestMessage(
+    contestedRole: DsRole,
+    initiator: GuildMember,
+    contestStart: Dayjs
+  ): Promise<MessageOptions> {
+    const eightPmToday = dayjs(contestStart).set("h", 20).startOf("h");
+    const contestEnd = eightPmToday.isAfter(contestStart)
       ? eightPmToday.add(24, "h")
       : eightPmToday.add(48, "h");
 
@@ -47,20 +69,12 @@ export default class RoleContestService {
         initiator.displayName
       } and everyone who currently holds the ${contestedRole.toString()} role can give me money to keep the role.\n` +
       `🔸 Whoever gives the least amount of money by the end of the contest period will be demoted.\n` +
-      `🔸 Use the command \`!Give @Raphtalia $1.00\` to pay me\n` +
+      `🔸 Use the command \`/give user: @Raphtalia  currency: $1.00\` to pay me\n` +
       `🔸 This contest will end at **${formatFullDate(contestEnd)}**`;
 
-    const embed = await this.getStatusEmbed(contestedRole);
+    const embed = await this.getOrCreateStatusEmbed(contestedRole);
 
-    const message = await channel.send({ content, embeds: [embed] });
-
-    await this._roleRepository.insertRoleContest(
-      contestedRole.id,
-      previousRole.id,
-      initiator.id,
-      new Date(),
-      message.id
-    );
+    return { content, embeds: [embed] };
   }
 
   public async bidOnRoleContest(
@@ -82,7 +96,9 @@ export default class RoleContestService {
       updatedRoleContest.messageId
     );
     if (contestStatusMessage) {
-      contestStatusMessage.edit({ embeds: [await this.getStatusEmbed(role, updatedRoleContest)] });
+      contestStatusMessage.edit({
+        embeds: [await this.getOrCreateStatusEmbed(role, updatedRoleContest)],
+      });
     }
 
     return updatedRoleContest;
@@ -152,7 +168,7 @@ export default class RoleContestService {
     }
   }
 
-  private async getStatusEmbed(role: DsRole, roleContest?: RoleContest) {
+  private async getOrCreateStatusEmbed(role: DsRole, roleContest?: RoleContest) {
     let bids = undefined;
 
     if (roleContest) {

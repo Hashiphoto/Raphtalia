@@ -1,16 +1,20 @@
-import { TextChannel } from "discord.js";
 import { autoInjectable, container } from "tsyringe";
-import { Env } from "../enums/Environment";
-import { Result } from "../enums/Result";
-import { IArgsProps } from "../interfaces/CommandInterfaces";
-import DecayItemsJob from "../jobs/DecayItemsJob";
-import CommandMessage from "../models/CommandMessage";
-import RaphError from "../models/RaphError";
+
 import ClientService from "../services/Client.service";
-import RoleService from "../services/Role.service";
-import RoleContestService from "../services/RoleContest.service";
 import Command from "./Command";
+import CommandMessage from "../models/CommandMessage";
+import DecayItemsJob from "../jobs/DecayItemsJob";
+import { Env } from "../enums/Environment";
+import GuildService from "../services/Guild.service";
+import { IArgsProps } from "../interfaces/CommandInterfaces";
 import NullCommand from "./NullCommand";
+import RaphError from "../models/RaphError";
+import { Result } from "../enums/Result";
+import RoleContestService from "../services/RoleContest.service";
+import RoleRepository from "../repositories/Role.repository";
+import RoleService from "../services/Role.service";
+import { TextChannel } from "discord.js";
+import dayjs from "dayjs";
 
 @autoInjectable()
 export default class Debug extends Command<IArgsProps> {
@@ -34,6 +38,7 @@ export default class Debug extends Command<IArgsProps> {
   }
 
   public async execute({ initiator, args }: IArgsProps): Promise<number | undefined> {
+    const guild = initiator.guild;
     switch (args[0].toLowerCase()) {
       case "resolvecontests": {
         const roleContestService = container.resolve(RoleContestService);
@@ -62,6 +67,35 @@ export default class Debug extends Command<IArgsProps> {
         const client = clientService.getClient();
         container.resolve(DecayItemsJob).run(client);
         this.queueReply("Removed expired items");
+        break;
+      }
+      case "showcontest": {
+        const contestId = Number(args[1]);
+        const roleRepository = container.resolve(RoleRepository);
+        const roleContestService = container.resolve(RoleContestService);
+        const guildService = container.resolve(GuildService);
+        const contest = await roleRepository.getRoleContest(contestId, true);
+        if (!contest) {
+          this.queueReply(`No contest with id ${contestId} exists`);
+          break;
+        }
+        const contestedRole = await guild.roles.fetch(contest.roleId, { force: true });
+        if (!contestedRole) {
+          this.queueReply(`Could not find role with id ${contest.roleId}`);
+          break;
+        }
+        const messageOptions = await roleContestService.createContestMessage(
+          contestedRole,
+          initiator,
+          dayjs(contest.startDate)
+        );
+        const outputChannel = await guildService.getOutputChannel(initiator.guild);
+        if (!outputChannel) {
+          this.queueReply("No output channel set");
+          break;
+        }
+        const message = await outputChannel.send(messageOptions);
+        this.queueReply(`Created new contest status message with id: ${message.id}`);
         break;
       }
       default:
