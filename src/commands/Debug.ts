@@ -74,13 +74,20 @@ export default class Debug extends Command<IArgsProps> {
           break;
         }
         const contestedRole = await guild.roles.fetch(contest.roleId, { force: true });
-        if (!contestedRole) {
-          this.queueReply(`Could not find role with id ${contest.roleId}`);
+        const contestInitiator = await guild.members.fetch({
+          user: contest.initiatorId,
+          force: true,
+        });
+        if (!contestedRole || !contestInitiator) {
+          this.queueReply(
+            (contestedRole ? "" : `Could not find role ${contest.roleId}. `) +
+              (contestInitiator ? "" : `Could not find member ${contest.initiatorId}`)
+          );
           break;
         }
         const messageOptions = await roleContestService.createContestMessage(
           contestedRole,
-          initiator,
+          contestInitiator,
           dayjs(contest.startDate)
         );
         const outputChannel = await guildService.getOutputChannel(initiator.guild);
