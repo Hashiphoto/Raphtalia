@@ -37,9 +37,9 @@ export default class JobService {
       this.timezone
     );
 
-    // Every day at 06:30 AM
+    // Every Monday at 06:30 AM
     new CronJob(
-      "30 6 * * *",
+      "30 6 * * 1",
       () => container.resolve(DropPricesJob).run(client),
       null,
       true,
