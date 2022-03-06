@@ -55,9 +55,12 @@ export default class Status extends Command<IStatusProps> {
       if (!initiator) {
         return interaction.reply(`This only works in a server`);
       }
-      await interaction.deferReply();
       const show = interaction.options.getBoolean("show") ?? false;
       this.channel = new InteractionChannel(interaction, !show);
+      if (!show) {
+        // Force the next message to be a followUp if using ephemeral
+        await this.reply(`Loading status...`);
+      }
       return this.runWithItem({ initiator });
     };
   }

@@ -22,7 +22,6 @@ export default class UserInventory {
         }
         const dateString = formatDate(item.expirationDate);
         const entry = expirationMap.get(dateString);
-        console.log(dateString, entry);
         expirationMap.set(dateString, entry ? entry + 1 : 1);
       });
 
