@@ -83,6 +83,7 @@ export default class Exile extends Command<IExileProps> {
         return interaction.reply(`No user was specified or they are not members of the server`);
       }
 
+      await interaction.deferReply();
       this.channel = new InteractionChannel(interaction);
       return this.runWithItem({ initiator, duration, targets: [target] });
     };

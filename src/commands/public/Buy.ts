@@ -1,4 +1,4 @@
-import { CommandInteraction, TextChannel } from "discord.js";
+import { CommandInteraction, MessageEmbed, TextChannel } from "discord.js";
 import { Format, print } from "../../utilities/Util";
 
 import Command from "../Command";
@@ -7,13 +7,18 @@ import GuildItem from "../../models/GuildItem";
 import { IArgProps } from "../../interfaces/CommandInterfaces";
 import InteractionChannel from "../../models/InteractionChannel";
 import InventoryService from "../../services/Inventory.service";
+import { Purchase } from "../../models/Purchase";
 import RaphError from "../../models/RaphError";
 import { RaphtaliaInteraction } from "../../enums/Interactions";
 import { Result } from "../../enums/Result";
 import { autoInjectable } from "tsyringe";
 
+interface IBuyProps extends IArgProps {
+  quantity?: number;
+}
+
 @autoInjectable()
-export default class Buy extends Command<IArgProps> {
+export default class Buy extends Command<IBuyProps> {
   public buy: (interaction: CommandInteraction) => void;
 
   public constructor(private _inventoryService?: InventoryService) {
@@ -35,6 +40,11 @@ export default class Buy extends Command<IArgProps> {
             type: "STRING",
             required: true,
           },
+          {
+            name: "quantity",
+            description: "Number of items to purchase",
+            type: "NUMBER",
+          },
         ],
       },
     ];
@@ -51,7 +61,9 @@ export default class Buy extends Command<IArgProps> {
       }
       this.channel = new InteractionChannel(interaction);
       const itemName = interaction.options.getString("item", true);
-      return this.runWithItem({ initiator, arg: itemName });
+      const quantity = interaction.options.getNumber("quantity") ?? undefined;
+      console.log(quantity);
+      return this.runWithItem({ initiator, arg: itemName, quantity });
     };
   }
 
@@ -66,11 +78,18 @@ export default class Buy extends Command<IArgProps> {
     });
   }
 
-  public async execute({ initiator, arg: itemName }: IArgProps): Promise<number | undefined> {
+  public async execute({
+    initiator,
+    arg: itemName,
+    quantity,
+  }: IBuyProps): Promise<number | undefined> {
+    if (!this._inventoryService) {
+      throw new RaphError(Result.ProgrammingError);
+    }
     // Get the guild item they are buying
     let guildItem: GuildItem | undefined;
     try {
-      guildItem = await this._inventoryService?.findGuildItem(initiator.guild.id, itemName);
+      guildItem = await this._inventoryService.findGuildItem(initiator.guild.id, itemName);
     } catch (error) {
       if (error.result === Result.AmbiguousInput) {
         this.queueReply(`There is more than one item with that name. Matches: ${error.message}`);
@@ -83,8 +102,9 @@ export default class Buy extends Command<IArgProps> {
       return;
     }
 
+    let purchase: Purchase;
     try {
-      await this._inventoryService?.userPurchase(initiator, guildItem);
+      purchase = await this._inventoryService.userPurchase(initiator, guildItem, quantity);
     } catch (error) {
       switch (error.result) {
         case Result.OutOfStock:
@@ -102,12 +122,17 @@ export default class Buy extends Command<IArgProps> {
       }
     }
 
-    this.queueReply(
-      `Thank you for your purchase of ${print(
-        guildItem.price,
-        Format.Dollar
-      )}!\n>>> ${guildItem.printName()} | Uses: ${guildItem.printMaxUses()}`
-    );
+    this.reply(`Thank you for your purchase! ${guildItem.printName()}`, {
+      embeds: [
+        new MessageEmbed().setColor(0x86ff6b).addFields({
+          name: print(purchase.cost, Format.Dollar),
+          value: [
+            `Quantity: ${purchase.items.length}`,
+            `Uses: ${purchase.items[0].printMaxUses()} per item`,
+          ].join("\n"),
+        }),
+      ],
+    });
     return undefined;
   }
 }

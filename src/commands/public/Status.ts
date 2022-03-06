@@ -55,6 +55,7 @@ export default class Status extends Command<IStatusProps> {
       if (!initiator) {
         return interaction.reply(`This only works in a server`);
       }
+      await interaction.deferReply();
       const show = interaction.options.getBoolean("show") ?? false;
       this.channel = new InteractionChannel(interaction, !show);
       return this.runWithItem({ initiator });

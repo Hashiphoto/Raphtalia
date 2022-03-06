@@ -1,5 +1,6 @@
+import { Format, formatDate, print } from "../utilities/Util";
 import { GuildMember, MessageEmbed } from "discord.js";
-import { formatDate } from "../utilities/Util";
+
 import UserItem from "./UserItem";
 
 export default class UserInventory {
@@ -14,9 +15,24 @@ export default class UserInventory {
   public toEmbed() {
     // All the items are identical, so we aggregate them into a single field
     const fields = UserInventory.groupItems(this.items).map((items) => {
-      const expirations = items.reduce((sum, current) => {
-        return current.expirationDate ? sum + `🕒 ${formatDate(current.expirationDate)}\n` : sum;
-      }, "");
+      const expirationMap = new Map<string, number>();
+      items.forEach((item) => {
+        if (!item.expirationDate) {
+          return;
+        }
+        const dateString = formatDate(item.expirationDate);
+        const entry = expirationMap.get(dateString);
+        console.log(dateString, entry);
+        expirationMap.set(dateString, entry ? entry + 1 : 1);
+      });
+
+      let expirations = "";
+      expirationMap.forEach((numEntries, dateString) => {
+        expirations += `🕒 ${dateString}${
+          numEntries > 1 ? `(x${print(numEntries, Format.Integer)})` : ""
+        }\n`;
+      });
+
       const aggregate = items[0].copy();
       aggregate.quantity = items.reduce((sum, current) => sum + current.quantity, 0);
       aggregate.remainingUses = items.reduce((sum, current) => sum + current.remainingUses, 0);

@@ -2,6 +2,7 @@ import { Guild as DsGuild, GuildMember } from "discord.js";
 import { delay, inject, injectable } from "tsyringe";
 import { Result } from "../enums/Result";
 import GuildItem from "../models/GuildItem";
+import { Purchase } from "../models/Purchase";
 import RaphError from "../models/RaphError";
 import UserInventory from "../models/UserInventory";
 import UserItem from "../models/UserItem";
@@ -11,8 +12,6 @@ import ClientService from "./Client.service";
 import CurrencyService from "./Currency.service";
 import GuildService from "./Guild.service";
 import GuildStoreService from "./message/GuildStore.service";
-
-const MIN_PRICE_HIKE = 0.25;
 
 @injectable()
 export default class InventoryService {
@@ -30,11 +29,7 @@ export default class InventoryService {
     return this._guildInventoryRepo.findGuildItem(guildId, name);
   }
 
-  public async subtractGuildStock(
-    guild: DsGuild,
-    item: GuildItem,
-    quantity: number
-  ): Promise<GuildItem> {
+  public async subtractGuildStock(item: GuildItem, quantity: number): Promise<GuildItem> {
     if (item.unlimitedQuantity) {
       // Record how many are sold
       await this._guildInventoryRepo.updateGuildItemSold(item.guildId, item, quantity, new Date());
@@ -43,26 +38,31 @@ export default class InventoryService {
       await this._guildInventoryRepo.updateGuildItemQuantity(item, -quantity);
     }
 
-    this._guildStoreService.update(guild);
     return this._guildInventoryRepo.getGuildItem(item.guildId, item.itemId);
   }
 
-  public async increaseGuildItemPrice(guild: DsGuild, guildItem: GuildItem): Promise<void> {
+  public async increaseGuildItemPrice(guildItem: GuildItem, quantityChange: number): Promise<void> {
     const dbGuild = await this._guildService.getGuild(guildItem.guildId);
     if (!dbGuild) {
       return;
     }
 
-    const priceMultiplier = Math.exp((guildItem.soldInCycle - 1) * dbGuild.priceHikeCoefficient);
-    // No work
-    if (priceMultiplier === 1) {
+    let priceMultiplier = 0;
+    const baseSoldInCycle = guildItem.soldInCycle - quantityChange; // The number sold PRIOR to the current purchase
+    for (let i = 0; i < quantityChange; i++) {
+      // If the user bought multiple of an item, we don't want to increase the price exponentially
+      // Add all the multipliers together instead
+      priceMultiplier += Math.exp((baseSoldInCycle + i) * dbGuild.priceHikeCoefficient);
+      console.log(priceMultiplier);
+    }
+
+    if (priceMultiplier <= 1) {
       return;
     }
-    // Increase by a minimum of 1 dollar
-    const newPrice = Math.max(priceMultiplier * guildItem.price, guildItem.price + MIN_PRICE_HIKE);
+
+    const newPrice = guildItem.price * priceMultiplier;
 
     await this._guildInventoryRepo.updateGuildItemPrice(guildItem.guildId, guildItem, newPrice);
-    this._guildStoreService.update(guild);
   }
 
   public async getGuildItemByCommand(
@@ -86,43 +86,54 @@ export default class InventoryService {
   /**
    * Purchase an item from the store, taking into account cost and available quantity
    */
-  public async userPurchase(
-    member: GuildMember,
-    item: GuildItem,
-    quantity = 1
-  ): Promise<UserItem | undefined> {
+  public async userPurchase(member: GuildMember, item: GuildItem, quantity = 1): Promise<Purchase> {
     const guildId = member.guild.id;
     // Check available stock
     if (!item.inStock()) {
       throw new RaphError(Result.OutOfStock);
     }
+    // Ensure user can purchase it
     const userCurrency = await this._currencyService.getCurrency(member);
     if (userCurrency < item.price) {
       throw new RaphError(Result.TooPoor);
     }
 
-    // Transfer money
-    await this._currencyService.transferCurrency(
-      member,
-      this._clientService.getRaphtaliaMember(member.guild),
-      item.price
-    );
+    const purchaseableQuantity = Math.min(quantity, item.quantity);
+    const cost = item.price * purchaseableQuantity;
 
     // Subtract from guild stock
-    const updatedItem = await this.subtractGuildStock(member.guild, item, quantity);
+    const updatedItem = await this.subtractGuildStock(item, purchaseableQuantity);
     if (!updatedItem) {
       throw new RaphError(Result.NotFound);
     }
     if (updatedItem.soldInCycle > 0) {
-      await this.increaseGuildItemPrice(member.guild, updatedItem);
+      await this.increaseGuildItemPrice(updatedItem, purchaseableQuantity);
     }
     this._guildStoreService.update(member.guild);
 
-    // Add it to player stock
-    item.quantity = quantity;
-    const newItemId = await this._userInventoryRepo.createUserItem(guildId, member.id, item);
+    // Add it to the player inventory
+    const newItems = await this._userInventoryRepo.createUserItem(
+      guildId,
+      member.id,
+      {
+        itemId: item.itemId,
+        maxUses: item.maxUses,
+        quantity: 1,
+      },
+      purchaseableQuantity
+    );
 
-    return this._userInventoryRepo.getUserItem(newItemId);
+    // Transfer money
+    await this._currencyService.transferCurrency(
+      member,
+      this._clientService.getRaphtaliaMember(member.guild),
+      cost
+    );
+
+    return {
+      items: newItems.sort(this.byRemainingUses),
+      cost,
+    };
   }
 
   public async getAllUserItems(guild: DsGuild, showHidden = false): Promise<UserItem[]> {

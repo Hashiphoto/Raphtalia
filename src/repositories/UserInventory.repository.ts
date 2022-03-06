@@ -44,13 +44,25 @@ export default class UserInventoryRepository extends Repository {
    * User has purchased an item. Insert a new db row
    * @returns the id number inserted
    */
-  public async createUserItem(guildId: string, userId: string, item: GuildItem): Promise<number> {
+  public async createUserItem(
+    guildId: string,
+    userId: string,
+    item: Partial<GuildItem>,
+    repeatCount = 1
+  ): Promise<UserItem[]> {
+    const escapedValue = `(${escape(userId)}, ${escape(guildId)}, ${escape(item.itemId)}, ${escape(
+      item.quantity
+    )}, ${escape(item.maxUses)})`;
+    const values = (new Array(repeatCount).fill(escapedValue) as string[]).join(",");
+
     return this.pool
       .query(
-        `INSERT INTO user_inventory (user_id, guild_id, item_id, quantity, remaining_uses) VALUES (?,?,?,?,?)`,
-        [userId, guildId, item.itemId, item.quantity, item.maxUses]
+        `INSERT INTO user_inventory (user_id, guild_id, item_id, quantity, remaining_uses) VALUES ${values}`
       )
-      .then(([result]: [OkPacket, FieldPacket[]]) => result.insertId);
+      .then(([result]: [OkPacket, FieldPacket[]]) => {
+        // Auto Increment Lock ensures the ids of the inserted rows
+        return this.getUserItemsBetween(result.insertId, result.insertId + result.affectedRows - 1);
+      });
   }
 
   public async listUserItems(
@@ -114,6 +126,25 @@ export default class UserInventoryRepository extends Repository {
           return undefined;
         }
         return this.toUserItem(rows[0]);
+      });
+  }
+
+  public async getUserItems(ids: number[]): Promise<UserItem[]> {
+    return this.pool
+      .query(this.selectUserItem + `WHERE id IN (?)`, [ids])
+      .then(async ([rows]: [RowDataPacket[], FieldPacket[]]) => {
+        return Promise.all(rows.map((r) => this.toUserItem(r)));
+      });
+  }
+
+  /**
+   * Select items by id in a certain range (inclusive)
+   */
+  public async getUserItemsBetween(id1: number, id2: number): Promise<UserItem[]> {
+    return this.pool
+      .query(this.selectUserItem + `WHERE id BETWEEN ? AND ?`, [id1, id2])
+      .then(async ([rows]: [RowDataPacket[], FieldPacket[]]) => {
+        return Promise.all(rows.map((r) => this.toUserItem(r)));
       });
   }
 

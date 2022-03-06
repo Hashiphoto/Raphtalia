@@ -104,6 +104,9 @@ export default class Command<T extends ICommandProps> {
     }
   }
 
+  /**
+   * Flush all queued replies
+   */
   public async flushMessageQueue(): Promise<Message | undefined> {
     if (!this.channel || !this.queuedText.length) {
       return;
@@ -118,10 +121,16 @@ export default class Command<T extends ICommandProps> {
       });
   }
 
+  /**
+   * Add a string message to be sent when the queue is flushed
+   */
   protected queueReply(content: string): void {
     this.queuedText += content + "\n";
   }
 
+  /**
+   * Send a message along with all queued replies
+   */
   protected async reply(content: string, options?: MessageOptions): Promise<Message | undefined> {
     if (!this.channel) {
       return;
@@ -161,9 +170,9 @@ export default class Command<T extends ICommandProps> {
     );
     return this.inventoryService
       .userPurchase(initiator, guildItem)
-      .then((userItem) => {
+      .then((purchase) => {
         this.queueReply(`Auto-purchased a ${guildItem.printName()} for ${guildItem.printPrice()}`);
-        return userItem;
+        return purchase.items[0];
       })
       .catch(async (error) => {
         let resultMessage: string;
