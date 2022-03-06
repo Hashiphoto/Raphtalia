@@ -62,7 +62,6 @@ export default class Buy extends Command<IBuyProps> {
       this.channel = new InteractionChannel(interaction);
       const itemName = interaction.options.getString("item", true);
       const quantity = interaction.options.getNumber("quantity") ?? undefined;
-      console.log(quantity);
       return this.runWithItem({ initiator, arg: itemName, quantity });
     };
   }

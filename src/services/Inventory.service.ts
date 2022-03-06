@@ -53,7 +53,6 @@ export default class InventoryService {
       // If the user bought multiple of an item, we don't want to increase the price exponentially
       // Add all the multipliers together instead
       priceMultiplier += Math.exp((baseSoldInCycle + i) * dbGuild.priceHikeCoefficient);
-      console.log(priceMultiplier);
     }
 
     if (priceMultiplier <= 1) {
