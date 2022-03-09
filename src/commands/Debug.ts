@@ -12,6 +12,7 @@ import RoleContestService from "../services/RoleContest.service";
 import RoleRepository from "../repositories/Role.repository";
 import RoleService from "../services/Role.service";
 import { TextChannel } from "discord.js";
+import TrendsService from "../services/Trends.service";
 import dayjs from "dayjs";
 
 @autoInjectable()
@@ -97,6 +98,12 @@ export default class Debug extends Command<IArgsProps> {
         }
         const message = await outputChannel.send(messageOptions);
         this.queueReply(`Created new contest status message with id: ${message.id}`);
+        break;
+      }
+      case "search": {
+        const trendsService = container.resolve(TrendsService);
+        const results = await trendsService.getInterestOverTime(args.slice(2), args[1] as any);
+        this.queueReply("```json\n" + JSON.stringify(results, null, 2) + "\n```");
         break;
       }
       default:
