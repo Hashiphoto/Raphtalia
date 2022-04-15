@@ -97,7 +97,10 @@ export default class InventoryService {
       throw new RaphError(Result.TooPoor);
     }
 
-    const purchaseableQuantity = Math.min(quantity, item.quantity);
+    const purchaseableQuantity = Math.min(
+      quantity,
+      item.unlimitedQuantity ? quantity : item.quantity
+    );
     const cost = item.price * purchaseableQuantity;
 
     // Subtract from guild stock
