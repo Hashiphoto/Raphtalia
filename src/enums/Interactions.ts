@@ -8,6 +8,7 @@ export enum RaphtaliaInteraction {
   BanWord = "ban-word",
   Buy = "buy",
   Censorship = "censorship",
+  Combat = "combat",
   Give = "give",
   Headpat = "headpat",
   Help = "help",

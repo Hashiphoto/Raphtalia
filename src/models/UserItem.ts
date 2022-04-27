@@ -1,19 +1,21 @@
 import dayjs, { Dayjs } from "dayjs";
-import GuildItem from "./GuildItem";
+
 import CommandItem from "./ItemCommand";
+import GuildItem from "./GuildItem";
 
 export default class UserItem extends GuildItem {
   public remainingUses: number;
   public datePurchased: Date;
   public userId: string;
   public id: string;
+  public userQuantity: number;
 
   public constructor(
     itemId: string,
     guildId: string,
     name: string,
     maxUses: number,
-    quantity: number,
+    guildQuantity: number,
     isStealProtected: boolean,
     commands: CommandItem[],
     price: number,
@@ -31,7 +33,7 @@ export default class UserItem extends GuildItem {
       guildId,
       name,
       maxUses,
-      quantity,
+      guildQuantity,
       isStealProtected,
       commands,
       price,
@@ -45,6 +47,7 @@ export default class UserItem extends GuildItem {
     this.datePurchased = datePurchased;
     this.userId = userId;
     this.id = id;
+    this.userQuantity = 1;
   }
 
   public get stealDc(): number {
@@ -98,7 +101,7 @@ export default class UserItem extends GuildItem {
   }
 
   public getDetails(additional = ""): string {
-    const quantity = `Quantity: ${this.quantity}\n`;
+    const quantity = `Quantity: ${this.userQuantity}\n`;
     const uses = `Uses: ${this.unlimitedUses ? "∞" : `${this.remainingUses}/${this.maxUses}`}\n`;
 
     return quantity + uses + additional + this.printCommands();

@@ -3,6 +3,7 @@ import Balance from "../commands/public/Balance";
 import BanWord from "../commands/public/BanWord";
 import Buy from "../commands/public/Buy";
 import Censorship from "../commands/admin/Censorship";
+import Combat from "../commands/public/Combat";
 import Exile from "../commands/public/Exile";
 import Give from "../commands/public/Give";
 import Headpat from "../commands/public/Headpat";
@@ -31,6 +32,7 @@ export const InteractionMap: {
   [RaphtaliaInteraction.BanWord]: new BanWord().banWord,
   [RaphtaliaInteraction.Buy]: new Buy().buy,
   [RaphtaliaInteraction.Censorship]: new Censorship().censorship,
+  [RaphtaliaInteraction.Combat]: new Combat().combat,
   [RaphtaliaInteraction.Exile]: new Exile().exile,
   [RaphtaliaInteraction.Give]: new Give().give,
   [RaphtaliaInteraction.Headpat]: new Headpat().headpat,

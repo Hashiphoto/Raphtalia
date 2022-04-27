@@ -31,8 +31,8 @@ export default class UserInventoryRepository extends Repository {
 
   public async insertUserItem(guildId: string, userId: string, item: UserItem): Promise<void> {
     await this.pool.query(
-      `INSERT INTO user_inventory (user_id, guild_id, item_id, quantity, remaining_uses) VALUES (?,?,?,?,?)`,
-      [userId, guildId, item.itemId, item.quantity, item.maxUses]
+      `INSERT INTO user_inventory (user_id, guild_id, item_id, remaining_uses) VALUES (?,?,?,?,?)`,
+      [userId, guildId, item.itemId, item.maxUses]
     );
   }
 
@@ -51,13 +51,13 @@ export default class UserInventoryRepository extends Repository {
     repeatCount = 1
   ): Promise<UserItem[]> {
     const escapedValue = `(${escape(userId)}, ${escape(guildId)}, ${escape(item.itemId)}, ${escape(
-      item.quantity
-    )}, ${escape(item.maxUses)})`;
+      item.maxUses
+    )})`;
     const values = (new Array(repeatCount).fill(escapedValue) as string[]).join(",");
 
     return this.pool
       .query(
-        `INSERT INTO user_inventory (user_id, guild_id, item_id, quantity, remaining_uses) VALUES ${values}`
+        `INSERT INTO user_inventory (user_id, guild_id, item_id, remaining_uses) VALUES ${values}`
       )
       .then(([result]: [OkPacket, FieldPacket[]]) => {
         // Auto Increment Lock ensures the ids of the inserted rows
@@ -149,10 +149,11 @@ export default class UserInventoryRepository extends Repository {
   }
 
   public async updateUserItem(guildId: string, item: UserItem): Promise<void> {
-    await this.pool.query(
-      "UPDATE user_inventory SET quantity=?, remaining_uses=? WHERE guild_id=? AND id=?",
-      [item.quantity, item.remainingUses, guildId, item.id]
-    );
+    await this.pool.query("UPDATE user_inventory SET remaining_uses=? WHERE guild_id=? AND id=?", [
+      item.remainingUses,
+      guildId,
+      item.id,
+    ]);
   }
 
   public async deleteUserItem(item: UserItem): Promise<void> {

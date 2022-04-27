@@ -15,6 +15,7 @@ import AllowWord from "../commands/public/AllowWord";
 import Balance from "../commands/public/Balance";
 import BanWord from "../commands/public/BanWord";
 import Buy from "../commands/public/Buy";
+import Combat from "../commands/public/Combat";
 import Exile from "../commands/public/Exile";
 import Give from "../commands/public/Give";
 import Headpat from "../commands/public/Headpat";
@@ -46,6 +47,7 @@ export default class CommandService {
       new BanWord(),
       new Buy(),
       new Censorship(),
+      new Combat(),
       new Debug(),
       new Exile(),
       new Give(),

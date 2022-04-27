@@ -24,25 +24,27 @@ export default class DropPricesJob implements Job {
         return;
       }
       const guildItems = await this._guildInventoryRepository.getGuildStock(guild.id);
-      for (const item of guildItems) {
+      for (const guildItem of guildItems) {
         // Don't discount items that sold
         // Don't let sold-out items depreciate for no reason
         // Also, don't change the price of explictly set free items
-        if (item.soldInCycle !== 0 || item.quantity === 0 || item.price === 0) {
+        if (guildItem.soldInCycle !== 0 || guildItem.quantity === 0 || guildItem.price === 0) {
           continue;
         }
 
         // Discount the item by the priceDropRate, increased if more days have passed than priceDropDays
-        const hoursSinceLastSold = dayjs.duration(dayjs().diff(dayjs(item.dateLastSold))).asHours();
+        const hoursSinceLastSold = dayjs
+          .duration(dayjs().diff(dayjs(guildItem.dateLastSold)))
+          .asHours();
         const daysSinceLastSold = Math.floor(hoursSinceLastSold / 24);
         const salePercentage =
           Math.ceil(daysSinceLastSold / dbGuild.priceDropDays) * dbGuild.priceDropRate;
 
-        const newPrice = item.price * (1.0 - salePercentage);
+        const newPrice = guildItem.price * (1.0 - salePercentage);
         if (newPrice <= 25.0) {
           continue;
         }
-        await this._guildInventoryRepository.updateGuildItemPrice(guild.id, item, newPrice);
+        await this._guildInventoryRepository.updateGuildItemPrice(guild.id, guildItem, newPrice);
       }
       await this._guildInventoryRepository.resetStoreCycle(guild.id);
       await this._guildStoreService.update(guild);

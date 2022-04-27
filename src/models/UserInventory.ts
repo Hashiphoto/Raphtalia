@@ -33,7 +33,7 @@ export default class UserInventory {
       });
 
       const aggregate = items[0].copy();
-      aggregate.quantity = items.reduce((sum, current) => sum + current.quantity, 0);
+      aggregate.userQuantity = items.reduce((sum, current) => sum + current.userQuantity, 0);
       aggregate.remainingUses = items.reduce((sum, current) => sum + current.remainingUses, 0);
       return {
         name: aggregate.getFormattedName(),

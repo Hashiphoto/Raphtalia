@@ -169,11 +169,8 @@ export default class InventoryService {
     }
 
     item.remainingUses -= uses;
-    if (item.remainingUses <= 0) {
-      item.quantity -= 1;
-    }
 
-    if (item.quantity <= 0) {
+    if (item.remainingUses <= 0) {
       await this.returnItemToStore(member.guild, item);
       return item;
     } else {
