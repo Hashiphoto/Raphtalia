@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model banned_words {
+  word     String @db.VarChar(45)
+  guild_id String @db.VarChar(45)
+
+  @@id([word, guild_id])
+  @@index([guild_id], map: "fk_banned_words_guilds_id_idx")
+}
+
+model channels {
+  id        String @id @db.VarChar(45)
+  delete_ms Int?   @default(-1)
+}
+
+model commands {
+  id      Int    @id @default(autoincrement())
+  name    String @db.VarChar(128)
+  item_id Int
+
+  @@index([item_id], map: "fk_items_commands_idx")
+}
+
+model guild_inventory {
+  guild_id        String   @db.VarChar(45)
+  item_id         Int
+  price           Decimal  @default(0.00) @db.Decimal(20, 2)
+  max_uses        Int      @default(0)
+  quantity        Int      @default(0)
+  max_quantity    Int      @default(0)
+  sold_in_cycle   Int      @default(0)
+  date_last_sold  DateTime @default(now()) @db.DateTime(0)
+  hidden          Int      @default(0) @db.TinyInt
+  steal_protected Int      @default(0) @db.TinyInt
+  lifespan_days   Int?
+
+  @@id([guild_id, item_id])
+  @@index([item_id], map: "fk_items_guild_inventory_idx")
+}
+
+model guilds {
+  id                     String  @id @db.VarChar(45)
+  censorship_enabled     Int     @default(0) @db.TinyInt
+  tax_rate               Float   @default(0)
+  role_message_id        String? @db.VarChar(45)
+  store_message_id       String? @db.VarChar(45)
+  ban_list_message_id    String? @db.VarChar(45)
+  message_rate           Float   @default(60)
+  message_reset_s        Int     @default(3600)
+  reactor_rate           Float   @default(5)
+  reactee_rate           Float   @default(10)
+  price_hike_coefficient Float   @default(0.1)
+  price_drop_days        Int     @default(3)
+  price_drop_rate        Float   @default(0.035)
+  output_channel         String? @db.VarChar(45)
+  debug_channel          String? @db.VarChar(45)
+}
+
+model items {
+  id   Int    @id @default(autoincrement())
+  name String @db.VarChar(128)
+}
+
+model role_contest_bids {
+  contest_id Int
+  user_id    String   @db.VarChar(45)
+  bid_amount Decimal? @db.Decimal(20, 2)
+
+  @@id([user_id, contest_id])
+  @@index([contest_id], map: "fk_role_contest_bids_role_contests_idx")
+}
+
+model role_contests {
+  id           Int      @id @default(autoincrement())
+  role_id      String   @db.VarChar(45)
+  from_role_id String   @db.VarChar(45)
+  initiator_id String   @db.VarChar(45)
+  start_date   DateTime @db.DateTime(0)
+  message_id   String   @db.VarChar(45)
+
+  @@index([from_role_id], map: "fk_role_contests_roles_from_id_idx")
+  @@index([role_id], map: "fk_role_contests_roles_id_idx")
+  @@index([initiator_id], map: "fk_role_contests_users_id_idx")
+}
+
+model roles {
+  id                String    @id @db.VarChar(45)
+  member_limit      Int       @default(-1)
+  last_promotion_on DateTime? @db.DateTime(0)
+}
+
+model screening_questions {
+  id         Int    @id @default(autoincrement())
+  guild_id   String @db.VarChar(45)
+  prompt     String @db.VarChar(256)
+  answer     String @db.VarChar(256)
+  timeout_ms Int    @default(30000)
+  strict     Int    @default(0) @db.TinyInt
+
+  @@index([guild_id], map: "fk_onboarding_questions_guilds_idx")
+}
+
+model user_inventory {
+  id             Int      @id @default(autoincrement()) @db.UnsignedInt
+  user_id        String   @db.VarChar(45)
+  guild_id       String   @db.VarChar(45)
+  item_id        Int
+  quantity       Int      @default(1)
+  remaining_uses Int?
+  date_purchased DateTime @default(now()) @db.DateTime(0)
+
+  @@index([item_id], map: "fk_items_user_inventory_idx")
+  @@index([user_id, guild_id], map: "fk_user_inventory_users")
+}
+
+model users {
+  id                String    @db.VarChar(45)
+  guild_id          String    @db.VarChar(45)
+  infractions       Int       @default(0)
+  currency          Decimal   @default(0.00) @db.Decimal(20, 2)
+  citizenship       Int       @default(0) @db.TinyInt
+  bonus_income      Float     @default(0)
+  last_message_date DateTime? @db.DateTime(0)
+
+  @@id([id, guild_id])
+  @@index([guild_id], map: "fk_users_guild_id_idx")
+}
